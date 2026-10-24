@@ -1,0 +1,166 @@
+import {
+  boolean,
+  doublePrecision,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { floors, projects } from './projects';
+import { organizations, users } from './identity';
+import { electricalPointTypeEnum, estimateStatusEnum } from './enums';
+import type { CalculationSettings, Point2D } from './types';
+
+export const materials = pgTable(
+  'materials',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(
+      () => organizations.id,
+      { onDelete: 'cascade' },
+    ),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    unit: text('unit').notNull().default('m'),
+    category: text('category'),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }),
+    currency: text('currency').notNull().default('UAH'),
+    active: boolean('active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('materials_org_code_unique').on(
+      table.organizationId,
+      table.code,
+    ),
+    index('materials_organization_idx').on(table.organizationId),
+  ],
+);
+
+export const electricalPoints = pgTable(
+  'electrical_points',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    type: electricalPointTypeEnum('type').notNull().default('socket'),
+    x: doublePrecision('x').notNull(),
+    y: doublePrecision('y').notNull(),
+    rotation: doublePrecision('rotation').notNull().default(0),
+    label: text('label'),
+    mountingHeight: doublePrecision('mounting_height'),
+    properties: jsonb('properties')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('electrical_points_floor_idx').on(table.floorId),
+    index('electrical_points_type_idx').on(table.type),
+  ],
+);
+
+export const cableRoutes = pgTable(
+  'cable_routes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    materialId: uuid('material_id').references(() => materials.id, {
+      onDelete: 'set null',
+    }),
+    circuitId: text('circuit_id'),
+    geometry: jsonb('geometry').$type<Point2D[]>().notNull(),
+    settings: jsonb('settings')
+      .$type<CalculationSettings>()
+      .notNull()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('cable_routes_floor_idx').on(table.floorId),
+    index('cable_routes_material_idx').on(table.materialId),
+  ],
+);
+
+export const estimates = pgTable(
+  'estimates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull().default(1),
+    status: estimateStatusEnum('status').notNull().default('draft'),
+    createdBy: uuid('created_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    calculationSettings: jsonb('calculation_settings')
+      .$type<CalculationSettings>()
+      .notNull()
+      .default({}),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('estimates_project_version_unique').on(
+      table.projectId,
+      table.version,
+    ),
+  ],
+);
+
+export const estimateItems = pgTable(
+  'estimate_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    estimateId: uuid('estimate_id')
+      .notNull()
+      .references(() => estimates.id, { onDelete: 'cascade' }),
+    materialId: uuid('material_id').references(() => materials.id, {
+      onDelete: 'set null',
+    }),
+    description: text('description').notNull(),
+    unit: text('unit').notNull(),
+    quantity: numeric('quantity', { precision: 12, scale: 3 }).notNull(),
+    purchaseQuantity: numeric('purchase_quantity', {
+      precision: 12,
+      scale: 3,
+    }),
+    unitPrice: numeric('unit_price', { precision: 12, scale: 2 }),
+    subtotal: numeric('subtotal', { precision: 14, scale: 2 }),
+    isOverridden: boolean('is_overridden').notNull().default(false),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('estimate_items_estimate_idx').on(table.estimateId)],
+);
