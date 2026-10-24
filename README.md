@@ -2,21 +2,23 @@
 
 Browser-based electrical installation planning: start from a blank plan or an uploaded drawing, place electrical points, route cable, calculate lengths and materials, and export an estimate.
 
-The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status lives in [`ROADMAP.md`](./ROADMAP.md).
+The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status lives in [`ROADMAP.md`](./ROADMAP.md). For a detailed Ukrainian setup guide, see [`RUN.md`](./RUN.md).
 
 ## Current status
 
-**Phase 1 — Project foundation** is implemented. The repository contains a working monorepo, API, database schema, and web shell. Product features (authentication, projects, editor, calculations, exports) are not implemented yet.
+**Phase 2 — Accounts and projects** is implemented end to end: registration, server-side sessions, and per-user project CRUD are verified. The editor, calculations, and exports are not implemented yet.
 
 Verified in this repository:
 
 - pnpm workspace with Turborepo, shared TypeScript baseline, and ESLint.
 - NestJS API with `/api/v1` prefix, Zod-validated environment configuration, normalized errors, `helmet` headers, CORS, and liveness/readiness endpoints.
 - Shared Zod request-validation pipe with field-level error messages.
-- React + Vite + Tailwind CSS web shell that checks the live API and database readiness.
-- PostgreSQL schema defined with Drizzle ORM: 16 tables, enums, foreign keys, indexes, and a tracked initial migration.
+- Registration, login, logout, and current-user endpoints with Argon2id password hashing, hashed server-side sessions, and in-memory rate limiting.
+- Project CRUD with owner-scoped queries: create, list, open, rename, archive, and restore.
+- React + Vite + Tailwind web app with login and registration pages, a protected project workspace, project detail pages, and a router.
+- PostgreSQL schema defined with Drizzle ORM: 17 tables, enums, foreign keys, indexes, and two tracked migrations (`users`, `sessions`).
 - Shared Zod contracts package.
-- Tests using Vitest and PGlite.
+- Tests using Vitest and PGlite, including auth and project integration tests against the real migrations.
 
 ## Requirements
 
@@ -35,11 +37,60 @@ pnpm db:migrate
 pnpm dev
 ```
 
-- Web: <http://localhost:5173>
-- API liveness: <http://localhost:3000/api/v1/health>
-- API readiness: <http://localhost:3000/api/v1/health/ready>
+- Web: <http://localhost:3004>
+- API liveness: <http://localhost:5004/api/v1/health>
+- API readiness: <http://localhost:5004/api/v1/health/ready>
+
+Ports come from the root `.env`: `API_PORT`, `WEB_PORT`, and `WEB_ORIGIN`. Defaults are `5004`, `3004`, and `http://localhost:3004`. If you change the web port, update `WEB_ORIGIN` too.
 
 The API starts without PostgreSQL. In that case liveness returns `200`, while readiness returns `503` with an actionable error. The web page reports both states.
+
+Open <http://localhost:3004/register> to create the first account. Registration, login, and logout require a working database and applied migrations.
+
+## Authentication
+
+Authentication uses server-side cookie sessions, not JWTs and not `localStorage`.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v1/auth/register` | Create an account and set the session cookie (`201`). |
+| `POST /api/v1/auth/login` | Verify credentials and set the session cookie (`200`). |
+| `POST /api/v1/auth/logout` | Revoke the current session and clear the cookie (`204`). |
+| `GET /api/v1/users/me` | Return the authenticated user (`401` without a valid session). |
+
+- Passwords are hashed with Argon2id via `@node-rs/argon2` (19 MiB memory, 2 iterations, parallelism 1).
+- Session tokens are 32 random bytes encoded as base64url. Only the SHA-256 hash of a token is stored in `sessions.token_hash`.
+- The cookie is `dmp_session`: `HttpOnly`, `SameSite=Lax`, `Secure` in production, with a 30-day default lifetime.
+- Login and registration attempts are limited in memory to 10 per 15 minutes per IP and route by default.
+- Web routes: `/login`, `/register`, the protected `/app` workspace, and `/app/projects/:projectId`.
+
+Authentication configuration in the root `.env`:
+
+```env
+SESSION_TTL_DAYS=30
+AUTH_RATE_LIMIT=10
+AUTH_RATE_WINDOW_MINUTES=15
+```
+
+In-memory rate limiting is per API instance. A shared store such as Redis is required before running multiple API instances.
+
+## Projects
+
+Every project belongs to the user who created it. List, read, update, archive, and restore queries are filtered by `createdBy`; another user's project returns `404` instead of revealing that it exists.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/projects?status=active\|archived\|all` | List the current user's projects; defaults to `active`. |
+| `POST /api/v1/projects` | Create a project (`201`). |
+| `GET /api/v1/projects/:id` | Read one owned project. |
+| `PATCH /api/v1/projects/:id` | Rename or update the description. |
+| `POST /api/v1/projects/:id/archive` | Move a project to `archived` (reversible). |
+| `POST /api/v1/projects/:id/restore` | Move an archived project back to `active`. |
+
+- The workspace lists active and archived projects separately and supports create, rename, archive, and restore.
+- Archiving is the deletion policy for now: it is reversible and no hard-delete endpoint exists.
+- Project names are required, trimmed, and limited to 120 characters; descriptions are optional and limited to 2000 characters.
+- Organization and project sharing tables exist in the schema, but team access is not implemented until Phase 7.
 
 ## Commands
 
@@ -65,6 +116,7 @@ packages/
   database/             Drizzle schema, migrations, PostgreSQL client
 infra/
   docker-compose.yml    Local PostgreSQL
+RUN.md                  Detailed Ukrainian setup and troubleshooting guide
 ```
 
 ## Database
@@ -82,13 +134,16 @@ After changing the schema, run `pnpm db:generate` and commit the generated migra
 - `pnpm build` — passed (API, web, contracts, database).
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm test` — 13 tests passed across 5 suites.
-- API smoke test — `/api/v1/health` returned `200`; `/api/v1/health/ready` returned `503` without PostgreSQL.
-- Web smoke test — page returned `200`; the Vite proxy forwarded `/api/v1/health` successfully.
-- Live PostgreSQL migration — **not verified**. Docker CLI is installed, but no Docker daemon or local PostgreSQL is available in this environment. PGlite applied the migration successfully.
+- `pnpm test` — 28 tests passed across 8 suites.
+- Auth integration tests — registration, session cookie hashing, current-user access, duplicate email (`409`), invalid credentials (`401`), payload validation (`400`), logout revocation, and disabled accounts. Tests run against PGlite with the committed migrations.
+- API smoke test on port `5004` — `/api/v1/health` returned `200`; `/api/v1/users/me` returned `401` without a cookie; invalid registration returned `400` with field-level messages; rate-limit headers were present.
+- Web smoke test on port `3004` — `/`, `/login`, and `/app` returned `200` through the Vite SPA fallback; the Vite proxy forwarded `/api/v1/users/me` to the API successfully.
+- Live PostgreSQL migration — **not verified**. Docker CLI is installed, but no Docker daemon or local PostgreSQL is available in this environment. PGlite applied both migrations successfully. A full browser registration/login flow against live PostgreSQL therefore remains unverified at runtime.
 
 ## Security notes
 
 - Never commit `.env`; only `.env.example` is tracked.
 - The API validates its environment at startup.
-- Authentication and authorization are not implemented yet. Do not expose this build publicly before Phase 2.
+- Passwords are hashed with Argon2id; session tokens are stored only as SHA-256 hashes.
+- Project-level authorization is implemented for personal projects: all project queries are owner-scoped and cross-user access returns `404`. Organization and shared-project permissions are not implemented yet, so do not expose this build publicly for multi-tenant use.
+- In-memory rate limiting does not survive restarts and is not shared between API instances.

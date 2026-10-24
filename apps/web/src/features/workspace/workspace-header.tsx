@@ -1,0 +1,73 @@
+import { LoaderCircle, LogOut, Zap } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/features/auth/auth-context';
+import { useLogout } from '@/features/auth/use-logout';
+
+interface WorkspaceHeaderProps {
+  badge?: string;
+  children?: ReactNode;
+}
+
+export function WorkspaceHeader({
+  badge = 'Phase 2 · Projects',
+  children,
+}: WorkspaceHeaderProps) {
+  const { user } = useAuth();
+  const { loggingOut, logoutError, signOut } = useLogout();
+
+  return (
+    <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+        <Link to="/app" className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20">
+            <Zap className="h-4 w-4" fill="currentColor" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold tracking-wide text-white">
+              DrawMyPlace
+            </span>
+            <span className="block text-xs text-slate-400">Workspace</span>
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-3">
+          {children}
+          {user ? (
+            <span className="hidden max-w-48 truncate text-sm text-slate-300 sm:block">
+              {user.name}
+            </span>
+          ) : null}
+          <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200 md:block">
+            {badge}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={signOut}
+            disabled={loggingOut}
+          >
+            {loggingOut ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+            {loggingOut ? 'Signing out…' : 'Sign out'}
+          </Button>
+        </div>
+      </div>
+
+      {logoutError ? (
+        <div className="mx-auto max-w-6xl px-6 pb-3">
+          <p
+            role="alert"
+            className="rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-100"
+          >
+            {logoutError}
+          </p>
+        </div>
+      ) : null}
+    </header>
+  );
+}

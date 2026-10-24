@@ -5,7 +5,7 @@ import {
   projectRoleEnum,
   projectStatusEnum,
 } from './enums';
-import type { Point2D, UnderlaySettings } from './types';
+import type { EditorViewport, Point2D, UnderlaySettings } from './types';
 
 export const projects = pgTable(
   'projects',
@@ -98,6 +98,10 @@ export const plans = pgTable(
       .$type<UnderlaySettings>()
       .notNull()
       .default({}),
+    viewport: jsonb('viewport')
+      .$type<EditorViewport>()
+      .notNull()
+      .default({ x: 0, y: 0, zoom: 1 }),
     version: integer('version').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

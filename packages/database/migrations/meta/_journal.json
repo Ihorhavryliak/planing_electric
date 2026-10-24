@@ -8,6 +8,20 @@
       "when": 1792861398446,
       "tag": "0000_nasty_roland_deschain",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792863920806,
+      "tag": "0001_glorious_venus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792865707548,
+      "tag": "0002_fast_blob",
+      "breakpoints": true
     }
   ]
 }

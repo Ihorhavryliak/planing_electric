@@ -21,14 +21,15 @@
 - [x] Repository inspected: before this session it contained only `CLAUDE.md`, `SPEC.md`, `ROADMAP.md`, and `text.txt`; it was not a git repository and had no application code.
 - [x] Git initialized and pnpm/Turborepo workspace created.
 - [x] Stack configured: React, TypeScript, Tailwind CSS, Vite, NestJS, Zod, PostgreSQL, Drizzle ORM, PGlite, pnpm, and Turborepo.
-- [x] Database schema and initial migration exist (16 tables); the migration is applied by a PGlite test.
-- [ ] Authentication and project CRUD are not implemented.
+- [x] Database schema and migrations exist (17 tables); both migrations are applied by PGlite tests.
+- [x] Authentication is implemented: registration, login, logout, current-user endpoint, Argon2id hashing, server-side sessions, guard, and rate limiting.
+- [ ] Project CRUD is not implemented.
 - [ ] Editor, calculations, materials, and exports are not implemented.
 - [x] Baseline install, build, typecheck, lint, and tests run; results are recorded in the session log.
 
-**Current project stage:** Phase 1 foundation implemented and verified. Phase 2 (authentication and project management) is next.
+**Current project stage:** Phase 2 authentication is implemented end to end. Project management (CRUD and ownership checks) is next.
 
-**Known blocker:** applying the migration to a live PostgreSQL server is unverified because no Docker daemon or local PostgreSQL is available in the current environment.
+**Known blocker:** applying migrations to a live PostgreSQL server is unverified because no Docker daemon or local PostgreSQL is available in the current environment.
 
 ## 2. Roadmap overview
 
@@ -84,14 +85,17 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 
 ### Phase 2 — Authentication and project management
 
-- [ ] Registration/login/logout and protected routes.
-- [ ] Current-user endpoint and profile basics.
-- [ ] Personal workspace and project list.
+- [x] Registration/login/logout and protected routes.
+- [x] Current-user endpoint and profile basics.
+- [x] Auth tests: registration, login, logout, current user, duplicate email, invalid credentials, validation, disabled accounts, and hashed session tokens.
+- [ ] Personal workspace and project list. The protected `/app` workspace is a placeholder; it has no project list yet.
 - [ ] Create, rename, open, archive, and delete/restore projects according to policy.
-- [ ] Server-side resource authorization.
-- [ ] Tests for unauthorized access and ID substitution.
+- [ ] Server-side project authorization.
+- [-] Tests for unauthorized access and ID substitution. Session enforcement is tested; project-level ID substitution tests must be added with project CRUD.
 
 **Exit criteria:** a user can create and reopen a project; one user cannot read or modify another user's private project.
+
+**Status:** the authentication slice is complete. Project management remains before this phase's exit criteria are met.
 
 ### Phase 3 — Editor foundation
 
@@ -239,9 +243,9 @@ Do not mark a feature complete merely because a file or UI component exists. Ver
 
 ## 6. Next 3 actions
 
-1. **Verify PostgreSQL against a real server** once a Docker daemon or PostgreSQL instance is available: `pnpm db:up`, `pnpm db:migrate`, then confirm `/api/v1/health/ready` returns `200`.
-2. **Implement the first Phase 2 vertical slice**: registration, login, current-user endpoint, and a protected route with tests.
-3. **Add project CRUD** with server-side resource authorization and tests for cross-user access denial.
+1. **Verify PostgreSQL against a real server** once a Docker daemon or PostgreSQL instance is available: `pnpm db:up`, `pnpm db:migrate`, then confirm `/api/v1/health/ready` returns `200` and complete a browser registration/login flow.
+2. **Implement project CRUD** with per-user ownership checks: create, list, reopen, rename, and archive projects.
+3. **Add project-level authorization tests** for cross-user access denial and ID substitution, then replace the dashboard placeholder with the project list.
 
 ## 7. Session log
 
@@ -260,3 +264,15 @@ Add a short dated entry after each work session:
 - Tests run: `pnpm install`, `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (13 tests in 5 suites). API smoke test returned `200` for liveness and `503` with an actionable body for readiness without PostgreSQL. Web returned `200`, and the Vite proxy reached the API successfully.
 - Issues/blockers: Docker CLI exists but the daemon is not running, and no local PostgreSQL is available. Live PostgreSQL migration/readiness is unverified.
 - Next action: start Phase 2 authentication.
+
+### 2026-10-24 — ports and run guide
+- Completed: moved API to port `5004` and web to `3004`; added `WEB_PORT`; made ports configurable through the root `.env`; updated Vite proxy, CORS default, `.env.example`, README; added `RUN.md` with Ukrainian setup, port changes, commands, and troubleshooting; enabled Vite `strictPort`.
+- Tests run: `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (13 tests in 5 suites). Runtime smoke test: API `5004` liveness `200`, web `3004` `200`, web proxy `200`, readiness `503` without PostgreSQL.
+- Issues/blockers: live PostgreSQL migration/readiness remains unverified.
+- Next action: start Phase 2 authentication.
+
+### 2026-10-24 — Phase 2 authentication
+- Completed: `sessions` table and migration `0001_glorious_venus.sql`; Argon2id password hashing; server-side cookie sessions with SHA-256 token hashes; `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, and `GET /api/v1/users/me`; `AuthGuard`; in-memory rate limiting on login/register; shared auth contracts; PGlite auth integration tests; React Router with `/login`, `/register`, and protected `/app`; auth context, forms, login/register pages, and dashboard placeholder; README/RUN/roadmap updates.
+- Tests run: `pnpm build`, `pnpm typecheck`, `pnpm lint`, `pnpm test` (28 tests in 8 suites). Runtime smoke: API `5004` health `200`, `/users/me` `401` without a cookie, invalid registration `400` with field messages, rate-limit headers present; web `3004` `/`, `/login`, `/app` returned `200`; Vite proxy reached the API.
+- Issues/blockers: live PostgreSQL migration and a full browser register/login flow against PostgreSQL remain unverified. Project-level authorization is not implemented yet. Rate limiting is in-memory and per instance.
+- Next action: project CRUD with ownership checks and authorization tests.

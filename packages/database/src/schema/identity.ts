@@ -31,6 +31,30 @@ export const users = pgTable(
   (table) => [uniqueIndex('users_email_unique').on(table.email)],
 );
 
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    userAgent: text('user_agent'),
+    ipAddress: text('ip_address'),
+  },
+  (table) => [
+    uniqueIndex('sessions_token_hash_unique').on(table.tokenHash),
+    index('sessions_user_idx').on(table.userId),
+    index('sessions_expires_idx').on(table.expiresAt),
+  ],
+);
+
 export const organizations = pgTable(
   'organizations',
   {

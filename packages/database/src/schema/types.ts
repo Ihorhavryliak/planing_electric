@@ -13,6 +13,12 @@ export interface UnderlaySettings {
   offsetY?: number;
 }
 
+export interface EditorViewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 export interface CalculationSettings {
   wastePercent?: number;
   defaultVerticalDropMeters?: number;

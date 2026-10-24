@@ -1,0 +1,1 @@
+ALTER TABLE "plans" ADD COLUMN "viewport" jsonb DEFAULT '{"x":0,"y":0,"zoom":1}'::jsonb NOT NULL;
