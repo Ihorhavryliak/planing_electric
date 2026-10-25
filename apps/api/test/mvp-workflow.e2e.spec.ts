@@ -193,6 +193,25 @@ describe('MVP workflow', () => {
       .expect(200);
     expect(pdf.headers['content-type']).toContain('application/pdf');
 
+    const links = await server()
+      .post(`${API}/estimates/${estimate.id}/export-links`)
+      .set('Cookie', cookie)
+      .expect(201);
+    const { csvUrl, pdfUrl } = links.body as {
+      csvUrl: string;
+      pdfUrl: string;
+    };
+
+    // Signed links work without a session cookie.
+    const signedCsv = await server().get(`${API}${csvUrl}`).expect(200);
+    expect(signedCsv.headers['content-type']).toContain('text/csv');
+    const signedPdf = await server().get(`${API}${pdfUrl}`).expect(200);
+    expect(signedPdf.headers['content-type']).toContain('application/pdf');
+
+    await server()
+      .get(`${API}${csvUrl.replace('sig=', 'sig=bad')}`)
+      .expect(404);
+
     // Reload everything and confirm persistence.
     const drawing = (
       await server()

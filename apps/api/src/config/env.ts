@@ -26,6 +26,8 @@ const envSchema = z.object({
   SMTP_SECURE: z.enum(['true', 'false']).default('false'),
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
+  EXPORT_LINK_SECRET: z.string().min(8).default('dev-export-link-secret'),
+  EXPORT_LINK_TTL_SECONDS: z.coerce.number().int().min(30).max(86400).default(300),
 });
 
 export type Env = z.infer<typeof envSchema>;

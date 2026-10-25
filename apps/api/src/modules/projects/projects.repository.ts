@@ -41,6 +41,15 @@ export class ProjectsRepository {
       .orderBy(desc(projects.updatedAt));
   }
 
+  async findById(projectId: string): Promise<ProjectRow | null> {
+    const [project] = await this.db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+    return project ?? null;
+  }
+
   async findAccessRole(
     projectId: string,
     userId: string,

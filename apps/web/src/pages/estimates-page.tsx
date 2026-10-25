@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
+  createExportLinks,
   listEstimatesByProject,
   updateEstimateItem,
   updateEstimateStatus,
@@ -40,6 +41,18 @@ export function EstimatesPage() {
   useEffect(() => {
     void load();
   }, [projectId]);
+
+  async function handleDownload(
+    estimate: PublicEstimate,
+    format: 'csv' | 'pdf',
+  ) {
+    try {
+      const links = await createExportLinks(estimate.id);
+      window.location.href = `/api/v1${format === 'csv' ? links.csvUrl : links.pdfUrl}`;
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
 
   async function handleStatus(
     estimate: PublicEstimate,
@@ -164,20 +177,22 @@ export function EstimatesPage() {
                         ? 'Mark draft'
                         : 'Mark final'}
                     </Button>
-                    <a
-                      href={`/api/v1/estimates/${estimate.id}/csv`}
-                      className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm text-slate-200 hover:bg-white/10"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleDownload(estimate, 'csv')}
                     >
                       <Download className="h-4 w-4" />
                       CSV
-                    </a>
-                    <a
-                      href={`/api/v1/estimates/${estimate.id}/pdf`}
-                      className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm text-slate-200 hover:bg-white/10"
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleDownload(estimate, 'pdf')}
                     >
                       <Download className="h-4 w-4" />
                       PDF
-                    </a>
+                    </Button>
                   </div>
                 </div>
 

@@ -35,6 +35,15 @@ export function updateMaterial(
   });
 }
 
+export function createExportLinks(
+  estimateId: string,
+): Promise<{ csvUrl: string; pdfUrl: string; expiresAt: string }> {
+  return apiRequest<{ csvUrl: string; pdfUrl: string; expiresAt: string }>(
+    `/estimates/${estimateId}/export-links`,
+    { method: 'POST' },
+  );
+}
+
 export function generateEstimate(planId: string): Promise<PublicEstimate> {
   return apiRequest<PublicEstimate>(`/plans/${planId}/estimate`, {
     method: 'POST',
