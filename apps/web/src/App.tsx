@@ -9,6 +9,7 @@ import { InvitePage } from '@/pages/invite-page';
 import { NotificationsPage } from '@/pages/notifications-page';
 import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
+import { MaterialsPage } from '@/pages/materials-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
 import { RegisterPage } from '@/pages/register-page';
@@ -38,6 +39,7 @@ export function App() {
             />
             <Route path="/app/organizations" element={<OrganizationsPage />} />
             <Route path="/app/notifications" element={<NotificationsPage />} />
+            <Route path="/app/materials" element={<MaterialsPage />} />
             <Route path="/invite/:token" element={<InvitePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

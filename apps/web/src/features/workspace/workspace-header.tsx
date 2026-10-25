@@ -1,4 +1,4 @@
-import { Bell, Building2, LoaderCircle, LogOut, Zap } from 'lucide-react';
+import { Bell, Building2, LoaderCircle, LogOut, Package, Zap } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,13 @@ export function WorkspaceHeader({
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <Building2 className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/app/materials"
+            aria-label="Materials"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <Package className="h-4 w-4" />
           </Link>
           <Link
             to="/app/notifications"

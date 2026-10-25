@@ -5,6 +5,36 @@ export function listMaterials(): Promise<PublicMaterial[]> {
   return apiRequest<PublicMaterial[]>('/materials');
 }
 
+export function createMaterial(input: {
+  code: string;
+  name: string;
+  unit: string;
+  category?: 'cable' | 'conduit' | 'accessory' | 'other' | null;
+  unitPrice?: number | null;
+  organizationId?: string | null;
+}): Promise<PublicMaterial> {
+  return apiRequest<PublicMaterial>('/materials', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateMaterial(
+  id: string,
+  input: {
+    name?: string;
+    unit?: string;
+    category?: 'cable' | 'conduit' | 'accessory' | 'other' | null;
+    unitPrice?: number | null;
+    active?: boolean;
+  },
+): Promise<PublicMaterial | null> {
+  return apiRequest<PublicMaterial | null>(`/materials/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
 export function generateEstimate(planId: string): Promise<PublicEstimate> {
   return apiRequest<PublicEstimate>(`/plans/${planId}/estimate`, {
     method: 'POST',
