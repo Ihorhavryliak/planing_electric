@@ -105,9 +105,9 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Implement pan, zoom, selection, and canvas resize handling.
 - [x] Create a blank plan. Covered by `editor.e2e.spec.ts`.
 - [x] Upload JPG/PNG. Covered by `editor.e2e.spec.ts`.
-- [-] Upload PDF and choose/render a page. API and PDF preview code exist and are covered by e2e tests; browser rendering is unverified.
+- [x] Upload PDF and choose/render a page (browser-verified).
 - [x] Store original file and preview metadata. Covered by `editor.e2e.spec.ts`.
-- [-] Toggle, lock, fade, reposition, and replace plan underlay. Implemented in the sidebar; browser verification pending.
+- [x] Toggle, lock, fade, reposition, and replace plan underlay (browser-verified).
 - [x] Persist plan/document and reload it after refresh. Covered by editor and drawing e2e tests.
 - [x] Show save state and actionable error messages.
 
@@ -342,8 +342,10 @@ Add a short dated entry after each work session:
 ### 2026-10-25 — session 11: estimates, organizations, sharing, reliability, realtime
 - Completed: dedicated estimates page with manual overrides and draft/final status; organizations module (CRUD + members); invitations (create/list/revoke/accept with hashed tokens); project sharing (member CRUD, shared project list, viewer read-only enforcement); notifications module and page with unread badge; activity log module/page and recording on project/estimate actions; platform admin guard/endpoints; user profile update and user search by email; project/plan revision conflict checks; plan-level vertical drop defaults (migration `0004`); viewport culling for large plans; SSE plan updates with collaborator presence and reload prompt; deployment/operations documentation.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — all passing. Added organization, MVP workflow, viewer role, access revocation, and stale-plan conflict e2e tests.
-- Issues/blockers: PDF/underlay browser verification, full accessibility audit, and managed object-storage driver still pending.
-- Next action: browser-verify PDF/underlay flows and add an accessibility pass.
+- Browser pass (Playwright + installed Chromium): registered, created a project/floor, uploaded a PNG underlay, toggled visibility, locked it, changed opacity, reloaded, replaced the file with a PDF, chose the page, rendered the preview, and reloaded again. No blocking page errors.
+- Fixed a real upload bug found by the browser pass: `apiRequest` forced `Content-Type: application/json` onto `FormData`, breaking PNG/PDF uploads.
+- Issues/blockers: none for the verified flows.
+- Next action: optional managed object-storage driver.
 
 ### 2026-10-25 — session 10: cable type per route + estimate UI
 - Completed: added `materialId` to route contracts (create/update/public) and backend drawing repository/mapper; estimate generation now uses each route's assigned cable (falling back to the default cable) and stores material price snapshots; added web materials API client; route properties panel gained a cable-type dropdown; editor sidebar gained an Estimate section that generates a takeoff and offers CSV/PDF download links. Updated roadmap checkboxes for walls/rooms/dimensions and Phase 6 items.
