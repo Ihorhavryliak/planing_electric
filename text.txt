@@ -30,4 +30,4 @@ npm i -g opencode-ai@latest
 
  oc_sk_608182de3d39_AL6zexXVZAU0UlKrIAOcqgcxR5XvKfqr
 
-  Продовжуй з того місця, де зупинився. Не питай дозволу.
+  Продовжуй рухаися по карті

@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { MessageEvent } from '@nestjs/common';
-import { map, type Observable } from 'rxjs';
+import { map, merge, type Observable } from 'rxjs';
 import type { PublicUser } from '@drawmyplace/contracts';
 import { RealtimeService } from '../../common/realtime/realtime.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -45,11 +45,13 @@ export class PlanEventsController {
       throw new NotFoundException('Project not found');
     }
 
-    return this.realtime.stream(planId).pipe(
-      map((event) => ({
-        data: event,
-        type: 'plan-update',
-      })),
+    const updates = this.realtime.stream(planId).pipe(
+      map((event) => ({ data: { ...event, channel: 'plan-update' } })),
     );
+    const presence = this.realtime.presence(planId).pipe(
+      map((count) => ({ data: { kind: 'presence', count } })),
+    );
+
+    return merge(updates, presence);
   }
 }

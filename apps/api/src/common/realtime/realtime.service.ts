@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Subject, type Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 export interface PlanEvent {
   planId: string;
@@ -11,6 +11,7 @@ export interface PlanEvent {
 @Injectable()
 export class RealtimeService {
   private readonly channels = new Map<string, Subject<PlanEvent>>();
+  private readonly presenceChannels = new Map<string, BehaviorSubject<number>>();
 
   private channel(planId: string): Subject<PlanEvent> {
     let subject = this.channels.get(planId);
@@ -27,5 +28,24 @@ export class RealtimeService {
 
   stream(planId: string): Observable<PlanEvent> {
     return this.channel(planId).asObservable();
+  }
+
+  presence(planId: string): Observable<number> {
+    let subject = this.presenceChannels.get(planId);
+    if (!subject) {
+      subject = new BehaviorSubject<number>(0);
+      this.presenceChannels.set(planId, subject);
+    }
+    const channel = subject;
+
+    return new Observable<number>((subscriber) => {
+      channel.next(channel.value + 1);
+      subscriber.next(channel.value);
+      const subscription = channel.subscribe((count) => subscriber.next(count));
+      return () => {
+        subscription.unsubscribe();
+        channel.next(Math.max(0, channel.value - 1));
+      };
+    });
   }
 }

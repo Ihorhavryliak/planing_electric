@@ -377,6 +377,7 @@ export function PlanEditor({
   const routeRequestRef = useRef(new Map<string, number>());
 
   const [remoteUpdate, setRemoteUpdate] = useState(false);
+  const [collaborators, setCollaborators] = useState(0);
   const [walls, setWalls] = useState<PublicWall[]>([]);
   const [materials, setMaterials] = useState<PublicMaterial[]>([]);
   const [estimate, setEstimate] = useState<PublicEstimate | null>(null);
@@ -503,8 +504,23 @@ export function PlanEditor({
 
   useEffect(() => {
     setRemoteUpdate(false);
+    setCollaborators(0);
     const source = new EventSource(`/api/v1/plans/${plan.id}/events`);
-    source.onmessage = () => setRemoteUpdate(true);
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as {
+          channel?: string;
+          count?: number;
+        };
+        if (payload.channel === 'presence') {
+          setCollaborators(payload.count ?? 0);
+        } else {
+          setRemoteUpdate(true);
+        }
+      } catch {
+        // Ignore malformed events.
+      }
+    };
     source.onerror = () => {
       // EventSource reconnects automatically; no UI action needed.
     };
@@ -1840,6 +1856,9 @@ export function PlanEditor({
             <h2 className="text-sm font-semibold text-white">Save state</h2>
             <p className="mt-1 text-xs text-slate-500">
               {floorName} · revision {plan.version}
+              {collaborators > 0
+                ? ` · ${collaborators} online`
+                : ''}
             </p>
             <div className="mt-3">
               <SaveStatus status={status} error={saveError} onRetry={retry} />

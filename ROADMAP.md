@@ -190,8 +190,8 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 
 - [x] Choose WebSocket transport and authorization model (SSE + cookie auth; ownership checked).
 - [x] Broadcast document revisions/operations (SSE endpoint + editor subscription with reload prompt).
-- [ ] Show active collaborators and basic presence.
-- [ ] Handle reconnects and stale revisions.
+- [x] Show active collaborators and basic presence (online count via SSE).
+- [x] Handle reconnects and stale revisions (EventSource auto-reconnect + reload prompt + version checks).
 - [ ] Test simultaneous edits and permission revocation.
 
 Do not start this phase before reliable saving and conflict detection exist.
