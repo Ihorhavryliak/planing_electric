@@ -801,6 +801,45 @@ describe('Drawing API', () => {
     expect(drawing.dimensions).toHaveLength(1);
   });
 
+  it('lets managers manage members but not electricians', async () => {
+    const owner = await registerUser();
+    const manager = await registerUser();
+    const electrician = await registerUser();
+    const project = await createProject(owner.cookie);
+
+    await server()
+      .post(`${API}/projects/${project.id}/members`)
+      .set('Cookie', owner.cookie)
+      .send({ userId: manager.user.id, role: 'manager' })
+      .expect(201);
+    await server()
+      .post(`${API}/projects/${project.id}/members`)
+      .set('Cookie', owner.cookie)
+      .send({ userId: electrician.user.id, role: 'electrician' })
+      .expect(201);
+
+    await server()
+      .get(`${API}/projects/${project.id}/members`)
+      .set('Cookie', manager.cookie)
+      .expect(200);
+    await server()
+      .get(`${API}/projects/${project.id}/members`)
+      .set('Cookie', electrician.cookie)
+      .expect(403);
+
+    const extra = await registerUser();
+    await server()
+      .post(`${API}/projects/${project.id}/members`)
+      .set('Cookie', manager.cookie)
+      .send({ userId: extra.user.id, role: 'viewer' })
+      .expect(201);
+    await server()
+      .post(`${API}/projects/${project.id}/members`)
+      .set('Cookie', electrician.cookie)
+      .send({ userId: owner.user.id, role: 'viewer' })
+      .expect(403);
+  });
+
   it('lets a viewer member read the drawing but not mutate it', async () => {
     const owner = await registerUser();
     const project = await createProject(owner.cookie);

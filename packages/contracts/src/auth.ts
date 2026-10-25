@@ -34,9 +34,16 @@ export const publicUserSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   status: z.enum(['active', 'disabled']),
+  emailVerified: z.boolean(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(10).max(256),
+});
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 
 export const forgotPasswordSchema = z.object({
   email: emailSchema,

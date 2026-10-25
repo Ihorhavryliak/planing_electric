@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useLogout } from '@/features/auth/use-logout';
 import { listNotifications } from '@/features/notifications/notifications-api';
+import { apiRequest, getErrorMessage } from '@/lib/api';
 
 interface WorkspaceHeaderProps {
   badge?: string;
@@ -18,6 +19,23 @@ export function WorkspaceHeader({
   const { user } = useAuth();
   const { loggingOut, logoutError, signOut } = useLogout();
   const [unread, setUnread] = useState(0);
+  const [verificationMessage, setVerificationMessage] = useState<
+    string | null
+  >(null);
+  const [resending, setResending] = useState(false);
+
+  async function resendVerification() {
+    setResending(true);
+    setVerificationMessage(null);
+    try {
+      await apiRequest<void>('/auth/resend-verification', { method: 'POST' });
+      setVerificationMessage('Verification email sent.');
+    } catch (error) {
+      setVerificationMessage(getErrorMessage(error));
+    } finally {
+      setResending(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) {
@@ -111,6 +129,23 @@ export function WorkspaceHeader({
           </Button>
         </div>
       </div>
+
+      {user && !user.emailVerified ? (
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 pb-3 text-xs text-amber-100">
+          <span className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2">
+            Verify your email to secure your account.
+            {verificationMessage ? ` ${verificationMessage}` : ''}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void resendVerification()}
+            disabled={resending}
+          >
+            {resending ? 'Sending…' : 'Resend email'}
+          </Button>
+        </div>
+      ) : null}
 
       {logoutError ? (
         <div className="mx-auto max-w-6xl px-6 pb-3">

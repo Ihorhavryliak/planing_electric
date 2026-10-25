@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -106,7 +107,7 @@ export class ProjectsService {
   }
 
   async listMembers(ownerId: string, projectId: string): Promise<PublicProjectMember[]> {
-    await this.requireOwned(ownerId, projectId);
+    await this.requireProjectManager(ownerId, projectId);
     const rows = await this.repository.listProjectMembers(projectId);
     return rows.map((row) => ({
       id: row.id,
@@ -123,7 +124,7 @@ export class ProjectsService {
     projectId: string,
     input: AddProjectMemberInput,
   ): Promise<PublicProjectMember> {
-    await this.requireOwned(ownerId, projectId);
+    await this.requireProjectManager(ownerId, projectId);
     const row = await this.repository.addProjectMember(
       projectId,
       input.userId,
@@ -149,8 +150,21 @@ export class ProjectsService {
   }
 
   async removeMember(ownerId: string, projectId: string, memberId: string) {
-    await this.requireOwned(ownerId, projectId);
+    await this.requireProjectManager(ownerId, projectId);
     await this.repository.removeProjectMember(memberId);
+  }
+
+  private async requireProjectManager(
+    userId: string,
+    projectId: string,
+  ): Promise<void> {
+    const role = await this.repository.findAccessRole(projectId, userId);
+    if (!role) {
+      throw new NotFoundException('Project not found');
+    }
+    if (role !== 'owner' && role !== 'manager') {
+      throw new ForbiddenException('Project manager access required');
+    }
   }
 
   private async requireOwned(

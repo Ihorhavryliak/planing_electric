@@ -7,6 +7,7 @@ export function toPublicUser(user: UserRow): PublicUser {
     email: user.email,
     name: user.name,
     status: user.status,
+    emailVerified: user.emailVerifiedAt !== null,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };

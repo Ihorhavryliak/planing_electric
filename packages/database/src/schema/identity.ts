@@ -21,6 +21,7 @@ export const users = pgTable(
     passwordHash: text('password_hash').notNull(),
     name: text('name').notNull(),
     status: userStatusEnum('status').notNull().default('active'),
+    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -149,5 +150,25 @@ export const passwordResetTokens = pgTable(
   (table) => [
     uniqueIndex('password_reset_tokens_hash_unique').on(table.tokenHash),
     index('password_reset_tokens_user_idx').on(table.userId),
+  ],
+);
+
+export const emailVerificationTokens = pgTable(
+  'email_verification_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('email_verification_tokens_hash_unique').on(table.tokenHash),
+    index('email_verification_tokens_user_idx').on(table.userId),
   ],
 );

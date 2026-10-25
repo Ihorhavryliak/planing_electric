@@ -14,12 +14,16 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
   type ForgotPasswordInput,
   type LoginInput,
   type PublicUser,
   type RegisterInput,
   type ResetPasswordInput,
+  type VerifyEmailInput,
 } from '@drawmyplace/contracts';
+import { AuthGuard } from './auth.guard';
+import { CurrentUser } from './current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
 import { AuthService } from './auth.service';
@@ -101,5 +105,22 @@ export class AuthController {
     input: ResetPasswordInput,
   ): Promise<void> {
     await this.auth.resetPassword(input);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthRateLimitGuard)
+  async verifyEmail(
+    @Body(new ZodValidationPipe(verifyEmailSchema))
+    input: VerifyEmailInput,
+  ): Promise<void> {
+    await this.auth.verifyEmail(input.token);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
+  async resendVerification(@CurrentUser() user: PublicUser): Promise<void> {
+    await this.auth.resendVerification(user.id);
   }
 }

@@ -19,6 +19,7 @@ import { ProjectPage } from '@/pages/project-page';
 import { RegisterPage } from '@/pages/register-page';
 import { ResetPasswordPage } from '@/pages/reset-password-page';
 import { SettingsPage } from '@/pages/settings-page';
+import { VerifyEmailPage } from '@/pages/verify-email-page';
 
 export function App() {
   return (
@@ -34,6 +35,10 @@ export function App() {
           <Route
             path="/reset-password/:token"
             element={<ResetPasswordPage />}
+          />
+          <Route
+            path="/verify-email/:token"
+            element={<VerifyEmailPage />}
           />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/register" element={<RegisterPage />} />

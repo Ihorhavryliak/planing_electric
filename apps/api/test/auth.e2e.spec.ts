@@ -6,6 +6,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/bootstrap';
+import { MailService } from '../src/common/mail/mail.service';
 import { DatabaseService } from '../src/database/database.service';
 import { SESSION_COOKIE_NAME } from '../src/modules/auth/session.service';
 import { createTestDatabase, type TestDatabase } from './test-database';
@@ -47,6 +48,7 @@ describe('Authentication API', () => {
   let app: INestApplication;
   let database: TestDatabase;
   let emailCounter = 0;
+  const sentMails: Array<{ to: string; subject: string; text: string }> = [];
 
   beforeAll(async () => {
     database = await createTestDatabase();
@@ -61,6 +63,12 @@ describe('Authentication API', () => {
           await database.client.query('select 1');
         },
         onApplicationShutdown: async () => {},
+      })
+      .overrideProvider(MailService)
+      .useValue({
+        send: async (to: string, subject: string, text: string) => {
+          sentMails.push({ to, subject, text });
+        },
       })
       .compile();
 
@@ -288,6 +296,37 @@ describe('Authentication API', () => {
     await server()
       .post(`${API}/auth/reset-password`)
       .send({ token, password: 'another-password' })
+      .expect(400);
+  });
+
+  it('verifies an email with a single-use token', async () => {
+    const email = nextEmail();
+    const registration = await register(email).expect(201);
+    expect((registration.body as { emailVerified: boolean }).emailVerified).toBe(
+      false,
+    );
+    const cookie = firstSetCookie(registration);
+
+    const mail = sentMails.find((item) => item.to === email);
+    expect(mail).toBeTruthy();
+    const match = mail!.text.match(/verify-email\/([a-f0-9]+)/);
+    expect(match).toBeTruthy();
+    const token = match![1];
+
+    await server()
+      .post(`${API}/auth/verify-email`)
+      .send({ token })
+      .expect(204);
+
+    const me = await server()
+      .get(`${API}/users/me`)
+      .set('Cookie', cookie)
+      .expect(200);
+    expect((me.body as { emailVerified: boolean }).emailVerified).toBe(true);
+
+    await server()
+      .post(`${API}/auth/verify-email`)
+      .send({ token })
       .expect(400);
   });
 

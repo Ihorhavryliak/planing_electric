@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt, isNull, lt } from 'drizzle-orm';
 import {
+  emailVerificationTokens,
   passwordResetTokens,
   sessions,
   users,
@@ -164,6 +165,35 @@ export class AuthRepository {
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, userId));
+  }
+
+  async createEmailVerificationToken(input: {
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    await this.db.insert(emailVerificationTokens).values(input);
+  }
+
+  async findEmailVerificationByHash(tokenHash: string) {
+    const [row] = await this.db
+      .select({ token: emailVerificationTokens, user: users })
+      .from(emailVerificationTokens)
+      .innerJoin(users, eq(emailVerificationTokens.userId, users.id))
+      .where(eq(emailVerificationTokens.tokenHash, tokenHash))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async markEmailVerified(userId: string, tokenId: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ emailVerifiedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, userId));
+    await this.db
+      .update(emailVerificationTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(emailVerificationTokens.id, tokenId));
   }
 
   async revokeAllSessions(userId: string): Promise<void> {

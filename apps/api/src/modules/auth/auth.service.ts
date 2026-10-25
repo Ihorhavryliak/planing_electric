@@ -86,7 +86,43 @@ export class AuthService {
       throw error;
     }
 
+    await this.sendVerificationEmail(user);
+
     return this.issueSession(user, metadata);
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    const tokenHash = this.sessions.hashToken(token);
+    const row = await this.repository.findEmailVerificationByHash(tokenHash);
+
+    if (!row || row.token.usedAt || row.token.expiresAt < new Date()) {
+      throw new BadRequestException('Verification link is invalid or expired');
+    }
+
+    await this.repository.markEmailVerified(row.user.id, row.token.id);
+  }
+
+  async resendVerification(userId: string): Promise<void> {
+    const user = await this.repository.findUserById(userId);
+    if (!user || user.emailVerifiedAt) {
+      return;
+    }
+    await this.sendVerificationEmail(user);
+  }
+
+  private async sendVerificationEmail(user: UserRow): Promise<void> {
+    const token = crypto.randomBytes(32).toString('hex');
+    await this.repository.createEmailVerificationToken({
+      userId: user.id,
+      tokenHash: this.sessions.hashToken(token),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    const webOrigin = this.config.get<string>('WEB_ORIGIN') ?? '';
+    await this.mail.send(
+      user.email,
+      'Verify your DrawMyPlace email',
+      `Confirm your email address within 24 hours:\n\n${webOrigin}/verify-email/${token}`,
+    );
   }
 
   async login(
