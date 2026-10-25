@@ -153,7 +153,7 @@ export function LandingPage() {
           </div>
         </header>
 
-        <main className="flex-1">
+        <main id="main-content" className="flex-1">
           <section className="grid items-center gap-10 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-200">

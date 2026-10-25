@@ -191,7 +191,7 @@ export function ProjectPage() {
     return (
       <div className="relative min-h-screen">
         <WorkspaceHeader badge="Project" />
-        <main className="mx-auto max-w-3xl px-6 py-16">
+        <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
           <div
             role="alert"
             className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100"

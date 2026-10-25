@@ -123,7 +123,7 @@ export function AppPage() {
       <div className="relative">
         <WorkspaceHeader />
 
-        <main className="mx-auto max-w-6xl px-6 py-10">
+        <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
