@@ -28,7 +28,7 @@
 - [x] Baseline install, build, typecheck, lint, and tests run; results are recorded in the session log.
 - [x] Full local verification on 2026-10-25: `pnpm typecheck`, `pnpm lint`, `pnpm build`, and `pnpm test` all pass.
 
-**Current project stage:** The electrical editor core — floors, blank plans, calibration, points, cable routes, route-attached points, bend insert/remove, and undo/redo — is implemented and browser-verified end to end (2026-10-25). Walls/rooms, dimensions, and uploaded/PDF underlay browser flows remain open. Phase 6 (materials, cable type, takeoff) is next after the remaining editor flows.
+**Current project stage:** Phase 6/7 foundations expanded: materials CRUD, organizations, invitations, project sharing, notifications, activity log, revision conflict checks, and dedicated estimates/activity pages implemented. Phase 8 reliability/UX and remaining browser verification remain.
 
 **Known blockers:** none. Live PostgreSQL migrations and readiness were verified on 2026-10-25; PGlite applies the same migrations in tests.
 
