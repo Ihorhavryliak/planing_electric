@@ -1,4 +1,4 @@
-import type { PublicProject } from '@drawmyplace/contracts';
+import type { PublicProject, PublicProjectMember } from '@drawmyplace/contracts';
 import {
   Archive,
   ArchiveRestore,
@@ -16,8 +16,11 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  addProjectMember,
   archiveProject,
   getProject,
+  listProjectMembers,
+  removeProjectMember,
   restoreProject,
   updateProject,
 } from '@/features/projects/projects-api';
@@ -40,6 +43,13 @@ export function ProjectPage() {
 
   const [changingStatus, setChangingStatus] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  const [members, setMembers] = useState<PublicProjectMember[]>([]);
+  const [membersError, setMembersError] = useState<string | null>(null);
+  const [newMemberId, setNewMemberId] = useState('');
+  const [newMemberRole, setNewMemberRole] =
+    useState<PublicProjectMember['role']>('viewer');
+  const [addingMember, setAddingMember] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,6 +74,55 @@ export function ProjectPage() {
 
     return () => controller.abort();
   }, [projectId, reloadToken]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const loaded = await listProjectMembers(projectId, controller.signal);
+        if (!controller.signal.aborted) {
+          setMembers(loaded);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setMembers([]);
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [projectId]);
+
+  async function handleAddMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMembersError(null);
+    setAddingMember(true);
+    try {
+      const created = await addProjectMember(projectId, {
+        userId: newMemberId,
+        role: newMemberRole,
+      });
+      setMembers((current) =>
+        current.some((m) => m.id === created.id) ? current : [created, ...current],
+      );
+      setNewMemberId('');
+    } catch (error) {
+      setMembersError(getErrorMessage(error));
+    } finally {
+      setAddingMember(false);
+    }
+  }
+
+  async function handleRemoveMember(memberId: string) {
+    setMembersError(null);
+    try {
+      await removeProjectMember(projectId, memberId);
+      setMembers((current) => current.filter((m) => m.id !== memberId));
+    } catch (error) {
+      setMembersError(getErrorMessage(error));
+    }
+  }
 
   const dirty =
     project !== null &&
@@ -373,6 +432,65 @@ export function ProjectPage() {
               </div>
             </section>
           </div>
+
+          <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <h2 className="text-sm font-semibold text-white">Shared with</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Add a team member by user ID and pick their role.
+            </p>
+            <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleAddMember}>
+              <Input
+                value={newMemberId}
+                onChange={(event) => setNewMemberId(event.target.value)}
+                placeholder="User ID (UUID)"
+                required
+                className="min-w-56 flex-1"
+              />
+              <select
+                value={newMemberRole}
+                onChange={(event) =>
+                  setNewMemberRole(event.target.value as PublicProjectMember['role'])
+                }
+                className="h-10 rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-slate-200"
+              >
+                <option value="viewer">Viewer</option>
+                <option value="electrician">Electrician</option>
+                <option value="manager">Manager</option>
+              </select>
+              <Button type="submit" disabled={addingMember}>
+                {addingMember ? 'Adding…' : 'Add member'}
+              </Button>
+            </form>
+            {membersError ? (
+              <p role="alert" className="mt-3 text-sm text-rose-300">
+                {membersError}
+              </p>
+            ) : null}
+            {members.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">No members yet.</p>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {members.map((member) => (
+                  <li
+                    key={member.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-white/5 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-300">
+                      {member.userId}{' '}
+                      <span className="text-xs text-amber-300">{member.role}</span>
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                    >
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </main>
       </div>
     </div>

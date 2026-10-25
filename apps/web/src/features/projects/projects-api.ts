@@ -1,6 +1,8 @@
 import type {
+  AddProjectMemberInput,
   CreateProjectInput,
   PublicProject,
+  PublicProjectMember,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { apiRequest } from '@/lib/api';
@@ -53,5 +55,33 @@ export function archiveProject(projectId: string): Promise<PublicProject> {
 export function restoreProject(projectId: string): Promise<PublicProject> {
   return apiRequest<PublicProject>(`/projects/${projectId}/restore`, {
     method: 'POST',
+  });
+}
+
+export function listProjectMembers(
+  projectId: string,
+  signal?: AbortSignal,
+): Promise<PublicProjectMember[]> {
+  return apiRequest<PublicProjectMember[]>(`/projects/${projectId}/members`, {
+    signal,
+  });
+}
+
+export function addProjectMember(
+  projectId: string,
+  input: AddProjectMemberInput,
+): Promise<PublicProjectMember> {
+  return apiRequest<PublicProjectMember>(`/projects/${projectId}/members`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function removeProjectMember(
+  projectId: string,
+  memberId: string,
+): Promise<void> {
+  return apiRequest<void>(`/projects/${projectId}/members/${memberId}`, {
+    method: 'DELETE',
   });
 }
