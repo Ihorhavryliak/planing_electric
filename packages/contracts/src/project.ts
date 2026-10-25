@@ -16,6 +16,7 @@ export const projectDescriptionSchema = z
 export const createProjectSchema = z.object({
   name: projectNameSchema,
   description: projectDescriptionSchema.optional(),
+  organizationId: z.string().uuid().nullable().optional(),
 });
 
 export const updateProjectSchema = z

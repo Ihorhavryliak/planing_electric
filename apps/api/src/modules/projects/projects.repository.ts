@@ -61,6 +61,7 @@ export class ProjectsRepository {
         createdBy: ownerId,
         name: input.name,
         description: input.description ?? null,
+        organizationId: input.organizationId ?? null,
       })
       .returning();
 
