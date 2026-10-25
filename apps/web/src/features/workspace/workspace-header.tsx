@@ -1,9 +1,10 @@
 import { Bell, Building2, LoaderCircle, LogOut, Zap } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useLogout } from '@/features/auth/use-logout';
+import { listNotifications } from '@/features/notifications/notifications-api';
 
 interface WorkspaceHeaderProps {
   badge?: string;
@@ -16,6 +17,28 @@ export function WorkspaceHeader({
 }: WorkspaceHeaderProps) {
   const { user } = useAuth();
   const { loggingOut, logoutError, signOut } = useLogout();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setUnread(0);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const items = await listNotifications();
+        if (!cancelled) {
+          setUnread(items.filter((item) => !item.readAt).length);
+        }
+      } catch {
+        if (!cancelled) setUnread(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
@@ -43,10 +66,17 @@ export function WorkspaceHeader({
           </Link>
           <Link
             to="/app/notifications"
-            aria-label="Notifications"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            aria-label={
+              unread > 0 ? `Notifications (${unread} unread)` : 'Notifications'
+            }
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <Bell className="h-4 w-4" />
+            {unread > 0 ? (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            ) : null}
           </Link>
           {user ? (
             <span className="hidden max-w-48 truncate text-sm text-slate-300 sm:block">
