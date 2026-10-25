@@ -192,7 +192,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Broadcast document revisions/operations (SSE endpoint + editor subscription with reload prompt).
 - [x] Show active collaborators and basic presence (online count via SSE).
 - [x] Handle reconnects and stale revisions (EventSource auto-reconnect + reload prompt + version checks).
-- [ ] Test simultaneous edits and permission revocation.
+- [-] Test simultaneous edits and permission revocation (revocation covered; concurrent edit test pending).
 
 Do not start this phase before reliable saving and conflict detection exist.
 

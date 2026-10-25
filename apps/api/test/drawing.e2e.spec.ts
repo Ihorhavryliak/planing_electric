@@ -794,5 +794,25 @@ describe('Drawing API', () => {
       .set('Cookie', viewer.cookie)
       .send({ name: 'Viewer floor' })
       .expect(403);
+
+    const members = (
+      await server()
+        .get(`${API}/projects/${project.id}/members`)
+        .set('Cookie', owner.cookie)
+        .expect(200)
+    ).body as Array<{ id: string; userId: string }>;
+    const viewerMember = members.find((m) => m.userId === viewer.user.id);
+    expect(viewerMember).toBeTruthy();
+
+    await server()
+      .delete(`${API}/projects/${project.id}/members/${viewerMember!.id}`)
+      .set('Cookie', owner.cookie)
+      .expect(204);
+
+    // Access is revoked immediately.
+    await server()
+      .get(`${API}/plans/${plan.id}/drawing`)
+      .set('Cookie', viewer.cookie)
+      .expect(404);
   });
 });
