@@ -139,7 +139,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Ensure vertical lengths are not counted twice. (drops only at route ends; `alreadyInGeometry` flag)
 - [x] Apply configurable waste percentage (default 10%). (per route via `settings.wastePercent`; project-level setting not yet)
 - [-] Show a breakdown of route length, vertical additions, waste, and final quantity. Route panel and “Cable routes” total are implemented; the browser pass reached the calculation panel, but totals and breakdowns were not asserted.
-- [ ] Define quantity rounding/purchase-unit behavior.
+- [x] Define quantity rounding/purchase-unit behavior (purchaseQuantity rounds up).
 - [-] Recalculate when geometry, calibration, cable type, or settings change. Server recalculates on every request; the editor refetches (200 ms debounce) after each saved point/route/calibration change. Implemented; browser totals were not asserted.
 - [x] Add unit tests for geometry, calibration, rounding, and allowances.
 
@@ -150,7 +150,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 ### Phase 6 — Materials, estimates, and exports
 
 - [x] Add a default materials catalog (seeded on API startup; list endpoint).
-- [ ] Support organization-specific material items/prices when organization support is ready.
+- [x] Support organization-specific material items/prices (material CRUD + organizationId).
 - [x] Build material takeoff from calculated routes (estimate generation from plan calculation).
 - [x] Store estimate versions and price snapshots (estimate + items persisted with versioning).
 - [x] Support clearly marked manual quantity/price overrides (estimate item PATCH + estimates page).

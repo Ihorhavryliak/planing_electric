@@ -1,5 +1,9 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import type { PublicMaterial } from '@drawmyplace/contracts';
+import type {
+  CreateMaterialInput,
+  PublicMaterial,
+  UpdateMaterialInput,
+} from '@drawmyplace/contracts';
 import { materials } from '@drawmyplace/database';
 import { DatabaseService } from '../../database/database.service';
 import { MaterialsRepository } from './materials.repository';
@@ -65,6 +69,34 @@ export class MaterialsService implements OnModuleInit {
 
   async getById(id: string): Promise<PublicMaterial | null> {
     const row = await this.repository.findById(id);
+    return row ? toPublic(row) : null;
+  }
+
+  async create(input: CreateMaterialInput): Promise<PublicMaterial> {
+    const row = await this.repository.create({
+      code: input.code,
+      name: input.name,
+      unit: input.unit,
+      category: input.category ?? null,
+      unitPrice: input.unitPrice ?? null,
+      currency: input.currency,
+      organizationId: input.organizationId ?? null,
+      active: input.active,
+    });
+    if (!row) throw new Error('Failed to create material');
+    return toPublic(row);
+  }
+
+  async update(id: string, input: UpdateMaterialInput): Promise<PublicMaterial | null> {
+    const row = await this.repository.update(id, {
+      code: input.code,
+      name: input.name,
+      unit: input.unit,
+      category: input.category,
+      unitPrice: input.unitPrice,
+      currency: input.currency,
+      active: input.active,
+    });
     return row ? toPublic(row) : null;
   }
 }
