@@ -28,6 +28,12 @@ export const publicEstimateSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const updateEstimateSchema = z.object({
+  status: estimateStatusSchema,
+});
+
+export type UpdateEstimateInput = z.infer<typeof updateEstimateSchema>;
+
 export const updateEstimateItemSchema = z
   .object({
     quantity: z.number().min(0).optional(),

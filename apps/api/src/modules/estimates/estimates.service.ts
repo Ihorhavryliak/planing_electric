@@ -161,6 +161,22 @@ export class EstimatesService {
     return this.getById(ownerId, loaded.estimate.id);
   }
 
+  async updateStatus(
+    ownerId: string,
+    estimateId: string,
+    status: 'draft' | 'final',
+  ): Promise<PublicEstimate | null> {
+    const loaded = await this.estimates.findById(estimateId);
+    if (!loaded) return null;
+    const project = await this.projects.findAccessibleById(
+      loaded.estimate.projectId,
+      ownerId,
+    );
+    if (!project) return null;
+    await this.estimates.updateStatus(estimateId, status);
+    return this.getById(ownerId, estimateId);
+  }
+
   async getById(ownerId: string, estimateId: string): Promise<PublicEstimate | null> {
     const result = await this.estimates.findById(estimateId);
     if (!result) {

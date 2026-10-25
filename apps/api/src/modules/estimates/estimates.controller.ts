@@ -9,6 +9,10 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import {
+  updateEstimateSchema,
+  type UpdateEstimateInput,
+} from '@drawmyplace/contracts';
 import type { Response } from 'express';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -48,6 +52,16 @@ export class EstimatesController {
     @Param('id', uuid()) id: string,
   ) {
     return this.estimates.getById(user.id, id);
+  }
+
+  @Patch('estimates/:id')
+  update(
+    @CurrentUser() user: { id: string },
+    @Param('id', uuid()) id: string,
+    @Body(new ZodValidationPipe(updateEstimateSchema))
+    input: UpdateEstimateInput,
+  ) {
+    return this.estimates.updateStatus(user.id, id, input.status);
   }
 
   @Patch('estimate-items/:itemId')

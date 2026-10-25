@@ -94,6 +94,15 @@ export class EstimatesRepository {
       .orderBy(desc(estimates.version));
   }
 
+  async updateStatus(estimateId: string, status: 'draft' | 'final') {
+    const [row] = await this.db
+      .update(estimates)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(estimates.id, estimateId))
+      .returning();
+    return row ?? null;
+  }
+
   async findItemById(itemId: string) {
     const [item] = await this.db
       .select()
