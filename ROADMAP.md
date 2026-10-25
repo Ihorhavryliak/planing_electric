@@ -189,7 +189,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 ### Phase 9 — Optional real-time collaboration
 
 - [x] Choose WebSocket transport and authorization model (SSE + cookie auth; ownership checked).
-- [-] Broadcast document revisions/operations (backend SSE endpoint and emits implemented; client subscription pending).
+- [x] Broadcast document revisions/operations (SSE endpoint + editor subscription with reload prompt).
 - [ ] Show active collaborators and basic presence.
 - [ ] Handle reconnects and stale revisions.
 - [ ] Test simultaneous edits and permission revocation.

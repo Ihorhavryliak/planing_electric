@@ -376,6 +376,7 @@ export function PlanEditor({
   const routesRef = useRef(routes);
   const routeRequestRef = useRef(new Map<string, number>());
 
+  const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [walls, setWalls] = useState<PublicWall[]>([]);
   const [materials, setMaterials] = useState<PublicMaterial[]>([]);
   const [estimate, setEstimate] = useState<PublicEstimate | null>(null);
@@ -498,6 +499,16 @@ export function PlanEditor({
       });
 
     return () => controller.abort();
+  }, [plan.id]);
+
+  useEffect(() => {
+    setRemoteUpdate(false);
+    const source = new EventSource(`/api/v1/plans/${plan.id}/events`);
+    source.onmessage = () => setRemoteUpdate(true);
+    source.onerror = () => {
+      // EventSource reconnects automatically; no UI action needed.
+    };
+    return () => source.close();
   }, [plan.id]);
 
   useEffect(() => {
@@ -1833,6 +1844,23 @@ export function PlanEditor({
             <div className="mt-3">
               <SaveStatus status={status} error={saveError} onRetry={retry} />
             </div>
+
+            {remoteUpdate ? (
+              <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                <p>Another collaborator changed this plan.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    setRemoteUpdate(false);
+                    void reloadDrawing();
+                  }}
+                >
+                  Reload drawing
+                </Button>
+              </div>
+            ) : null}
 
             {historyError ? (
               <p
