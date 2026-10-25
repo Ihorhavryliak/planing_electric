@@ -4,6 +4,7 @@ function escapePdf(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
 import type { PlanCalculation, PublicEstimate } from '@drawmyplace/contracts';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { DrawingService } from '../drawing/drawing.service';
 import { FloorsRepository } from '../editor/floors.repository';
 import { PlansRepository } from '../editor/plans.repository';
@@ -15,6 +16,7 @@ import { EstimatesRepository } from './estimates.repository';
 @Injectable()
 export class EstimatesService {
   constructor(
+    @Inject(ActivityLogService) private readonly activity: ActivityLogService,
     @Inject(DrawingService) private readonly drawing: DrawingService,
     @Inject(PlansRepository) private readonly plans: PlansRepository,
     @Inject(FloorsRepository) private readonly floors: FloorsRepository,
@@ -82,6 +84,14 @@ export class EstimatesService {
     if (!result) {
       throw new Error('Failed to load estimate');
     }
+
+    await this.activity.record({
+      projectId: floor.projectId,
+      actorId: ownerId,
+      action: 'estimate.generated',
+      resourceType: 'estimate',
+      resourceId: created.id,
+    });
 
     return result;
   }

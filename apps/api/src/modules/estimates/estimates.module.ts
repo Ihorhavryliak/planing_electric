@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ActivityLogModule } from '../activity-log/activity-log.module';
 import { AuthModule } from '../auth/auth.module';
 import { DrawingModule } from '../drawing/drawing.module';
 import { EditorModule } from '../editor/editor.module';
@@ -10,6 +11,7 @@ import { EstimatesService } from './estimates.service';
 
 @Module({
   imports: [
+    ActivityLogModule,
     AuthModule,
     DrawingModule,
     EditorModule,
