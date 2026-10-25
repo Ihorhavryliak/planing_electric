@@ -177,7 +177,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 ### Phase 8 — Reliability and UX
 
 - [x] Debounced autosave with visible save/error state.
-- [ ] Revision/version checks to prevent silent overwrites.
+- [-] Revision/version checks to prevent silent overwrites (project update conflict check).
 - [ ] Recovery flow for stale/conflicting document changes.
 - [ ] Empty/loading/error states for core pages.
 - [ ] Keyboard and accessibility review.

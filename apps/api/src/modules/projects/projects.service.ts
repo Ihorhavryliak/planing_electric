@@ -12,6 +12,7 @@ import type {
   PublicProjectMember,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 import { toPublicProject } from './projects.mapper';
 import { ProjectsRepository, type ProjectRow } from './projects.repository';
 
@@ -20,6 +21,8 @@ export class ProjectsService {
   constructor(
     @Inject(ProjectsRepository)
     private readonly repository: ProjectsRepository,
+    @Inject(ActivityLogService)
+    private readonly activity: ActivityLogService,
   ) {}
 
   async list(
@@ -36,6 +39,14 @@ export class ProjectsService {
     input: CreateProjectInput,
   ): Promise<PublicProject> {
     const project = await this.repository.create(ownerId, input);
+
+    await this.activity.record({
+      projectId: project.id,
+      actorId: ownerId,
+      action: 'project.created',
+      resourceType: 'project',
+      resourceId: project.id,
+    });
 
     return toPublicProject(project);
   }
@@ -68,6 +79,14 @@ export class ProjectsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
+
+    await this.activity.record({
+      projectId: project.id,
+      actorId: ownerId,
+      action: 'project.updated',
+      resourceType: 'project',
+      resourceId: project.id,
+    });
 
     return toPublicProject(project);
   }
@@ -149,6 +168,14 @@ export class ProjectsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
+
+    await this.activity.record({
+      projectId: project.id,
+      actorId: ownerId,
+      action: `project.${status}`,
+      resourceType: 'project',
+      resourceId: project.id,
+    });
 
     return toPublicProject(project);
   }
