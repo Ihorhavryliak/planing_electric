@@ -156,7 +156,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Support clearly marked manual quantity/price overrides (estimate item PATCH + estimates page).
 - [x] Export CSV (endpoint + web download link).
 - [x] Export PDF (endpoint + web download link).
-- [ ] Enforce export permissions and secure file access (ownership check on estimate; no secure links yet).
+- [-] Enforce export permissions and secure file access (ownership check done; signed links pending).
 
 **Exit criteria:** a user can create, save, reopen, and export a material specification.
 
