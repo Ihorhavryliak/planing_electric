@@ -28,6 +28,66 @@ export function screenToWorld(
   };
 }
 
+export interface WorldBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+/**
+ * World-space rectangle currently visible in the canvas, expanded by a margin.
+ * Used to skip drawing objects far outside the viewport on large plans.
+ */
+export function visibleWorldBounds(
+  viewport: EditorViewport,
+  size: CanvasSize,
+  margin = 120,
+): WorldBounds {
+  const halfWidth = size.width / 2 / viewport.zoom;
+  const halfHeight = size.height / 2 / viewport.zoom;
+  const marginWorld = margin / viewport.zoom;
+
+  return {
+    minX: viewport.x - halfWidth - marginWorld,
+    minY: viewport.y - halfHeight - marginWorld,
+    maxX: viewport.x + halfWidth + marginWorld,
+    maxY: viewport.y + halfHeight + marginWorld,
+  };
+}
+
+export function pointInBounds(point: Vec2, bounds: WorldBounds): boolean {
+  return (
+    point.x >= bounds.minX &&
+    point.x <= bounds.maxX &&
+    point.y >= bounds.minY &&
+    point.y <= bounds.maxY
+  );
+}
+
+export function geometryIntersectsBounds(
+  geometry: readonly Vec2[],
+  bounds: WorldBounds,
+): boolean {
+  if (geometry.length === 0) return false;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const point of geometry) {
+    if (point.x < minX) minX = point.x;
+    if (point.y < minY) minY = point.y;
+    if (point.x > maxX) maxX = point.x;
+    if (point.y > maxY) maxY = point.y;
+  }
+  return (
+    maxX >= bounds.minX &&
+    minX <= bounds.maxX &&
+    maxY >= bounds.minY &&
+    minY <= bounds.maxY
+  );
+}
+
 export function worldToScreen(
   world: Vec2,
   viewport: EditorViewport,

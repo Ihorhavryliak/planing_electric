@@ -3,9 +3,12 @@ import {
   distanceBetween,
   formatMeters,
   formatScale,
+  geometryIntersectsBounds,
   isClick,
+  pointInBounds,
   previewMetersPerUnit,
   screenToWorld,
+  visibleWorldBounds,
   worldToScreen,
 } from './editor-geometry';
 
@@ -70,5 +73,25 @@ describe('calibration preview', () => {
     expect(previewMetersPerUnit({ x: 1, y: 1 }, { x: 1, y: 1 }, 2, 'm')).toBeNull();
     expect(previewMetersPerUnit({ x: 0, y: 0 }, { x: 1, y: 0 }, 0, 'm')).toBeNull();
     expect(previewMetersPerUnit({ x: 0, y: 0 }, { x: 1, y: 0 }, Number.NaN, 'm')).toBeNull();
+  });
+});
+
+describe('viewport culling', () => {
+  const viewport = { x: 100, y: 100, zoom: 1 };
+
+  it('computes visible world bounds including the margin', () => {
+    const bounds = visibleWorldBounds(viewport, size, 0);
+    expect(bounds.minX).toBe(100 - 400);
+    expect(bounds.maxX).toBe(100 + 400);
+    expect(bounds.minY).toBe(100 - 300);
+    expect(bounds.maxY).toBe(100 + 300);
+  });
+
+  it('tests points and geometry against bounds', () => {
+    const bounds = visibleWorldBounds(viewport, size, 0);
+    expect(pointInBounds({ x: 100, y: 100 }, bounds)).toBe(true);
+    expect(pointInBounds({ x: 10_000, y: 100 }, bounds)).toBe(false);
+    expect(geometryIntersectsBounds([{ x: -500, y: 0 }, { x: 0, y: 0 }], bounds)).toBe(true);
+    expect(geometryIntersectsBounds([{ x: 5000, y: 5000 }, { x: 6000, y: 6000 }], bounds)).toBe(false);
   });
 });

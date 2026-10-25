@@ -182,7 +182,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Empty/loading/error states for core pages (implemented across editor/estimates/activity).
 - [-] Keyboard and accessibility review (skip link added; full audit pending).
 - [x] Tablet layout review (editor switches to sidebar layout at `lg` and stacks below).
-- [ ] Large-plan performance checks.
+- [x] Large-plan performance checks (viewport culling for points/routes/walls/rooms/dimensions + tests).
 - [x] Verify PDF/file upload limits and malformed file handling (Multer limits configured).
 - [x] Add end-to-end tests for the complete MVP workflow (API-level project→estimate flow).
 

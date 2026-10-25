@@ -44,11 +44,14 @@ import { drawCalibrationOverlay } from './calibration-overlay';
 import {
   distanceBetween,
   findPointAt,
+  geometryIntersectsBounds,
   gridStep,
   isClick,
   niceStep,
+  pointInBounds,
   screenToWorld,
   snapToStep,
+  visibleWorldBounds,
   type Vec2,
 } from './editor-geometry';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
@@ -539,6 +542,11 @@ export function EditorCanvas({
   onMoveDimensionOffsetRef.current = onMoveDimensionOffset;
   onDeleteDimensionRef.current = onDeleteDimension;
 
+  const worldBounds = useMemo(
+    () => visibleWorldBounds(viewport, size),
+    [viewport, size],
+  );
+
   const renderRoutes = useMemo<RouteRenderItem[]>(() => {
     const draggedPoint = pointDrag
       ? points.find((point) => point.id === pointDrag.id)
@@ -556,65 +564,96 @@ export function EditorCanvas({
       ).map((update) => [update.id, update.geometry]),
     );
 
-    return routes.map((route) => ({
-      id: route.id,
-      geometry:
-        attached.get(route.id) ??
-        (vertexDrag?.routeId === route.id
-          ? route.geometry.map((vertex, index) =>
-              index === vertexDrag.index ? vertexDrag.at : vertex,
-            )
-          : route.geometry),
-    }));
-  }, [routes, vertexDrag, pointDrag, points]);
+    return routes
+      .filter((route) => geometryIntersectsBounds(route.geometry, worldBounds))
+      .map((route) => ({
+        id: route.id,
+        geometry:
+          attached.get(route.id) ??
+          (vertexDrag?.routeId === route.id
+            ? route.geometry.map((vertex, index) =>
+                index === vertexDrag.index ? vertexDrag.at : vertex,
+              )
+            : route.geometry),
+      }));
+  }, [routes, vertexDrag, pointDrag, points, worldBounds]);
 
   // Points as drawn: the one being dragged follows the pointer before it is saved.
   const renderPoints = useMemo<PointRenderItem[]>(
     () =>
-      points.map((point) =>
-        pointDrag?.id === point.id
-          ? { ...point, x: pointDrag.at.x, y: pointDrag.at.y }
-          : point,
-      ),
-    [points, pointDrag],
+      points
+        .filter((point) => {
+          const at =
+            pointDrag?.id === point.id
+              ? pointDrag.at
+              : { x: point.x, y: point.y };
+          return pointInBounds(at, worldBounds);
+        })
+        .map((point) =>
+          pointDrag?.id === point.id
+            ? { ...point, x: pointDrag.at.x, y: pointDrag.at.y }
+            : point,
+        ),
+    [points, pointDrag, worldBounds],
   );
 
   const renderWalls = useMemo<WallRenderItem[]>(
     () =>
-      walls.map((wall) => ({
-        id: wall.id,
-        geometry:
-          wallDrag?.id === wall.id ? wallDrag.geometry : wall.geometry,
-        thickness: wall.thickness,
-        label: wall.label,
-      })),
-    [walls, wallDrag],
+      walls
+        .filter((wall) =>
+          geometryIntersectsBounds(
+            wallDrag?.id === wall.id ? wallDrag.geometry : wall.geometry,
+            worldBounds,
+          ),
+        )
+        .map((wall) => ({
+          id: wall.id,
+          geometry:
+            wallDrag?.id === wall.id ? wallDrag.geometry : wall.geometry,
+          thickness: wall.thickness,
+          label: wall.label,
+        })),
+    [walls, wallDrag, worldBounds],
   );
 
   const renderRooms = useMemo<RoomRenderItem[]>(
     () =>
-      rooms.map((room) => ({
-        id: room.id,
-        name: room.name,
-        boundary:
-          roomDrag?.id === room.id ? roomDrag.boundary : room.boundary,
-      })),
-    [rooms, roomDrag],
+      rooms
+        .filter((room) =>
+          geometryIntersectsBounds(
+            roomDrag?.id === room.id ? roomDrag.boundary : room.boundary,
+            worldBounds,
+          ),
+        )
+        .map((room) => ({
+          id: room.id,
+          name: room.name,
+          boundary:
+            roomDrag?.id === room.id ? roomDrag.boundary : room.boundary,
+        })),
+    [rooms, roomDrag, worldBounds],
   );
 
   const renderDimensions = useMemo<DimensionRenderItem[]>(
     () =>
-      dimensions.map((dimension) => ({
-        id: dimension.id,
-        pointA: dimension.pointA,
-        pointB: dimension.pointB,
-        offset:
-          dimensionDrag?.id === dimension.id
-            ? dimensionDrag.offset
-            : dimension.offset,
-        label: dimension.label,
-      })),
-    [dimensions, dimensionDrag],
+      dimensions
+        .filter((dimension) =>
+          geometryIntersectsBounds(
+            [dimension.pointA, dimension.pointB],
+            worldBounds,
+          ),
+        )
+        .map((dimension) => ({
+          id: dimension.id,
+          pointA: dimension.pointA,
+          pointB: dimension.pointB,
+          offset:
+            dimensionDrag?.id === dimension.id
+              ? dimensionDrag.offset
+              : dimension.offset,
+          label: dimension.label,
+        })),
+    [dimensions, dimensionDrag, worldBounds],
   );
 
   const structureDraft: StructureDraft | null =
