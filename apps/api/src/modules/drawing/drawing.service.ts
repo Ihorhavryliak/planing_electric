@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -104,7 +105,7 @@ export class DrawingService {
     planId: string,
     input: SetCalibrationInput,
   ): Promise<PublicCalibration> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
     // The controller validates too; parsing here keeps the service safe on its own.
     const parsed = setCalibrationSchema.parse(input);
 
@@ -133,7 +134,7 @@ export class DrawingService {
   }
 
   async deleteCalibration(ownerId: string, planId: string): Promise<void> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
     await this.drawing.deleteCalibration(plan.id);
   }
 
@@ -144,7 +145,7 @@ export class DrawingService {
     planId: string,
     input: CreateWallInput,
   ): Promise<PublicWall> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if ((await this.drawing.countWalls(plan.floorId)) >= MAX_WALLS_PER_FLOOR) {
       throw new ConflictException(
@@ -177,7 +178,7 @@ export class DrawingService {
     planId: string,
     input: CreateRoomInput,
   ): Promise<PublicRoom> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if ((await this.drawing.countRooms(plan.floorId)) >= MAX_ROOMS_PER_FLOOR) {
       throw new ConflictException(
@@ -210,7 +211,7 @@ export class DrawingService {
     planId: string,
     input: CreateDimensionInput,
   ): Promise<PublicDimension> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if (
       (await this.drawing.countDimensions(plan.floorId)) >=
@@ -256,7 +257,7 @@ export class DrawingService {
     planId: string,
     input: CreatePointInput,
   ): Promise<PublicPoint> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if ((await this.drawing.countPoints(plan.floorId)) >= MAX_POINTS_PER_FLOOR) {
       throw new ConflictException(
@@ -289,7 +290,7 @@ export class DrawingService {
     planId: string,
     input: CreateRouteInput,
   ): Promise<PublicRoute> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if ((await this.drawing.countRoutes(plan.floorId)) >= MAX_ROUTES_PER_FLOOR) {
       throw new ConflictException(
@@ -431,6 +432,26 @@ export class DrawingService {
   // ----------------------------------------------------------- authorization
 
   /** Not-found for both missing and foreign ids, so ids cannot be probed. */
+  private async requireEditablePlan(ownerId: string, planId: string) {
+    const plan = await this.requireOwnedPlan(ownerId, planId);
+    await this.requireEditableFloor(ownerId, plan.floorId);
+    return plan;
+  }
+
+  private async requireEditableFloor(ownerId: string, floorId: string) {
+    const floor = await this.floors.findById(floorId);
+    if (!floor) {
+      throw new NotFoundException('Floor not found');
+    }
+    const role = await this.projects.findAccessRole(floor.projectId, ownerId);
+    if (!role) {
+      throw new NotFoundException('Project not found');
+    }
+    if (role === 'viewer') {
+      throw new ForbiddenException('Read-only access');
+    }
+  }
+
   private async requireOwnedFloorId(
     ownerId: string,
     floorId: string,
@@ -474,6 +495,7 @@ export class DrawingService {
     }
 
     await this.requireOwnedFloorId(ownerId, wall.floorId);
+    await this.requireEditableFloor(ownerId, wall.floorId);
 
     return wall;
   }
@@ -489,6 +511,7 @@ export class DrawingService {
     }
 
     await this.requireOwnedFloorId(ownerId, room.floorId);
+    await this.requireEditableFloor(ownerId, room.floorId);
 
     return room;
   }
@@ -504,6 +527,7 @@ export class DrawingService {
     }
 
     await this.requireOwnedFloorId(ownerId, dimension.floorId);
+    await this.requireEditableFloor(ownerId, dimension.floorId);
 
     return dimension;
   }
@@ -519,6 +543,7 @@ export class DrawingService {
     }
 
     await this.requireOwnedFloorId(ownerId, point.floorId);
+    await this.requireEditableFloor(ownerId, point.floorId);
 
     return point;
   }
@@ -534,6 +559,7 @@ export class DrawingService {
     }
 
     await this.requireOwnedFloorId(ownerId, route.floorId);
+    await this.requireEditableFloor(ownerId, route.floorId);
 
     return route;
   }

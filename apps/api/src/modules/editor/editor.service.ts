@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -68,7 +69,7 @@ export class EditorService {
     projectId: string,
     input: CreateFloorInput,
   ): Promise<PublicFloor> {
-    await this.requireOwnedProject(ownerId, projectId);
+    await this.requireEditableProject(ownerId, projectId);
 
     const floor = await this.floors.create(projectId, input.name);
 
@@ -80,6 +81,7 @@ export class EditorService {
     floorId: string,
   ): Promise<PublicPlan> {
     const floor = await this.requireOwnedFloor(ownerId, floorId);
+    await this.requireEditableProject(ownerId, floor.projectId);
     await this.ensureFloorHasNoPlan(floor.id);
 
     const plan = await this.plans.create(floor.id, { sourceType: 'blank' });
@@ -94,6 +96,7 @@ export class EditorService {
     page: string | undefined,
   ): Promise<PublicPlan> {
     const floor = await this.requireOwnedFloor(ownerId, floorId);
+    await this.requireEditableProject(ownerId, floor.projectId);
     await this.ensureFloorHasNoPlan(floor.id);
 
     const { extension, file: planFile } = this.validatePlanFile(file);
@@ -126,7 +129,7 @@ export class EditorService {
     planId: string,
     input: UpdatePlanInput,
   ): Promise<PublicPlan> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if (
       input.expectedVersion !== undefined &&
@@ -162,7 +165,7 @@ export class EditorService {
     file: UploadedPlanFile | undefined,
     page: string | undefined,
   ): Promise<PublicPlan> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
     const { extension, file: planFile } = this.validatePlanFile(file);
     const pageNumber = this.parsePdfPage(planFile.mimetype, page);
     const fileKey = await this.storage.save(planFile.buffer, extension);
@@ -193,7 +196,7 @@ export class EditorService {
     planId: string,
     file: UploadedPlanFile | undefined,
   ): Promise<PublicPlan> {
-    const plan = await this.requireOwnedPlan(ownerId, planId);
+    const plan = await this.requireEditablePlan(ownerId, planId);
 
     if (!file) {
       throw new BadRequestException('Preview file is required');
@@ -273,6 +276,21 @@ export class EditorService {
     }
   }
 
+  private async requireEditableProject(
+    userId: string,
+    projectId: string,
+  ): Promise<void> {
+    const role = await this.projects.findAccessRole(projectId, userId);
+
+    if (!role) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (role === 'viewer') {
+      throw new ForbiddenException('Read-only access');
+    }
+  }
+
   private async requireOwnedFloor(
     ownerId: string,
     floorId: string,
@@ -286,6 +304,19 @@ export class EditorService {
     await this.requireOwnedProject(ownerId, floor.projectId);
 
     return floor;
+  }
+
+  private async requireEditablePlan(
+    userId: string,
+    planId: string,
+  ): Promise<PlanRow> {
+    const plan = await this.requireOwnedPlan(userId, planId);
+    const floor = await this.floors.findById(plan.floorId);
+    if (!floor) {
+      throw new NotFoundException('Floor not found');
+    }
+    await this.requireEditableProject(userId, floor.projectId);
+    return plan;
   }
 
   private async requireOwnedPlan(

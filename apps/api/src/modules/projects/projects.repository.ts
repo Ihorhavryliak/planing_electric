@@ -36,6 +36,18 @@ export class ProjectsRepository {
       .orderBy(desc(projects.updatedAt));
   }
 
+  async findAccessRole(
+    projectId: string,
+    userId: string,
+  ): Promise<'owner' | 'manager' | 'electrician' | 'viewer' | null> {
+    const project = await this.findOwnedById(projectId, userId);
+    if (project) {
+      return 'owner';
+    }
+    const member = await this.findProjectMember(projectId, userId);
+    return (member?.role as 'manager' | 'electrician' | 'viewer' | undefined) ?? null;
+  }
+
   async findAccessibleById(
     projectId: string,
     userId: string,
