@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,12 +14,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  addProjectMemberSchema,
   createProjectSchema,
   projectListQuerySchema,
   updateProjectSchema,
+  type AddProjectMemberInput,
   type CreateProjectInput,
   type ProjectListQuery,
   type PublicProject,
+  type PublicProjectMember,
   type PublicUser,
   type UpdateProjectInput,
 } from '@drawmyplace/contracts';
@@ -84,5 +88,33 @@ export class ProjectsController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<PublicProject> {
     return this.projects.restore(user.id, id);
+  }
+
+  @Get(':id/members')
+  listMembers(
+    @CurrentUser() user: PublicUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<PublicProjectMember[]> {
+    return this.projects.listMembers(user.id, id);
+  }
+
+  @Post(':id/members')
+  addMember(
+    @CurrentUser() user: PublicUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body(new ZodValidationPipe(addProjectMemberSchema))
+    input: AddProjectMemberInput,
+  ): Promise<PublicProjectMember> {
+    return this.projects.addMember(user.id, id, input);
+  }
+
+  @Delete(':id/members/:memberId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeMember(
+    @CurrentUser() user: PublicUser,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Param('memberId', new ParseUUIDPipe({ version: '4' })) memberId: string,
+  ): Promise<void> {
+    await this.projects.removeMember(user.id, id, memberId);
   }
 }

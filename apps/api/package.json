@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@drawmyplace/calculations": "workspace:*",
     "@drawmyplace/contracts": "workspace:*",
     "@drawmyplace/database": "workspace:*",
     "@nestjs/common": "^11.2.8",

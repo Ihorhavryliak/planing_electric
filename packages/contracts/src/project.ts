@@ -46,4 +46,28 @@ export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
+export const projectRoleSchema = z.enum([
+  'owner',
+  'manager',
+  'electrician',
+  'viewer',
+]);
+
+export const publicProjectMemberSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: projectRoleSchema,
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const addProjectMemberSchema = z.object({
+  userId: z.string().uuid(),
+  role: projectRoleSchema.default('viewer'),
+});
+
+export type PublicProjectMember = z.infer<typeof publicProjectMemberSchema>;
+export type AddProjectMemberInput = z.infer<typeof addProjectMemberSchema>;
+
 export type PublicProject = z.infer<typeof publicProjectSchema>;

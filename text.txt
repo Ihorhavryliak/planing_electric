@@ -13,9 +13,6 @@ Enter
 
 opencode auth login
 
-oc_sk_3314e24e2885_VkF7m9fAONx9kiddXghNSuEuhUzDReZq
-oc_sk_e3945ef48831_TtY_Para7hE9pKwdWQFekgtUPw3_eb35
-
 npm uninstall -g opencode-ai
 taskkill /F /IM opencode.exe - in terminal
 rm -rf ~/.local/share/opencode
@@ -27,3 +24,8 @@ npm i -g opencode-ai@latest
  opencode -v
 
  /models
+ /connect
+
+ продовжи писати вусь проект по карті будь ласка не задавй питання  і продовджуй push код на гіт
+
+ oc_sk_608182de3d39_AL6zexXVZAU0UlKrIAOcqgcxR5XvKfqr

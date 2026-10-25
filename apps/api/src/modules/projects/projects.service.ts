@@ -1,8 +1,10 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  AddProjectMemberInput,
   CreateProjectInput,
   ProjectListQuery,
   PublicProject,
+  PublicProjectMember,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { toPublicProject } from './projects.mapper';
@@ -63,6 +65,48 @@ export class ProjectsService {
 
   async restore(ownerId: string, projectId: string): Promise<PublicProject> {
     return this.changeStatus(ownerId, projectId, 'active');
+  }
+
+  async listMembers(ownerId: string, projectId: string): Promise<PublicProjectMember[]> {
+    await this.requireOwned(ownerId, projectId);
+    const rows = await this.repository.listProjectMembers(projectId);
+    return rows.map((row) => ({
+      id: row.id,
+      projectId: row.projectId,
+      userId: row.userId,
+      role: row.role as PublicProjectMember['role'],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    }));
+  }
+
+  async addMember(
+    ownerId: string,
+    projectId: string,
+    input: AddProjectMemberInput,
+  ): Promise<PublicProjectMember> {
+    await this.requireOwned(ownerId, projectId);
+    const row = await this.repository.addProjectMember(
+      projectId,
+      input.userId,
+      input.role,
+    );
+    if (!row) {
+      throw new Error('Failed to add project member');
+    }
+    return {
+      id: row.id,
+      projectId: row.projectId,
+      userId: row.userId,
+      role: row.role as PublicProjectMember['role'],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  async removeMember(ownerId: string, projectId: string, memberId: string) {
+    await this.requireOwned(ownerId, projectId);
+    await this.repository.removeProjectMember(memberId);
   }
 
   private async requireOwned(

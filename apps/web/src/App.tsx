@@ -2,6 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { AppPage } from '@/pages/app-page';
+import { EditorPage } from '@/pages/editor-page';
+import { EstimatesPage } from '@/pages/estimates-page';
+import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
@@ -18,6 +21,15 @@ export function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/app" element={<AppPage />} />
             <Route path="/app/projects/:projectId" element={<ProjectPage />} />
+            <Route
+              path="/app/projects/:projectId/editor"
+              element={<EditorPage />}
+            />
+            <Route
+              path="/app/projects/:projectId/estimates"
+              element={<EstimatesPage />}
+            />
+            <Route path="/app/organizations" element={<OrganizationsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

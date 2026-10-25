@@ -47,6 +47,68 @@ export const materials = pgTable(
   ],
 );
 
+export const walls = pgTable(
+  'walls',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    geometry: jsonb('geometry').$type<Point2D[]>().notNull(),
+    /** Wall thickness in drawing units; null means "not specified". */
+    thickness: doublePrecision('thickness'),
+    label: text('label'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('walls_floor_idx').on(table.floorId)],
+);
+
+export const rooms = pgTable(
+  'rooms',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    boundary: jsonb('boundary').$type<Point2D[]>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('rooms_floor_idx').on(table.floorId)],
+);
+
+export const dimensions = pgTable(
+  'dimensions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    pointA: jsonb('point_a').$type<Point2D>().notNull(),
+    pointB: jsonb('point_b').$type<Point2D>().notNull(),
+    /** Perpendicular offset of the dimension line from the measured points. */
+    offset: doublePrecision('offset').notNull().default(0),
+    label: text('label'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('dimensions_floor_idx').on(table.floorId)],
+);
+
 export const electricalPoints = pgTable(
   'electrical_points',
   {

@@ -3,6 +3,7 @@ import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  ArrowUpRight,
   CircleAlert,
   LoaderCircle,
   PencilRuler,
@@ -11,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -337,11 +338,11 @@ export function ProjectPage() {
                     <PencilRuler className="h-6 w-6 text-amber-300" />
                   </span>
                   <h3 className="mt-4 text-base font-semibold text-white">
-                    Editor foundation is next
+                    Plan editor
                   </h3>
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
-                    Blank plans and JPG, PNG, or PDF underlays with pan, zoom, and
-                    saved state are the next Phase 3 milestone.
+                    Create floors, start a blank plan or upload a JPG, PNG, or
+                    PDF, then place points and draw cable routes.
                   </p>
                   {archived ? (
                     <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
@@ -349,9 +350,24 @@ export function ProjectPage() {
                       Restore this project before editing.
                     </p>
                   ) : (
-                    <span className="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
-                      Coming in Phase 3
-                    </span>
+                    <>
+                      <Link
+                        to={`/app/projects/${project.id}/editor`}
+                        className={cn(buttonVariants(), 'mt-5')}
+                      >
+                        Open plan editor
+                        <ArrowUpRight className="h-4 w-4" />
+                      </Link>
+                      <div>
+                        <Link
+                          to={`/app/projects/${project.id}/estimates`}
+                          className="mt-3 inline-flex items-center gap-1.5 text-sm text-amber-300 hover:text-amber-200"
+                        >
+                          View estimates
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

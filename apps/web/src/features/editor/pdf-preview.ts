@@ -7,12 +7,13 @@ const MAX_PREVIEW_DIMENSION = 2400;
 
 export async function countPdfPages(file: Blob): Promise<number> {
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await getDocument({ data }).promise;
+  const task = getDocument({ data });
+  const pdf = await task.promise;
 
   try {
     return pdf.numPages;
   } finally {
-    await pdf.destroy();
+    await task.destroy();
   }
 }
 
@@ -21,7 +22,8 @@ export async function renderPdfPageToPng(
   pageNumber: number,
 ): Promise<Blob> {
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await getDocument({ data }).promise;
+  const task = getDocument({ data });
+  const pdf = await task.promise;
 
   try {
     if (pageNumber < 1 || pageNumber > pdf.numPages) {
@@ -62,6 +64,6 @@ export async function renderPdfPageToPng(
       }, 'image/png');
     });
   } finally {
-    await pdf.destroy();
+    await task.destroy();
   }
 }

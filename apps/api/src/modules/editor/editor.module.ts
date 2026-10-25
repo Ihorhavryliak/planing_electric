@@ -30,5 +30,7 @@ import { PlansRepository } from './plans.repository';
     PlansRepository,
     PlanStorageService,
   ],
+  exports: [FloorsRepository, PlansRepository],
 })
+
 export class EditorModule {}

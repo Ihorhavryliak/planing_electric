@@ -6,7 +6,7 @@ import type {
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { and, desc, eq, type SQL } from 'drizzle-orm';
-import { projects, type Database } from '@drawmyplace/database';
+import { projectMembers, projects, type Database } from '@drawmyplace/database';
 import { DatabaseService } from '../../database/database.service';
 
 export type ProjectRow = typeof projects.$inferSelect;
@@ -113,5 +113,51 @@ export class ProjectsRepository {
       .returning();
 
     return project ?? null;
+  }
+
+  async listProjectMembers(projectId: string) {
+    return this.db
+      .select()
+      .from(projectMembers)
+      .where(eq(projectMembers.projectId, projectId));
+  }
+
+  async findProjectMember(projectId: string, userId: string) {
+    const [row] = await this.db
+      .select()
+      .from(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.projectId, projectId),
+          eq(projectMembers.userId, userId),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
+  async addProjectMember(
+    projectId: string,
+    userId: string,
+    role: string,
+  ) {
+    const [row] = await this.db
+      .insert(projectMembers)
+      .values({ projectId, userId, role: role as never })
+      .returning();
+    return row;
+  }
+
+  async updateProjectMember(memberId: string, role: string) {
+    const [row] = await this.db
+      .update(projectMembers)
+      .set({ role: role as never })
+      .where(eq(projectMembers.id, memberId))
+      .returning();
+    return row ?? null;
+  }
+
+  async removeProjectMember(memberId: string) {
+    await this.db.delete(projectMembers).where(eq(projectMembers.id, memberId));
   }
 }
