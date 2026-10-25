@@ -775,6 +775,14 @@ describe('Drawing API', () => {
       .set('Cookie', viewer.cookie)
       .expect(200);
 
+    const viewerProjects = (
+      await server()
+        .get(`${API}/projects`)
+        .set('Cookie', viewer.cookie)
+        .expect(200)
+    ).body as PublicProject[];
+    expect(viewerProjects.map((item) => item.id)).toContain(project.id);
+
     await server()
       .post(`${API}/plans/${plan.id}/points`)
       .set('Cookie', viewer.cookie)
