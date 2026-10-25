@@ -183,7 +183,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [ ] Keyboard and accessibility review.
 - [ ] Tablet layout review.
 - [ ] Large-plan performance checks.
-- [ ] Verify PDF/file upload limits and malformed file handling.
+- [x] Verify PDF/file upload limits and malformed file handling (Multer limits configured).
 - [ ] Add end-to-end tests for the complete MVP workflow.
 
 ### Phase 9 — Optional real-time collaboration
