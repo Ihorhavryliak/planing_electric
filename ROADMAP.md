@@ -169,7 +169,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [ ] Enforce permissions in API guards/policies/services.
 - [ ] Distinguish platform admin from organization owner/admin.
 - [ ] Test role boundaries and cross-organization isolation.
-- [ ] Add basic activity log and notifications.
+- [-] Add basic activity log (backend endpoint + module). Notifications pending.
 
 **Exit criteria:** an owner can invite a worker or viewer; each role can perform only authorized actions.
 
