@@ -205,7 +205,7 @@ Do not start this phase before reliable saving and conflict detection exist.
 - [x] Configure logs, error reporting, and health monitoring (documented in DEPLOYMENT.md).
 - [x] Document deployment and rollback (DEPLOYMENT.md).
 - [x] Run full regression tests (typecheck, lint, build, and all tests pass).
-- [ ] Confirm no critical permissions or data-loss bugs remain.
+- [x] Confirm no critical permissions or data-loss bugs remain (IDOR, viewer, revocation, and stale-write tests pass).
 
 ## 4. MVP end-to-end acceptance scenario
 
