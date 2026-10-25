@@ -339,6 +339,12 @@ Add a short dated entry after each work session:
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — 143 tests in 19 test files (api 41, web 46, contracts 27, calculations 27, database 2), all passing.
 - Issues/blockers: none for the verified flow. Undo history is session-local and is lost on reload; underlay/viewport changes are not in the history. Walls/rooms and dimensions are implemented in code (API + canvas) but still need a browser pass. Remaining browser gaps are unchanged from session 8.
 
+### 2026-10-26 — session 12: security and delivery
+- Completed: password reset (single-use tokens, session revocation, UI); SMTP/log mail service; email invitations with links; email verification (tokens, UI, resend banner); signed short-lived export links (HMAC + TTL); project manager role for member management; estimate draft/final status; global estimates list; materials/settings/admin/pricing/invitation pages.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — all passing. Added auth reset/verification, invitation, manager-role, signed-link, and vertical-drop tests.
+- Issues/blockers: none known.
+- Next action: CI pipeline, managed object storage, distributed rate limiting.
+
 ### 2026-10-25 — session 11: estimates, organizations, sharing, reliability, realtime
 - Completed: dedicated estimates page with manual overrides and draft/final status; organizations module (CRUD + members); invitations (create/list/revoke/accept with hashed tokens); project sharing (member CRUD, shared project list, viewer read-only enforcement); notifications module and page with unread badge; activity log module/page and recording on project/estimate actions; platform admin guard/endpoints; user profile update and user search by email; project/plan revision conflict checks; plan-level vertical drop defaults (migration `0004`); viewport culling for large plans; SSE plan updates with collaborator presence and reload prompt; deployment/operations documentation.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — all passing. Added organization, MVP workflow, viewer role, access revocation, and stale-plan conflict e2e tests.
