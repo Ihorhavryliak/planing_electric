@@ -180,7 +180,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [-] Revision/version checks to prevent silent overwrites (project update conflict check).
 - [-] Recovery flow for stale/conflicting document changes (plan/project version checks + autosave error).
 - [x] Empty/loading/error states for core pages (implemented across editor/estimates/activity).
-- [ ] Keyboard and accessibility review.
+- [-] Keyboard and accessibility review (skip link added; full audit pending).
 - [ ] Tablet layout review.
 - [ ] Large-plan performance checks.
 - [x] Verify PDF/file upload limits and malformed file handling (Multer limits configured).
