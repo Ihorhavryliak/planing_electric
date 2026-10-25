@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
+import { LocalStorageDriver } from '../../common/storage/local-storage-driver';
+import { STORAGE_DRIVER } from '../../common/storage/storage-driver';
 import { AuthModule } from '../auth/auth.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { EditorService } from './editor.service';
@@ -29,8 +31,10 @@ import { PlansRepository } from './plans.repository';
     FloorsRepository,
     PlansRepository,
     PlanStorageService,
+    LocalStorageDriver,
+    { provide: STORAGE_DRIVER, useExisting: LocalStorageDriver },
   ],
-  exports: [FloorsRepository, PlansRepository],
+  exports: [FloorsRepository, PlansRepository, PlanStorageService],
 })
 
 export class EditorModule {}

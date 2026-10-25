@@ -200,7 +200,7 @@ Do not start this phase before reliable saving and conflict detection exist.
 
 - [x] Review authentication, authorization, upload security, rate limits, and secrets (checklist in DEPLOYMENT.md).
 - [x] Configure production database migrations (documented in DEPLOYMENT.md).
-- [-] Configure object storage and access policies (local adapter documented; managed object storage pending).
+- [-] Configure object storage and access policies (storage-driver abstraction + local driver; managed driver pending).
 - [x] Set up backups and a restore procedure (documented in DEPLOYMENT.md).
 - [x] Configure logs, error reporting, and health monitoring (documented in DEPLOYMENT.md).
 - [x] Document deployment and rollback (DEPLOYMENT.md).
