@@ -104,6 +104,7 @@ Every project belongs to the user who created it. List, read, update, archive, a
 | `pnpm db:generate` | Generate a Drizzle migration after schema changes. |
 | `pnpm db:migrate` | Apply tracked migrations to `DATABASE_URL`. |
 | `pnpm db:up` / `pnpm db:down` | Start or stop local PostgreSQL with Docker Compose. |
+| `pnpm browser:check` | Run the Playwright browser smoke check (API and web must be running). |
 
 ## Repository layout
 

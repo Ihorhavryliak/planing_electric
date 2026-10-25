@@ -16,7 +16,8 @@
     "db:generate": "pnpm --filter @drawmyplace/database db:generate",
     "db:migrate": "pnpm --filter @drawmyplace/database db:migrate",
     "db:up": "docker compose -f infra/docker-compose.yml up -d",
-    "db:down": "docker compose -f infra/docker-compose.yml down"
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "browser:check": "node scripts/browser-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

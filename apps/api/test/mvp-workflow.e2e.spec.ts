@@ -150,6 +150,32 @@ describe('MVP workflow', () => {
     ).body as PublicEstimate[];
     expect(listEstimates.map((item) => item.id)).toContain(estimate.id);
 
+    const finalized = await server()
+      .patch(`${API}/estimates/${estimate.id}`)
+      .set('Cookie', cookie)
+      .send({ status: 'final' })
+      .expect(200);
+    expect((finalized.body as PublicEstimate).status).toBe('final');
+
+    const item = estimate.items[0]!;
+    const overridden = await server()
+      .patch(`${API}/estimate-items/${item.id}`)
+      .set('Cookie', cookie)
+      .send({
+        quantity: 42,
+        purchaseQuantity: 42,
+        unitPrice: 10,
+        isOverridden: true,
+      })
+      .expect(200);
+    const overriddenItem = (overridden.body as PublicEstimate).items[0]!;
+    expect(overriddenItem).toMatchObject({
+      quantity: 42,
+      unitPrice: 10,
+      subtotal: 420,
+      isOverridden: true,
+    });
+
     const csv = await server()
       .get(`${API}/estimates/${estimate.id}/csv`)
       .set('Cookie', cookie)

@@ -633,6 +633,50 @@ describe('Drawing API', () => {
     expect(result.totalRequiredLength).toBe(33);
   });
 
+  it('applies plan-level vertical drop defaults', async () => {
+    const fixture = await createFixture();
+    await calibrate(fixture).expect(200);
+    await addPoint(fixture, { type: 'socket', x: 0, y: 0 });
+    await addPoint(fixture, { type: 'socket', x: 0, y: 1000 });
+    await addRoute(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 0, y: 1000 },
+      ],
+    });
+
+    const first = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/calculation`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanCalculation;
+    // 10 m plan + two 1.5 m socket drops + 10% = 14.3 m.
+    expect(first.routes[0]).toMatchObject({
+      planLength: 10,
+      verticalLength: 3,
+      requiredLength: 14.3,
+    });
+
+    await server()
+      .patch(`${API}/plans/${fixture.plan.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({ calculationSettings: { verticalDropDefaults: { socket: 2 } } })
+      .expect(200);
+
+    const second = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/calculation`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanCalculation;
+    expect(second.routes[0]).toMatchObject({
+      planLength: 10,
+      verticalLength: 4,
+      requiredLength: 15.4,
+    });
+  });
+
   it('honours a per-route waste percentage and re-scales after recalibration', async () => {
     const fixture = await createFixture();
     await calibrate(fixture).expect(200);
