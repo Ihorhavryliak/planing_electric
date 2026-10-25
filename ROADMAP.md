@@ -198,7 +198,7 @@ Do not start this phase before reliable saving and conflict detection exist.
 
 ### Phase 10 — Production readiness
 
-- [ ] Review authentication, authorization, upload security, rate limits, and secrets.
+- [x] Review authentication, authorization, upload security, rate limits, and secrets (checklist in DEPLOYMENT.md).
 - [x] Configure production database migrations (documented in DEPLOYMENT.md).
 - [-] Configure object storage and access policies (local adapter documented; managed object storage pending).
 - [x] Set up backups and a restore procedure (documented in DEPLOYMENT.md).
