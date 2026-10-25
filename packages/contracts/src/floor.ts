@@ -58,12 +58,14 @@ export const updatePlanSchema = z
     underlay: underlaySettingsSchema.optional(),
     viewport: editorViewportSchema.optional(),
     page: z.number().int().min(1).max(1000).nullable().optional(),
+    expectedVersion: z.number().int().min(1).optional(),
   })
   .refine(
     (value) =>
       value.underlay !== undefined ||
       value.viewport !== undefined ||
-      value.page !== undefined,
+      value.page !== undefined ||
+      value.expectedVersion !== undefined,
     { message: 'Provide at least one field to update' },
   );
 

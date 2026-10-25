@@ -128,6 +128,13 @@ export class EditorService {
   ): Promise<PublicPlan> {
     const plan = await this.requireOwnedPlan(ownerId, planId);
 
+    if (
+      input.expectedVersion !== undefined &&
+      plan.version !== input.expectedVersion
+    ) {
+      throw new ConflictException('Plan version mismatch');
+    }
+
     if (input.page !== undefined && plan.mimeType !== 'application/pdf') {
       throw new BadRequestException(
         'Page selection is only available for PDF plans',

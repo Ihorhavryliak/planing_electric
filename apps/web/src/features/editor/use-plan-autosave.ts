@@ -73,6 +73,7 @@ export function usePlanAutosave({
         const updated = await updatePlan(plan.id, {
           underlay: state.underlay,
           viewport: state.viewport,
+          expectedVersion: plan.version,
         });
 
         if (!mountedRef.current) {
