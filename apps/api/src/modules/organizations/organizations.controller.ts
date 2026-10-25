@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
   Inject,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -52,21 +54,29 @@ export class OrganizationsController {
   }
 
   @Get(':id')
-  get(
+  async get(
     @CurrentUser() user: PublicUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Promise<PublicOrganization | null> {
-    return this.orgs.get(user.id, id);
+  ): Promise<PublicOrganization> {
+    const org = await this.orgs.get(user.id, id);
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+    return org;
   }
 
   @Patch(':id')
-  update(
+  async update(
     @CurrentUser() user: PublicUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body(new ZodValidationPipe(updateOrganizationSchema))
     input: UpdateOrganizationInput,
-  ): Promise<PublicOrganization | null> {
-    return this.orgs.update(user.id, id, input);
+  ): Promise<PublicOrganization> {
+    const org = await this.orgs.update(user.id, id, input);
+    if (!org) {
+      throw new ForbiddenException('Not allowed to update this organization');
+    }
+    return org;
   }
 
   @Delete(':id')
@@ -79,32 +89,44 @@ export class OrganizationsController {
   }
 
   @Get(':id/members')
-  members(
+  async members(
     @CurrentUser() user: PublicUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Promise<PublicOrganizationMember[] | null> {
-    return this.orgs.listMembers(user.id, id);
+  ): Promise<PublicOrganizationMember[]> {
+    const members = await this.orgs.listMembers(user.id, id);
+    if (!members) {
+      throw new ForbiddenException('Not a member of this organization');
+    }
+    return members;
   }
 
   @Post(':id/members')
-  addMember(
+  async addMember(
     @CurrentUser() user: PublicUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body(new ZodValidationPipe(addOrganizationMemberSchema))
     input: AddOrganizationMemberInput,
-  ): Promise<PublicOrganizationMember | null> {
-    return this.orgs.addMember(user.id, id, input);
+  ): Promise<PublicOrganizationMember> {
+    const member = await this.orgs.addMember(user.id, id, input);
+    if (!member) {
+      throw new ForbiddenException('Not allowed to manage members');
+    }
+    return member;
   }
 
   @Patch(':id/members/:memberId')
-  updateMember(
+  async updateMember(
     @CurrentUser() user: PublicUser,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Param('memberId', new ParseUUIDPipe({ version: '4' })) memberId: string,
     @Body(new ZodValidationPipe(updateOrganizationMemberSchema))
     input: UpdateOrganizationMemberInput,
-  ): Promise<PublicOrganizationMember | null> {
-    return this.orgs.updateMember(user.id, id, memberId, input);
+  ): Promise<PublicOrganizationMember> {
+    const member = await this.orgs.updateMember(user.id, id, memberId, input);
+    if (!member) {
+      throw new ForbiddenException('Not allowed to manage members');
+    }
+    return member;
   }
 
   @Delete(':id/members/:memberId')
