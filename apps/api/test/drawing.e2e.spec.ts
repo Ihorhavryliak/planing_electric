@@ -756,4 +756,35 @@ describe('Drawing API', () => {
     expect(drawing.rooms).toHaveLength(1);
     expect(drawing.dimensions).toHaveLength(1);
   });
+
+  it('lets a viewer member read the drawing but not mutate it', async () => {
+    const owner = await registerUser();
+    const project = await createProject(owner.cookie);
+    const floor = await createFloor(owner.cookie, project.id);
+    const plan = await createBlankPlan(owner.cookie, floor.id);
+    const viewer = await registerUser();
+
+    await server()
+      .post(`${API}/projects/${project.id}/members`)
+      .set('Cookie', owner.cookie)
+      .send({ userId: viewer.user.id, role: 'viewer' })
+      .expect(201);
+
+    await server()
+      .get(`${API}/plans/${plan.id}/drawing`)
+      .set('Cookie', viewer.cookie)
+      .expect(200);
+
+    await server()
+      .post(`${API}/plans/${plan.id}/points`)
+      .set('Cookie', viewer.cookie)
+      .send({ type: 'socket', x: 1, y: 1 })
+      .expect(403);
+
+    await server()
+      .post(`${API}/projects/${project.id}/floors`)
+      .set('Cookie', viewer.cookie)
+      .send({ name: 'Viewer floor' })
+      .expect(403);
+  });
 });
