@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { DatabaseModule } from './database/database.module';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DrawingModule } from './modules/drawing/drawing.module';
 import { EditorModule } from './modules/editor/editor.module';
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
     }),
     DatabaseModule,
     ActivityLogModule,
+    AdminModule,
     AuthModule,
     EditorModule,
     EstimatesModule,

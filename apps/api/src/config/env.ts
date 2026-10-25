@@ -18,6 +18,7 @@ const envSchema = z.object({
     .default(15),
   STORAGE_DIR: z.string().min(1).default('storage'),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(20),
+  PLATFORM_ADMIN_EMAILS: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

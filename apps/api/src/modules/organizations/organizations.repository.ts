@@ -39,6 +39,10 @@ export class OrganizationsRepository {
     return row ?? null;
   }
 
+  async listAll() {
+    return this.db.select().from(organizations);
+  }
+
   async listForUser(userId: string) {
     const memberships = await this.db
       .select({ organizationId: organizationMembers.organizationId })

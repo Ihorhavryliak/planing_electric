@@ -31,6 +31,10 @@ export class AuthRepository {
     this.db = database.db;
   }
 
+  async listUsers(limit = 100): Promise<UserRow[]> {
+    return this.db.select().from(users).limit(limit);
+  }
+
   async findUserById(id: string): Promise<UserRow | null> {
     const [user] = await this.db
       .select()
