@@ -150,6 +150,11 @@ describe('MVP workflow', () => {
     ).body as PublicEstimate[];
     expect(listEstimates.map((item) => item.id)).toContain(estimate.id);
 
+    const allEstimates = (
+      await server().get(`${API}/estimates`).set('Cookie', cookie).expect(200)
+    ).body as PublicEstimate[];
+    expect(allEstimates.map((item) => item.id)).toContain(estimate.id);
+
     const finalized = await server()
       .patch(`${API}/estimates/${estimate.id}`)
       .set('Cookie', cookie)

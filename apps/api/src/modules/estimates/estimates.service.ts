@@ -96,6 +96,18 @@ export class EstimatesService {
     return result;
   }
 
+  async listForUser(ownerId: string): Promise<PublicEstimate[]> {
+    const projects = await this.projects.listByOwner(ownerId, 'all');
+    const projectIds = projects.map((project) => project.id);
+    const estimates = await this.estimates.listByProjectIds(projectIds);
+    const results: PublicEstimate[] = [];
+    for (const estimate of estimates) {
+      const mapped = await this.getById(ownerId, estimate.id);
+      if (mapped) results.push(mapped);
+    }
+    return results;
+  }
+
   async listByProject(ownerId: string, projectId: string): Promise<PublicEstimate[]> {
     const project = await this.projects.findAccessibleById(projectId, ownerId);
     if (!project) {

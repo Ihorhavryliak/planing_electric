@@ -55,6 +55,10 @@ export function updateEstimateStatus(
   });
 }
 
+export function listAllEstimates(): Promise<PublicEstimate[]> {
+  return apiRequest<PublicEstimate[]>('/estimates');
+}
+
 export function listEstimatesByProject(
   projectId: string,
 ): Promise<PublicEstimate[]> {

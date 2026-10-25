@@ -46,6 +46,11 @@ export class EstimatesController {
     return this.estimates.listByProject(user.id, projectId);
   }
 
+  @Get('estimates')
+  listAll(@CurrentUser() user: { id: string }) {
+    return this.estimates.listForUser(user.id);
+  }
+
   @Get('estimates/:id')
   get(
     @CurrentUser() user: { id: string },

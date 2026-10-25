@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq, max } from 'drizzle-orm';
+import { desc, eq, inArray, max } from 'drizzle-orm';
 import { estimates, estimateItems, type Database } from '@drawmyplace/database';
 import { DatabaseService } from '../../database/database.service';
 
@@ -84,6 +84,15 @@ export class EstimatesRepository {
       .where(eq(estimateItems.estimateId, estimate.id));
 
     return { estimate, items };
+  }
+
+  async listByProjectIds(projectIds: string[]) {
+    if (projectIds.length === 0) return [];
+    return this.db
+      .select()
+      .from(estimates)
+      .where(inArray(estimates.projectId, projectIds))
+      .orderBy(desc(estimates.createdAt));
   }
 
   async listByProject(projectId: string) {
