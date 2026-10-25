@@ -97,7 +97,7 @@ export class EstimatesService {
   }
 
   async listByProject(ownerId: string, projectId: string): Promise<PublicEstimate[]> {
-    const project = await this.projects.findOwnedById(projectId, ownerId);
+    const project = await this.projects.findAccessibleById(projectId, ownerId);
     if (!project) {
       return [];
     }
@@ -125,7 +125,7 @@ export class EstimatesService {
     if (!item) return null;
     const loaded = await this.estimates.findById(item.estimateId);
     if (!loaded) return null;
-    const project = await this.projects.findOwnedById(
+    const project = await this.projects.findAccessibleById(
       loaded.estimate.projectId,
       ownerId,
     );
@@ -167,7 +167,7 @@ export class EstimatesService {
       return null;
     }
 
-    const project = await this.projects.findOwnedById(result.estimate.projectId, ownerId);
+    const project = await this.projects.findAccessibleById(result.estimate.projectId, ownerId);
     if (!project) {
       return null;
     }
