@@ -25,6 +25,10 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/app" element={<AppPage />} />
+            <Route
+              path="/app/dashboard"
+              element={<Navigate to="/app" replace />}
+            />
             <Route path="/app/projects/:projectId" element={<ProjectPage />} />
             <Route
               path="/app/projects/:projectId/editor"
@@ -39,6 +43,7 @@ export function App() {
               element={<ActivityPage />}
             />
             <Route path="/app/organizations" element={<OrganizationsPage />} />
+            <Route path="/app/team" element={<OrganizationsPage />} />
             <Route path="/app/notifications" element={<NotificationsPage />} />
             <Route path="/app/materials" element={<MaterialsPage />} />
             <Route path="/app/settings" element={<SettingsPage />} />
