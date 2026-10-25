@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { ActivityPage } from '@/pages/activity-page';
+import { AdminPage } from '@/pages/admin-page';
 import { AllEstimatesPage } from '@/pages/all-estimates-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
@@ -49,6 +50,9 @@ export function App() {
             <Route path="/app/materials" element={<MaterialsPage />} />
             <Route path="/app/settings" element={<SettingsPage />} />
             <Route path="/app/estimates" element={<AllEstimatesPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/users" element={<AdminPage />} />
+            <Route path="/admin/organizations" element={<AdminPage />} />
             <Route path="/invite/:token" element={<InvitePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
