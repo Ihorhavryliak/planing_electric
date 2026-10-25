@@ -1738,8 +1738,8 @@ export function PlanEditor({
 
   return (
     <>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="relative h-[65vh] min-h-[440px] xl:h-[calc(100vh-12rem)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="relative h-[65vh] min-h-[440px] lg:h-[calc(100vh-12rem)]">
           <EditorCanvas
             image={image}
             underlay={underlay}
@@ -1851,7 +1851,7 @@ export function PlanEditor({
           ) : null}
         </div>
 
-        <aside className="space-y-4 xl:max-h-[calc(100vh-12rem)] xl:overflow-y-auto xl:pr-1">
+        <aside className="space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <h2 className="text-sm font-semibold text-white">Save state</h2>
             <p className="mt-1 text-xs text-slate-500">
