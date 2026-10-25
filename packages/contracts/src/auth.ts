@@ -38,6 +38,11 @@ export const publicUserSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;

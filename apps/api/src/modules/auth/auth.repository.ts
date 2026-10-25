@@ -31,6 +31,25 @@ export class AuthRepository {
     this.db = database.db;
   }
 
+  async findUserById(id: string): Promise<UserRow | null> {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    return user ?? null;
+  }
+
+  async updateUserName(id: string, name: string): Promise<UserRow | null> {
+    const [user] = await this.db
+      .update(users)
+      .set({ name, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user ?? null;
+  }
+
   async findUserByEmail(email: string): Promise<UserRow | null> {
     const [user] = await this.db
       .select()
