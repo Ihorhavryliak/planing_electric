@@ -541,4 +541,36 @@ describe('Editor API', () => {
       .set('Cookie', cookie)
       .expect(400);
   });
+
+  it('rejects stale plan updates with a conflict', async () => {
+    const { cookie } = await registerUser();
+    const project = await createProject(cookie);
+    const floor = await createFloor(cookie, project.id);
+    const plan = await createBlankPlan(cookie, floor.id);
+
+    const updated = await server()
+      .patch(`${API}/plans/${plan.id}`)
+      .set('Cookie', cookie)
+      .send({ expectedVersion: plan.version, viewport: { x: 10, y: 10, zoom: 1 } })
+      .expect(200);
+
+    expect((updated.body as PublicPlan).version).toBe(plan.version + 1);
+
+    // A second editor still holding the old version must not overwrite.
+    await server()
+      .patch(`${API}/plans/${plan.id}`)
+      .set('Cookie', cookie)
+      .send({ expectedVersion: plan.version, viewport: { x: 99, y: 99, zoom: 2 } })
+      .expect(409);
+
+    const current = await server()
+      .get(`${API}/plans/${plan.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
+    expect((current.body as PublicPlan).viewport).toMatchObject({
+      x: 10,
+      y: 10,
+      zoom: 1,
+    });
+  });
 });
