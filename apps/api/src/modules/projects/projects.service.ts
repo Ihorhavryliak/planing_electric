@@ -13,6 +13,7 @@ import type {
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { NotificationsRepository } from '../notifications/notifications.repository';
 import { toPublicProject } from './projects.mapper';
 import { ProjectsRepository, type ProjectRow } from './projects.repository';
 
@@ -23,6 +24,8 @@ export class ProjectsService {
     private readonly repository: ProjectsRepository,
     @Inject(ActivityLogService)
     private readonly activity: ActivityLogService,
+    @Inject(NotificationsRepository)
+    private readonly notifications: NotificationsRepository,
   ) {}
 
   async list(
@@ -126,6 +129,12 @@ export class ProjectsService {
     if (!row) {
       throw new Error('Failed to add project member');
     }
+
+    await this.notifications.create(input.userId, 'project.shared', {
+      projectId,
+      role: input.role,
+    });
+
     return {
       id: row.id,
       projectId: row.projectId,
