@@ -5,6 +5,7 @@ import { ActivityPage } from '@/pages/activity-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
 import { EstimatesPage } from '@/pages/estimates-page';
+import { InvitePage } from '@/pages/invite-page';
 import { NotificationsPage } from '@/pages/notifications-page';
 import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
@@ -37,6 +38,7 @@ export function App() {
             />
             <Route path="/app/organizations" element={<OrganizationsPage />} />
             <Route path="/app/notifications" element={<NotificationsPage />} />
+            <Route path="/invite/:token" element={<InvitePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

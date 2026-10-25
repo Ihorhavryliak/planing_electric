@@ -58,3 +58,10 @@ export function revokeInvitation(invitationId: string): Promise<void> {
     method: 'DELETE',
   });
 }
+
+export function acceptInvitation(token: string): Promise<PublicInvitation | null> {
+  return apiRequest<PublicInvitation | null>('/invitations/accept', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+}
