@@ -102,6 +102,10 @@ export const plans = pgTable(
       .$type<EditorViewport>()
       .notNull()
       .default({ x: 0, y: 0, zoom: 1 }),
+    calculationSettings: jsonb('calculation_settings')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     version: integer('version').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

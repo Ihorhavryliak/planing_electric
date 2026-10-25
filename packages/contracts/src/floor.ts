@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+const dropDefault = z.number().min(0).max(100).optional();
+
+export const calculationSettingsSchema = z.object({
+  verticalDropDefaults: z
+    .object({
+      socket: dropDefault,
+      switch: dropDefault,
+      light: dropDefault,
+      panel: dropDefault,
+      junction: dropDefault,
+      custom: dropDefault,
+    })
+    .partial()
+    .optional(),
+});
+
 export const floorNameSchema = z
   .string()
   .trim()
@@ -38,6 +54,7 @@ export const publicPlanSchema = z.object({
   hasPreview: z.boolean(),
   underlay: underlaySettingsSchema,
   viewport: editorViewportSchema,
+  calculationSettings: calculationSettingsSchema.default({}),
   version: z.number().int(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
@@ -57,6 +74,7 @@ export const updatePlanSchema = z
   .object({
     underlay: underlaySettingsSchema.optional(),
     viewport: editorViewportSchema.optional(),
+    calculationSettings: calculationSettingsSchema.optional(),
     page: z.number().int().min(1).max(1000).nullable().optional(),
     expectedVersion: z.number().int().min(1).optional(),
   })
@@ -64,6 +82,7 @@ export const updatePlanSchema = z
     (value) =>
       value.underlay !== undefined ||
       value.viewport !== undefined ||
+      value.calculationSettings !== undefined ||
       value.page !== undefined ||
       value.expectedVersion !== undefined,
     { message: 'Provide at least one field to update' },

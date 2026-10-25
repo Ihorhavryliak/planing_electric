@@ -29,6 +29,13 @@
       "when": 1792903706163,
       "tag": "0003_harsh_silver_centurion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792904000000,
+      "tag": "0004_plan_calculation_settings",
+      "breakpoints": true
     }
   ]
 }

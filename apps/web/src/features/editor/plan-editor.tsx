@@ -48,6 +48,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import {
@@ -378,6 +379,8 @@ export function PlanEditor({
 
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
+  const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
+  const [dropError, setDropError] = useState<string | null>(null);
   const [walls, setWalls] = useState<PublicWall[]>([]);
   const [materials, setMaterials] = useState<PublicMaterial[]>([]);
   const [estimate, setEstimate] = useState<PublicEstimate | null>(null);
@@ -439,6 +442,19 @@ export function PlanEditor({
   useEffect(() => {
     setPageInput(String(plan.page ?? 1));
   }, [plan.page]);
+
+  useEffect(() => {
+    const defaults =
+      plan.calculationSettings?.verticalDropDefaults ?? {};
+    setDropDrafts({
+      socket: defaults.socket !== undefined ? String(defaults.socket) : '',
+      switch: defaults.switch !== undefined ? String(defaults.switch) : '',
+      light: defaults.light !== undefined ? String(defaults.light) : '',
+      panel: defaults.panel !== undefined ? String(defaults.panel) : '',
+      junction: defaults.junction !== undefined ? String(defaults.junction) : '',
+      custom: defaults.custom !== undefined ? String(defaults.custom) : '',
+    });
+  }, [plan.id, plan.calculationSettings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -610,6 +626,31 @@ export function PlanEditor({
     setRoutesError(null);
     setLayoutError(null);
     bumpCalculation();
+  }
+
+  async function commitDropDefaults() {
+    setDropError(null);
+    const verticalDropDefaults: Record<string, number> = {};
+    for (const [type, value] of Object.entries(dropDrafts)) {
+      if (value.trim() === '') continue;
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+        setDropError('Vertical drops must be between 0 and 100 m.');
+        return;
+      }
+      verticalDropDefaults[type] = parsed;
+    }
+
+    try {
+      const updated = await updatePlan(plan.id, {
+        calculationSettings: { verticalDropDefaults },
+        expectedVersion: plan.version,
+      });
+      onPlanChange(updated);
+      bumpCalculation();
+    } catch (error) {
+      setDropError(getErrorMessage(error));
+    }
   }
 
   async function applyHistory(direction: 'undo' | 'redo') {
@@ -1852,6 +1893,44 @@ export function PlanEditor({
         </div>
 
         <aside className="space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h2 className="text-sm font-semibold text-white">
+              Vertical drop defaults
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Meters per point type. Per-point overrides win.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {(['socket', 'switch', 'light', 'panel', 'junction', 'custom'] as const).map(
+                (type) => (
+                  <label key={type} className="text-xs text-slate-400">
+                    {type}
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={dropDrafts[type] ?? ''}
+                      onChange={(event) =>
+                        setDropDrafts((current) => ({
+                          ...current,
+                          [type]: event.target.value,
+                        }))
+                      }
+                      onBlur={() => void commitDropDefaults()}
+                      className="mt-1 h-8"
+                    />
+                  </label>
+                ),
+              )}
+            </div>
+            {dropError ? (
+              <p role="alert" className="mt-2 text-xs text-rose-300">
+                {dropError}
+              </p>
+            ) : null}
+          </section>
+
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <h2 className="text-sm font-semibold text-white">Save state</h2>
             <p className="mt-1 text-xs text-slate-500">

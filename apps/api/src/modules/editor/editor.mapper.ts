@@ -1,4 +1,5 @@
 import {
+  calculationSettingsSchema,
   editorViewportSchema,
   underlaySettingsSchema,
   type PublicFloor,
@@ -18,6 +19,9 @@ export function toPublicPlan(plan: PlanRow): PublicPlan {
     hasPreview: plan.previewKey !== null,
     underlay: underlaySettingsSchema.parse(plan.underlay),
     viewport: editorViewportSchema.parse(plan.viewport),
+    calculationSettings: calculationSettingsSchema.parse(
+      plan.calculationSettings ?? {},
+    ),
     version: plan.version,
     createdAt: plan.createdAt.toISOString(),
     updatedAt: plan.updatedAt.toISOString(),

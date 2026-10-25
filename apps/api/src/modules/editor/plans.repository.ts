@@ -91,6 +91,9 @@ export class PlansRepository {
         version: sql<number>`${plans.version} + 1`,
         ...(input.underlay !== undefined ? { underlay: input.underlay } : {}),
         ...(input.viewport !== undefined ? { viewport: input.viewport } : {}),
+        ...(input.calculationSettings !== undefined
+          ? { calculationSettings: input.calculationSettings }
+          : {}),
         ...(input.page !== undefined ? { page: input.page } : {}),
         ...(clearPreview ? { previewKey: null } : {}),
       })

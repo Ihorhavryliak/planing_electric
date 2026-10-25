@@ -135,7 +135,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 
 - [x] Implement pure, reusable geometry/calculation functions. (`packages/calculations`; 27 unit tests, user ran `pnpm test` after session 2)
 - [x] Calculate polyline segment lengths in the correct coordinate units.
-- [-] Add configurable vertical drops/risers. Per-point override is editable in the point panel (session 6, unverified); project-level defaults are not configurable yet.
+- [x] Add configurable vertical drops/risers (per-point overrides + plan-level defaults in the editor).
 - [x] Ensure vertical lengths are not counted twice. (drops only at route ends; `alreadyInGeometry` flag)
 - [x] Apply configurable waste percentage (default 10%). (per route via `settings.wastePercent`; project-level setting not yet)
 - [x] Show a breakdown of route length, vertical additions, waste, and final quantity.

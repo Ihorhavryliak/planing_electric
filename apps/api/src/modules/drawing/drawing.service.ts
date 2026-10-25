@@ -31,6 +31,7 @@ import {
 } from '@drawmyplace/contracts';
 import {
   CalibrationError,
+  DEFAULT_VERTICAL_DROPS_METERS,
   calculateRoute,
   calibrate,
   resolveRouteDrops,
@@ -368,8 +369,17 @@ export class DrawingService {
       );
     }
 
+    const configuredDefaults =
+      (plan.calculationSettings as {
+        verticalDropDefaults?: Partial<Record<DropPoint['type'], number>>;
+      })?.verticalDropDefaults ?? {};
+    const dropDefaults = {
+      ...DEFAULT_VERTICAL_DROPS_METERS,
+      ...configuredDefaults,
+    } as Record<DropPoint['type'], number>;
+
     const routes = routeRows.map((route) =>
-      this.calculateOneRoute(route, dropPoints, metersPerUnit),
+      this.calculateOneRoute(route, dropPoints, metersPerUnit, dropDefaults),
     );
 
     for (const route of routes) {
@@ -396,10 +406,11 @@ export class DrawingService {
     route: RouteRow,
     points: DropPoint[],
     metersPerUnit: number | null,
+    dropDefaults: Record<DropPoint['type'], number>,
   ): RouteCalculation {
     const { geometry, settings } = toPublicRoute(route);
     const name = route.circuitId ? `Route ${route.circuitId}` : 'A route';
-    const drops = resolveRouteDrops({ geometry, points });
+    const drops = resolveRouteDrops({ geometry, points, defaults: dropDefaults });
     const result = calculateRoute({
       points: geometry,
       metersPerUnit,
