@@ -6,7 +6,7 @@ The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status
 
 ## Current status
 
-The MVP core is implemented: authentication, projects, floors, blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points, cable routes, calculations, materials, estimates, CSV/PDF export, organizations, invitations, project sharing, notifications, activity log, and revision conflict checks.
+The MVP core is implemented: authentication (including password reset), projects, floors, blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points, cable routes, calculations, materials, estimates, CSV/PDF export, organizations, email invitations, project sharing, notifications, activity log, revision conflict checks, and real-time plan notifications via SSE.
 
 Verified in this repository:
 

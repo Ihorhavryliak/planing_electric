@@ -19,6 +19,13 @@ const envSchema = z.object({
   STORAGE_DIR: z.string().min(1).default('storage'),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(20),
   PLATFORM_ADMIN_EMAILS: z.string().default(''),
+  MAIL_DRIVER: z.enum(['log', 'smtp']).default('log'),
+  MAIL_FROM: z.string().default('DrawMyPlace <no-reply@drawmyplace.local>'),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: z.enum(['true', 'false']).default('false'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -35,8 +35,8 @@ export function listOrganizationMembers(
 export function createInvitation(
   organizationId: string,
   input: CreateInvitationInput,
-): Promise<{ invitation: PublicInvitation; token: string }> {
-  return apiRequest<{ invitation: PublicInvitation; token: string }>(
+): Promise<{ invitation: PublicInvitation; token?: string }> {
+  return apiRequest<{ invitation: PublicInvitation; token?: string }>(
     `/organizations/${organizationId}/invitations`,
     {
       method: 'POST',

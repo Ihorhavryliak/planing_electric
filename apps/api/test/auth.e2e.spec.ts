@@ -253,4 +253,50 @@ describe('Authentication API', () => {
 
     expect(login.body.message).toBe('Invalid email or password');
   });
+
+  it('resets a password with a single-use token and revokes old sessions', async () => {
+    const email = nextEmail();
+    const registration = await register(email).expect(201);
+    const oldCookie = firstSetCookie(registration);
+
+    const forgot = await server()
+      .post(`${API}/auth/forgot-password`)
+      .send({ email })
+      .expect(200);
+    const token = (forgot.body as { token?: string }).token;
+    expect(typeof token).toBe('string');
+
+    await server()
+      .post(`${API}/auth/reset-password`)
+      .send({ token, password: 'brand-new-password' })
+      .expect(204);
+
+    // Existing sessions are revoked.
+    await server().get(`${API}/users/me`).set('Cookie', oldCookie).expect(401);
+
+    await server()
+      .post(`${API}/auth/login`)
+      .send({ email, password: PASSWORD })
+      .expect(401);
+
+    await server()
+      .post(`${API}/auth/login`)
+      .send({ email, password: 'brand-new-password' })
+      .expect(200);
+
+    // The token cannot be used twice.
+    await server()
+      .post(`${API}/auth/reset-password`)
+      .send({ token, password: 'another-password' })
+      .expect(400);
+  });
+
+  it('does not reveal whether an email exists when resetting a password', async () => {
+    const response = await server()
+      .post(`${API}/auth/forgot-password`)
+      .send({ email: 'missing-user@example.com' })
+      .expect(200);
+
+    expect(response.body).toEqual({});
+  });
 });

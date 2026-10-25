@@ -1,14 +1,20 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'node:crypto';
 import type {
+  ForgotPasswordInput,
   LoginInput,
   PublicUser,
   RegisterInput,
+  ResetPasswordInput,
 } from '@drawmyplace/contracts';
+import { MailService } from '../../common/mail/mail.service';
 import type { SessionMetadata } from './auth.types';
 import { AuthRepository, type UserRow } from './auth.repository';
 import { toPublicUser } from './auth.mapper';
@@ -46,6 +52,8 @@ export class AuthService {
     @Inject(AuthRepository) private readonly repository: AuthRepository,
     @Inject(PasswordService) private readonly passwords: PasswordService,
     @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(MailService) private readonly mail: MailService,
+    @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
   async register(
@@ -103,6 +111,53 @@ export class AuthService {
     await this.repository.revokeSessionByTokenHash(
       this.sessions.hashToken(token),
     );
+  }
+
+  /**
+   * Always resolves, even for unknown emails, so the endpoint cannot be used
+   * to enumerate accounts.
+   */
+  async forgotPassword(
+    input: ForgotPasswordInput,
+  ): Promise<{ token?: string }> {
+    const user = await this.repository.findUserByEmail(input.email);
+    if (!user || user.status !== 'active') {
+      return {};
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.sessions.hashToken(token);
+    await this.repository.createPasswordResetToken({
+      userId: user.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    });
+
+    const webOrigin = this.config.get<string>('WEB_ORIGIN') ?? '';
+    const link = `${webOrigin}/reset-password/${token}`;
+    await this.mail.send(
+      user.email,
+      'Reset your DrawMyPlace password',
+      `Use this link within one hour to reset your password:\n\n${link}\n\nIf you did not request this, ignore this email.`,
+    );
+
+    return this.config.get<string>('NODE_ENV') !== 'production'
+      ? { token }
+      : {};
+  }
+
+  async resetPassword(input: ResetPasswordInput): Promise<void> {
+    const tokenHash = this.sessions.hashToken(input.token);
+    const row = await this.repository.findPasswordResetByHash(tokenHash);
+
+    if (!row || row.reset.usedAt || row.reset.expiresAt < new Date()) {
+      throw new BadRequestException('Reset link is invalid or expired');
+    }
+
+    const passwordHash = await this.passwords.hash(input.password);
+    await this.repository.updateUserPassword(row.user.id, passwordHash);
+    await this.repository.markPasswordResetUsed(row.reset.id);
+    await this.repository.revokeAllSessions(row.user.id);
   }
 
   private async issueSession(

@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { MailService } from '../../common/mail/mail.service';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   CreateInvitationInput,
@@ -32,6 +34,8 @@ export class InvitationsService {
     @Inject(AuthRepository) private readonly users: AuthRepository,
     @Inject(NotificationsRepository)
     private readonly notifications: NotificationsRepository,
+    @Inject(MailService) private readonly mail: MailService,
+    @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
   async create(userId: string, organizationId: string, input: CreateInvitationInput) {
@@ -63,7 +67,19 @@ export class InvitationsService {
       });
     }
 
-    return { invitation: toPublic(row), token: rawToken };
+    const webOrigin = this.config.get<string>('WEB_ORIGIN') ?? '';
+    const link = `${webOrigin}/invite/${rawToken}`;
+    await this.mail.send(
+      input.email,
+      'You are invited to a DrawMyPlace organization',
+      `You have been invited to join an organization as ${input.role}.\n\nAccept the invitation:\n\n${link}\n\nThe invitation expires in ${input.expiresInDays} day(s).`,
+    );
+
+    const exposeToken = this.config.get<string>('NODE_ENV') !== 'production';
+    return {
+      invitation: toPublic(row),
+      token: exposeToken ? rawToken : undefined,
+    };
   }
 
   async list(userId: string, organizationId: string) {

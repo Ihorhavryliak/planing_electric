@@ -107,7 +107,7 @@ export function OrganizationsPage() {
         expiresInDays: 7,
       });
       setInvitations((current) => [result.invitation, ...current]);
-      setInviteToken(result.token);
+      setInviteToken(result.token ?? null);
       setInviteEmail('');
     } catch (err) {
       setError(getErrorMessage(err));

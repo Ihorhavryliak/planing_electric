@@ -36,6 +36,13 @@
       "when": 1792904000000,
       "tag": "0004_plan_calculation_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792905000000,
+      "tag": "0005_password_reset_tokens",
+      "breakpoints": true
     }
   ]
 }

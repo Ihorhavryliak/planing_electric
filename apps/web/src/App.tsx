@@ -6,6 +6,7 @@ import { AdminPage } from '@/pages/admin-page';
 import { AllEstimatesPage } from '@/pages/all-estimates-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
+import { ForgotPasswordPage } from '@/pages/forgot-password-page';
 import { EstimatesPage } from '@/pages/estimates-page';
 import { InvitePage } from '@/pages/invite-page';
 import { NotificationsPage } from '@/pages/notifications-page';
@@ -16,6 +17,7 @@ import { MaterialsPage } from '@/pages/materials-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
 import { RegisterPage } from '@/pages/register-page';
+import { ResetPasswordPage } from '@/pages/reset-password-page';
 import { SettingsPage } from '@/pages/settings-page';
 
 export function App() {
@@ -25,6 +27,14 @@ export function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPasswordPage />}
+          />
+          <Route
+            path="/reset-password/:token"
+            element={<ResetPasswordPage />}
+          />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>

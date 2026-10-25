@@ -24,6 +24,10 @@ Copy `.env.example` to `.env` and set:
 | `STORAGE_DIR` | Directory for uploaded files and previews |
 | `MAX_UPLOAD_MB` | Max plan upload size |
 | `PLATFORM_ADMIN_EMAILS` | Comma-separated platform administrator emails |
+| `MAIL_DRIVER` | `log` (development) or `smtp` |
+| `MAIL_FROM` | Sender address for reset links and invitations |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | SMTP connection |
+| `SMTP_USER` / `SMTP_PASSWORD` | SMTP credentials |
 
 Never commit `.env`. Keep secrets in the deployment platform's secret store.
 

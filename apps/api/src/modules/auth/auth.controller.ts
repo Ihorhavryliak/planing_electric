@@ -10,11 +10,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
+  type ForgotPasswordInput,
   type LoginInput,
   type PublicUser,
   type RegisterInput,
+  type ResetPasswordInput,
 } from '@drawmyplace/contracts';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
@@ -77,5 +81,25 @@ export class AuthController {
     }
 
     this.sessionCookies.clearCookie(response);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthRateLimitGuard)
+  forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema))
+    input: ForgotPasswordInput,
+  ): Promise<{ token?: string }> {
+    return this.auth.forgotPassword(input);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthRateLimitGuard)
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema))
+    input: ResetPasswordInput,
+  ): Promise<void> {
+    await this.auth.resetPassword(input);
   }
 }

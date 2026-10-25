@@ -96,6 +96,15 @@ export function LoginPage() {
           />
         </div>
 
+        <div className="text-right">
+          <Link
+            to="/forgot-password"
+            className="text-xs text-slate-400 hover:text-white"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         {error ? (
           <p
             role="alert"

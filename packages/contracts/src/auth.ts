@@ -38,6 +38,21 @@ export const publicUserSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(10).max(256),
+  password: z
+    .string()
+    .min(10, 'Password must be at least 10 characters')
+    .max(128, 'Password must be at most 128 characters'),
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(100),
 });
