@@ -23,7 +23,12 @@ export class ProjectsRepository {
     ownerId: string,
     status: ProjectListQuery['status'],
   ): Promise<ProjectRow[]> {
-    const conditions: SQL[] = [eq(projects.createdBy, ownerId)];
+    const conditions: SQL[] = [
+      or(
+        eq(projects.createdBy, ownerId),
+        sql`exists (select 1 from project_members pm where pm.project_id = ${projects.id} and pm.user_id = ${ownerId})`,
+      ) as SQL,
+    ];
 
     if (status !== 'all') {
       conditions.push(eq(projects.status, status));
