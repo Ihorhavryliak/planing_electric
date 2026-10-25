@@ -178,7 +178,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 
 - [x] Debounced autosave with visible save/error state.
 - [-] Revision/version checks to prevent silent overwrites (project update conflict check).
-- [ ] Recovery flow for stale/conflicting document changes.
+- [-] Recovery flow for stale/conflicting document changes (plan/project version checks + autosave error).
 - [x] Empty/loading/error states for core pages (implemented across editor/estimates/activity).
 - [ ] Keyboard and accessibility review.
 - [ ] Tablet layout review.
