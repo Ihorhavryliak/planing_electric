@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { DatabaseModule } from './database/database.module';
+import { RealtimeModule } from './common/realtime/realtime.module';
 import { ActivityLogModule } from './modules/activity-log/activity-log.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -25,6 +26,7 @@ import { UsersModule } from './modules/users/users.module';
       envFilePath: ['.env', '../../.env'],
     }),
     DatabaseModule,
+    RealtimeModule,
     ActivityLogModule,
     AdminModule,
     AuthModule,

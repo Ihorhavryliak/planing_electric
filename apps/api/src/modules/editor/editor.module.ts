@@ -8,6 +8,7 @@ import { ProjectsModule } from '../projects/projects.module';
 import { EditorService } from './editor.service';
 import { FloorsController } from './floors.controller';
 import { FloorsRepository } from './floors.repository';
+import { PlanEventsController } from './plan-events.controller';
 import { PlanStorageService } from './plan-storage.service';
 import { PlansController } from './plans.controller';
 import { PlansRepository } from './plans.repository';
@@ -25,7 +26,7 @@ import { PlansRepository } from './plans.repository';
       }),
     }),
   ],
-  controllers: [FloorsController, PlansController],
+  controllers: [FloorsController, PlansController, PlanEventsController],
   providers: [
     EditorService,
     FloorsRepository,

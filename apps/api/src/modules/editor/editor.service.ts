@@ -7,6 +7,7 @@ import {
   NotFoundException,
   PayloadTooLargeException,
 } from '@nestjs/common';
+import { RealtimeService } from '../../common/realtime/realtime.service';
 import type {
   CreateFloorInput,
   PublicFloor,
@@ -39,6 +40,7 @@ export class EditorService {
     @Inject(FloorsRepository) private readonly floors: FloorsRepository,
     @Inject(PlansRepository) private readonly plans: PlansRepository,
     @Inject(PlanStorageService) private readonly storage: PlanStorageService,
+    @Inject(RealtimeService) private readonly realtime: RealtimeService,
   ) {}
 
   async listFloors(
@@ -156,6 +158,12 @@ export class EditorService {
       await this.storage.remove(plan.previewKey);
     }
 
+    this.realtime.emit({
+      planId: updated.id,
+      version: updated.version,
+      kind: 'plan.updated',
+    });
+
     return toPublicPlan(updated);
   }
 
@@ -187,6 +195,12 @@ export class EditorService {
       this.storage.remove(plan.fileKey),
       this.storage.remove(plan.previewKey),
     ]);
+
+    this.realtime.emit({
+      planId: updated.id,
+      version: updated.version,
+      kind: 'plan.file.replaced',
+    });
 
     return toPublicPlan(updated);
   }

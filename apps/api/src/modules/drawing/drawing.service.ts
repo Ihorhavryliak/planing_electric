@@ -37,6 +37,7 @@ import {
   roundTo,
   type DropPoint,
 } from '@drawmyplace/calculations';
+import { RealtimeService } from '../../common/realtime/realtime.service';
 import { FloorsRepository } from '../editor/floors.repository';
 import { PlansRepository, type PlanRow } from '../editor/plans.repository';
 import { ProjectsRepository } from '../projects/projects.repository';
@@ -71,7 +72,15 @@ export class DrawingService {
     @Inject(FloorsRepository) private readonly floors: FloorsRepository,
     @Inject(PlansRepository) private readonly plans: PlansRepository,
     @Inject(DrawingRepository) private readonly drawing: DrawingRepository,
+    @Inject(RealtimeService) private readonly realtime: RealtimeService,
   ) {}
+
+  private async emitFloor(floorId: string, kind: string): Promise<void> {
+    const plan = await this.plans.findByFloor(floorId);
+    if (plan) {
+      this.realtime.emit({ planId: plan.id, version: plan.version, kind });
+    }
+  }
 
   // ---------------------------------------------------------------- reading
 
@@ -124,6 +133,7 @@ export class DrawingService {
         metersPerPixel: result.metersPerUnit,
       });
 
+      await this.emitFloor(plan.floorId, 'calibration.updated');
       return toPublicCalibration(row);
     } catch (error) {
       if (error instanceof CalibrationError) {
@@ -136,6 +146,7 @@ export class DrawingService {
   async deleteCalibration(ownerId: string, planId: string): Promise<void> {
     const plan = await this.requireEditablePlan(ownerId, planId);
     await this.drawing.deleteCalibration(plan.id);
+    await this.emitFloor(plan.floorId, 'calibration.deleted');
   }
 
   // ------------------------------------------------------------------ walls
@@ -265,7 +276,9 @@ export class DrawingService {
       );
     }
 
-    return toPublicPoint(await this.drawing.createPoint(plan.floorId, input));
+    const created = await this.drawing.createPoint(plan.floorId, input);
+    await this.emitFloor(plan.floorId, 'point.created');
+    return toPublicPoint(created);
   }
 
   async updatePoint(
@@ -275,12 +288,15 @@ export class DrawingService {
   ): Promise<PublicPoint> {
     const point = await this.requireOwnedPoint(ownerId, pointId);
 
-    return toPublicPoint(await this.drawing.updatePoint(point.id, input));
+    const updated = await this.drawing.updatePoint(point.id, input);
+    await this.emitFloor(point.floorId, 'point.updated');
+    return toPublicPoint(updated);
   }
 
   async deletePoint(ownerId: string, pointId: string): Promise<void> {
     const point = await this.requireOwnedPoint(ownerId, pointId);
     await this.drawing.deletePoint(point.id);
+    await this.emitFloor(point.floorId, 'point.deleted');
   }
 
   // ----------------------------------------------------------------- routes
@@ -298,7 +314,9 @@ export class DrawingService {
       );
     }
 
-    return toPublicRoute(await this.drawing.createRoute(plan.floorId, input));
+    const created = await this.drawing.createRoute(plan.floorId, input);
+    await this.emitFloor(plan.floorId, 'route.created');
+    return toPublicRoute(created);
   }
 
   async updateRoute(
@@ -308,12 +326,15 @@ export class DrawingService {
   ): Promise<PublicRoute> {
     const route = await this.requireOwnedRoute(ownerId, routeId);
 
-    return toPublicRoute(await this.drawing.updateRoute(route.id, input));
+    const updated = await this.drawing.updateRoute(route.id, input);
+    await this.emitFloor(route.floorId, 'route.updated');
+    return toPublicRoute(updated);
   }
 
   async deleteRoute(ownerId: string, routeId: string): Promise<void> {
     const route = await this.requireOwnedRoute(ownerId, routeId);
     await this.drawing.deleteRoute(route.id);
+    await this.emitFloor(route.floorId, 'route.deleted');
   }
 
   // ------------------------------------------------------------ calculation
