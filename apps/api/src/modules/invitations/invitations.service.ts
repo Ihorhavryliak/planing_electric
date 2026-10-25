@@ -6,6 +6,7 @@ import type {
   PublicInvitation,
 } from '@drawmyplace/contracts';
 import { AuthRepository } from '../auth/auth.repository';
+import { NotificationsRepository } from '../notifications/notifications.repository';
 import { OrganizationsRepository } from '../organizations/organizations.repository';
 import { InvitationsRepository } from './invitations.repository';
 
@@ -29,6 +30,8 @@ export class InvitationsService {
     @Inject(OrganizationsRepository)
     private readonly orgs: OrganizationsRepository,
     @Inject(AuthRepository) private readonly users: AuthRepository,
+    @Inject(NotificationsRepository)
+    private readonly notifications: NotificationsRepository,
   ) {}
 
   async create(userId: string, organizationId: string, input: CreateInvitationInput) {
@@ -47,6 +50,19 @@ export class InvitationsService {
       invitedBy: userId,
       expiresAt,
     });
+    if (!row) {
+      throw new Error('Failed to create invitation');
+    }
+
+    const existingUser = await this.users.findUserByEmail(input.email);
+    if (existingUser) {
+      await this.notifications.create(existingUser.id, 'invitation.received', {
+        organizationId,
+        invitationId: row.id,
+        role: input.role,
+      });
+    }
+
     return { invitation: toPublic(row), token: rawToken };
   }
 
