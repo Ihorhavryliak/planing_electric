@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/protected-route';
 import { AuthProvider } from '@/features/auth/auth-context';
+import { ActivityPage } from '@/pages/activity-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
 import { EstimatesPage } from '@/pages/estimates-page';
@@ -28,6 +29,10 @@ export function App() {
             <Route
               path="/app/projects/:projectId/estimates"
               element={<EstimatesPage />}
+            />
+            <Route
+              path="/app/projects/:projectId/activity"
+              element={<ActivityPage />}
             />
             <Route path="/app/organizations" element={<OrganizationsPage />} />
           </Route>
