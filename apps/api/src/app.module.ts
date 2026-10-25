@@ -10,6 +10,7 @@ import { EstimatesModule } from './modules/estimates/estimates.module';
 import { HealthModule } from './modules/health/health.module';
 import { InvitationsModule } from './modules/invitations/invitations.module';
 import { MaterialsModule } from './modules/materials/materials.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { UsersModule } from './modules/users/users.module';
@@ -31,6 +32,7 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     InvitationsModule,
     MaterialsModule,
+    NotificationsModule,
     OrganizationsModule,
     ProjectsModule,
     UsersModule,
