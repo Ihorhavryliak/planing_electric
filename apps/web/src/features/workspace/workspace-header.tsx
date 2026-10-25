@@ -1,4 +1,4 @@
-import { LoaderCircle, LogOut, Zap } from 'lucide-react';
+import { Bell, Building2, LoaderCircle, LogOut, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,20 @@ export function WorkspaceHeader({
 
         <div className="flex items-center gap-3">
           {children}
+          <Link
+            to="/app/organizations"
+            aria-label="Organizations"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <Building2 className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/app/notifications"
+            aria-label="Notifications"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <Bell className="h-4 w-4" />
+          </Link>
           {user ? (
             <span className="hidden max-w-48 truncate text-sm text-slate-300 sm:block">
               {user.name}
