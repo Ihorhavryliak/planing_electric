@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import type { PublicUser, UpdateProfileInput } from '@drawmyplace/contracts';
@@ -21,6 +22,20 @@ export class UsersController {
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: PublicUser): PublicUser {
     return user;
+  }
+
+  @Get('search')
+  @UseGuards(AuthGuard)
+  async search(
+    @Query('email') email: string,
+  ): Promise<PublicUser | null> {
+    if (!email || email.length > 254) {
+      return null;
+    }
+    const found = await this.authRepository.findUserByEmail(
+      email.trim().toLowerCase(),
+    );
+    return found ? toPublicUser(found) : null;
   }
 
   @Patch('me')

@@ -24,6 +24,7 @@ import {
   restoreProject,
   updateProject,
 } from '@/features/projects/projects-api';
+import { searchUserByEmail } from '@/features/users/users-api';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
@@ -46,7 +47,7 @@ export function ProjectPage() {
 
   const [members, setMembers] = useState<PublicProjectMember[]>([]);
   const [membersError, setMembersError] = useState<string | null>(null);
-  const [newMemberId, setNewMemberId] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] =
     useState<PublicProjectMember['role']>('viewer');
   const [addingMember, setAddingMember] = useState(false);
@@ -99,14 +100,19 @@ export function ProjectPage() {
     setMembersError(null);
     setAddingMember(true);
     try {
+      const user = await searchUserByEmail(newMemberEmail);
+      if (!user) {
+        setMembersError('No user found with that email.');
+        return;
+      }
       const created = await addProjectMember(projectId, {
-        userId: newMemberId,
+        userId: user.id,
         role: newMemberRole,
       });
       setMembers((current) =>
         current.some((m) => m.id === created.id) ? current : [created, ...current],
       );
-      setNewMemberId('');
+      setNewMemberEmail('');
     } catch (error) {
       setMembersError(getErrorMessage(error));
     } finally {
@@ -436,13 +442,14 @@ export function ProjectPage() {
           <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
             <h2 className="text-sm font-semibold text-white">Shared with</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Add a team member by user ID and pick their role.
+              Add a team member by email and pick their role.
             </p>
             <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleAddMember}>
               <Input
-                value={newMemberId}
-                onChange={(event) => setNewMemberId(event.target.value)}
-                placeholder="User ID (UUID)"
+                type="email"
+                value={newMemberEmail}
+                onChange={(event) => setNewMemberEmail(event.target.value)}
+                placeholder="member@example.com"
                 required
                 className="min-w-56 flex-1"
               />
