@@ -4,7 +4,7 @@
 >
 > **Status rule:** Only mark a task `[x]` after checking the repository and verifying the implementation. Do not infer implementation status from the specification alone.
 >
-> **Last updated:** 2026-10-25 (session 9)
+> **Last updated:** 2026-10-25 (session 11)
 
 ## 1. Where we are now
 
@@ -338,6 +338,12 @@ Add a short dated entry after each work session:
 - Browser pass (Playwright + installed Chrome, headless): the full previous flow plus undo/redo for scale calibration, point placement, route creation, point move with route-end follow, bend insertion, bend deletion, and point deletion. Reload still shows 2 points, 1 route with 2 vertices, calibration, and “All changes saved”. No console or page errors.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — 143 tests in 19 test files (api 41, web 46, contracts 27, calculations 27, database 2), all passing.
 - Issues/blockers: none for the verified flow. Undo history is session-local and is lost on reload; underlay/viewport changes are not in the history. Walls/rooms and dimensions are implemented in code (API + canvas) but still need a browser pass. Remaining browser gaps are unchanged from session 8.
+
+### 2026-10-25 — session 11: estimates, organizations, sharing, reliability, realtime
+- Completed: dedicated estimates page with manual overrides and draft/final status; organizations module (CRUD + members); invitations (create/list/revoke/accept with hashed tokens); project sharing (member CRUD, shared project list, viewer read-only enforcement); notifications module and page with unread badge; activity log module/page and recording on project/estimate actions; platform admin guard/endpoints; user profile update and user search by email; project/plan revision conflict checks; plan-level vertical drop defaults (migration `0004`); viewport culling for large plans; SSE plan updates with collaborator presence and reload prompt; deployment/operations documentation.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — all passing. Added organization, MVP workflow, viewer role, access revocation, and stale-plan conflict e2e tests.
+- Issues/blockers: PDF/underlay browser verification, full accessibility audit, and managed object-storage driver still pending.
+- Next action: browser-verify PDF/underlay flows and add an accessibility pass.
 
 ### 2026-10-25 — session 10: cable type per route + estimate UI
 - Completed: added `materialId` to route contracts (create/update/public) and backend drawing repository/mapper; estimate generation now uses each route's assigned cable (falling back to the default cable) and stores material price snapshots; added web materials API client; route properties panel gained a cable-type dropdown; editor sidebar gained an Estimate section that generates a takeoff and offers CSV/PDF download links. Updated roadmap checkboxes for walls/rooms/dimensions and Phase 6 items.
