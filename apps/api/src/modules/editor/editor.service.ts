@@ -266,7 +266,7 @@ export class EditorService {
     ownerId: string,
     projectId: string,
   ): Promise<void> {
-    const project = await this.projects.findOwnedById(projectId, ownerId);
+    const project = await this.projects.findAccessibleById(projectId, ownerId);
 
     if (!project) {
       throw new NotFoundException('Project not found');

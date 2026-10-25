@@ -441,7 +441,7 @@ export class DrawingService {
       throw new NotFoundException('Floor not found');
     }
 
-    const project = await this.projects.findOwnedById(floor.projectId, ownerId);
+    const project = await this.projects.findAccessibleById(floor.projectId, ownerId);
 
     if (!project) {
       throw new NotFoundException('Project not found');
