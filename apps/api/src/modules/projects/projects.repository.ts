@@ -5,7 +5,7 @@ import type {
   ProjectStatus,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
-import { and, desc, eq, type SQL } from 'drizzle-orm';
+import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm';
 import { projectMembers, projects, type Database } from '@drawmyplace/database';
 import { DatabaseService } from '../../database/database.service';
 
@@ -34,6 +34,27 @@ export class ProjectsRepository {
       .from(projects)
       .where(and(...conditions))
       .orderBy(desc(projects.updatedAt));
+  }
+
+  async findAccessibleById(
+    projectId: string,
+    userId: string,
+  ): Promise<ProjectRow | null> {
+    const [project] = await this.db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          eq(projects.id, projectId),
+          or(
+            eq(projects.createdBy, userId),
+            sql`exists (select 1 from project_members pm where pm.project_id = ${projects.id} and pm.user_id = ${userId})`,
+          ),
+        ),
+      )
+      .limit(1);
+
+    return project ?? null;
   }
 
   async findOwnedById(

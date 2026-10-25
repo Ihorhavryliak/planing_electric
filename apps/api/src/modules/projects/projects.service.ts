@@ -55,7 +55,10 @@ export class ProjectsService {
   }
 
   async get(ownerId: string, projectId: string): Promise<PublicProject> {
-    const project = await this.requireOwned(ownerId, projectId);
+    const project = await this.repository.findAccessibleById(projectId, ownerId);
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
 
     return toPublicProject(project);
   }
