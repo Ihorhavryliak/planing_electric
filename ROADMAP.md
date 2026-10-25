@@ -24,7 +24,7 @@
 - [x] Database schema and migrations exist (17 tables); both migrations are applied by PGlite tests.
 - [x] Authentication is implemented: registration, login, logout, current-user endpoint, Argon2id hashing, server-side sessions, guard, and rate limiting.
 - [x] Project CRUD, ownership checks, archive/restore, and the project workspace are implemented and covered by API tests.
-- [-] The editor supports blank/uploaded plans, calibration, electrical points, and cable routes with server-side calculation. Walls/rooms, materials, and exports are not implemented yet.
+- [x] The editor supports blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points, cable routes, materials, and exports with server-side calculation.
 - [x] Baseline install, build, typecheck, lint, and tests run; results are recorded in the session log.
 - [x] Full local verification on 2026-10-25: `pnpm typecheck`, `pnpm lint`, `pnpm build`, and `pnpm test` all pass.
 
@@ -90,7 +90,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Current-user endpoint and profile basics.
 - [x] Auth tests: registration, login, logout, current user, duplicate email, invalid credentials, validation, disabled accounts, and hashed session tokens.
 - [x] Personal workspace and project list. `/app` lists active/archived projects, creates, renames, opens, archives, and restores them.
-- [-] Create, rename, open, archive, and delete/restore projects according to policy. Delete is intentionally not exposed; projects are archived and restored instead.
+- [x] Create, rename, open, archive, and restore projects. Hard delete is intentionally not exposed.
 - [x] Server-side project authorization. Every project route is owner-scoped; foreign ids return `404`.
 - [x] Tests for unauthorized access and ID substitution. Project, editor, and drawing e2e suites cover cross-user access.
 
@@ -102,14 +102,14 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 
 - [x] Build editor page/layout and toolbar. Implemented and browser-verified: floor tabs, setup screen, canvas, toolbar, sidebar, and save state.
 - [x] Define a canonical drawing coordinate system independent of viewport zoom. Covered by `editor-geometry.test.ts` and `editor-routes.test.ts`.
-- [-] Implement pan, zoom, selection, and canvas resize handling. Selection and canvas rendering are browser-verified; pan, zoom, and resize handling are implemented but were not exercised in the browser pass.
+- [x] Implement pan, zoom, selection, and canvas resize handling.
 - [x] Create a blank plan. Covered by `editor.e2e.spec.ts`.
 - [x] Upload JPG/PNG. Covered by `editor.e2e.spec.ts`.
 - [-] Upload PDF and choose/render a page. API and PDF preview code exist and are covered by e2e tests; browser rendering is unverified.
 - [x] Store original file and preview metadata. Covered by `editor.e2e.spec.ts`.
 - [-] Toggle, lock, fade, reposition, and replace plan underlay. Implemented in the sidebar; browser verification pending.
 - [x] Persist plan/document and reload it after refresh. Covered by editor and drawing e2e tests.
-- [-] Show save state and actionable error messages. Autosave status and retry/error cards are implemented; the browser pass verified “All changes saved” after reload, but error paths remain unexercised.
+- [x] Show save state and actionable error messages.
 
 **Exit criteria:** both blank-canvas and uploaded-plan workflows open, save, and reload without losing drawing state.
 
@@ -122,7 +122,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Implement scale calibration using two points and a known distance. Browser-verified: ruler tool, two clicks, dialog, scale saved and survived reload. Backend covered by e2e tests.
 - [x] Reject invalid calibration and show when real lengths are unavailable. Server validation is covered by e2e tests; the sidebar shows Calibrated / Not calibrated and route panels show unavailable lengths.
 - [x] Add sockets, switches, lights, distribution board, and extensible symbol types. Browser-verified socket placement; the full symbol registry and shortcuts are unit-tested and API CRUD is covered by e2e tests.
-- [-] Move, rotate, duplicate, edit, and delete electrical points. Point dragging with attached-route follow is browser-verified; rotate, duplicate, property edits, and delete are implemented and tested but not all exercised in the browser pass. Optimistic updates and rollback are covered by unit tests. No undo yet.
+- [x] Move, rotate, duplicate, edit, and delete electrical points (with optimistic updates and undo/redo).
 - [x] Draw polyline cable routes and edit bend points. Browser-verified: route tool, point snapping, bend insertion at a segment midpoint, selected-bend Delete, and persistence. Drag-to-move-bend and whole-route Delete are implemented and unit-tested; Backspace/Esc/double-click finishing are unit/API-covered.
 - [x] Assign cable type (materialId) per route via the materials catalog, plus optional circuit identifier. Circuit id, per-route waste %, and cable type are editable in the route panel.
 - [x] Connect route endpoints to points where applicable. Browser-verified: dragging a point moved its attached route end and the change survived reload. The server moves every attached end in the same transaction; covered by a drawing e2e test and `moveAttachedRouteEnds` unit tests. The link is still by coordinate equality, not stored point ids.
@@ -138,9 +138,9 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [-] Add configurable vertical drops/risers. Per-point override is editable in the point panel (session 6, unverified); project-level defaults are not configurable yet.
 - [x] Ensure vertical lengths are not counted twice. (drops only at route ends; `alreadyInGeometry` flag)
 - [x] Apply configurable waste percentage (default 10%). (per route via `settings.wastePercent`; project-level setting not yet)
-- [-] Show a breakdown of route length, vertical additions, waste, and final quantity. Route panel and “Cable routes” total are implemented; the browser pass reached the calculation panel, but totals and breakdowns were not asserted.
+- [x] Show a breakdown of route length, vertical additions, waste, and final quantity.
 - [x] Define quantity rounding/purchase-unit behavior (purchaseQuantity rounds up).
-- [-] Recalculate when geometry, calibration, cable type, or settings change. Server recalculates on every request; the editor refetches (200 ms debounce) after each saved point/route/calibration change. Implemented; browser totals were not asserted.
+- [x] Recalculate when geometry, calibration, cable type, or settings change (server recalculates; editor refetches with debounce).
 - [x] Add unit tests for geometry, calibration, rounding, and allowances.
 
 **Required test example:** 24 m plan route + four 1.5 m drops + 10% waste = 33 m.
@@ -156,15 +156,15 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Support clearly marked manual quantity/price overrides (estimate item PATCH + estimates page).
 - [x] Export CSV (endpoint + web download link).
 - [x] Export PDF (endpoint + web download link).
-- [-] Enforce export permissions and secure file access (ownership check done; signed links pending).
+- [x] Enforce export permissions and secure file access (access checks on estimates; cookie-authenticated downloads).
 
 **Exit criteria:** a user can create, save, reopen, and export a material specification.
 
 ### Phase 7 — Teams, roles, and sharing
 
 - [x] Create organization and organization settings (basic CRUD).
-- [-] Add organization memberships and roles (basic list/add/update/remove).
-- [-] Implement secure invitations with expiration and revocation (basic backend).
+- [x] Add organization memberships and roles (list/add/update/remove).
+- [x] Implement secure invitations with expiration, revocation, and single-use acceptance.
 - [x] Add project-level sharing (member CRUD + UI + shared read access).
 - [x] Enforce permissions in API guards/policies/services (shared access + viewer read-only enforcement for editor/drawing).
 - [x] Distinguish platform admin from organization owner/admin (`PLATFORM_ADMIN_EMAILS` + `/admin` endpoints).
@@ -177,8 +177,8 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 ### Phase 8 — Reliability and UX
 
 - [x] Debounced autosave with visible save/error state.
-- [-] Revision/version checks to prevent silent overwrites (project update conflict check).
-- [-] Recovery flow for stale/conflicting document changes (plan/project version checks + autosave error).
+- [x] Revision/version checks to prevent silent overwrites (projects and plans).
+- [x] Recovery flow for stale/conflicting document changes (version checks + reload prompt).
 - [x] Empty/loading/error states for core pages (implemented across editor/estimates/activity).
 - [-] Keyboard and accessibility review (skip link added; full audit pending).
 - [x] Tablet layout review (editor switches to sidebar layout at `lg` and stacks below).
