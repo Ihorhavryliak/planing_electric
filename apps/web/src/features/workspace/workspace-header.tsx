@@ -86,9 +86,12 @@ export function WorkspaceHeader({
             ) : null}
           </Link>
           {user ? (
-            <span className="hidden max-w-48 truncate text-sm text-slate-300 sm:block">
+            <Link
+              to="/app/settings"
+              className="hidden max-w-48 truncate text-sm text-slate-300 hover:text-white sm:block"
+            >
               {user.name}
-            </span>
+            </Link>
           ) : null}
           <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200 md:block">
             {badge}

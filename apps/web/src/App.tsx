@@ -13,6 +13,7 @@ import { MaterialsPage } from '@/pages/materials-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
 import { RegisterPage } from '@/pages/register-page';
+import { SettingsPage } from '@/pages/settings-page';
 
 export function App() {
   return (
@@ -40,6 +41,7 @@ export function App() {
             <Route path="/app/organizations" element={<OrganizationsPage />} />
             <Route path="/app/notifications" element={<NotificationsPage />} />
             <Route path="/app/materials" element={<MaterialsPage />} />
+            <Route path="/app/settings" element={<SettingsPage />} />
             <Route path="/invite/:token" element={<InvitePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

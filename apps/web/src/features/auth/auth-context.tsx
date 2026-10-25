@@ -22,6 +22,7 @@ interface AuthContextValue {
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: () => Promise<PublicUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -86,9 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous');
   }, []);
 
+  const refresh = useCallback(async () => {
+    try {
+      const current = await apiRequest<PublicUser>('/users/me');
+      setUser(current);
+      setStatus('authenticated');
+      return current;
+    } catch {
+      setUser(null);
+      setStatus('anonymous');
+      return null;
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout],
+    () => ({ user, status, login, register, logout, refresh }),
+    [user, status, login, register, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
