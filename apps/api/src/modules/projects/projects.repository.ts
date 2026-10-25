@@ -79,6 +79,7 @@ export class ProjectsRepository {
   ): Promise<ProjectRow | null> {
     const changes: Partial<typeof projects.$inferInsert> = {
       updatedAt: new Date(),
+      revision: (await this.currentRevision(projectId, ownerId)) + 1,
     };
 
     if (input.name !== undefined) {
@@ -89,15 +90,27 @@ export class ProjectsRepository {
       changes.description = input.description;
     }
 
+    const conditions = [
+      eq(projects.id, projectId),
+      eq(projects.createdBy, ownerId),
+    ];
+
+    if (input.expectedRevision !== undefined) {
+      conditions.push(eq(projects.revision, input.expectedRevision));
+    }
+
     const [project] = await this.db
       .update(projects)
       .set(changes)
-      .where(
-        and(eq(projects.id, projectId), eq(projects.createdBy, ownerId)),
-      )
+      .where(and(...conditions))
       .returning();
 
     return project ?? null;
+  }
+
+  private async currentRevision(projectId: string, ownerId: string): Promise<number> {
+    const row = await this.findOwnedById(projectId, ownerId);
+    return row?.revision ?? 0;
   }
 
   async setStatusOwned(

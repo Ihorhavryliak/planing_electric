@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type {
   AddProjectMemberInput,
   CreateProjectInput,
@@ -46,11 +51,19 @@ export class ProjectsService {
     projectId: string,
     input: UpdateProjectInput,
   ): Promise<PublicProject> {
-    const project = await this.repository.updateOwned(
-      projectId,
-      ownerId,
-      input,
-    );
+    const existing = await this.repository.findOwnedById(projectId, ownerId);
+    if (!existing) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (
+      input.expectedRevision !== undefined &&
+      existing.revision !== input.expectedRevision
+    ) {
+      throw new ConflictException('Project revision mismatch');
+    }
+
+    const project = await this.repository.updateOwned(projectId, ownerId, input);
 
     if (!project) {
       throw new NotFoundException('Project not found');

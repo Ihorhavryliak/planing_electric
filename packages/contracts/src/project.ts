@@ -23,9 +23,13 @@ export const updateProjectSchema = z
   .object({
     name: projectNameSchema.optional(),
     description: projectDescriptionSchema.nullable().optional(),
+    expectedRevision: z.number().int().min(0).optional(),
   })
   .refine(
-    (value) => value.name !== undefined || value.description !== undefined,
+    (value) =>
+      value.name !== undefined ||
+      value.description !== undefined ||
+      value.expectedRevision !== undefined,
     { message: 'Provide at least one field to update' },
   );
 
