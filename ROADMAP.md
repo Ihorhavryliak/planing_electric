@@ -165,7 +165,7 @@ P0 = required for the first usable MVP. P1 = important follow-up. P2 = advanced 
 - [x] Create organization and organization settings (basic CRUD).
 - [-] Add organization memberships and roles (basic list/add/update/remove).
 - [-] Implement secure invitations with expiration and revocation (basic backend).
-- [-] Add project-level sharing (basic project member CRUD endpoints).
+- [x] Add project-level sharing (member CRUD + UI + shared read access).
 - [ ] Enforce permissions in API guards/policies/services.
 - [ ] Distinguish platform admin from organization owner/admin.
 - [ ] Test role boundaries and cross-organization isolation.
