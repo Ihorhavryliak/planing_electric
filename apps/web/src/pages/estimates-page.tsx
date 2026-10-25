@@ -12,6 +12,7 @@ import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   listEstimatesByProject,
   updateEstimateItem,
+  updateEstimateStatus,
 } from '@/features/editor/materials-api';
 import type { PublicEstimate, PublicEstimateItem } from '@drawmyplace/contracts';
 import { getErrorMessage } from '@/lib/api';
@@ -39,6 +40,23 @@ export function EstimatesPage() {
   useEffect(() => {
     void load();
   }, [projectId]);
+
+  async function handleStatus(
+    estimate: PublicEstimate,
+    status: 'draft' | 'final',
+  ) {
+    setSavingItemId(estimate.id);
+    try {
+      const updated = await updateEstimateStatus(estimate.id, status);
+      setEstimates((prev) =>
+        prev.map((est) => (est.id === updated.id ? updated : est)),
+      );
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSavingItemId(null);
+    }
+  }
 
   async function handleOverride(
     event: FormEvent<HTMLFormElement>,
@@ -130,7 +148,22 @@ export function EstimatesPage() {
                       {new Date(estimate.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={savingItemId === estimate.id}
+                      onClick={() =>
+                        handleStatus(
+                          estimate,
+                          estimate.status === 'final' ? 'draft' : 'final',
+                        )
+                      }
+                    >
+                      {estimate.status === 'final'
+                        ? 'Mark draft'
+                        : 'Mark final'}
+                    </Button>
                     <a
                       href={`/api/v1/estimates/${estimate.id}/csv`}
                       className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm text-slate-200 hover:bg-white/10"

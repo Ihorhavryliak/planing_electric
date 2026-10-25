@@ -15,6 +15,16 @@ export function getEstimate(estimateId: string): Promise<PublicEstimate> {
   return apiRequest<PublicEstimate>(`/estimates/${estimateId}`);
 }
 
+export function updateEstimateStatus(
+  estimateId: string,
+  status: 'draft' | 'final',
+): Promise<PublicEstimate> {
+  return apiRequest<PublicEstimate>(`/estimates/${estimateId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
 export function listEstimatesByProject(
   projectId: string,
 ): Promise<PublicEstimate[]> {
