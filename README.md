@@ -2,11 +2,11 @@
 
 Browser-based electrical installation planning: start from a blank plan or an uploaded drawing, place electrical points, route cable, calculate lengths and materials, and export an estimate.
 
-The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status lives in [`ROADMAP.md`](./ROADMAP.md). For a detailed Ukrainian setup guide, see [`RUN.md`](./RUN.md).
+The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status lives in [`ROADMAP.md`](./ROADMAP.md). For a detailed Ukrainian setup guide, see [`RUN.md`](./RUN.md), and for production operations see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## Current status
 
-**Phase 2 — Accounts and projects** is implemented end to end: registration, server-side sessions, and per-user project CRUD are verified. The editor, calculations, and exports are not implemented yet.
+The MVP core is implemented: authentication, projects, floors, blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points, cable routes, calculations, materials, estimates, CSV/PDF export, organizations, invitations, project sharing, notifications, activity log, and revision conflict checks.
 
 Verified in this repository:
 

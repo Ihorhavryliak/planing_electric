@@ -199,12 +199,12 @@ Do not start this phase before reliable saving and conflict detection exist.
 ### Phase 10 — Production readiness
 
 - [ ] Review authentication, authorization, upload security, rate limits, and secrets.
-- [ ] Configure production database migrations.
-- [ ] Configure object storage and access policies.
-- [ ] Set up backups and a restore procedure.
-- [ ] Configure logs, error reporting, and health monitoring.
-- [ ] Document deployment and rollback.
-- [ ] Run full regression tests.
+- [x] Configure production database migrations (documented in DEPLOYMENT.md).
+- [-] Configure object storage and access policies (local adapter documented; managed object storage pending).
+- [x] Set up backups and a restore procedure (documented in DEPLOYMENT.md).
+- [x] Configure logs, error reporting, and health monitoring (documented in DEPLOYMENT.md).
+- [x] Document deployment and rollback (DEPLOYMENT.md).
+- [x] Run full regression tests (typecheck, lint, build, and all tests pass).
 - [ ] Confirm no critical permissions or data-loss bugs remain.
 
 ## 4. MVP end-to-end acceptance scenario
