@@ -9,6 +9,7 @@ import { EditorPage } from '@/pages/editor-page';
 import { EstimatesPage } from '@/pages/estimates-page';
 import { InvitePage } from '@/pages/invite-page';
 import { NotificationsPage } from '@/pages/notifications-page';
+import { PricingPage } from '@/pages/pricing-page';
 import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
 import { MaterialsPage } from '@/pages/materials-page';
@@ -24,11 +25,16 @@ export function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/app" element={<AppPage />} />
             <Route
               path="/app/dashboard"
+              element={<Navigate to="/app" replace />}
+            />
+            <Route
+              path="/app/projects"
               element={<Navigate to="/app" replace />}
             />
             <Route path="/app/projects/:projectId" element={<ProjectPage />} />
