@@ -149,6 +149,79 @@ describe('Organizations API', () => {
       .expect(403);
   });
 
+  it('invites a user by email and accepts the invitation once', async () => {
+    const owner = await registerUser();
+    const invited = await registerUser();
+    const org = await createOrg(owner.cookie, 'Invite org');
+
+    const created = await server()
+      .post(`${API}/organizations/${org.id}/invitations`)
+      .set('Cookie', owner.cookie)
+      .send({ email: invited.user.email, role: 'electrician', expiresInDays: 7 })
+      .expect(201);
+
+    const { token, invitation } = created.body as {
+      token: string;
+      invitation: { id: string; email: string; revokedAt: string | null };
+    };
+    expect(token).toHaveLength(64);
+    expect(invitation).toMatchObject({
+      email: invited.user.email,
+      revokedAt: null,
+    });
+
+    const accepted = await server()
+      .post(`${API}/invitations/accept`)
+      .set('Cookie', invited.cookie)
+      .send({ token })
+      .expect(201);
+    expect(accepted.body).toMatchObject({ id: invitation.id });
+
+    const orgs = (
+      await server()
+        .get(`${API}/organizations`)
+        .set('Cookie', invited.cookie)
+        .expect(200)
+    ).body as PublicOrganization[];
+    expect(orgs.map((item) => item.id)).toContain(org.id);
+
+    // A token is single-use.
+    const replay = await server()
+      .post(`${API}/invitations/accept`)
+      .set('Cookie', invited.cookie)
+      .send({ token })
+      .expect(201);
+    expect(replay.body).toEqual({});
+  });
+
+  it('revokes an invitation before it is accepted', async () => {
+    const owner = await registerUser();
+    const invited = await registerUser();
+    const org = await createOrg(owner.cookie, 'Revoke org');
+
+    const created = await server()
+      .post(`${API}/organizations/${org.id}/invitations`)
+      .set('Cookie', owner.cookie)
+      .send({ email: invited.user.email, role: 'viewer' })
+      .expect(201);
+    const { token, invitation } = created.body as {
+      token: string;
+      invitation: { id: string };
+    };
+
+    await server()
+      .delete(`${API}/invitations/${invitation.id}`)
+      .set('Cookie', owner.cookie)
+      .expect(204);
+
+    const accepted = await server()
+      .post(`${API}/invitations/accept`)
+      .set('Cookie', invited.cookie)
+      .send({ token })
+      .expect(201);
+    expect(accepted.body).toEqual({});
+  });
+
   it('requires authentication for all organization endpoints', async () => {
     const org = '7d03f7d0-8ca7-4f53-9851-c8d3f2bd5f86';
     await server().get(`${API}/organizations`).expect(401);
