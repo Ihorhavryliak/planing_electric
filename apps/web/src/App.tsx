@@ -5,6 +5,7 @@ import { ActivityPage } from '@/pages/activity-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
 import { EstimatesPage } from '@/pages/estimates-page';
+import { NotificationsPage } from '@/pages/notifications-page';
 import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
 import { LoginPage } from '@/pages/login-page';
@@ -35,6 +36,7 @@ export function App() {
               element={<ActivityPage />}
             />
             <Route path="/app/organizations" element={<OrganizationsPage />} />
+            <Route path="/app/notifications" element={<NotificationsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
