@@ -1,4 +1,4 @@
-/* global process, Buffer, console */
+/* global process, Buffer, console, document */
 import { chromium } from 'playwright';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -65,6 +65,23 @@ async function main() {
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: /create account|sign up|register/i }).click();
   await page.waitForURL('**/app', { timeout: 15000 });
+
+  // Theme: system -> light -> dark, persists across reload, then back to system.
+  const themeButton = page.getByRole('button', { name: /^Theme:/ });
+  await themeButton.click();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.theme === 'light',
+  );
+  await themeButton.click();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.theme === 'dark',
+  );
+  await page.reload();
+  await page.waitForURL('**/app');
+  await page.waitForFunction(
+    () => document.documentElement.dataset.theme === 'dark',
+  );
+  await page.getByRole('button', { name: /^Theme:/ }).click();
 
   await page.getByPlaceholder('Test apartment').fill('Browser Check Project');
   await page.getByRole('button', { name: 'Create project' }).click();

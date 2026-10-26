@@ -39,6 +39,48 @@ body {
   }
 }
 
+/*
+ * Light theme: Tailwind v4 utilities resolve through these palette variables,
+ * so remapping the slate scale flips surfaces and text consistently without
+ * rewriting every component. The drawing canvas intentionally stays dark.
+ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --color-slate-950: #f8fafc;
+  --color-slate-900: #ffffff;
+  --color-slate-800: #f1f5f9;
+  --color-slate-700: #e2e8f0;
+  --color-slate-600: #cbd5e1;
+  --color-slate-500: #64748b;
+  --color-slate-400: #475569;
+  --color-slate-300: #334155;
+  --color-slate-200: #1e293b;
+  --color-slate-100: #0f172a;
+  --color-white: #0f172a;
+
+  --color-amber-100: #92400e;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-emerald-100: #065f46;
+  --color-emerald-200: #047857;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-rose-100: #881337;
+  --color-rose-200: #9f1239;
+  --color-rose-300: #be123c;
+  --color-rose-400: #e11d48;
+}
+
+[data-theme='light'] .text-slate-950 {
+  color: #0f172a;
+}
+
+[data-theme='light'] .app-grid {
+  opacity: 0.5;
+}
+
 .app-grid {
   background-image:
     linear-gradient(to right, rgb(148 163 184 / 0.07) 1px, transparent 1px),

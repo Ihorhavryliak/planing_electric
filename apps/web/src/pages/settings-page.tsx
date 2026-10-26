@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
+import { useTheme } from '@/features/theme/theme-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { apiRequest, getErrorMessage } from '@/lib/api';
 
 export function SettingsPage() {
   const { user, refresh } = useAuth();
+  const { preference, setPreference } = useTheme();
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +179,29 @@ export function SettingsPage() {
             ) : null}
           </div>
         </form>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <h2 className="text-sm font-semibold text-white">Appearance</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Follow the system setting or choose a theme explicitly.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(['system', 'light', 'dark'] as const).map((option) => (
+              <Button
+                key={option}
+                variant={preference === option ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setPreference(option)}
+              >
+                {option === 'system'
+                  ? 'System'
+                  : option === 'light'
+                    ? 'Light'
+                    : 'Dark'}
+              </Button>
+            ))}
+          </div>
+        </section>
 
         <form
           className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5"

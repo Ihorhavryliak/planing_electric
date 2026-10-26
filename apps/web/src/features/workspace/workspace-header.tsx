@@ -1,10 +1,21 @@
-import { Bell, Building2, LoaderCircle, LogOut, Package, Zap } from 'lucide-react';
+import {
+  Bell,
+  Building2,
+  LoaderCircle,
+  LogOut,
+  Monitor,
+  Moon,
+  Package,
+  Sun,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useLogout } from '@/features/auth/use-logout';
 import { listNotifications } from '@/features/notifications/notifications-api';
+import { useTheme } from '@/features/theme/theme-context';
 import { apiRequest, getErrorMessage } from '@/lib/api';
 
 interface WorkspaceHeaderProps {
@@ -17,7 +28,12 @@ export function WorkspaceHeader({
   children,
 }: WorkspaceHeaderProps) {
   const { user } = useAuth();
+  const { preference, resolved, toggle } = useTheme();
   const { loggingOut, logoutError, signOut } = useLogout();
+  const themeLabel =
+    preference === 'system'
+      ? `Theme: system (${resolved})`
+      : `Theme: ${preference}`;
   const [unread, setUnread] = useState(0);
   const [verificationMessage, setVerificationMessage] = useState<
     string | null
@@ -75,6 +91,21 @@ export function WorkspaceHeader({
 
         <div className="flex items-center gap-3">
           {children}
+          <button
+            type="button"
+            onClick={toggle}
+            title={themeLabel}
+            aria-label={themeLabel}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            {preference === 'system' ? (
+              <Monitor className="h-4 w-4" />
+            ) : resolved === 'dark' ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </button>
           <Link
             to="/app/organizations"
             aria-label="Organizations"
