@@ -163,6 +163,35 @@ export class AuthService {
     return this.issueSession(user, metadata);
   }
 
+  async listSessions(userId: string, currentSessionId: string | undefined) {
+    const rows = await this.repository.listActiveSessions(userId);
+    return rows.map((row) => ({
+      id: row.id,
+      current: row.id === currentSessionId,
+      userAgent: row.userAgent,
+      ipAddress: row.ipAddress,
+      createdAt: row.createdAt.toISOString(),
+      lastUsedAt: row.lastUsedAt ? row.lastUsedAt.toISOString() : null,
+      expiresAt: row.expiresAt.toISOString(),
+    }));
+  }
+
+  async revokeSession(
+    userId: string,
+    sessionId: string,
+    currentSessionId: string | undefined,
+  ): Promise<boolean> {
+    if (sessionId === currentSessionId) {
+      return false;
+    }
+    const row = await this.repository.findSessionById(sessionId);
+    if (!row || row.userId !== userId) {
+      return false;
+    }
+    await this.repository.revokeSession(sessionId);
+    return true;
+  }
+
   async logout(token: string): Promise<void> {
     await this.repository.revokeSessionByTokenHash(
       this.sessions.hashToken(token),

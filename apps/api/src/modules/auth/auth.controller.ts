@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
+  Param,
+  ParseUUIDPipe,
   Post,
   Req,
   Res,
@@ -30,7 +34,7 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
 import { AuthService } from './auth.service';
 import { SESSION_COOKIE_NAME, SessionService } from './session.service';
-import type { SessionMetadata } from './auth.types';
+import type { AuthenticatedRequest, SessionMetadata } from './auth.types';
 import type { Request, Response } from 'express';
 
 function metadataFrom(request: Request): SessionMetadata {
@@ -107,6 +111,26 @@ export class AuthController {
     input: ResetPasswordInput,
   ): Promise<void> {
     await this.auth.resetPassword(input);
+  }
+
+  @Get('sessions')
+  @UseGuards(AuthGuard)
+  sessions(
+    @CurrentUser() user: PublicUser,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.auth.listSessions(user.id, request.sessionId);
+  }
+
+  @Delete('sessions/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
+  async revokeSession(
+    @CurrentUser() user: PublicUser,
+    @Req() request: AuthenticatedRequest,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<void> {
+    await this.auth.revokeSession(user.id, id, request.sessionId);
   }
 
   @Post('change-password')

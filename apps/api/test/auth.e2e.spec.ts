@@ -330,6 +330,36 @@ describe('Authentication API', () => {
       .expect(400);
   });
 
+  it('lists and revokes other sessions', async () => {
+    const email = nextEmail();
+    const registration = await register(email).expect(201);
+    const firstCookie = firstSetCookie(registration);
+
+    const login = await server()
+      .post(`${API}/auth/login`)
+      .send({ email, password: PASSWORD })
+      .expect(200);
+    const secondCookie = firstSetCookie(login);
+
+    const sessions = (
+      await server()
+        .get(`${API}/auth/sessions`)
+        .set('Cookie', firstCookie)
+        .expect(200)
+    ).body as Array<{ id: string; current: boolean }>;
+    expect(sessions).toHaveLength(2);
+    const other = sessions.find((session) => !session.current);
+    expect(other).toBeTruthy();
+
+    await server()
+      .delete(`${API}/auth/sessions/${other!.id}`)
+      .set('Cookie', firstCookie)
+      .expect(204);
+
+    await server().get(`${API}/users/me`).set('Cookie', secondCookie).expect(401);
+    await server().get(`${API}/users/me`).set('Cookie', firstCookie).expect(200);
+  });
+
   it('changes a password only with the current password', async () => {
     const email = nextEmail();
     const registration = await register(email).expect(201);

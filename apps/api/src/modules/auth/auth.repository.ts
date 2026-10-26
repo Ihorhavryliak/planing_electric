@@ -110,6 +110,28 @@ export class AuthRepository {
     return row ?? null;
   }
 
+  async listActiveSessions(userId: string) {
+    return this.db
+      .select()
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.userId, userId),
+          isNull(sessions.revokedAt),
+          gt(sessions.expiresAt, new Date()),
+        ),
+      );
+  }
+
+  async findSessionById(sessionId: string) {
+    const [row] = await this.db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+    return row ?? null;
+  }
+
   async revokeSession(sessionId: string): Promise<void> {
     await this.db
       .update(sessions)

@@ -20,6 +20,35 @@ export function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSaved, setPasswordSaved] = useState(false);
 
+  interface SessionEntry {
+    id: string;
+    current: boolean;
+    userAgent: string | null;
+    ipAddress: string | null;
+    createdAt: string;
+    lastUsedAt: string | null;
+  }
+  const [sessions, setSessions] = useState<SessionEntry[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setSessions(await apiRequest<SessionEntry[]>('/auth/sessions'));
+      } catch {
+        setSessions([]);
+      }
+    })();
+  }, []);
+
+  async function revokeSession(id: string) {
+    try {
+      await apiRequest<void>(`/auth/sessions/${id}`, { method: 'DELETE' });
+      setSessions((current) => current.filter((item) => item.id !== id));
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setChangingPassword(true);
@@ -170,6 +199,38 @@ export function SettingsPage() {
             ) : null}
           </div>
         </form>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <h2 className="text-sm font-semibold text-white">Active sessions</h2>
+          <ul className="mt-3 space-y-2 text-sm">
+            {sessions.map((session) => (
+              <li
+                key={session.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/5 px-3 py-2"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-slate-200">
+                    {session.userAgent ?? 'Unknown browser'}
+                    {session.current ? ' (this session)' : ''}
+                  </span>
+                  <span className="block text-xs text-slate-500">
+                    {session.ipAddress ?? 'unknown ip'} ·{' '}
+                    {new Date(session.createdAt).toLocaleString()}
+                  </span>
+                </span>
+                {!session.current ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void revokeSession(session.id)}
+                  >
+                    Revoke
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
     </div>
   );
