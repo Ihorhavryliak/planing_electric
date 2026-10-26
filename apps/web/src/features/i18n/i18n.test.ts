@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { localizeMessage, setErrorLocale } from './error-messages';
 import {
   LOCALE_STORAGE_KEY,
+  currencyFor,
   formatLocale,
   isLocale,
   readLocale,
   translate,
+  translateUnit,
   writeLocale,
 } from './i18n';
 
@@ -50,6 +52,13 @@ describe('i18n', () => {
     expect(formatLocale('uk')).toBe('uk-UA');
     expect(formatLocale('pl')).toBe('pl-PL');
     expect(formatLocale('en')).toBe('en-US');
+  });
+
+  it('maps locales to currencies and translated units', () => {
+    expect(currencyFor('uk')).toBe('UAH');
+    expect(translateUnit('uk', 'm')).toBe('м');
+    expect(translateUnit('uk', 'm2')).toBe('м²');
+    expect(translateUnit('uk', 'pcs')).toBe('pcs');
   });
 
   it('localizes known API errors and leaves unknown ones intact', () => {

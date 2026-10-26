@@ -10,7 +10,6 @@ import { Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
-import { formatMeters } from './editor-geometry';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
 import {
   dimensionLine,
@@ -36,6 +35,7 @@ function realLength(
   length: number,
   metersPerUnit: number | null,
   t: (key: string, params?: Record<string, string | number>) => string,
+  formatMeters: (value: number) => string,
 ): string {
   return metersPerUnit === null
     ? t('editor.units', { value: length.toFixed(1) })
@@ -46,16 +46,20 @@ function realArea(
   area: number,
   metersPerUnit: number | null,
   t: (key: string, params?: Record<string, string | number>) => string,
+  formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string,
+  unit: string,
 ): string {
   if (metersPerUnit === null) {
     return t('editor.unitsSquared', { value: area.toFixed(0) });
   }
 
   const squareMeters = area * metersPerUnit * metersPerUnit;
+  const value = formatNumber(squareMeters, {
+    minimumFractionDigits: squareMeters < 10 ? 2 : 1,
+    maximumFractionDigits: squareMeters < 10 ? 2 : 1,
+  });
 
-  return squareMeters < 10
-    ? `${squareMeters.toFixed(2)} m²`
-    : `${squareMeters.toFixed(1)} m²`;
+  return `${value} ${unit}`;
 }
 
 interface WallPanelProps extends PanelProps {
@@ -72,7 +76,7 @@ export function WallPropertiesPanel({
   onDuplicate,
   onDelete,
 }: WallPanelProps) {
-  const { t } = useI18n();
+  const { t, formatMeters } = useI18n();
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -123,7 +127,12 @@ export function WallPropertiesPanel({
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
           label={t('editor.totalLength')}
-          value={realLength(polylineLength(wall.geometry), metersPerUnit, t)}
+          value={realLength(
+            polylineLength(wall.geometry),
+            metersPerUnit,
+            t,
+            formatMeters,
+          )}
         />
         <Row
           label={t('editor.segments')}
@@ -169,7 +178,7 @@ export function RoomPropertiesPanel({
   onDuplicate,
   onDelete,
 }: RoomPanelProps) {
-  const { t } = useI18n();
+  const { t, formatMeters, formatNumber, formatUnit } = useI18n();
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -203,11 +212,22 @@ export function RoomPropertiesPanel({
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
           label={t('editor.area')}
-          value={realArea(polygonArea(room.boundary), metersPerUnit, t)}
+          value={realArea(
+            polygonArea(room.boundary),
+            metersPerUnit,
+            t,
+            formatNumber,
+            formatUnit('m2'),
+          )}
         />
         <Row
           label={t('editor.perimeter')}
-          value={realLength(polygonPerimeter(room.boundary), metersPerUnit, t)}
+          value={realLength(
+            polygonPerimeter(room.boundary),
+            metersPerUnit,
+            t,
+            formatMeters,
+          )}
         />
         <Row
           label={t('editor.corners')}
@@ -245,7 +265,7 @@ export function DimensionPropertiesPanel({
   onChange,
   onDelete,
 }: DimensionPanelProps) {
-  const { t } = useI18n();
+  const { t, formatMeters } = useI18n();
   const line = dimensionLine(
     dimension.pointA,
     dimension.pointB,
@@ -301,7 +321,7 @@ export function DimensionPropertiesPanel({
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
           label={t('editor.measured')}
-          value={realLength(line.length, metersPerUnit, t)}
+          value={realLength(line.length, metersPerUnit, t, formatMeters)}
         />
         <Row
           label={t('editor.offset')}

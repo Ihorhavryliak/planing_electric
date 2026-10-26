@@ -21,7 +21,8 @@ import { getErrorMessage } from '@/lib/api';
 
 export function EstimatesPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
-  const { formatDate, t } = useI18n();
+  const { formatCurrency, formatDate, formatNumber, formatUnit, t } =
+    useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -241,19 +242,27 @@ export function EstimatesPage() {
                             ) : null}
                           </td>
                           <td className="py-2 pr-3 text-slate-400">
-                            {item.unit}
+                            {formatUnit(item.unit)}
                           </td>
                           <td className="py-2 pr-3 text-slate-200">
-                            {item.quantity}
+                            {formatNumber(item.quantity, {
+                              maximumFractionDigits: 2,
+                            })}
                           </td>
                           <td className="py-2 pr-3 text-slate-200">
-                            {item.purchaseQuantity ?? '—'}
+                            {item.purchaseQuantity === null
+                              ? '—'
+                              : formatNumber(item.purchaseQuantity)}
                           </td>
                           <td className="py-2 pr-3 text-slate-200">
-                            {item.unitPrice ?? '—'}
+                            {item.unitPrice === null
+                              ? '—'
+                              : formatCurrency(item.unitPrice)}
                           </td>
                           <td className="py-2 pr-3 text-slate-200">
-                            {item.subtotal ?? '—'}
+                            {item.subtotal === null
+                              ? '—'
+                              : formatCurrency(item.subtotal)}
                           </td>
                           <td className="py-2">
                             <form

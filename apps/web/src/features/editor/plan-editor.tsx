@@ -80,7 +80,7 @@ import {
   updateRoute,
   updateWall,
 } from './drawing-api';
-import { formatScale, type Vec2 } from './editor-geometry';
+import type { Vec2 } from './editor-geometry';
 import {
   loadPlanFile,
   planFileUrl,
@@ -377,7 +377,7 @@ export function PlanEditor({
   floorName,
   onPlanChange,
 }: PlanEditorProps) {
-  const { t } = useI18n();
+  const { t, formatNumber, formatScale, formatUnit } = useI18n();
   const [underlay, setUnderlay] = useState<UnderlaySettings>(plan.underlay);
   const [viewport, setViewport] = useState<EditorViewport>(plan.viewport);
   const [assetNonce, setAssetNonce] = useState(0);
@@ -2963,7 +2963,10 @@ export function PlanEditor({
                     <li key={item.id} className="flex justify-between gap-2">
                       <span className="truncate">{item.description}</span>
                       <span className="tabular-nums">
-                        {item.quantity.toFixed(2)} {item.unit}
+                        {formatNumber(item.quantity, {
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                        {formatUnit(item.unit)}
                       </span>
                     </li>
                   ))}

@@ -120,6 +120,13 @@ infra/
 RUN.md                  Detailed Ukrainian setup and troubleshooting guide
 ```
 
+## Observability
+
+- The API logs each request with a request id, duration, status, and route. The id is returned as `X-Request-Id`.
+- Set `SENTRY_DSN` to send API exceptions (HTTP 500s) to Sentry; without it, reporting is a no-op.
+- Set `VITE_SENTRY_DSN` to enable browser error and performance reporting; the React tree is wrapped in a Sentry error boundary.
+- Health endpoints: `GET /api/v1/health` (liveness) and `GET /api/v1/health/ready` (database readiness).
+
 ## Database
 
 - Schema: `packages/database/src/schema`

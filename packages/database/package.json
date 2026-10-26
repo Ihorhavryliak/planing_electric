@@ -4,7 +4,10 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "migrations"],
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
@@ -14,6 +17,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@opentelemetry/api": "1.10.0",
     "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.9"
   },

@@ -8,7 +8,6 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
-import { formatMeters } from './editor-geometry';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
 
 interface RoutePropertiesPanelProps {
@@ -35,7 +34,7 @@ export function RoutePropertiesPanel({
   onChange,
   onDelete,
 }: RoutePropertiesPanelProps) {
-  const { t } = useI18n();
+  const { t, formatMeters } = useI18n();
   const cableMaterials = materials.filter(
     (material) => material.category === 'cable' || material.category === null,
   );

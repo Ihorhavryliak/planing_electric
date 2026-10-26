@@ -8,10 +8,13 @@ import {
   type ReactNode,
 } from 'react';
 import { setErrorLocale } from './error-messages';
+import { formatMeters, formatScale } from '@/features/editor/editor-geometry';
 import {
+  currencyFor,
   formatLocale,
   readLocale,
   translate,
+  translateUnit,
   writeLocale,
   type Locale,
 } from './i18n';
@@ -22,6 +25,10 @@ interface I18nContextValue {
   t: (key: string, params?: Record<string, string | number>) => string;
   formatDate: (value: string | Date) => string;
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string;
+  formatCurrency: (value: number) => string;
+  formatMeters: (value: number) => string;
+  formatScale: (metersPerUnit: number) => string;
+  formatUnit: (unit: string) => string;
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -55,6 +62,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         }).format(typeof input === 'string' ? new Date(input) : input),
       formatNumber: (input, options) =>
         new Intl.NumberFormat(intlLocale, options).format(input),
+      formatCurrency: (input) =>
+        new Intl.NumberFormat(intlLocale, {
+          style: 'currency',
+          currency: currencyFor(locale),
+        }).format(input),
+      formatMeters: (input) => formatMeters(input, locale),
+      formatScale: (metersPerUnit) => formatScale(metersPerUnit, locale),
+      formatUnit: (unit) => translateUnit(locale, unit),
     };
   }, [locale, setLocale]);
 

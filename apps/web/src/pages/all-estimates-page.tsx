@@ -16,7 +16,7 @@ function total(estimate: PublicEstimate): number {
 }
 
 export function AllEstimatesPage() {
-  const { formatDate, t } = useI18n();
+  const { formatCurrency, formatDate, t } = useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function AllEstimatesPage() {
                     {formatDate(estimate.createdAt)} ·{' '}
                     {t('estimates.linesTotal', {
                       lines: estimate.items.length,
-                      total: total(estimate).toFixed(2),
+                      total: formatCurrency(total(estimate)),
                     })}
                   </p>
                 </div>

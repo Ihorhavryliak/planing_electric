@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { useI18n } from '@/features/i18n/i18n-context';
 import {
   distanceBetween,
-  formatScale,
   previewMetersPerUnit,
   type Vec2,
 } from './editor-geometry';
@@ -33,7 +32,7 @@ export function CalibrationDialog({
   onCancel,
   onConfirm,
 }: CalibrationDialogProps) {
-  const { t } = useI18n();
+  const { t, formatScale } = useI18n();
   const [distance, setDistance] = useState('');
   const [unit, setUnit] = useState<LengthUnitInput>(existing?.unit ?? 'm');
   const inputRef = useRef<HTMLInputElement>(null);

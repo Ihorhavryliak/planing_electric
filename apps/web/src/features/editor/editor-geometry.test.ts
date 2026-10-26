@@ -60,6 +60,9 @@ describe('length formatting', () => {
     expect(formatScale(0.005)).toBe('1 unit = 5.00 mm');
     expect(formatScale(2)).toBe('1 unit = 2.00 m');
     expect(formatScale(0)).toBe('—');
+    expect(formatMeters(12.345, 'uk')).toBe('12,35 м');
+    expect(formatMeters(0.456, 'uk')).toBe('46 см');
+    expect(formatScale(0.005, 'uk')).toBe('1 од. = 5,00 мм');
   });
 });
 

@@ -1,4 +1,9 @@
 import type { EditorViewport, LengthUnitInput } from '@drawmyplace/contracts';
+import {
+  formatLocale,
+  translate,
+  type Locale,
+} from '@/features/i18n/i18n';
 
 /**
  * Coordinate model of the editor:
@@ -109,29 +114,48 @@ export function isClick(start: Vec2, end: Vec2, threshold = 4): boolean {
 }
 
 /** Length in meters as a short label: 12.35 m, or 45 cm below one meter. */
-export function formatMeters(meters: number): string {
+export function formatMeters(meters: number, locale: Locale = 'en'): string {
   if (!Number.isFinite(meters)) {
     return '—';
   }
 
+  const intlLocale = formatLocale(locale);
+
   if (Math.abs(meters) < 1) {
-    return `${Math.round(meters * 100)} cm`;
+    const value = new Intl.NumberFormat(intlLocale, {
+      maximumFractionDigits: 0,
+    }).format(meters * 100);
+    return `${value} ${translate(locale, 'units.cm')}`;
   }
 
-  return `${meters.toFixed(2)} m`;
+  const value = new Intl.NumberFormat(intlLocale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(meters);
+  return `${value} ${translate(locale, 'units.m')}`;
 }
 
 /** Human readable scale: how much real length one drawing unit represents. */
-export function formatScale(metersPerUnit: number): string {
+export function formatScale(
+  metersPerUnit: number,
+  locale: Locale = 'en',
+): string {
   if (!Number.isFinite(metersPerUnit) || metersPerUnit <= 0) {
     return '—';
   }
 
-  if (metersPerUnit >= 1) {
-    return `1 unit = ${metersPerUnit.toPrecision(3)} m`;
-  }
+  const intlLocale = formatLocale(locale);
+  const unitKey = metersPerUnit >= 1 ? 'units.m' : 'units.mm';
+  const value = new Intl.NumberFormat(intlLocale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(metersPerUnit >= 1 ? metersPerUnit : metersPerUnit * 1000);
 
-  return `1 unit = ${(metersPerUnit * 1000).toPrecision(3)} mm`;
+  return translate(locale, 'editor.scaleValue', {
+    unit: translate(locale, 'units.unit'),
+    value,
+    lengthUnit: translate(locale, unitKey),
+  });
 }
 
 /**

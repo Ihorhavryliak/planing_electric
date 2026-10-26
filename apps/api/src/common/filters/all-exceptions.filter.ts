@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { captureException } from '../observability/sentry';
 
 interface ApiErrorBody {
   statusCode: number;
@@ -63,6 +64,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(
         exception instanceof Error ? exception.stack : String(exception),
       );
+      captureException(exception, {
+        requestId: String(response.getHeader('X-Request-Id') ?? ''),
+        path: request.originalUrl,
+        method: request.method,
+      });
     } else {
       this.logger.warn(`${request.method} ${request.originalUrl} -> ${status}`);
     }

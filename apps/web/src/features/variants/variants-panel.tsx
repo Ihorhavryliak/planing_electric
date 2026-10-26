@@ -13,7 +13,7 @@ import {
 } from './variants-api';
 
 export function VariantsPanel({ projectId }: { projectId: string }) {
-  const { t } = useI18n();
+  const { formatCurrency, formatMeters, t } = useI18n();
   const [variants, setVariants] = useState<PublicVariant[]>([]);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -151,12 +151,12 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                   <td className="py-2 pr-3 text-slate-300">
                     {variant.metrics.totalRequiredLength === null
                       ? '—'
-                      : `${variant.metrics.totalRequiredLength.toFixed(1)} m`}
+                      : formatMeters(variant.metrics.totalRequiredLength)}
                   </td>
                   <td className="py-2 pr-3 text-slate-300">
                     {variant.metrics.estimatedCost === null
                       ? '—'
-                      : variant.metrics.estimatedCost.toFixed(2)}
+                      : formatCurrency(variant.metrics.estimatedCost)}
                   </td>
                   <td className="py-2 pr-3 text-amber-200">
                     {variant.metrics.warningCount}

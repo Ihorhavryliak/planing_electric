@@ -42,7 +42,7 @@ const now = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
 
 export function LocalEditorPage() {
-  const { t } = useI18n();
+  const { t, formatMeters } = useI18n();
   const { localId = '' } = useParams<{ localId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<LocalProject | null>(null);
@@ -244,7 +244,7 @@ export function LocalEditorPage() {
           <span className="text-xs text-slate-400">
             {total === null
               ? t('local.notCalibrated')
-              : t('local.cable', { length: total.toFixed(1) })}
+              : t('local.cable', { length: formatMeters(total) })}
           </span>
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/local')}>

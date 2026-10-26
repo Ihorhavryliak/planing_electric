@@ -2,7 +2,6 @@ import type { PlanCalculation, PublicRoute } from '@drawmyplace/contracts';
 import { LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/features/i18n/i18n-context';
-import { formatMeters } from './editor-geometry';
 
 interface CalculationPanelProps {
   routes: readonly PublicRoute[];
@@ -23,7 +22,7 @@ export function CalculationPanel({
   selectedRouteId,
   onSelectRoute,
 }: CalculationPanelProps) {
-  const { t } = useI18n();
+  const { t, formatMeters } = useI18n();
   const results = new Map(
     (calculation?.routes ?? []).map((item) => [item.routeId, item]),
   );

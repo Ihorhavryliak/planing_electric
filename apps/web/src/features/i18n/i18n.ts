@@ -237,7 +237,7 @@ const en: Dictionary = {
   'local.importFailed': 'Import failed',
   'local.savingLocally': 'Saving locally…',
   'local.savedLocally': 'Saved locally',
-  'local.cable': 'Cable: {length} m',
+  'local.cable': 'Cable: {length}',
   'local.notCalibrated': 'Not calibrated',
   'local.projects': 'Projects',
   'local.projectName': 'Project name',
@@ -737,6 +737,14 @@ const en: Dictionary = {
   'editor.ceiling': 'Ceiling',
   'editor.exportFailed': 'Export failed',
   'editor.calibrationTitle': 'Set the plan scale',
+
+  'units.m': 'm',
+  'units.cm': 'cm',
+  'units.mm': 'mm',
+  'units.m2': 'm²',
+  'units.unit': 'unit',
+  'editor.scaleValue': '1 {unit} = {value} {lengthUnit}',
+
   'editor.calibrationIntro':
     'The two points are {distance} drawing units apart. How far apart are they in reality?',
 };
@@ -975,7 +983,7 @@ const uk: Dictionary = {
   'local.importFailed': 'Не вдалося імпортувати',
   'local.savingLocally': 'Збереження локально…',
   'local.savedLocally': 'Збережено локально',
-  'local.cable': 'Кабель: {length} м',
+  'local.cable': 'Кабель: {length}',
   'local.notCalibrated': 'Не відкалібровано',
   'local.projects': 'Проєкти',
   'local.projectName': 'Назва проєкту',
@@ -1482,6 +1490,14 @@ const uk: Dictionary = {
   'editor.ceiling': 'Стеля',
   'editor.exportFailed': 'Не вдалося експортувати',
   'editor.calibrationTitle': 'Задайте масштаб плану',
+
+  'units.m': 'м',
+  'units.cm': 'см',
+  'units.mm': 'мм',
+  'units.m2': 'м²',
+  'units.unit': 'од.',
+  'editor.scaleValue': '1 {unit} = {value} {lengthUnit}',
+
   'editor.calibrationIntro':
     'Між двома точками {distance} одиниць креслення. Яка відстань насправді?',
 };
@@ -1535,4 +1551,21 @@ export function translate(
 
 export function formatLocale(locale: Locale): string {
   return locale === 'uk' ? 'uk-UA' : locale === 'pl' ? 'pl-PL' : 'en-US';
+}
+
+const CURRENCIES: Record<Locale, string> = {
+  uk: 'UAH',
+  pl: 'PLN',
+  en: 'USD',
+};
+
+export function currencyFor(locale: Locale): string {
+  const configured = import.meta.env?.VITE_CURRENCY;
+  return configured && configured.length === 3 ? configured : CURRENCIES[locale];
+}
+
+/** Localized label for a known measurement unit, or the raw unit. */
+export function translateUnit(locale: Locale, unit: string): string {
+  const known = unit === 'm' || unit === 'cm' || unit === 'mm' || unit === 'm2';
+  return known ? translate(locale, `units.${unit}`) : unit;
 }
