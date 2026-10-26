@@ -58,6 +58,7 @@ import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
+import { DevicePalette } from './device-palette';
 import {
   createDimension,
   createOpening,
@@ -91,7 +92,7 @@ import {
   updatePlan,
   uploadPlanPreview,
 } from './editor-api';
-import { EditorCanvas } from './editor-canvas';
+import { EditorCanvas, type PlacementRequest } from './editor-canvas';
 
 const ThreeView = lazy(() =>
   import('./three-view').then((module) => ({ default: module.ThreeView })),
@@ -425,6 +426,8 @@ export function PlanEditor({
   const routeRequestRef = useRef(new Map<string, number>());
 
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [placementRequest, setPlacementRequest] =
+    useState<PlacementRequest | null>(null);
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
@@ -2070,6 +2073,7 @@ export function PlanEditor({
           {viewMode === '2d' ? (
           <EditorCanvas
             image={image}
+            placementRequest={placementRequest}
             underlay={underlay}
             viewport={viewport}
             autoFit={plan.version === 1}
@@ -2098,7 +2102,13 @@ export function PlanEditor({
             onInsertRouteVertex={handleInsertRouteVertex}
             onRemoveRouteVertex={handleRemoveRouteVertex}
             onDeleteRoute={(id) => void handleDeleteRoute(id)}
-            onCreatePoint={(type, at) => void handleCreatePoint(type, at)}
+            onCreatePoint={(type, at, subtype) =>
+              void handleCreatePoint(
+                type,
+                at,
+                subtype ? { properties: { subtype } } : {},
+              )
+            }
             onMovePoint={(id, at) =>
               void handlePatchPoint(id, { x: at.x, y: at.y })
             }
@@ -2502,6 +2512,16 @@ export function PlanEditor({
               </p>
             ) : null}
           </section>
+
+          <DevicePalette
+            onSelect={(type, subtype) =>
+              setPlacementRequest({
+                type,
+                subtype,
+                nonce: Date.now(),
+              })
+            }
+          />
 
           <CircuitsPanel
             circuits={circuits}

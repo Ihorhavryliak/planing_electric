@@ -17,7 +17,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
-import { EditorCanvas } from '@/features/editor/editor-canvas';
+import { DevicePalette } from '@/features/editor/device-palette';
+import {
+  EditorCanvas,
+  type PlacementRequest,
+} from '@/features/editor/editor-canvas';
 import { previewMetersPerUnit, type Vec2 } from '@/features/editor/editor-geometry';
 import {
   LocalConflictError,
@@ -28,6 +32,7 @@ import {
 } from '@/features/local/local-db';
 import { calculateRoute, resolveRouteDrops } from '@drawmyplace/calculations';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { DEVICE_SUBTYPES, type DeviceSubtype } from '@drawmyplace/contracts';
 
 const HIDDEN_UNDERLAY: UnderlaySettings = {
   visible: false,
@@ -51,6 +56,8 @@ export function LocalEditorPage() {
   const [viewport, setViewport] = useState({ x: 0, y: 0, zoom: 1 });
   const [underlay, setUnderlay] = useState<UnderlaySettings>(HIDDEN_UNDERLAY);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
+  const [placementRequest, setPlacementRequest] =
+    useState<PlacementRequest | null>(null);
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedDimensionId, setSelectedDimensionId] = useState<string | null>(
@@ -268,6 +275,7 @@ export function LocalEditorPage() {
         <div className="relative h-[70vh] min-h-[440px]">
           <EditorCanvas
             image={null}
+            placementRequest={placementRequest}
             underlay={underlay}
             viewport={viewport}
             autoFit={false}
@@ -298,7 +306,11 @@ export function LocalEditorPage() {
                 setSelectedRouteId(null);
               }
             }}
-            onCreatePoint={(type: ElectricalPointType, at: Vec2) =>
+            onCreatePoint={(
+              type: ElectricalPointType,
+              at: Vec2,
+              subtype: DeviceSubtype | null,
+            ) =>
               update((current) => ({
                 ...current,
                 points: [
@@ -312,7 +324,7 @@ export function LocalEditorPage() {
                     rotation: 0,
                     label: null,
                     mountingHeight: null,
-                    properties: {},
+                    properties: subtype ? { subtype } : {},
                     updatedAt: now(),
                   } satisfies PublicPoint,
                 ],
@@ -573,6 +585,16 @@ export function LocalEditorPage() {
             </dl>
           </section>
 
+          <DevicePalette
+            onSelect={(type, subtype) =>
+              setPlacementRequest({
+                type,
+                subtype,
+                nonce: Date.now(),
+              })
+            }
+          />
+
           <CircuitsPanel
             circuits={drawing.circuits}
             points={drawing.points}
@@ -607,6 +629,43 @@ export function LocalEditorPage() {
                 {t('local.selectedPoint')}
               </h2>
               <p className="mt-2">{t(`editor.point.${selectedPoint.type}`)}</p>
+              <label className="mt-3 block">
+                <span className="text-slate-500">
+                  {t('devices.subtype')}
+                </span>
+                <select
+                  value={selectedPoint.properties.subtype ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    update((current) => ({
+                      ...current,
+                      points: current.points.map((point) => {
+                        if (point.id !== selectedPoint.id) return point;
+                        const { subtype: _previous, ...rest } = point.properties;
+                        return {
+                          ...point,
+                          properties: value
+                            ? {
+                                ...rest,
+                                subtype: value as DeviceSubtype,
+                              }
+                            : rest,
+                        };
+                      }),
+                    }));
+                  }}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                >
+                  <option value="">{t('devices.generic')}</option>
+                  {DEVICE_SUBTYPES.filter(
+                    (definition) => definition.type === selectedPoint.type,
+                  ).map((definition) => (
+                    <option key={definition.id} value={definition.id}>
+                      {t(`devices.subtype.${definition.id}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="mt-3 block">
                 <span className="text-slate-500">
                   {t('circuits.circuit')}

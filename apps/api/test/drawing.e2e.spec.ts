@@ -781,7 +781,11 @@ describe('Drawing API', () => {
         type: 'socket',
         x: 10,
         y: 20,
-        properties: { circuitId: 'G1', verticalDropMeters: 1.2 },
+        properties: {
+          circuitId: 'G1',
+          verticalDropMeters: 1.2,
+          subtype: 'socket-double',
+        },
       })
       .expect(201);
 
@@ -795,6 +799,7 @@ describe('Drawing API', () => {
     expect(drawing.points[0]?.properties).toMatchObject({
       circuitId: 'G1',
       verticalDropMeters: 1.2,
+      subtype: 'socket-double',
     });
 
     await addRoute(fixture, {

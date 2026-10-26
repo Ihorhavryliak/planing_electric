@@ -1,8 +1,10 @@
-import type {
-  Circuit,
-  ElectricalPointType,
-  PublicPoint,
-  UpdatePointInput,
+import {
+  DEVICE_SUBTYPES,
+  type Circuit,
+  type DeviceSubtype,
+  type ElectricalPointType,
+  type PublicPoint,
+  type UpdatePointInput,
 } from '@drawmyplace/contracts';
 import { Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +30,9 @@ export function PointPropertiesPanel({
 }: PointPropertiesPanelProps) {
   const { t } = useI18n();
   const symbol = POINT_SYMBOLS[point.type];
+  const subtypeOptions = DEVICE_SUBTYPES.filter(
+    (definition) => definition.type === point.type,
+  );
 
   function commitNumber(
     raw: string,
@@ -99,6 +104,40 @@ export function PointPropertiesPanel({
                 {t(`editor.point.${item.type}`)}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-xs text-slate-400">
+            {t('devices.subtype')}
+          </span>
+          <select
+            className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:outline-none"
+            value={point.properties.subtype ?? ''}
+            onChange={(event) => {
+              const value = event.target.value;
+              const { subtype: _previous, ...rest } = point.properties;
+              onChange({
+                properties: value
+                  ? { ...rest, subtype: value as DeviceSubtype }
+                  : rest,
+              });
+            }}
+          >
+            <option value="">{t('devices.generic')}</option>
+            {subtypeOptions.map((definition) => (
+              <option key={definition.id} value={definition.id}>
+                {t(`devices.subtype.${definition.id}`)}
+              </option>
+            ))}
+            {point.properties.subtype &&
+            !subtypeOptions.some(
+              (definition) => definition.id === point.properties.subtype,
+            ) ? (
+              <option value={point.properties.subtype}>
+                {t('circuits.unknown')}: {point.properties.subtype}
+              </option>
+            ) : null}
           </select>
         </label>
 

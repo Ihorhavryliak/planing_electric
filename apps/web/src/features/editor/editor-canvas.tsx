@@ -1,4 +1,5 @@
 import type {
+  DeviceSubtype,
   EditorViewport,
   ElectricalPointType,
   PublicCalibration,
@@ -181,8 +182,16 @@ interface DragState {
   dimensionStartOffset: number | null;
 }
 
+export interface PlacementRequest {
+  type: ElectricalPointType;
+  subtype: DeviceSubtype;
+  /** Changes on every palette click so repeated selections retrigger placement. */
+  nonce: number;
+}
+
 interface EditorCanvasProps {
   image: HTMLImageElement | null;
+  placementRequest?: PlacementRequest | null;
   underlay: UnderlaySettings;
   viewport: EditorViewport;
   autoFit: boolean;
@@ -201,7 +210,11 @@ interface EditorCanvasProps {
   selectedRouteId: string | null;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
   onSelectPoint: (id: string | null) => void;
-  onCreatePoint: (type: ElectricalPointType, at: Vec2) => void;
+  onCreatePoint: (
+    type: ElectricalPointType,
+    at: Vec2,
+    subtype: DeviceSubtype | null,
+  ) => void;
   onMovePoint: (id: string, at: Vec2) => void;
   onDeletePoint: (id: string) => void;
   onSelectRoute: (id: string | null) => void;
@@ -352,6 +365,7 @@ function drawUnderlay(
 
 export function EditorCanvas({
   image,
+  placementRequest,
   underlay,
   viewport,
   autoFit,
@@ -413,6 +427,7 @@ export function EditorCanvas({
   const [calibrationDraft, setCalibrationDraft] = useState<Vec2[]>([]);
   const [cursorWorld, setCursorWorld] = useState<Vec2 | null>(null);
   const [placeType, setPlaceType] = useState<ElectricalPointType>('socket');
+  const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(false);
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
@@ -461,6 +476,7 @@ export function EditorCanvas({
   const pointsRef = useRef(points);
   const selectedPointIdRef = useRef(selectedPointId);
   const placeTypeRef = useRef(placeType);
+  const placeSubtypeRef = useRef(placeSubtype);
   const snapRef = useRef(snapEnabled);
   const onSelectPointRef = useRef(onSelectPoint);
   const onCreatePointRef = useRef(onCreatePoint);
@@ -513,6 +529,7 @@ export function EditorCanvas({
   pointsRef.current = points;
   selectedPointIdRef.current = selectedPointId;
   placeTypeRef.current = placeType;
+  placeSubtypeRef.current = placeSubtype;
   snapRef.current = snapEnabled;
   onSelectPointRef.current = onSelectPoint;
   onCreatePointRef.current = onCreatePoint;
@@ -915,6 +932,16 @@ export function EditorCanvas({
       setSelectedVertex(null);
     }
   }, [tool]);
+
+  useEffect(() => {
+    if (!placementRequest) {
+      return;
+    }
+
+    setPlaceType(placementRequest.type);
+    setPlaceSubtype(placementRequest.subtype);
+    setTool('place');
+  }, [placementRequest]);
 
   useEffect(() => {
     setSelectedVertex(null);
@@ -1844,6 +1871,7 @@ export function EditorCanvas({
           onCreatePointRef.current(
             placeTypeRef.current,
             snapped(toWorld(end)),
+            placeSubtypeRef.current,
           );
         } else if (drag.addsRouteVertex && clicked) {
           addRouteVertex(end);
@@ -2049,6 +2077,7 @@ export function EditorCanvas({
 
       if (symbol) {
         setPlaceType(symbol.type);
+        setPlaceSubtype(null);
         setTool('place');
       } else if (event.key === 'Delete' || event.key === 'Backspace') {
         const selected = selectedPointIdRef.current;
@@ -2308,6 +2337,7 @@ export function EditorCanvas({
               aria-pressed={active}
               onClick={() => {
                 setPlaceType(symbol.type);
+                setPlaceSubtype(null);
                 setTool('place');
               }}
               className={cn(

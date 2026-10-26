@@ -6,7 +6,7 @@ The product specification lives in [`SPEC.md`](./SPEC.md). Implementation status
 
 ## Current status
 
-The MVP core is implemented: authentication (including password reset), projects, floors, blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points, circuits, cable routes, calculations, materials, estimates, CSV/PDF export, organizations, email invitations, project sharing, notifications, activity log, revision conflict checks, and real-time plan notifications via SSE.
+The MVP core is implemented: authentication (including password reset), projects, floors, blank/uploaded plans, calibration, walls/rooms/dimensions, electrical points with a device subtype catalog, circuits, cable routes, calculations, materials, estimates, CSV/PDF export, organizations, email invitations, project sharing, notifications, activity log, revision conflict checks, and real-time plan notifications via SSE.
 
 Verified in this repository:
 
@@ -144,7 +144,7 @@ After changing the schema, run `pnpm db:generate` and commit the generated migra
 - `pnpm lint` — passed.
 - `pnpm test` — 64 API tests and 79 web tests passed.
 - Live PostgreSQL — migrations `0000`–`0009` applied to a clean `drawmyplace_qa` database created in the Docker container; 24 public tables and the `estimates.warnings` JSONB column verified.
-- Browser smoke check on a clean database (`node scripts/browser-check.mjs`) — registration, theme persistence, Ukrainian/English locale persistence, project/floor creation, PNG and PDF underlays, wall/doors/windows, calibration, circuits (create/assign), points (place/rotate/duplicate), cable routes (draw, pan, bend drag, delete + undo), rooms, dimensions, 3D view and GLB download, variants, and local-first create/draw/reload/export/import/sync.
+- Browser smoke check on a clean database (`node scripts/browser-check.mjs`) — registration, theme persistence, Ukrainian/English locale persistence, project/floor creation, PNG and PDF underlays, wall/doors/windows, calibration, circuits (create/assign), device palette (subtype placement), points (place/rotate/duplicate), cable routes (draw, pan, bend drag, delete + undo), rooms, dimensions, 3D view and GLB download, variants, and local-first create/draw/reload/export/import/sync.
 - Health endpoints — `/api/v1/health` and `/api/v1/health/ready` return `200` with PostgreSQL available.
 - Optional Sentry reporting is wired for API (HTTP 500s) and web (global handlers + error boundary); it stays disabled until `SENTRY_DSN` / `VITE_SENTRY_DSN` are set.
 

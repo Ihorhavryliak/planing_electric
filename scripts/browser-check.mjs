@@ -194,8 +194,9 @@ async function main() {
   await page.getByLabel('Real distance').fill('4');
   await page.getByRole('button', { name: 'Set scale' }).click();
 
-  // Place a socket and draw a cable route between two points.
-  await page.getByRole('button', { name: 'Place socket' }).click();
+  // Place a double socket from the device palette and draw a cable route.
+  await page.locator('summary').filter({ hasText: 'Power' }).click();
+  await page.getByRole('button', { name: 'Double socket' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
   await page.getByRole('button', { name: 'Draw cable route tool' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
@@ -240,6 +241,12 @@ async function main() {
   await page.getByRole('textbox', { name: /Rotation/ }).fill('90');
   await page.getByRole('textbox', { name: /Rotation/ }).blur();
   await page.getByRole('button', { name: 'Duplicate' }).click();
+  const subtypeSelect = page
+    .getByRole('combobox')
+    .filter({ has: page.locator('option[value="socket-double"]') });
+  if ((await subtypeSelect.inputValue()) !== 'socket-double') {
+    throw new Error('Device subtype was not persisted on the point.');
+  }
   await circuitSelect.selectOption('L1');
 
   const pointsSection = page.locator('section').filter({

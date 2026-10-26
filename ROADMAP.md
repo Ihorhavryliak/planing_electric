@@ -276,7 +276,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 Порівняння з публічним `drawmyplace.com/editor` показало, що бекенд, акаунти й тестування в нас сильніші, але бракує доменної глибини електрики та полірованого UX редактора. Порядок нижче — пріоритетний.
 
 - [x] 15.1 **Кола (circuits)**: зберігати перелік кіл у `plan.calculationSettings`, призначати точки й траси, показувати панель кіл із кількістю пристроїв/трас, редагувати назву/колір, валідувати призначення.
-- [ ] 15.2 **Каталог підтипів пристроїв**: розетки (одинарна/подвійна/трифазна/підлогова), вимикачі (прохідний/двохклавішний/димер/датчик руху), світло, low-voltage/data, щити й коробки; палітра категорій у редакторі.
+- [x] 15.2 **Каталог підтипів пристроїв**: 37 підтипів у 6 категоріях (розподіл, коробки, живлення, керування, освітлення, низька напруга), палітра в редакторі, збереження підтипу в точці, редагування у властивостях, підтримка локального режиму.
 - [ ] 15.3 **Монтажні елементи**: штроби, проходи крізь стіни, позначки кіл на плані; шари та керування видимістю.
 - [ ] 15.4 **Live takeoff у редакторі**: довжина стін, площа, об'єм, кількість вузлів стін, пристрої за типами, кабель і орієнтовна вартість матеріалів без генерації кошторису.
 - [ ] 15.5 **Панель Validation**: агрегувати errors/warnings по всьому плану (кола, кабель, отвори, непідключені пристрої) з кількістю та переходом до проблемного об'єкта.
@@ -375,3 +375,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 79, contracts 34), `node scripts/browser-check.mjs`.
 - Issues/blockers: circuit definitions live in plan JSON settings for now; a dedicated table/API can follow if circuits need independent permissions or history.
 - Next action: device subtype catalog and palette (15.2).
+
+### 2026-10-26 — session 18: device subtype catalog
+- Completed: shared catalog of 37 device subtypes across distribution, boxes, power, control, lighting and low-voltage categories; localized labels in `ua`/`en` (and `ru` catalog); compact grouped palette in the server and local editors; placement flow carries the subtype into `point.properties.subtype`; property panels can change it; canvas still uses the base point type for drawing; Vite pre-bundles contracts runtime exports; contract, API and browser-check coverage.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 79, contracts 38), `node scripts/browser-check.mjs`.
+- Issues/blockers: low-voltage subtypes currently use the `custom` base symbol; distinct canvas symbols can come with the next point-type expansion.
+- Next action: wall chases, penetrations and circuit labels (15.3).

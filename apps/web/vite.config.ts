@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['@drawmyplace/calculations'],
+      include: ['@drawmyplace/calculations', '@drawmyplace/contracts'],
     },
     server: {
       port: webPort,

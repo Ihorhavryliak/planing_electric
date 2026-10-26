@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { deviceSubtypeSchema } from './devices';
 import { publicOpeningSchema } from './opening';
 import {
   publicDimensionSchema,
@@ -60,6 +61,8 @@ export const pointPropertiesSchema = z
     verticalDropMeters: z.number().min(0).max(100).optional(),
     /** Circuit code from the plan's circuit list. */
     circuitId: z.string().trim().min(1).max(40).nullable().optional(),
+    /** Catalog subtype (double socket, dimmer, LAN point, ...). */
+    subtype: deviceSubtypeSchema.nullable().optional(),
   })
   .strict();
 

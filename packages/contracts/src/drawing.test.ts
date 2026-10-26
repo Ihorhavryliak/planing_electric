@@ -79,4 +79,16 @@ describe('route contracts', () => {
     });
     expect(() => pointPropertiesSchema.parse({ circuitId: '' })).toThrow();
   });
+
+  it('accepts catalog device subtypes', () => {
+    expect(pointPropertiesSchema.parse({ subtype: 'socket-double' })).toEqual({
+      subtype: 'socket-double',
+    });
+    expect(pointPropertiesSchema.parse({ subtype: null })).toEqual({
+      subtype: null,
+    });
+    expect(() =>
+      pointPropertiesSchema.parse({ subtype: 'socket-unknown' }),
+    ).toThrow();
+  });
 });
