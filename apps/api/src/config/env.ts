@@ -28,6 +28,7 @@ const envSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   EXPORT_LINK_SECRET: z.string().min(8).default('dev-export-link-secret'),
   EXPORT_LINK_TTL_SECONDS: z.coerce.number().int().min(30).max(86400).default(300),
+  REDIS_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

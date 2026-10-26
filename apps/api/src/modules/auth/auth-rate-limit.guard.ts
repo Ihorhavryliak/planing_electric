@@ -17,7 +17,7 @@ export class AuthRateLimitGuard implements CanActivate {
     @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const http = context.switchToHttp();
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
@@ -28,7 +28,11 @@ export class AuthRateLimitGuard implements CanActivate {
 
     const route = `${request.method} ${request.path}`;
     const ip = request.ip ?? request.socket.remoteAddress ?? 'unknown';
-    const result = this.limiter.consume(`${ip}:${route}`, limit, windowMs);
+    const result = await this.limiter.consume(
+      `${ip}:${route}`,
+      limit,
+      windowMs,
+    );
 
     response.setHeader('X-RateLimit-Limit', String(limit));
     response.setHeader('X-RateLimit-Remaining', String(result.remaining));

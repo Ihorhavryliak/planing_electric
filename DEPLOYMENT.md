@@ -30,6 +30,7 @@ Copy `.env.example` to `.env` and set:
 | `SMTP_USER` / `SMTP_PASSWORD` | SMTP credentials |
 | `EXPORT_LINK_SECRET` | HMAC secret for short-lived export links (set a strong value in production) |
 | `EXPORT_LINK_TTL_SECONDS` | Export link lifetime (default 300) |
+| `REDIS_URL` | Optional Redis for shared rate limiting across API instances |
 
 Never commit `.env`. Keep secrets in the deployment platform's secret store.
 

@@ -1,40 +1,48 @@
+import type { ConfigService } from '@nestjs/config';
 import { describe, expect, it } from 'vitest';
 import { RateLimitService } from '../src/modules/auth/rate-limit.service';
 
-describe('RateLimitService', () => {
-  it('allows requests up to the limit and rejects the next one', () => {
-    const limiter = new RateLimitService();
+function createLimiter(): RateLimitService {
+  const config = {
+    get: () => undefined,
+  } as unknown as ConfigService;
+  return new RateLimitService(config);
+}
 
-    expect(limiter.consume('ip:route', 2, 60_000)).toMatchObject({
+describe('RateLimitService', () => {
+  it('allows requests up to the limit and rejects the next one', async () => {
+    const limiter = createLimiter();
+
+    expect(await limiter.consume('ip:route', 2, 60_000)).toMatchObject({
       allowed: true,
       remaining: 1,
     });
-    expect(limiter.consume('ip:route', 2, 60_000)).toMatchObject({
+    expect(await limiter.consume('ip:route', 2, 60_000)).toMatchObject({
       allowed: true,
       remaining: 0,
     });
-    expect(limiter.consume('ip:route', 2, 60_000)).toMatchObject({
+    expect(await limiter.consume('ip:route', 2, 60_000)).toMatchObject({
       allowed: false,
       remaining: 0,
     });
   });
 
-  it('keeps separate buckets for different keys', () => {
-    const limiter = new RateLimitService();
+  it('keeps separate buckets for different keys', async () => {
+    const limiter = createLimiter();
 
-    limiter.consume('first', 1, 60_000);
-    limiter.consume('first', 1, 60_000);
+    await limiter.consume('first', 1, 60_000);
+    await limiter.consume('first', 1, 60_000);
 
-    expect(limiter.consume('second', 1, 60_000).allowed).toBe(true);
+    expect((await limiter.consume('second', 1, 60_000)).allowed).toBe(true);
   });
 
-  it('reports a retry delay that does not exceed the window', () => {
-    const limiter = new RateLimitService();
+  it('reports a retry delay that does not exceed the window', async () => {
+    const limiter = createLimiter();
 
-    limiter.consume('key', 1, 60_000);
-    limiter.consume('key', 1, 60_000);
+    await limiter.consume('key', 1, 60_000);
+    await limiter.consume('key', 1, 60_000);
 
-    const denied = limiter.consume('key', 1, 60_000);
+    const denied = await limiter.consume('key', 1, 60_000);
 
     expect(denied.allowed).toBe(false);
     expect(denied.retryAfterSeconds).toBeGreaterThan(0);
