@@ -4,7 +4,7 @@
 >
 > **Правило статусу:** Позначайте завдання `[x]` лише після перевірки репозиторію та підтвердження реалізації. Не робіть висновків про статус реалізації лише на основі специфікації.
 >
-> **Останнє оновлення:** 2026-10-26 (сесія 13)
+> **Останнє оновлення:** 2026-10-26 (сесія 14)
 
 ## 1. Поточний стан
 
@@ -28,7 +28,7 @@
 - [x] Запущено базове встановлення, збірку, перевірку типів, лінтінг та тести; результати записані в журнал сесій.
 - [x] Повна локальна перевірка 2026-10-25: `pnpm typecheck`, `pnpm lint`, `pnpm build` та `pnpm test` — усі проходять.
 
-**Поточний етап проєкту:** Основи Phase 10 на місці. Наступна робота для відповідності: українська локалізація, підтримка світлої/темної теми, завершення перевірки в браузері, 3D-візуалізація, варіанти проєкту, налаштовувана валідація та гостьовий режим/local-first.
+**Поточний етап проєкту:** усі фази 0–14 реалізовано й перевірено. Виконано локалізацію uk/en/pl, тему, 3D, варіанти, налаштовувану валідацію, кошторисні попередження, local-first із лімітами/конфліктами, Sentry та розширений браузерний прогін.
 
 **Відомі блокери:** немає. Нові завдання для відповідності нижче не розпочаті, якщо не позначено інше.
 
@@ -117,7 +117,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** обидва робочі процеси (пусте полотно та завантажений план) відкриваються, зберігаються та перезавантажуються без втрати стану креслення.
 
-**Статус:** робочий процес пустого плану перевірено в браузері; процеси завантаження підкладки JPG/PNG/PDF покриті на рівні API, але все ще потребують перевірки в браузері.
+**Статус:** завершено. Порожній план, завантаження PNG і PDF, вибір сторінки, toggle/lock/opacity, масштабування, панорамування та перезавантаження перевірено в браузері.
 
 ### Фаза 4 — Геометрія та електричні об'єкти
 
@@ -313,9 +313,9 @@ MVP готовий до початкового тестування корист
 
 ## 6. Наступні 3 дії
 
-1. **Фаза 11:** додати i18n та українську локалізацію для редактора, помилок, листів, одиниць виміру та налаштувань.
-2. **UX Фази 8:** додати перемикач світлої/темної теми з збереженим налаштуванням та системним резервом; завершити решту перевірки в браузері (елементи керування підкладкою, редагування точок, стіни/кімнати, розміри).
-3. **Фаза 12:** спроектувати та реалізувати синхронізований 3D-вид з існуючої 2D-геометрії, включаючи двері/вікна як повноцінні об'єкти.
+1. **Реліз-підготовка:** оновити README до поточного стану (фази 0–14), перевірити Docker/ENV і додати чекліст розгортання.
+2. **QA-прогін:** пройти повний сценарій із розділу 4 на чистій PostgreSQL та в трьох локалях, включно з експортом CSV/PDF і запрошеннями.
+3. **Полірування:** додати скріншоти/демо-дані, переглянути продуктивність великих планів і налаштувати зовнішній Sentry-проєкт для staging.
 
 ## 7. Журнал сесій
 
@@ -333,4 +333,10 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — API 62 tests, web 73 tests, all passing.
 - Issues/blockers: i18n translation is partial (shell/auth/settings); local storage limits and conflict tests remain; point rotate/duplicate/bend-drag browser paths still unverified.
 - Next action: finish Ukrainian translation and local-first edge-case tests.
+
+### 2026-10-26 — session 14: editor i18n, full localization, variants/estimates, local limits, Sentry
+- Completed: translated the editor (toolbar, sidebar, dialogs, property panels, calculations, 3D) and every remaining page; localized API errors, dates, numbers, units (m/cm/mm/m²) and currency (UAH/PLN/USD with VITE_CURRENCY override); added estimate-level validation warnings; variant comparison now includes estimated material cost; local IndexedDB storage enforces size/project limits, normalizes legacy snapshots and detects cross-tab conflicts; optional Sentry reporting for API and web with an error boundary; browser check now covers pan, bend drag, whole-route delete+undo, Ukrainian editor and the local conflict-safe autosave path.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — API 64 tests, web 80 tests; `pnpm db:migrate` applied `0009_estimate_warnings`; browser check passed.
+- Issues/blockers: none. Sentry remains disabled until DSNs are configured.
+- Next action: release preparation and a clean-database QA pass.
 
