@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
+  FileSpreadsheet,
   FileText,
   Layers,
   LoaderCircle,
@@ -22,8 +23,10 @@ import { Link, useParams } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ValidationPanel } from '@/features/editor/validation-panel';
 import { ExportPanel } from '@/features/editor/export-panel';
+import { ReportsPanel } from '@/features/editor/reports-panel';
+import { buildElectricalPlan } from '@/features/editor/electrical';
 import { validatePlan } from '@/features/editor/validation';
-import { buildTakeoff } from '@drawmyplace/calculations';
+import { buildPanelSchedule, buildTakeoff } from '@drawmyplace/calculations';
 import { getPlanCalculation, getPlanDrawing } from '@/features/editor/drawing-api';
 import { listFloors } from '@/features/editor/editor-api';
 import {
@@ -38,11 +41,18 @@ import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-type DocsTab = 'materials' | 'estimate' | 'validation' | 'variants' | 'print';
+type DocsTab =
+  | 'materials'
+  | 'estimate'
+  | 'reports'
+  | 'validation'
+  | 'variants'
+  | 'print';
 
 const TABS: { id: DocsTab; icon: typeof Tags; label: string }[] = [
   { id: 'materials', icon: Tags, label: 'docs.materials' },
   { id: 'estimate', icon: FileText, label: 'docs.estimate' },
+  { id: 'reports', icon: FileSpreadsheet, label: 'docs.reports' },
   { id: 'validation', icon: ShieldCheck, label: 'docs.validation' },
   { id: 'variants', icon: Layers, label: 'docs.variants' },
   { id: 'print', icon: Printer, label: 'docs.print' },
@@ -149,6 +159,31 @@ export function ProjectDocsPage() {
       materialIds: materials.map((material) => material.id),
     });
   }, [drawing, plan, materials]);
+
+  const electrical = useMemo(() => {
+    if (!drawing || !plan) return null;
+
+    const routeLengths = new Map(
+      (calculation?.routes ?? []).map((route) => [
+        route.routeId,
+        route.requiredLength,
+      ]),
+    );
+
+    return buildElectricalPlan({
+      circuits: plan.calculationSettings.circuits ?? [],
+      points: drawing.points,
+      routes: drawing.routes,
+      routeLengths,
+      settings: plan.calculationSettings.electrical ?? null,
+      calibrated: Boolean(drawing.calibration),
+    });
+  }, [drawing, plan, calculation]);
+
+  const panelSchedule = useMemo(
+    () => (electrical ? buildPanelSchedule(electrical) : null),
+    [electrical],
+  );
 
   const takeoff = useMemo(() => {
     if (!drawing) return null;
@@ -454,6 +489,19 @@ export function ProjectDocsPage() {
                 ))
               )}
             </div>
+          ) : null}
+
+          {tab === 'reports' ? (
+            <ReportsPanel
+              projectName={project?.name ?? ''}
+              planName={floors.find((floor) => floor.id === floorId)?.name}
+              drawing={drawing}
+              circuits={plan?.calculationSettings.circuits ?? []}
+              calculation={calculation}
+              electrical={electrical}
+              panelSchedule={panelSchedule}
+              materials={materials}
+            />
           ) : null}
 
           {tab === 'validation' ? (

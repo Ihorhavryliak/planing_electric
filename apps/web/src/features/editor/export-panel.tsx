@@ -6,12 +6,19 @@ import type {
   PublicRoute,
 } from '@drawmyplace/contracts';
 import type { ElectricalPlanResult } from '@drawmyplace/calculations';
-import { Download, FileCode2, FileJson2, LoaderCircle } from 'lucide-react';
+import {
+  Download,
+  FileCode2,
+  FileJson2,
+  FileSpreadsheet,
+  LoaderCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 import {
+  downloadBytes,
   downloadSvg,
   downloadTextFile,
   loadProjectExport,
@@ -21,6 +28,12 @@ import { buildPlanSvg } from './svg-export';
 import { buildSchematicSvg } from './schematic-export';
 import { buildCircuitNumbering } from './circuit-numbering';
 import { buildCableJournal, buildCableJournalCsv } from './cable-journal';
+import {
+  buildReportTable,
+  buildReportsWorkbook,
+  REPORT_DEFINITIONS,
+} from './reports';
+import { XLSX_MIME } from './xlsx';
 
 interface ExportPanelProps {
   drawing: PlanDrawing | null;
@@ -114,6 +127,33 @@ export function ExportPanel({
     );
   }
 
+  function exportReportsExcel() {
+    if (!drawing) return;
+
+    const source = {
+      t,
+      drawing,
+      circuits,
+      points,
+      routes,
+      calculation,
+      electrical,
+    };
+    const reports = REPORT_DEFINITIONS.map((definition) => ({
+      id: definition.id,
+      table: buildReportTable(definition.id, source),
+      name: t(definition.titleKey),
+    })).filter((report) => report.table.rows.length > 0);
+
+    if (reports.length === 0) return;
+
+    downloadBytes(
+      `${planName}-reports.xlsx`,
+      buildReportsWorkbook(reports, { title: planName }),
+      XLSX_MIME,
+    );
+  }
+
   async function exportProjectJson() {
     if (!projectId) return;
 
@@ -178,6 +218,16 @@ export function ExportPanel({
             {t('export.cableJournal')}
           </Button>
         ) : null}
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-start"
+          disabled={!drawing}
+          onClick={exportReportsExcel}
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          {t('export.reportsExcel')}
+        </Button>
         {projectId ? (
           <Button
             variant="outline"

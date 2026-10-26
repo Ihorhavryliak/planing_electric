@@ -305,7 +305,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [ ] 16.10 **Експорт DWG/DXF**: експорт 2D-плану (стіни, отвори, кімнати, точки, траси, розміри) для обміну з AutoCAD/Revit; мінімально — сумісність з AutoCAD R2018 DXF.
 - [ ] 16.11 **Експорт IFC для BIM**: передача стін, отворів, точок і трас як IFC-сутностей; необхідно для участі в BIM-проєктах і перевірки колізій у Navisworks/Solibri.
 - [ ] 16.12 **Перевірка колізій (clash detection)**: використати наявний 3D-вид (12, 15.7, 15.10) для перевірки перетину кабельних трас з іншими інженерними мережами або несучими конструкціями; список колізій з переходом до об'єкта.
-- [ ] 16.13 **Гнучкі шаблони звітів**: кабельний журнал, специфікація обладнання, відомість етажних щитів; шаблони з можливістю вибору полів і вивантаження в Excel/PDF; розширення наявного експорту кошторису (Фаза 6) та документації (15.8).
+- [x] 16.13 **Гнучкі шаблони звітів**: кабельний журнал, специфікація обладнання, відомість етажних щитів; шаблони з можливістю вибору полів і вивантаження в Excel/PDF; розширення наявного експорту кошторису (Фаза 6) та документації (15.8).
 
 **Критерії завершення:** електричний проєкт проходить перевірку навантажень, падіння напруги й узгодженість захистів; має графік щита, однолінійну схему та кабельний журнал; експортується в DWG/DXF та IFC; критичні невідповідності блокують фінальний експорт кошторису.
 
@@ -679,3 +679,12 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 113, contracts 40, calculations 55, database 2; 275 tests).
 - Issues/blockers: light theme keeps the drawing canvas dark on purpose; visual verification is manual because there is no screenshot-diff test.
 - Next action: report templates (16.13).
+
+### 2026-10-27 — session 39: flexible report templates (16.13)
+- Completed: three report templates — equipment specification (grouped by subtype and circuit with quantities and mounting heights), cable journal (numbering, protection, cable, length, device/route counts) and panel schedule (ways, protection, load, ΔU, fill status). Every template exposes its fields as toggles; selections are stored in `dmp:report-fields` and normalized to a stable column order.
+- Completed: dependency-free XLSX writer (`xlsx.ts`) producing real Office Open XML workbooks as stored ZIP archives: styled header row, bold totals, frozen header, autofilter, column widths and typed numeric cells. CSV export stays Excel-friendly (UTF-8 BOM, `;`); PDF uses the browser print dialog with a dedicated light print stylesheet.
+- Completed: new **Reports** tab in the documentation workspace with live preview, totals, row count, per-template Excel/CSV and a combined all-reports workbook. One-click "All reports (Excel)" also added to the editor export panel and the local editor toolbar.
+- Completed: fixed the 3D GLB button being covered by the redesigned floating canvas toolbar (moved below the toolbar).
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 125, contracts 40, calculations 55, database 2; 287 tests). XLSX unit tests cover CRC-32, column letters, ZIP structure, sheet sanitization and cell XML; report tests cover grouping, field selection, totals, CSV and a three-sheet workbook. Browser check now verifies the reports empty state, field toggles, Excel downloads and validates the saved workbooks as ZIP/XLSX.
+- Issues/blockers: PDF is produced through the print dialog rather than a server-side PDF renderer; the XLSX writer intentionally omits formulas, merged cells and shared strings.
+- Next action: IFC export (16.11) and clash detection (16.12), symbol library (16.8) or onboarding (Phase 17).

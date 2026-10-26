@@ -185,6 +185,7 @@ async function main() {
 
   await page.reload();
   await page.waitForURL('**/editor');
+  const serverEditorUrl = page.url();
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
   // Draw a wall and add a door + window, so the 3D scene has real geometry.
@@ -558,9 +559,20 @@ async function main() {
   await page.getByRole('button', { name: '3D view' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
   await page.locator('canvas').last().waitFor({ timeout: 20000 });
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: /GLB/ }).click();
-  const download = await downloadPromise;
+  let download;
+  try {
+    [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: /GLB/ }).click(),
+    ]);
+  } catch (downloadError) {
+    await page.screenshot({ path: path.join(dir, 'glb-failure.png') });
+    console.error('GLB diagnostics', {
+      errors,
+      body: (await page.locator('body').innerText()).slice(-500),
+    });
+    throw downloadError;
+  }
   if (!download.suggestedFilename().endsWith('.glb')) {
     throw new Error(`Unexpected GLB filename: ${download.suggestedFilename()}`);
   }
@@ -905,6 +917,88 @@ async function main() {
   await page
     .getByRole('heading', { name: 'Validation', exact: true })
     .waitFor();
+  // Report templates: the synced local project only has a wall, so the
+  // equipment preview shows its empty state.
+  await page.getByRole('button', { name: 'Reports', exact: true }).click();
+  await page
+    .getByRole('heading', { name: 'Report templates', exact: true })
+    .waitFor();
+  await page
+    .getByText('Nothing to report yet. Add devices, circuits and routes in the editor.')
+    .waitFor();
+  // The original server project has devices and routes: test field selection
+  // and real XLSX downloads there.
+  await page.goto(serverEditorUrl.replace(/\/editor$/, '/documentation'));
+  await page
+    .getByRole('heading', { name: 'Documentation', exact: true })
+    .waitFor({ timeout: 20000 });
+  await page.getByRole('button', { name: 'Reports', exact: true }).click();
+  await page
+    .getByRole('heading', { name: 'Report templates', exact: true })
+    .waitFor();
+  const reportTable = page.locator('table.report-table').first();
+  await reportTable.waitFor();
+  if ((await reportTable.locator('tbody tr').count()) < 1) {
+    throw new Error('Equipment report preview is empty.');
+  }
+  const mountingChip = page.getByRole('button', {
+    name: 'Mounting',
+    exact: true,
+  });
+  await mountingChip.click();
+  if (
+    (await reportTable.locator('thead').innerText())
+      .toLowerCase()
+      .includes('mounting')
+  ) {
+    throw new Error('Deselected report field is still visible.');
+  }
+  await mountingChip.click();
+  const [reportDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Excel', exact: true }).click(),
+  ]);
+  const reportPath = path.join(dir, 'reports.xlsx');
+  await reportDownload.saveAs(reportPath);
+  const reportBytes = await readFile(reportPath);
+  if (reportBytes[0] !== 0x50 || reportBytes[1] !== 0x4b) {
+    throw new Error('Excel export is not an XLSX (ZIP) file.');
+  }
+  if (reportBytes.length < 1000) {
+    throw new Error('Excel export is unexpectedly small.');
+  }
+  await page.getByRole('tab', { name: 'Cable journal' }).click();
+  await page
+    .getByRole('tab', { name: 'Cable journal', selected: true })
+    .waitFor();
+  await page
+    .locator('table.report-table thead')
+    .getByText('Wire', { exact: true })
+    .waitFor();
+  const journalHeader = await page
+    .locator('table.report-table thead')
+    .first()
+    .innerText();
+  if (!journalHeader.toLowerCase().includes('address')) {
+    throw new Error(
+      `Cable journal preview is missing its address column: ${journalHeader}`,
+    );
+  }
+  const [allReportsDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'All reports (Excel)' }).last().click(),
+  ]);
+  const allReportsPath = path.join(dir, 'all-reports.xlsx');
+  await allReportsDownload.saveAs(allReportsPath);
+  const allReportsBytes = await readFile(allReportsPath);
+  if (allReportsBytes[0] !== 0x50 || allReportsBytes.length < 2000) {
+    throw new Error('Combined report workbook was not generated.');
+  }
+  // The remaining documentation checks use the synced local project.
+  await page.goto(docsUrl);
+  await page
+    .getByRole('heading', { name: 'Documentation', exact: true })
+    .waitFor({ timeout: 20000 });
   await page.getByRole('button', { name: 'Print PDF' }).click();
   await page.getByRole('button', { name: 'Print / Save as PDF' }).waitFor();
   await page.getByRole('button', { name: 'Variants', exact: true }).click();

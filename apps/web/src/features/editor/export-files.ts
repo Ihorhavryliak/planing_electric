@@ -22,7 +22,11 @@ export interface ProjectExport {
 }
 
 function safeFileName(value: string): string {
-  return value.replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '') || 'drawmyplace';
+  return (
+    value
+      .replace(/[^\p{L}\p{N}._-]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || 'drawmyplace'
+  );
 }
 
 export function downloadTextFile(
@@ -31,6 +35,23 @@ export function downloadTextFile(
   mimeType: string,
 ): void {
   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+  downloadBlob(fileName, blob);
+}
+
+export function downloadBytes(
+  fileName: string,
+  bytes: Uint8Array,
+  mimeType: string,
+): void {
+  const buffer = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  ) as ArrayBuffer;
+  const blob = new Blob([buffer], { type: mimeType });
+  downloadBlob(fileName, blob);
+}
+
+function downloadBlob(fileName: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.download = safeFileName(fileName);

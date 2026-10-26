@@ -40,7 +40,11 @@ import {
   type ValidationTarget,
 } from '@/features/editor/validation';
 import { useTakeoffSettings } from '@/features/editor/takeoff-settings';
-import { downloadSvg, downloadTextFile } from '@/features/editor/export-files';
+import {
+  downloadBytes,
+  downloadSvg,
+  downloadTextFile,
+} from '@/features/editor/export-files';
 import { buildPlanSvg } from '@/features/editor/svg-export';
 import { buildSchematicSvg } from '@/features/editor/schematic-export';
 import { buildCircuitNumbering } from '@/features/editor/circuit-numbering';
@@ -48,6 +52,12 @@ import {
   buildCableJournal,
   buildCableJournalCsv,
 } from '@/features/editor/cable-journal';
+import {
+  buildReportTable,
+  buildReportsWorkbook,
+  REPORT_DEFINITIONS,
+} from '@/features/editor/reports';
+import { XLSX_MIME } from '@/features/editor/xlsx';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
@@ -551,6 +561,40 @@ export function LocalEditorPage() {
     );
   }
 
+  function exportReportsExcel() {
+    if (!drawing || !project) return;
+
+    const cableLengths: Record<string, number> = {};
+
+    for (const route of localCable ?? []) {
+      if (!route.circuitId) continue;
+      cableLengths[route.circuitId] =
+        (cableLengths[route.circuitId] ?? 0) + (route.requiredLength ?? 0);
+    }
+
+    const source = {
+      t,
+      drawing,
+      circuits: drawing.circuits,
+      electrical,
+      panelSchedule,
+      cableLengths,
+    };
+    const reports = REPORT_DEFINITIONS.map((definition) => ({
+      id: definition.id,
+      table: buildReportTable(definition.id, source),
+      name: t(definition.titleKey),
+    })).filter((report) => report.table.rows.length > 0);
+
+    if (reports.length === 0) return;
+
+    downloadBytes(
+      `${name || 'local-project'}-reports.xlsx`,
+      buildReportsWorkbook(reports, { title: name }),
+      XLSX_MIME,
+    );
+  }
+
   function requestTool(tool: EditorTool, pointType?: ElectricalPointType) {
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
@@ -819,6 +863,9 @@ export function LocalEditorPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={exportCableJournal}>
               {t('export.cableJournal')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportReportsExcel}>
+              {t('export.reportsExcel')}
             </Button>
           </div>
         </div>

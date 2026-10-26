@@ -254,3 +254,24 @@ body {
     transform: translateY(0);
   }
 }
+
+@media print {
+  .report-table {
+    color: #0f172a;
+    font-size: 10pt;
+  }
+
+  .report-table th,
+  .report-table td {
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  .report-table thead th {
+    background: #f1f5f9 !important;
+  }
+
+  .report-print-title {
+    color: #0f172a !important;
+  }
+}

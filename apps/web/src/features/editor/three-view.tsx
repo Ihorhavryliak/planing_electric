@@ -687,7 +687,7 @@ export function ThreeView({
         type="button"
         onClick={() => void exportGlb()}
         disabled={exporting}
-        className="absolute top-3 right-3 inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-slate-950/90 px-3 text-xs text-slate-200 backdrop-blur hover:bg-white/10"
+        className="absolute top-16 right-3 inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-slate-950/90 px-3 text-xs text-slate-200 backdrop-blur hover:bg-white/10"
       >
         {exporting ? (
           <LoaderCircle className="h-4 w-4 animate-spin" />
