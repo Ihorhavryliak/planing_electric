@@ -293,10 +293,10 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 Порівняння з EPLAN, WSCAD, AutoCAD Electrical і CADMATIC показує, що поточна система закриває рівень «план + траси + кошторис», але не замикає цикл «план → розрахунок → схема → щит → нормоконтроль». Порядок нижче — пріоритетний.
 
-- [ ] 16.1 **Розрахунок навантажень (load calculation)**: автоматичний розрахунок установленої та розрахункової потужності за колами й на вводі; коефіцієнти попиту/використання за типами споживачів; збереження результатів у `plan.calculationSettings`; відображення в live takeoff (15.4) та кошторисі.
-- [ ] 16.2 **Розрахунок падіння напруги (voltage drop)**: перевірка кожної лінії від щита до найдальшого споживача; врахування довжини траси, перерізу, матеріалу жили та струму; попередження при перевищенні допустимого ΔU (наприклад, 5% для силових, 3% для освітлення).
-- [ ] 16.3 **Розрахунок струмів короткого замикання (short-circuit current)**: оцінка струму КЗ на кожній лінії для перевірки відключаючої здатності автоматів і селективності; мінімальний набір — однофазне КЗ у кінці лінії.
-- [ ] 16.4 **Автоматична перевірка перерізів і захистів**: модуль, що зіставляє розрахунковий струм, номінал автомата/ПЗВ і переріз кабелю; інтеграція з панеллю Validation (15.5) як нові правила; блокування генерації кошторису при критичних невідповідностях.
+- [x] 16.1 **Розрахунок навантажень (load calculation)**: автоматичний розрахунок установленої та розрахункової потужності за колами й на вводі; коефіцієнти попиту/використання за типами споживачів; збереження результатів у `plan.calculationSettings`; відображення в live takeoff (15.4) та кошторисі.
+- [x] 16.2 **Розрахунок падіння напруги (voltage drop)**: перевірка кожної лінії від щита до найдальшого споживача; врахування довжини траси, перерізу, матеріалу жили та струму; попередження при перевищенні допустимого ΔU (наприклад, 5% для силових, 3% для освітлення).
+- [x] 16.3 **Розрахунок струмів короткого замикання (short-circuit current)**: оцінка струму КЗ на кожній лінії для перевірки відключаючої здатності автоматів і селективності; мінімальний набір — однофазне КЗ у кінці лінії.
+- [x] 16.4 **Автоматична перевірка перерізів і захистів**: модуль, що зіставляє розрахунковий струм, номінал автомата/ПЗВ і переріз кабелю; інтеграція з панеллю Validation (15.5) як нові правила; блокування генерації кошторису при критичних невідповідностях.
 - [ ] 16.5 **Редактор графіків щитів (panel schedules)**: окремий модуль для компонування щитів, призначення автоматів/ПЗВ/дифавтоматів на конкретні лінії, розрахунок заповнення щита; автогенерація графіка щита для експорту (PDF/CSV).
 - [ ] 16.6 **Поглиблена однолінійна схема**: розширити наявний експорт 15.9 до повноцінної однолінійної схеми з вводом, щитами, групами, номіналами захисних апаратів і перерізами; зв'язок «план → схема» (зміна на плані відображається на схемі).
 - [ ] 16.7 **Автоматична нумерація кіл, проводів і клем**: наскрізна адресація (наприклад, `Q1-1L1`, `W12`, `X1:3`) з оновленням при зміні схеми; використання нумерації в кабельному журналі, специфікаціях і SVG-схемі.
@@ -494,3 +494,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (full-screen guide opens/closes, wall-tool tooltip shows its hint).
 - Issues/blockers: tooltips are hover/focus based and not pinned onboarding coach-marks.
 - Next action: optional interactive coach-mark tour.
+
+### 2026-10-26 — session 31: engineering calculations 16.1–16.4
+- Completed: a new `electrical` module in `@drawmyplace/calculations` with catalog connected power and demand factors per device subtype, per-circuit installed/demand load, single- and three-phase design current, voltage drop (conductor material, section, route length, cos φ), single-phase fault current at the line end, breaker/RCD/cable coordination and intake totals with phase split.
+- Completed: per-circuit and default settings (supply, voltage, cable material/section, breaker rating/curve/breaking capacity, RCD, source fault level, ΔU limits) persisted in `plan.calculationSettings.electrical`; new Electrical calculation panel in server and local editors with editable defaults, per-circuit current/breaker/cable/ΔU/fault rows and issue jumping; load summary added to Live takeoff.
+- Completed: electrical rules integrated into `validatePlan` (13 new codes) and the Validation panel; critical overload, breaker-above-cable and breaking-capacity errors disable estimate generation in the UI and are rejected by the API with `ELECTRICAL_COORDINATION`; estimate warnings now include installed/demand load and design current.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 101, contracts 38, calculations 50, database 2; 256 automated tests), `node scripts/browser-check.mjs` (electrical panel current, coordinated state, demo calculation).
+- Issues/blockers: route length is the sum of circuit routes (conservative, no panel-to-load topology); fault current uses a simplified source impedance and single-phase end fault; cable ampacity uses one IEC B1 installation column.
+- Next action: panel schedules and a full single-line diagram (16.5–16.7).

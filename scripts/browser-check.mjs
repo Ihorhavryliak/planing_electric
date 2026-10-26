@@ -306,6 +306,33 @@ async function main() {
     throw new Error('Live takeoff did not calculate cable length.');
   }
 
+  // Engineering calculation runs live for every circuit.
+  const electricalSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Electrical calculation', exact: true }),
+  });
+  await electricalSection.getByText('Coordinated', { exact: true }).waitFor();
+  const electricalCurrent = electricalSection.getByText('Max current').locator('..');
+  if ((await electricalCurrent.innerText()).includes('—')) {
+    throw new Error('Electrical calculation did not produce a design current.');
+  }
+  await electricalSection.getByText('L1', { exact: true }).first().waitFor();
+
+  // Mis-sized protection blocks estimate generation until it is fixed.
+  const cableSelect = electricalSection.getByLabel('Default cable');
+  const breakerSelect = electricalSection.getByLabel('Default breaker');
+  await cableSelect.selectOption('1.5');
+  await breakerSelect.selectOption('20');
+  await electricalSection.getByText('Errors 1', { exact: true }).waitFor();
+  if (!(await page.getByRole('button', { name: 'Generate estimate' }).isDisabled())) {
+    throw new Error('Critical electrical error did not block the estimate.');
+  }
+  await cableSelect.selectOption('2.5');
+  await breakerSelect.selectOption('16');
+  await electricalSection.getByText('Coordinated', { exact: true }).waitFor();
+  if (await page.getByRole('button', { name: 'Generate estimate' }).isDisabled()) {
+    throw new Error('Estimate stayed blocked after fixing the protection.');
+  }
+
   await syncCanvas();
   await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
   const beforeBend = await canvasHash();
@@ -579,6 +606,13 @@ async function main() {
   }
   await page.getByText('Living room').first().waitFor();
   await page.getByText(/Lighting/).first().waitFor();
+
+  const demoElectrical = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Electrical calculation', exact: true }),
+  });
+  await demoElectrical.getByText('Coordinated', { exact: true }).waitFor();
+  await demoElectrical.getByText('Demand', { exact: true }).waitFor();
+  await demoElectrical.getByText(/L2/).first().waitFor();
 
   // Create an anonymous project, draw a wall, and reload it.
   await page.goto(`${WEB}/local`);

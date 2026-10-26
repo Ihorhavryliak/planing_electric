@@ -738,6 +738,11 @@ const en: Dictionary = {
   'takeoff.unassigned': 'Unassigned',
   'takeoff.wallHeight': 'Wall height, m',
   'takeoff.defaultThickness': 'Wall thickness, m',
+  'takeoff.electricalLoad': 'Electrical load',
+  'takeoff.installedPower': 'Installed power',
+  'takeoff.demandPower': 'Demand power',
+  'takeoff.designCurrent': 'Design current',
+
   'validation.title': 'Validation',
   'validation.hint':
     'Plan-wide checks for circuits, cable, devices and openings.',
@@ -770,6 +775,89 @@ const en: Dictionary = {
   'validation.openingMissingWall':
     'Openings reference missing walls: {count}',
   'validation.unusedCircuit': 'Unused circuits: {count}',
+  'validation.electricalUncalibrated':
+    'Calibrate the plan to check voltage drop and fault current.',
+  'validation.circuitNoDevices': 'Circuit {circuit} has no devices.',
+  'validation.circuitNoRoute': 'Circuit {circuit} has no cable route.',
+  'validation.orphanDevice':
+    'Devices reference a missing circuit {circuit}.',
+  'validation.currentExceedsBreaker':
+    'Circuit {circuit}: design current {current} A exceeds the {rating} A breaker.',
+  'validation.breakerExceedsCable':
+    'Circuit {circuit}: {rating} A breaker exceeds cable capacity {ampacity} A ({section} mm²).',
+  'validation.unknownCableSection':
+    'Circuit {circuit}: unknown cable section {section} mm².',
+  'validation.voltageDropExceeded':
+    'Circuit {circuit}: voltage drop {drop}% exceeds the {limit}% limit.',
+  'validation.faultCurrentLow':
+    'Circuit {circuit}: fault current {fault} A is below the {trip} A magnetic trip.',
+  'validation.breakingCapacityExceeded':
+    'Circuit {circuit}: fault current {fault} A exceeds the {capacity} kA breaking capacity.',
+  'validation.rcdMissing': 'Circuit {circuit}: socket circuit has no RCD.',
+  'validation.rcdSensitivityHigh':
+    'Circuit {circuit}: RCD sensitivity {sensitivity} mA is above 30 mA.',
+  'validation.rcdRatingLow':
+    'Circuit {circuit}: RCD rating {rcd} A is below the {rating} A breaker.',
+
+  'electrical.title': 'Electrical calculation',
+  'electrical.hint':
+    'Live load, voltage drop and protection checks for every circuit and the intake.',
+  'electrical.errors': 'Errors {count}',
+  'electrical.warnings': 'Warnings {count}',
+  'electrical.ok': 'Coordinated',
+  'electrical.installed': 'Installed',
+  'electrical.demand': 'Demand',
+  'electrical.current': 'Max current',
+  'electrical.worstDrop': 'Worst ΔU',
+  'electrical.uncalibrated':
+    'Calibrate the plan to check voltage drop and fault current.',
+  'electrical.supply': 'Supply',
+  'electrical.singlePhase': 'Single-phase',
+  'electrical.threePhase': 'Three-phase',
+  'electrical.sourceFault': 'Source fault level',
+  'electrical.cable': 'Default cable',
+  'electrical.breaker': 'Default breaker',
+  'electrical.conductor': 'Conductor',
+  'electrical.copper': 'Copper',
+  'electrical.aluminium': 'Aluminium',
+  'electrical.rcd': 'RCD 30 mA',
+  'electrical.circuitError': 'Check',
+  'electrical.circuitWarning': 'Warning',
+  'electrical.circuitOk': 'OK',
+  'electrical.load': 'Load',
+  'electrical.breakerShort': 'Breaker',
+  'electrical.cableShort': 'Cable',
+  'electrical.dropShort': 'ΔU',
+  'electrical.fault': 'Fault',
+  'electrical.phase': 'Phase',
+  'electrical.noCircuits': 'Add a circuit to see the calculation.',
+  'electrical.blocked':
+    'Fix the critical electrical errors before generating an estimate.',
+  'electrical.issue.electricalUncalibrated':
+    'The plan scale is not calibrated; voltage drop and fault current are not checked.',
+  'electrical.issue.circuitNoDevices': 'Circuit {circuit} has no devices.',
+  'electrical.issue.circuitNoRoute': 'Circuit {circuit} has no cable route.',
+  'electrical.issue.orphanDevice':
+    'Devices reference a missing circuit {circuit}.',
+  'electrical.issue.currentExceedsBreaker':
+    'Circuit {circuit}: design current {current} A exceeds the {rating} A breaker.',
+  'electrical.issue.breakerExceedsCable':
+    'Circuit {circuit}: {rating} A breaker exceeds cable capacity {ampacity} A ({section} mm²).',
+  'electrical.issue.unknownCableSection':
+    'Circuit {circuit}: unknown cable section {section} mm².',
+  'electrical.issue.voltageDropExceeded':
+    'Circuit {circuit}: voltage drop {drop}% exceeds the {limit}% limit.',
+  'electrical.issue.faultCurrentLow':
+    'Circuit {circuit}: fault current {fault} A is below the {trip} A magnetic trip.',
+  'electrical.issue.breakingCapacityExceeded':
+    'Circuit {circuit}: fault current {fault} A exceeds the {capacity} kA breaking capacity.',
+  'electrical.issue.rcdMissing':
+    'Circuit {circuit}: socket circuit has no RCD.',
+  'electrical.issue.rcdSensitivityHigh':
+    'Circuit {circuit}: RCD sensitivity {sensitivity} mA is above 30 mA.',
+  'electrical.issue.rcdRatingLow':
+    'Circuit {circuit}: RCD rating {rcd} A is below the {rating} A breaker.',
+
   'project.documentation': 'Documentation',
   'docs.loading': 'Loading documentation…',
   'docs.backToProject': 'Back to project',
@@ -1809,6 +1897,11 @@ const ua: Dictionary = {
   'takeoff.unassigned': 'Без кола',
   'takeoff.wallHeight': 'Висота стін, м',
   'takeoff.defaultThickness': 'Товщина стін, м',
+  'takeoff.electricalLoad': 'Електричне навантаження',
+  'takeoff.installedPower': 'Установлена потужність',
+  'takeoff.demandPower': 'Розрахункова потужність',
+  'takeoff.designCurrent': 'Розрахунковий струм',
+
   'validation.title': 'Перевірка',
   'validation.hint':
     'Перевірки всього плану: кола, кабель, пристрої та отвори.',
@@ -1841,6 +1934,89 @@ const ua: Dictionary = {
   'validation.openingMissingWall':
     'Отвори посилаються на відсутні стіни: {count}',
   'validation.unusedCircuit': 'Невикористані кола: {count}',
+  'validation.electricalUncalibrated':
+    'Відкалібруйте план, щоб перевірити падіння напруги та струм КЗ.',
+  'validation.circuitNoDevices': 'Коло {circuit} не має пристроїв.',
+  'validation.circuitNoRoute': 'Коло {circuit} не має кабельної траси.',
+  'validation.orphanDevice':
+    'Пристрої посилаються на відсутнє коло {circuit}.',
+  'validation.currentExceedsBreaker':
+    'Коло {circuit}: розрахунковий струм {current} А перевищує автомат {rating} А.',
+  'validation.breakerExceedsCable':
+    'Коло {circuit}: автомат {rating} А перевищує пропускну здатність кабелю {ampacity} А ({section} мм²).',
+  'validation.unknownCableSection':
+    'Коло {circuit}: невідомий переріз кабелю {section} мм².',
+  'validation.voltageDropExceeded':
+    'Коло {circuit}: падіння напруги {drop}% перевищує ліміт {limit}%.',
+  'validation.faultCurrentLow':
+    'Коло {circuit}: струм КЗ {fault} А нижчий за магнітний розчіплювач {trip} А.',
+  'validation.breakingCapacityExceeded':
+    'Коло {circuit}: струм КЗ {fault} А перевищує відключаючу здатність {capacity} кА.',
+  'validation.rcdMissing': 'Коло {circuit}: розеткове коло без ПЗВ.',
+  'validation.rcdSensitivityHigh':
+    'Коло {circuit}: чутливість ПЗВ {sensitivity} мА перевищує 30 мА.',
+  'validation.rcdRatingLow':
+    'Коло {circuit}: номінал ПЗВ {rcd} А нижчий за автомат {rating} А.',
+
+  'electrical.title': 'Електророзрахунок',
+  'electrical.hint':
+    'Живий розрахунок навантажень, падіння напруги й захистів для кіл та вводу.',
+  'electrical.errors': 'Помилки {count}',
+  'electrical.warnings': 'Попередження {count}',
+  'electrical.ok': 'Узгоджено',
+  'electrical.installed': 'Установлена',
+  'electrical.demand': 'Розрахункова',
+  'electrical.current': 'Макс. струм',
+  'electrical.worstDrop': 'Найб. ΔU',
+  'electrical.uncalibrated':
+    'Відкалібруйте план, щоб перевірити падіння напруги та струм КЗ.',
+  'electrical.supply': 'Живлення',
+  'electrical.singlePhase': 'Однофазне',
+  'electrical.threePhase': 'Трифазне',
+  'electrical.sourceFault': 'Струм КЗ джерела',
+  'electrical.cable': 'Кабель за замовч.',
+  'electrical.breaker': 'Автомат за замовч.',
+  'electrical.conductor': 'Жила',
+  'electrical.copper': 'Мідь',
+  'electrical.aluminium': 'Алюміній',
+  'electrical.rcd': 'ПЗВ 30 мА',
+  'electrical.circuitError': 'Перевірити',
+  'electrical.circuitWarning': 'Увага',
+  'electrical.circuitOk': 'ОК',
+  'electrical.load': 'Струм',
+  'electrical.breakerShort': 'Автомат',
+  'electrical.cableShort': 'Кабель',
+  'electrical.dropShort': 'ΔU',
+  'electrical.fault': 'КЗ',
+  'electrical.phase': 'Фаза',
+  'electrical.noCircuits': 'Додайте коло, щоб побачити розрахунок.',
+  'electrical.blocked':
+    'Виправте критичні електричні помилки перед формуванням кошторису.',
+  'electrical.issue.electricalUncalibrated':
+    'Масштаб плану не відкалібровано — падіння напруги та струм КЗ не перевіряються.',
+  'electrical.issue.circuitNoDevices': 'Коло {circuit} не має пристроїв.',
+  'electrical.issue.circuitNoRoute': 'Коло {circuit} не має кабельної траси.',
+  'electrical.issue.orphanDevice':
+    'Пристрої посилаються на відсутнє коло {circuit}.',
+  'electrical.issue.currentExceedsBreaker':
+    'Коло {circuit}: розрахунковий струм {current} А перевищує автомат {rating} А.',
+  'electrical.issue.breakerExceedsCable':
+    'Коло {circuit}: автомат {rating} А перевищує пропускну здатність кабелю {ampacity} А ({section} мм²).',
+  'electrical.issue.unknownCableSection':
+    'Коло {circuit}: невідомий переріз кабелю {section} мм².',
+  'electrical.issue.voltageDropExceeded':
+    'Коло {circuit}: падіння напруги {drop}% перевищує ліміт {limit}%.',
+  'electrical.issue.faultCurrentLow':
+    'Коло {circuit}: струм КЗ {fault} А нижчий за магнітний розчіплювач {trip} А.',
+  'electrical.issue.breakingCapacityExceeded':
+    'Коло {circuit}: струм КЗ {fault} А перевищує відключаючу здатність {capacity} кА.',
+  'electrical.issue.rcdMissing':
+    'Коло {circuit}: розеткове коло без ПЗВ.',
+  'electrical.issue.rcdSensitivityHigh':
+    'Коло {circuit}: чутливість ПЗВ {sensitivity} мА перевищує 30 мА.',
+  'electrical.issue.rcdRatingLow':
+    'Коло {circuit}: номінал ПЗВ {rcd} А нижчий за автомат {rating} А.',
+
   'project.documentation': 'Документація',
   'docs.loading': 'Завантаження документації…',
   'docs.backToProject': 'Назад до проєкту',

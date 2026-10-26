@@ -1,5 +1,6 @@
 import type {
   Circuit,
+  ElectricalSettings,
   PublicCalibration,
   PublicDimension,
   PublicOpening,
@@ -21,6 +22,7 @@ export const MAX_LOCAL_PROJECT_BYTES = 5 * 1024 * 1024;
 export interface LocalDrawing {
   calibration: PublicCalibration | null;
   circuits: Circuit[];
+  electrical: ElectricalSettings;
   walls: PublicWall[];
   rooms: PublicRoom[];
   openings: PublicOpening[];
@@ -64,6 +66,7 @@ export function emptyDrawing(): LocalDrawing {
   return {
     calibration: null,
     circuits: [],
+    electrical: {},
     walls: [],
     rooms: [],
     openings: [],
@@ -94,6 +97,10 @@ function normalizeDrawing(drawing: Partial<LocalDrawing>): LocalDrawing {
   return {
     calibration: drawing.calibration ?? null,
     circuits: array(drawing.circuits),
+    electrical:
+      drawing.electrical && typeof drawing.electrical === 'object'
+        ? drawing.electrical
+        : {},
     walls: array(drawing.walls),
     rooms: array(drawing.rooms),
     openings: array(drawing.openings),

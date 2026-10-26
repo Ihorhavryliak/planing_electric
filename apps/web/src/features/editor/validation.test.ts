@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { calculateElectrical } from '@drawmyplace/calculations';
 import { validatePlan, type ValidationInput } from './validation';
 
 function baseInput(): ValidationInput {
@@ -158,5 +159,31 @@ describe('plan validation', () => {
     const issues = validatePlan(input);
     expect(issues[0]?.code).toBe('routeZeroLength');
     expect(issues[0]?.severity).toBe('error');
+  });
+
+  it('adds electrical coordination issues and targets the affected circuit', () => {
+    const input = baseInput();
+    input.electrical = calculateElectrical({
+      circuits: [{ id: 'C1', name: 'Sockets' }],
+      devices: [
+        {
+          id: 'p2',
+          circuitId: 'C1',
+          type: 'socket',
+          subtype: 'socket-dedicated',
+          powerW: 4_000,
+          demandFactor: 1,
+        },
+      ],
+      lengthsByCircuit: { C1: 20 },
+    });
+
+    const issue = validatePlan(input).find(
+      (item) => item.code === 'currentExceedsBreaker',
+    );
+
+    expect(issue?.severity).toBe('error');
+    expect(issue?.targets).toEqual([{ kind: 'circuit', id: 'C1' }]);
+    expect(issue?.params?.current).toBeGreaterThan(16);
   });
 });

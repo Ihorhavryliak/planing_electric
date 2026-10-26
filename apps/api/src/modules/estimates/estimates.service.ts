@@ -1,9 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { calculateElectrical } from '@drawmyplace/calculations';
 
 function escapePdf(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
-import type { PlanCalculation, PublicEstimate } from '@drawmyplace/contracts';
+import type {
+  ElectricalSettings,
+  PlanCalculation,
+  PublicEstimate,
+} from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { DrawingService } from '../drawing/drawing.service';
 import { FloorsRepository } from '../editor/floors.repository';
@@ -53,6 +58,51 @@ export class EstimatesService {
       (drawing?.routes ?? []).map((route) => [route.id, route.materialId]),
     );
 
+    // Critical electrical mismatches (overload, undersized cable, insufficient
+    // breaking capacity) must be fixed before an estimate can be issued.
+    const planSettings = (plan.calculationSettings ?? {}) as {
+      circuits?: { id: string; name: string }[];
+      electrical?: ElectricalSettings;
+    };
+    const routeLengths = new Map(
+      calculation.routes.map((route) => [route.routeId, route.requiredLength]),
+    );
+    const circuitLengths: Record<string, number> = {};
+    for (const route of drawing?.routes ?? []) {
+      if (!route.circuitId) continue;
+      circuitLengths[route.circuitId] =
+        (circuitLengths[route.circuitId] ?? 0) +
+        (routeLengths.get(route.id) ?? 0);
+    }
+
+    const electrical = calculateElectrical({
+      circuits: (planSettings.circuits ?? []).map((circuit) => ({
+        id: circuit.id,
+        name: circuit.name,
+      })),
+      devices: (drawing?.points ?? []).map((point) => ({
+        id: point.id,
+        circuitId: point.properties.circuitId ?? null,
+        subtype: point.properties.subtype ?? null,
+        type: point.type,
+      })),
+      settings: planSettings.electrical ?? null,
+      lengthsByCircuit: circuitLengths,
+      calibrated: calculation.metersPerUnit !== null,
+    });
+    const criticalElectrical = electrical.issues.filter(
+      (issue) => issue.severity === 'error',
+    );
+
+    if (criticalElectrical.length > 0) {
+      throw new BadRequestException({
+        code: 'ELECTRICAL_COORDINATION',
+        message:
+          'Fix critical electrical mismatches before generating an estimate.',
+        issues: criticalElectrical,
+      });
+    }
+
     const items = calculation.routes.map((route) => {
       const quantity = route.requiredLength ?? 0;
       const assignedId = routeMaterialById.get(route.routeId) ?? null;
@@ -77,11 +127,20 @@ export class EstimatesService {
       };
     });
 
+    const electricalWarnings =
+      electrical.circuits.length > 0
+        ? [
+            `Electrical load: ${(electrical.totalConnectedPowerW / 1_000).toFixed(2)} kW installed, ` +
+              `${(electrical.totalDemandPowerW / 1_000).toFixed(2)} kW demand, ` +
+              `${electrical.maxPhaseCurrentA.toFixed(1)} A design current.`,
+          ]
+        : [];
+
     const created = await this.estimates.create(
       floor.projectId,
       ownerId,
       items,
-      calculation.warnings,
+      [...calculation.warnings, ...electricalWarnings],
     );
 
     const result = await this.getById(ownerId, created.id);

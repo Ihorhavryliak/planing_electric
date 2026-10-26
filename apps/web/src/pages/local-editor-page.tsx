@@ -26,6 +26,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
+import { ElectricalPanel } from '@/features/editor/electrical-panel';
+import { buildElectricalPlan } from '@/features/editor/electrical';
 import { LayersPanel } from '@/features/editor/layers-panel';
 import { TakeoffPanel } from '@/features/editor/takeoff-panel';
 import { ValidationPanel } from '@/features/editor/validation-panel';
@@ -273,6 +275,29 @@ export function LocalEditorPage() {
     [drawing, metersPerUnit, localCable, takeoffSettings],
   );
 
+  const routeLengths = useMemo(() => {
+    const lengths = new Map<string, number | null>();
+
+    drawing?.routes.forEach((route, index) => {
+      lengths.set(route.id, localCable?.[index]?.requiredLength ?? null);
+    });
+
+    return lengths;
+  }, [drawing, localCable]);
+
+  const electrical = useMemo(
+    () =>
+      buildElectricalPlan({
+        circuits: drawing?.circuits ?? [],
+        points: drawing?.points ?? [],
+        routes: drawing?.routes ?? [],
+        routeLengths,
+        settings: drawing?.electrical ?? null,
+        calibrated: metersPerUnit !== null,
+      }),
+    [drawing, routeLengths, metersPerUnit],
+  );
+
   const validationIssues = useMemo(
     () =>
       validatePlan({
@@ -282,8 +307,9 @@ export function LocalEditorPage() {
         routes: drawing?.routes ?? [],
         walls: drawing?.walls ?? [],
         openings: drawing?.openings ?? [],
+        electrical,
       }),
-    [drawing],
+    [drawing, electrical],
   );
 
   function focusValidationTarget(target: ValidationTarget) {
@@ -1086,6 +1112,12 @@ export function LocalEditorPage() {
             defaultThicknessMeters={takeoffSettings.defaultThicknessMeters}
             onWallHeightChange={setWallHeight}
             onDefaultThicknessChange={setDefaultThickness}
+            electrical={{
+              installedKw: electrical.totalConnectedPowerW / 1_000,
+              demandKw: electrical.totalDemandPowerW / 1_000,
+              currentA: electrical.maxPhaseCurrentA,
+              calibrated: electrical.calibrated,
+            }}
             onSelectCircuit={(circuitId) => {
               const route = drawing?.routes.find(
                 (item) => item.circuitId === circuitId,
@@ -1137,6 +1169,25 @@ export function LocalEditorPage() {
                 ),
               }))
             }
+          />
+
+          <ElectricalPanel
+            result={electrical}
+            onSettingsChange={(next) =>
+              update((current) => ({ ...current, electrical: next }))
+            }
+            onSelectCircuit={(circuitId) => {
+              const route = drawing?.routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (!route) return;
+              setSelectedRouteId(route.id);
+              setSelectedPointId(null);
+              setSelectedWallId(null);
+              setSelectedOpeningId(null);
+              setSelectedRoomId(null);
+              setSelectedDimensionId(null);
+            }}
           />
 
           {selectedPoint ? (

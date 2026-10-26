@@ -8,6 +8,7 @@ import type {
   CreateWallInput,
   EditorViewport,
   ElectricalPointType,
+  ElectricalSettings,
   LengthUnitInput,
   PublicCalibration,
   PublicDimension,
@@ -63,6 +64,8 @@ import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
+import { ElectricalPanel } from './electrical-panel';
+import { buildElectricalPlan } from './electrical';
 import { LayersPanel } from './layers-panel';
 import { TakeoffPanel } from './takeoff-panel';
 import { ValidationPanel } from './validation-panel';
@@ -503,6 +506,10 @@ export function PlanEditor({
     string | null
   >(null);
   const [layoutError, setLayoutError] = useState<string | null>(null);
+  const electricalSaveRef = useRef<{
+    busy: boolean;
+    queued: ElectricalSettings | null;
+  }>({ busy: false, queued: null });
   const wallsRef = useRef(walls);
   const openingsRef = useRef(openings);
   const roomsRef = useRef(rooms);
@@ -2083,6 +2090,35 @@ export function PlanEditor({
   const undoCommand = getUndoCommand(history);
   const redoCommand = getRedoCommand(history);
   const circuits = plan.calculationSettings?.circuits ?? [];
+  const routeLengths = useMemo(
+    () =>
+      new Map(
+        (calculation?.routes ?? []).map((route) => [
+          route.routeId,
+          route.requiredLength,
+        ]),
+      ),
+    [calculation],
+  );
+  const electrical = useMemo(
+    () =>
+      buildElectricalPlan({
+        circuits,
+        points,
+        routes,
+        routeLengths,
+        settings: plan.calculationSettings?.electrical ?? null,
+        calibrated: metersPerUnit !== null,
+      }),
+    [
+      circuits,
+      points,
+      routes,
+      routeLengths,
+      plan.calculationSettings?.electrical,
+      metersPerUnit,
+    ],
+  );
   const penetrationCounts = useMemo(
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
@@ -2154,8 +2190,21 @@ export function PlanEditor({
           materials.length > 0
             ? materials.map((material) => material.id)
             : undefined,
+        electrical,
       }),
-    [calibration, circuits, points, routes, walls, openings, materials],
+    [
+      calibration,
+      circuits,
+      points,
+      routes,
+      walls,
+      openings,
+      materials,
+      electrical,
+    ],
+  );
+  const electricalBlocked = electrical.issues.some(
+    (issue) => issue.severity === 'error',
   );
 
   async function saveCircuits(next: Circuit[]) {
@@ -2190,6 +2239,39 @@ export function PlanEditor({
 
   function handleDeleteCircuit(id: string) {
     void saveCircuits(circuits.filter((circuit) => circuit.id !== id));
+  }
+
+  function handleElectricalSettingsChange(next: ElectricalSettings) {
+    const state = electricalSaveRef.current;
+    state.queued = next;
+
+    if (state.busy) return;
+
+    state.busy = true;
+    void (async () => {
+      let base = plan;
+
+      try {
+        while (state.queued) {
+          const settings = state.queued;
+          state.queued = null;
+          const updated = await updatePlan(plan.id, {
+            calculationSettings: {
+              ...base.calculationSettings,
+              electrical: settings,
+            },
+            expectedVersion: base.version,
+          });
+          base = updated;
+          onPlanChange(updated);
+        }
+      } catch (error) {
+        state.queued = null;
+        setLayoutError(getErrorMessage(error));
+      } finally {
+        state.busy = false;
+      }
+    })();
   }
 
   useEffect(() => {
@@ -2999,12 +3081,36 @@ export function PlanEditor({
             onDelete={handleDeleteCircuit}
           />
 
+          <ElectricalPanel
+            result={electrical}
+            onSettingsChange={handleElectricalSettingsChange}
+            onSelectCircuit={(circuitId) => {
+              const route = routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (route) {
+                selectRoute(route.id);
+                return;
+              }
+              const point = points.find(
+                (item) => item.properties.circuitId === circuitId,
+              );
+              if (point) selectPoint(point.id);
+            }}
+          />
+
           <TakeoffPanel
             summary={takeoff}
             wallHeightMeters={takeoffSettings.wallHeightMeters}
             defaultThicknessMeters={takeoffSettings.defaultThicknessMeters}
             onWallHeightChange={setWallHeight}
             onDefaultThicknessChange={setDefaultThickness}
+            electrical={{
+              installedKw: electrical.totalConnectedPowerW / 1_000,
+              demandKw: electrical.totalDemandPowerW / 1_000,
+              currentA: electrical.maxPhaseCurrentA,
+              calibrated: electrical.calibrated,
+            }}
             onSelectCircuit={(circuitId) => {
               const route = routes.find(
                 (item) => item.circuitId === circuitId,
@@ -3534,7 +3640,7 @@ export function PlanEditor({
             <Button
               className="mt-3 w-full"
               size="sm"
-              disabled={estimateBusy}
+              disabled={estimateBusy || electricalBlocked}
               onClick={() => {
                 setEstimateBusy(true);
                 setEstimateError(null);
@@ -3554,6 +3660,11 @@ export function PlanEditor({
                 ? t('editor.generating')
                 : t('editor.generateEstimate')}
             </Button>
+            {electricalBlocked ? (
+              <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/10 px-2.5 py-2 text-[11px] leading-relaxed text-rose-100">
+                {t('electrical.blocked')}
+              </p>
+            ) : null}
             {estimateError ? (
               <p className="mt-2 text-xs text-rose-200">{estimateError}</p>
             ) : null}

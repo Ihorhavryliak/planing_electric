@@ -9,6 +9,13 @@ interface TakeoffPanelProps {
   onWallHeightChange: (value: number) => void;
   onDefaultThicknessChange: (value: number) => void;
   onSelectCircuit?: (circuitId: string | null) => void;
+  /** Load summary from the live electrical calculation. */
+  electrical?: {
+    installedKw: number;
+    demandKw: number;
+    currentA: number;
+    calibrated: boolean;
+  } | null;
 }
 
 function Row({
@@ -64,6 +71,7 @@ export function TakeoffPanel({
   onWallHeightChange,
   onDefaultThicknessChange,
   onSelectCircuit,
+  electrical,
 }: TakeoffPanelProps) {
   const { t, formatMeters, formatNumber, formatCurrency } = useI18n();
   const area = (value: number) =>
@@ -200,6 +208,34 @@ export function TakeoffPanel({
           }
         />
       </Group>
+
+      {electrical ? (
+        <Group title={t('takeoff.electricalLoad')}>
+          <Row
+            label={t('takeoff.installedPower')}
+            value={`${formatNumber(electrical.installedKw, {
+              maximumFractionDigits: 2,
+            })} kW`}
+          />
+          <Row
+            label={t('takeoff.demandPower')}
+            value={`${formatNumber(electrical.demandKw, {
+              maximumFractionDigits: 2,
+            })} kW`}
+          />
+          <Row
+            label={t('takeoff.designCurrent')}
+            value={
+              electrical.calibrated
+                ? `${formatNumber(electrical.currentA, {
+                    maximumFractionDigits: 1,
+                  })} A`
+                : '—'
+            }
+            strong
+          />
+        </Group>
+      ) : null}
 
       <Group title={t('takeoff.devices')}>
         <Row

@@ -227,6 +227,16 @@ export function createDemoLocalProject(
   project.drawing = {
     calibration,
     circuits: CIRCUITS,
+    electrical: {
+      supply: 'single-phase',
+      defaultCable: { material: 'copper', sectionMm2: 2.5 },
+      defaultBreaker: {
+        ratingA: 16,
+        curve: 'C',
+        breakingCapacityKa: 6,
+      },
+      sourceFaultCurrentKa: 6,
+    },
     walls: [
       wallTop,
       wallRight,

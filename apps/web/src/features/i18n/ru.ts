@@ -718,6 +718,11 @@ export const ru: Dictionary = {
   'takeoff.unassigned': 'Без цепи',
   'takeoff.wallHeight': 'Высота стен, м',
   'takeoff.defaultThickness': 'Толщина стен, м',
+  'takeoff.electricalLoad': 'Электрическая нагрузка',
+  'takeoff.installedPower': 'Установленная мощность',
+  'takeoff.demandPower': 'Расчётная мощность',
+  'takeoff.designCurrent': 'Расчётный ток',
+
   'validation.title': 'Проверка',
   'validation.hint':
     'Проверки всего плана: цепи, кабель, устройства и проёмы.',
@@ -750,6 +755,88 @@ export const ru: Dictionary = {
   'validation.openingMissingWall':
     'Проёмы ссылаются на отсутствующие стены: {count}',
   'validation.unusedCircuit': 'Неиспользуемые цепи: {count}',
+  'validation.electricalUncalibrated':
+    'Откалибруйте план, чтобы проверить падение напряжения и ток КЗ.',
+  'validation.circuitNoDevices': 'Цепь {circuit} не имеет устройств.',
+  'validation.circuitNoRoute': 'Цепь {circuit} не имеет кабельной трассы.',
+  'validation.orphanDevice':
+    'Устройства ссылаются на отсутствующую цепь {circuit}.',
+  'validation.currentExceedsBreaker':
+    'Цепь {circuit}: расчётный ток {current} А превышает автомат {rating} А.',
+  'validation.breakerExceedsCable':
+    'Цепь {circuit}: автомат {rating} А превышает пропускную способность кабеля {ampacity} А ({section} мм²).',
+  'validation.unknownCableSection':
+    'Цепь {circuit}: неизвестное сечение кабеля {section} мм².',
+  'validation.voltageDropExceeded':
+    'Цепь {circuit}: падение напряжения {drop}% превышает лимит {limit}%.',
+  'validation.faultCurrentLow':
+    'Цепь {circuit}: ток КЗ {fault} А ниже магнитного расцепителя {trip} А.',
+  'validation.breakingCapacityExceeded':
+    'Цепь {circuit}: ток КЗ {fault} А превышает отключающую способность {capacity} кА.',
+  'validation.rcdMissing': 'Цепь {circuit}: розеточная цепь без УЗО.',
+  'validation.rcdSensitivityHigh':
+    'Цепь {circuit}: чувствительность УЗО {sensitivity} мА превышает 30 мА.',
+  'validation.rcdRatingLow':
+    'Цепь {circuit}: номинал УЗО {rcd} А ниже автомата {rating} А.',
+
+  'electrical.title': 'Электрорасчёт',
+  'electrical.hint':
+    'Живой расчёт нагрузок, падения напряжения и защит для цепей и ввода.',
+  'electrical.errors': 'Ошибки {count}',
+  'electrical.warnings': 'Предупреждения {count}',
+  'electrical.ok': 'Согласовано',
+  'electrical.installed': 'Установленная',
+  'electrical.demand': 'Расчётная',
+  'electrical.current': 'Макс. ток',
+  'electrical.worstDrop': 'Наиб. ΔU',
+  'electrical.uncalibrated':
+    'Откалибруйте план, чтобы проверить падение напряжения и ток КЗ.',
+  'electrical.supply': 'Питание',
+  'electrical.singlePhase': 'Однофазное',
+  'electrical.threePhase': 'Трёхфазное',
+  'electrical.sourceFault': 'Ток КЗ источника',
+  'electrical.cable': 'Кабель по умолч.',
+  'electrical.breaker': 'Автомат по умолч.',
+  'electrical.conductor': 'Жила',
+  'electrical.copper': 'Медь',
+  'electrical.aluminium': 'Алюминий',
+  'electrical.rcd': 'УЗО 30 мА',
+  'electrical.circuitError': 'Проверить',
+  'electrical.circuitWarning': 'Внимание',
+  'electrical.circuitOk': 'ОК',
+  'electrical.load': 'Ток',
+  'electrical.breakerShort': 'Автомат',
+  'electrical.cableShort': 'Кабель',
+  'electrical.dropShort': 'ΔU',
+  'electrical.fault': 'КЗ',
+  'electrical.phase': 'Фаза',
+  'electrical.noCircuits': 'Добавьте цепь, чтобы увидеть расчёт.',
+  'electrical.blocked':
+    'Исправьте критические электрические ошибки перед формированием сметы.',
+  'electrical.issue.electricalUncalibrated':
+    'Масштаб плана не откалиброван — падение напряжения и ток КЗ не проверяются.',
+  'electrical.issue.circuitNoDevices': 'Цепь {circuit} не имеет устройств.',
+  'electrical.issue.circuitNoRoute': 'Цепь {circuit} не имеет кабельной трассы.',
+  'electrical.issue.orphanDevice':
+    'Устройства ссылаются на отсутствующую цепь {circuit}.',
+  'electrical.issue.currentExceedsBreaker':
+    'Цепь {circuit}: расчётный ток {current} А превышает автомат {rating} А.',
+  'electrical.issue.breakerExceedsCable':
+    'Цепь {circuit}: автомат {rating} А превышает пропускную способность кабеля {ampacity} А ({section} мм²).',
+  'electrical.issue.unknownCableSection':
+    'Цепь {circuit}: неизвестное сечение кабеля {section} мм².',
+  'electrical.issue.voltageDropExceeded':
+    'Цепь {circuit}: падение напряжения {drop}% превышает лимит {limit}%.',
+  'electrical.issue.faultCurrentLow':
+    'Цепь {circuit}: ток КЗ {fault} А ниже магнитного расцепителя {trip} А.',
+  'electrical.issue.breakingCapacityExceeded':
+    'Цепь {circuit}: ток КЗ {fault} А превышает отключающую способность {capacity} кА.',
+  'electrical.issue.rcdMissing': 'Цепь {circuit}: розеточная цепь без УЗО.',
+  'electrical.issue.rcdSensitivityHigh':
+    'Цепь {circuit}: чувствительность УЗО {sensitivity} мА превышает 30 мА.',
+  'electrical.issue.rcdRatingLow':
+    'Цепь {circuit}: номинал УЗО {rcd} А ниже автомата {rating} А.',
+
   'project.documentation': 'Документация',
   'docs.loading': 'Загрузка документации…',
   'docs.backToProject': 'Назад к проекту',

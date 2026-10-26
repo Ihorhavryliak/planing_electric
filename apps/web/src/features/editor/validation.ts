@@ -1,6 +1,8 @@
 import {
   findRoutePenetrations,
   polylineLength,
+  type ElectricalIssueCode,
+  type ElectricalPlanResult,
   type Point2D,
 } from '@drawmyplace/calculations';
 
@@ -20,7 +22,8 @@ export type ValidationCode =
   | 'isolatedPoint'
   | 'openingOutsideWall'
   | 'openingMissingWall'
-  | 'unusedCircuit';
+  | 'unusedCircuit'
+  | ElectricalIssueCode;
 
 export type ValidationTarget =
   | {
@@ -77,6 +80,8 @@ export interface ValidationInput {
   openings: readonly ValidationOpening[];
   /** Known material ids; when omitted, material references are not checked. */
   materialIds?: readonly string[];
+  /** Load, voltage-drop and protection results for the electrical rules. */
+  electrical?: ElectricalPlanResult | null;
 }
 
 const ENDPOINT_TOLERANCE = 1e-6;
@@ -321,6 +326,21 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
 
   if (unusedCircuits.length > 0) {
     issues.push(issue('unusedCircuit', 'info', unusedCircuits));
+  }
+
+  for (const electricalIssue of input.electrical?.issues ?? []) {
+    const target: ValidationTarget = electricalIssue.circuitId
+      ? { kind: 'circuit', id: electricalIssue.circuitId }
+      : { kind: 'calibration' };
+
+    issues.push(
+      issue(
+        electricalIssue.code,
+        electricalIssue.severity,
+        [target],
+        electricalIssue.params,
+      ),
+    );
   }
 
   return sortIssues(issues);
