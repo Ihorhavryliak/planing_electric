@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document, fetch, localStorage, history, location */
+/* global process, Buffer, console, document, fetch, localStorage, history, location, window */
 import { chromium } from 'playwright';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -65,6 +65,14 @@ async function main() {
   await page.getByLabel('Password').fill(PASSWORD);
   await page.getByRole('button', { name: /create account|sign up|register/i }).click();
   await page.waitForURL('**/app', { timeout: 15000 });
+  await page.locator('header').first().waitFor();
+  const headerPosition = await page.evaluate(() => {
+    const header = document.querySelector('header');
+    return header ? window.getComputedStyle(header).position : '';
+  });
+  if (headerPosition !== 'sticky') {
+    throw new Error(`Workspace header is not sticky: ${headerPosition}`);
+  }
 
   // Theme: system -> light -> dark, persists across reload, then back to system.
   const themeButton = page.getByRole('button', { name: /^Theme:/ });
@@ -134,6 +142,24 @@ async function main() {
       body: (await page.locator('body').innerText()).slice(0, 1200),
     });
     throw underlayError;
+  }
+
+  // Design-token and data-tour contracts stay stable across the refresh.
+  const designContract = await page.evaluate(() => {
+    const styles = window.getComputedStyle(document.documentElement);
+    return {
+      brand: styles.getPropertyValue('--dmp-color-brand').trim(),
+      panel: styles.getPropertyValue('--panel-border').trim(),
+      targets: ['editor-toolbar', 'editor-canvas', 'circuits', 'validation', 'save'].every(
+        (name) => Boolean(document.querySelector(`[data-tour="${name}"]`)),
+      ),
+    };
+  });
+  if (!designContract.brand || !designContract.panel) {
+    throw new Error('Semantic design tokens are missing.');
+  }
+  if (!designContract.targets) {
+    throw new Error('The data-tour contract is incomplete.');
   }
 
   // First-run tour: five steps, completes once and is stored on the account.

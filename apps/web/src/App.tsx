@@ -9,6 +9,7 @@ import { AdminPage } from '@/pages/admin-page';
 import { AllEstimatesPage } from '@/pages/all-estimates-page';
 import { AppPage } from '@/pages/app-page';
 import { EditorPage } from '@/pages/editor-page';
+import { DesignPage } from '@/pages/design-page';
 import { ForgotPasswordPage } from '@/pages/forgot-password-page';
 import { EstimatesPage } from '@/pages/estimates-page';
 import { InvitePage } from '@/pages/invite-page';
@@ -52,6 +53,17 @@ export function App() {
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/local" element={<LocalProjectsPage />} />
           <Route path="/local/:localId" element={<LocalEditorPage />} />
+          <Route
+            path="/design"
+            element={
+              import.meta.env.DEV ||
+              import.meta.env.VITE_ENABLE_DESIGN === 'true' ? (
+                <DesignPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/app" element={<AppPage />} />

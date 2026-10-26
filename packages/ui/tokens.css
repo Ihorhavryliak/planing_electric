@@ -1,0 +1,126 @@
+/*
+ * DrawMyPlace design tokens.
+ *
+ * Semantic values live here so new UI can use `--dmp-*` variables instead of
+ * raw Tailwind palette classes. The existing slate/amber palette is remapped
+ * for the light theme in apps/web/src/index.css; these tokens provide the
+ * stable names for new components and the /design catalogue.
+ */
+:root {
+  /* brand */
+  --dmp-color-brand: #fbbf24;
+  --dmp-color-brand-strong: #f59e0b;
+  --dmp-color-brand-soft: rgb(251 191 36 / 0.14);
+  --dmp-color-on-brand: #020617;
+
+  /* surfaces and borders */
+  --dmp-color-surface: #020617;
+  --dmp-color-surface-raised: #0f172a;
+  --dmp-color-surface-overlay: rgb(2 6 23 / 0.92);
+  --dmp-color-surface-inset: rgb(255 255 255 / 0.03);
+  --dmp-color-border: rgb(255 255 255 / 0.09);
+  --dmp-color-border-strong: rgb(255 255 255 / 0.16);
+  --dmp-color-border-brand: rgb(251 191 36 / 0.4);
+
+  /* text */
+  --dmp-color-text: #f1f5f9;
+  --dmp-color-text-muted: #94a3b8;
+  --dmp-color-text-subtle: #7f8ea3;
+
+  /* status */
+  --dmp-color-success: #34d399;
+  --dmp-color-success-soft: rgb(52 211 153 / 0.12);
+  --dmp-color-warning: #fbbf24;
+  --dmp-color-warning-soft: rgb(251 191 36 / 0.12);
+  --dmp-color-danger: #fb7185;
+  --dmp-color-danger-soft: rgb(251 113 133 / 0.12);
+  --dmp-color-info: #38bdf8;
+  --dmp-color-info-soft: rgb(56 189 248 / 0.12);
+
+  /* typography */
+  --dmp-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --dmp-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --dmp-text-2xs: 0.6875rem;
+  --dmp-text-xs: 0.75rem;
+  --dmp-text-sm: 0.875rem;
+  --dmp-text-md: 1rem;
+  --dmp-text-lg: 1.25rem;
+  --dmp-text-xl: 1.75rem;
+  --dmp-text-2xl: 2rem;
+  --dmp-leading-tight: 1.2;
+  --dmp-leading-normal: 1.5;
+  --dmp-weight-regular: 400;
+  --dmp-weight-medium: 500;
+  --dmp-weight-semibold: 600;
+
+  /* spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 */
+  --dmp-space-1: 0.25rem;
+  --dmp-space-2: 0.5rem;
+  --dmp-space-3: 0.75rem;
+  --dmp-space-4: 1rem;
+  --dmp-space-6: 1.5rem;
+  --dmp-space-8: 2rem;
+  --dmp-space-12: 3rem;
+
+  /* radii */
+  --dmp-radius-sm: 0.375rem;
+  --dmp-radius-md: 0.5rem;
+  --dmp-radius-lg: 0.75rem;
+  --dmp-radius-xl: 1rem;
+  --dmp-radius-2xl: 1.25rem;
+
+  /* elevation */
+  --dmp-shadow-0: none;
+  --dmp-shadow-1: 0 1px 2px rgb(0 0 0 / 0.25);
+  --dmp-shadow-2: 0 4px 12px -4px rgb(0 0 0 / 0.35);
+  --dmp-shadow-3: 0 12px 28px -16px rgb(0 0 0 / 0.55);
+  --dmp-shadow-4: 0 24px 60px -28px rgb(0 0 0 / 0.8);
+
+  /* motion */
+  --dmp-duration-fast: 120ms;
+  --dmp-duration-base: 180ms;
+  --dmp-duration-slow: 240ms;
+  --dmp-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dmp-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme='light'] {
+  --dmp-color-brand: #d97706;
+  --dmp-color-brand-strong: #b45309;
+  --dmp-color-brand-soft: rgb(217 119 6 / 0.12);
+  --dmp-color-on-brand: #ffffff;
+
+  --dmp-color-surface: #f8fafc;
+  --dmp-color-surface-raised: #ffffff;
+  --dmp-color-surface-overlay: rgb(255 255 255 / 0.96);
+  --dmp-color-surface-inset: rgb(15 23 42 / 0.025);
+  --dmp-color-border: rgb(15 23 42 / 0.09);
+  --dmp-color-border-strong: rgb(15 23 42 / 0.16);
+  --dmp-color-border-brand: rgb(217 119 6 / 0.4);
+
+  --dmp-color-text: #0f172a;
+  --dmp-color-text-muted: #475569;
+  --dmp-color-text-subtle: #5b6b80;
+
+  --dmp-color-success: #059669;
+  --dmp-color-success-soft: rgb(5 150 105 / 0.1);
+  --dmp-color-warning: #b45309;
+  --dmp-color-warning-soft: rgb(180 83 9 / 0.1);
+  --dmp-color-danger: #e11d48;
+  --dmp-color-danger-soft: rgb(225 29 72 / 0.1);
+  --dmp-color-info: #0284c7;
+  --dmp-color-info-soft: rgb(2 132 199 / 0.1);
+
+  --dmp-shadow-1: 0 1px 2px rgb(15 23 42 / 0.08);
+  --dmp-shadow-2: 0 4px 12px -4px rgb(15 23 42 / 0.16);
+  --dmp-shadow-3: 0 12px 28px -16px rgb(15 23 42 / 0.3);
+  --dmp-shadow-4: 0 24px 60px -28px rgb(15 23 42 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dmp-duration-fast: 0.01ms;
+    --dmp-duration-base: 0.01ms;
+    --dmp-duration-slow: 0.01ms;
+  }
+}

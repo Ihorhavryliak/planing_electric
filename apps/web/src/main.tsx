@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { initErrorReporting } from './lib/sentry';
+import '@drawmyplace/ui/tokens.css';
 import './index.css';
 
 initErrorReporting();

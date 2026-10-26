@@ -384,12 +384,12 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 19.1 Дизайн-система та токени
 
-- [ ] 19.1.1 Зафіксувати дизайн-токени в `packages/ui/tokens.css` (або `tailwind.config`): кольорова палітра (brand, surface, border, muted, success/warning/danger), типографічна шкала (11–32 px, 6 рівнів), шкала відступів (4/8/12/16/24/32/48), радіуси (sm/md/lg/xl/2xl), тіні (elevation 0–4), motion-токени (duration 120/180/240 ms, easing standard/emphasized).
+- [x] 19.1.1 Зафіксувати дизайн-токени в `packages/ui/tokens.css` (або `tailwind.config`): кольорова палітра (brand, surface, border, muted, success/warning/danger), типографічна шкала (11–32 px, 6 рівнів), шкала відступів (4/8/12/16/24/32/48), радіуси (sm/md/lg/xl/2xl), тіні (elevation 0–4), motion-токени (duration 120/180/240 ms, easing standard/emphasized).
 - [ ] 19.1.2 Перевести Tailwind-конфіг на семантичні токени (`bg-surface`, `text-muted`, `border-subtle`) замість сирих `slate-*`/`zinc-*`; ремап світлої/темної теми через CSS-змінні (як уже зроблено у Фазі 8).
 - [ ] 19.1.3 Каталог іконок: уніфікувати на `lucide-react` (розміри 14/16/20, stroke 1.75), прибрати змішані емодзі та inline-SVG у тулбарі.
 - [ ] 19.1.4 Кастомізувати ключові shadcn-компоненти (Button, Input, Select, Dialog, Popover, Tooltip, Tabs, Card, Badge) під токени; зафіксувати варіанти (size: sm/md/lg, variant: primary/secondary/ghost/danger).
-- [ ] 19.1.5 Додати сторінку `/design` (dev-only, за `VITE_ENABLE_DESIGN=true`) з живим каталогом токенів і компонентів для QA.
-- [ ] 19.1.6 Snapshot-тести токенів/тем (light/dark) у `theme.test.ts`, щоб ремап не ламав контраст.
+- [x] 19.1.5 Додати сторінку `/design` (dev-only, за `VITE_ENABLE_DESIGN=true`) з живим каталогом токенів і компонентів для QA.
+- [x] 19.1.6 Snapshot-тести токенів/тем (light/dark) у `theme.test.ts`, щоб ремап не ламав контраст.
 
 #### 19.2 App shell і навігація
 
@@ -445,8 +445,8 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [ ] 19.8.1 Оновити `scripts/browser-check.mjs` — додати візуальні перевірки (наявність дизайн-токенів, segmented-перемикача режимів, sticky-статусбара).
 - [ ] 19.8.2 Playwright-скріншоти (light + dark) для лендінгу, /app, /local, редактора, документації; зберігати в `docs/screenshots/`.
 - [ ] 19.8.3 Оновити README та документацію користувача зі скріншотами нового UI.
-- [ ] 19.8.4 Перевірити, що всі попередні Playwright-селектори (`data-testid`, `data-tour`) не зламані — контракт стабільності (Фаза 17.2).
-- [ ] 19.8.5 Повний прогін: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test`, `node scripts/browser-check.mjs` — усе зелене.
+- [x] 19.8.4 Перевірити, що всі попередні Playwright-селектори (`data-testid`, `data-tour`) не зламані — контракт стабільності (Фаза 17.2).
+- [x] 19.8.5 Повний прогін: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test`, `node scripts/browser-check.mjs` — усе зелене.
 
 **Критерії завершення:** єдина дизайн-система з токенами; лендінг, `/app`, `/local`, редактор (2D/3D/split/preview/fullscreen), документація та публічні сторінки візуально узгоджені; світла/темна теми проходять контраст AA; усі існуючі e2e та Playwright-селектори працюють; у `docs/screenshots/` оновлені скріншоти.
 
@@ -733,3 +733,12 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 139, contracts 47, calculations 64, database 2; 318 tests), `node scripts/browser-check.mjs`, `node scripts/capture-screenshots.mjs`.
 - Issues/blockers: screenshots currently cover the local editor and local project list; server-only screens (documentation, onboarding tour) can be added when a stable demo account is available.
 - Next action: Phase 19 design-system work or backlog polish.
+
+### 2026-10-27 — session 45: design tokens and catalog (19.1.1, 19.1.5, 19.1.6)
+- Completed: new `@drawmyplace/ui` package with `tokens.css` – brand/surface/border/text/status colors, seven-step typography, 4/8/12/16/24/32/48 spacing, five radii, elevation 0–4, 120/180/240 ms motion and standard/emphasized easing, with light-theme overrides and reduced-motion durations.
+- Completed: `/design` dev catalog (available in DEV or with `VITE_ENABLE_DESIGN=true`) renders live token values, typography, spacing, radii, elevation, motion and button/input/badge samples, with a theme toggle.
+- Completed: token tests parse the CSS and verify complete token groups, light/dark remapping, WCAG AA contrast for all text tiers, 3:1 for status colors and reduced-motion overrides.
+- Completed: browser smoke check now asserts semantic tokens (`--dmp-color-brand`, `--panel-border`), the full `data-tour` contract and the sticky workspace header (19.8.4/19.8.5).
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
+- Issues/blockers: the existing slate/amber utilities are not yet migrated to semantic utility classes (19.1.2); the design page is intentionally untranslated and dev-only. Other Phase 19 items (app shell, landing, editor toolbar/status bar, visualization, local cards, remaining accessibility) remain open.
+- Next action: Phase 19.2 app shell or 19.4 editor chrome, then the remaining Phase 19 sections.

@@ -132,6 +132,9 @@ importers:
       '@drawmyplace/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@drawmyplace/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@sentry/react':
         specifier: ^11.9.0
         version: 11.9.0(react-router@7.18.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
@@ -255,6 +258,8 @@ importers:
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@8.3.5(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
+
+  packages/ui: {}
 
 packages:
 
