@@ -201,4 +201,89 @@ describe('plan validation', () => {
     input.routes[0]!.startPointId = '99999999-9999-4999-8999-999999999999';
     expect(codes(input)).toContain('pinnedPointMissing');
   });
+
+  it('applies wet-room RCD rules and shows normative references', () => {
+    const input = baseInput();
+    input.points = input.points.map((point, index) =>
+      index === 1
+        ? {
+            ...point,
+            x: 100,
+            y: 0,
+            type: 'socket',
+            properties: { circuitId: 'C1' },
+          }
+        : point,
+    );
+    input.rooms = [
+      {
+        id: 'room-1',
+        name: 'Bathroom',
+        boundary: [
+          { x: 50, y: -50 },
+          { x: 150, y: -50 },
+          { x: 150, y: 50 },
+          { x: 50, y: 50 },
+        ],
+      },
+    ];
+    input.electrical = calculateElectrical({
+      circuits: [{ id: 'C1', name: 'Sockets' }],
+      devices: [{ id: 'p2', circuitId: 'C1', type: 'socket' }],
+      lengthsByCircuit: { C1: 10 },
+      settings: { defaultRcd: null },
+    });
+
+    const issue = validatePlan(input).find(
+      (item) => item.code === 'normWetZoneRcd',
+    );
+    expect(issue?.severity).toBe('error');
+    expect(issue?.norm).toContain('ПУЭ 7.1.79');
+    expect(issue?.params?.room).toBe('Bathroom');
+  });
+
+  it('does not flag a wet-room socket protected by a 30 mA RCD', () => {
+    const input = baseInput();
+    input.rooms = [
+      {
+        id: 'room-1',
+        name: 'Sanvuzol',
+        boundary: [
+          { x: 50, y: -50 },
+          { x: 150, y: -50 },
+          { x: 150, y: 50 },
+          { x: 50, y: 50 },
+        ],
+      },
+    ];
+    input.electrical = calculateElectrical({
+      circuits: [{ id: 'C1', name: 'Sockets' }],
+      devices: [{ id: 'p2', circuitId: 'C1', type: 'socket' }],
+      lengthsByCircuit: { C1: 10 },
+    });
+
+    expect(codes(input)).not.toContain('normWetZoneRcd');
+  });
+
+  it('adds a normative reference to cable/breaker mismatches', () => {
+    const input = baseInput();
+    input.electrical = calculateElectrical({
+      circuits: [{ id: 'C1', name: 'Sockets' }],
+      devices: [
+        {
+          id: 'p2',
+          circuitId: 'C1',
+          type: 'socket',
+          powerW: 4_000,
+          demandFactor: 1,
+        },
+      ],
+      lengthsByCircuit: { C1: 20 },
+    });
+
+    const issue = validatePlan(input).find(
+      (item) => item.code === 'currentExceedsBreaker',
+    );
+    expect(issue?.norm).toContain('ДБН');
+  });
 });

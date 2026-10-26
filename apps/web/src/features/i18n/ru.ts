@@ -764,6 +764,11 @@ export const ru: Dictionary = {
     'Вводной автомат {rating} А меньше рекомендуемого {recommended} А.',
   'validation.pinnedEndMismatch':
     'Прикреплённые концы кабеля не совпадают с координатами точек: {count}',
+  'validation.norm': 'Норматив: {norm}',
+  'validation.normWetZoneRcd':
+    'Влажное помещение «{room}»: цепь {circuit} требует УЗО 30 мА (сейчас {sensitivity} мА).',
+  'validation.normJunctionWetZone':
+    'Влажное помещение «{room}»: избегайте соединительных коробок, используйте герметичные соединения.',
   'validation.electricalUncalibrated':
     'Откалибруйте план, чтобы проверить падение напряжения и ток КЗ.',
   'validation.circuitNoDevices': 'Цепь {circuit} не имеет устройств.',

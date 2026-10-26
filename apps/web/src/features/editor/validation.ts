@@ -5,6 +5,11 @@ import {
   type ElectricalPlanResult,
   type Point2D,
 } from '@drawmyplace/calculations';
+import {
+  NORM_REFERENCES,
+  isWetRoomName,
+  pointInPolygon,
+} from './normative';
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
 
@@ -28,6 +33,8 @@ export type ValidationCode =
   | 'panelOverflow'
   | 'panelNearlyFull'
   | 'mainBreakerUndersized'
+  | 'normWetZoneRcd'
+  | 'normJunctionWetZone'
   | ElectricalIssueCode;
 
 export type ValidationTarget =
@@ -46,6 +53,8 @@ export interface ValidationIssue {
   count: number;
   targets: ValidationTarget[];
   params?: Record<string, string | number>;
+  /** Normative clause for normocontrol rows. */
+  norm?: string;
 }
 
 export interface ValidationWall {
@@ -86,6 +95,7 @@ export interface ValidationInput {
   routes: readonly ValidationRoute[];
   walls: readonly ValidationWall[];
   openings: readonly ValidationOpening[];
+  rooms?: readonly { id: string; name: string; boundary: readonly Point2D[] }[];
   /** Known material ids; when omitted, material references are not checked. */
   materialIds?: readonly string[];
   /** Load, voltage-drop and protection results for the electrical rules. */
@@ -104,6 +114,7 @@ function issue(
   severity: ValidationSeverity,
   targets: ValidationTarget[],
   params?: Record<string, string | number>,
+  norm?: string,
 ): ValidationIssue {
   return {
     id: `${code}:${targets
@@ -114,6 +125,7 @@ function issue(
     count: Math.max(1, targets.length),
     targets,
     params,
+    norm,
   };
 }
 
@@ -376,9 +388,58 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
     issues.push(issue('unusedCircuit', 'info', unusedCircuits));
   }
 
+  for (const room of input.rooms ?? []) {
+    if (!isWetRoomName(room.name)) continue;
+
+    for (const point of input.points) {
+      if (!pointInPolygon(point, room.boundary)) continue;
+
+      if (point.type === 'socket') {
+        const circuit = input.electrical?.circuits.find(
+          (item) => item.id === point.properties.circuitId,
+        );
+        const rcd = circuit?.rcd ?? null;
+
+        if (!rcd || rcd.sensitivityMa > 30) {
+          issues.push(
+            issue(
+              'normWetZoneRcd',
+              'error',
+              [{ kind: 'point', id: point.id }],
+              {
+                room: room.name,
+                circuit: point.properties.circuitId ?? '—',
+                sensitivity: rcd?.sensitivityMa ?? 0,
+              },
+              'ПУЭ 7.1.79; ДБН В.2.5-23:2010, п. 8.5',
+            ),
+          );
+        }
+      }
+
+      if (point.type === 'junction') {
+        issues.push(
+          issue(
+            'normJunctionWetZone',
+            'warning',
+            [{ kind: 'point', id: point.id }],
+            { room: room.name },
+            'ПУЭ 7.1.48; ДБН В.2.5-23:2010, п. 8.5',
+          ),
+        );
+      }
+    }
+  }
+
   for (const panelIssue of input.panelSchedule?.issues ?? []) {
     issues.push(
-      issue(panelIssue.code, panelIssue.severity, [{ kind: 'panel' }], panelIssue.params),
+      issue(
+        panelIssue.code,
+        panelIssue.severity,
+        [{ kind: 'panel' }],
+        panelIssue.params,
+        NORM_REFERENCES[panelIssue.code],
+      ),
     );
   }
 
@@ -393,6 +454,7 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
         electricalIssue.severity,
         [target],
         electricalIssue.params,
+        NORM_REFERENCES[electricalIssue.code],
       ),
     );
   }

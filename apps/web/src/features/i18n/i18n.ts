@@ -784,6 +784,11 @@ const en: Dictionary = {
     'Main breaker {rating} A is below the recommended {recommended} A.',
   'validation.pinnedEndMismatch':
     'Pinned cable ends do not match their point coordinates: {count}',
+  'validation.norm': 'Norm: {norm}',
+  'validation.normWetZoneRcd':
+    'Wet room “{room}”: circuit {circuit} needs a 30 mA RCD (currently {sensitivity} mA).',
+  'validation.normJunctionWetZone':
+    'Wet room “{room}”: avoid junction boxes; use sealed connections.',
   'validation.electricalUncalibrated':
     'Calibrate the plan to check voltage drop and fault current.',
   'validation.circuitNoDevices': 'Circuit {circuit} has no devices.',
@@ -2057,6 +2062,11 @@ const ua: Dictionary = {
     'Ввідний автомат {rating} А менший за рекомендований {recommended} А.',
   'validation.pinnedEndMismatch':
     'Прикріплені кінці кабелю не збігаються з координатами точок: {count}',
+  'validation.norm': 'Норматив: {norm}',
+  'validation.normWetZoneRcd':
+    'Вологе приміщення «{room}»: коло {circuit} потребує ПЗВ 30 мА (зараз {sensitivity} мА).',
+  'validation.normJunctionWetZone':
+    'Вологе приміщення «{room}»: уникайте з’єднувальних коробок, використовуйте герметичні з’єднання.',
   'validation.electricalUncalibrated':
     'Відкалібруйте план, щоб перевірити падіння напруги та струм КЗ.',
   'validation.circuitNoDevices': 'Коло {circuit} не має пристроїв.',

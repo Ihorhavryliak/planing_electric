@@ -2278,6 +2278,7 @@ export function PlanEditor({
         routes,
         walls,
         openings,
+        rooms,
         materialIds:
           materials.length > 0
             ? materials.map((material) => material.id)
@@ -2292,6 +2293,7 @@ export function PlanEditor({
       routes,
       walls,
       openings,
+      rooms,
       materials,
       electrical,
       panelSchedule,

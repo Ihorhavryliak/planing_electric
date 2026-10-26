@@ -334,6 +334,7 @@ export function LocalEditorPage() {
         routes: drawing?.routes ?? [],
         walls: drawing?.walls ?? [],
         openings: drawing?.openings ?? [],
+        rooms: drawing?.rooms ?? [],
         electrical,
         panelSchedule,
       }),

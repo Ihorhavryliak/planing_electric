@@ -136,6 +136,11 @@ export function ValidationPanel({
                   <SeverityIcon severity={issue.severity} />
                   <span className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-300">
                     {t(`validation.${issue.code}`, issue.params)}
+                    {issue.norm ? (
+                      <span className="mt-0.5 block text-[10px] text-slate-500">
+                        {t('validation.norm', { norm: issue.norm })}
+                      </span>
+                    ) : null}
                   </span>
                   {issue.count > 1 ? (
                     <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] tabular-nums text-slate-400">
