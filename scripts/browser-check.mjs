@@ -188,15 +188,31 @@ async function main() {
   });
   await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
 
-  // Room outline and a dimension.
+  // Room outline and a dimension. Keep clicks inside the visible viewport.
   await page.getByRole('button', { name: 'Draw room outline tool' }).click();
-  await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
-  await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
-  await page.mouse.click(at(0.55, 0.85).x, at(0.55, 0.85).y);
+  await page.getByText(/Click to start a room outline/).waitFor();
+  await page.mouse.click(at(0.25, 0.68).x, at(0.25, 0.68).y);
+  await page.mouse.click(at(0.55, 0.68).x, at(0.55, 0.68).y);
+  await page.mouse.click(at(0.55, 0.78).x, at(0.55, 0.78).y);
   await page.keyboard.press('Enter');
+
+  const layoutSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Layout', exact: true }),
+  });
+  await layoutSection
+    .getByText('Rooms')
+    .locator('..')
+    .getByText('1', { exact: true })
+    .waitFor({ timeout: 10000 });
+
   await page.getByRole('button', { name: 'Add dimension tool' }).click();
   await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
   await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
+  await layoutSection
+    .getByText('Dimensions')
+    .locator('..')
+    .getByText('1', { exact: true })
+    .waitFor({ timeout: 10000 });
 
   // Select the socket, rotate it, and duplicate it.
   await page.getByRole('button', { name: 'Select tool' }).click();

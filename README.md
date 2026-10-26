@@ -136,17 +136,17 @@ RUN.md                  Detailed Ukrainian setup and troubleshooting guide
 
 After changing the schema, run `pnpm db:generate` and commit the generated migration. Apply it with `pnpm db:migrate`. Tests use PGlite and apply the committed migrations, so migration files must stay in sync with the schema.
 
-## Verification baseline — 2026-10-24
+## Verification baseline — 2026-10-26
 
 - `pnpm install` — passed.
 - `pnpm build` — passed (API, web, contracts, database).
 - `pnpm typecheck` — passed.
 - `pnpm lint` — passed.
-- `pnpm test` — 28 tests passed across 8 suites.
-- Auth integration tests — registration, session cookie hashing, current-user access, duplicate email (`409`), invalid credentials (`401`), payload validation (`400`), logout revocation, and disabled accounts. Tests run against PGlite with the committed migrations.
-- API smoke test on port `5004` — `/api/v1/health` returned `200`; `/api/v1/users/me` returned `401` without a cookie; invalid registration returned `400` with field-level messages; rate-limit headers were present.
-- Web smoke test on port `3004` — `/`, `/login`, and `/app` returned `200` through the Vite SPA fallback; the Vite proxy forwarded `/api/v1/users/me` to the API successfully.
-- Live PostgreSQL migration — **not verified**. Docker CLI is installed, but no Docker daemon or local PostgreSQL is available in this environment. PGlite applied both migrations successfully. A full browser registration/login flow against live PostgreSQL therefore remains unverified at runtime.
+- `pnpm test` — 64 API tests and 80 web tests passed.
+- Live PostgreSQL — migrations `0000`–`0009` applied to a clean `drawmyplace_qa` database created in the Docker container; 24 public tables and the `estimates.warnings` JSONB column verified.
+- Browser smoke check on a clean database (`node scripts/browser-check.mjs`) — registration, theme persistence, Ukrainian locale persistence, project/floor creation, PNG and PDF underlays, wall/doors/windows, calibration, points (place/rotate/duplicate), cable routes (draw, pan, bend drag, delete + undo), rooms, dimensions, 3D view and GLB download, variants, and local-first create/draw/reload/export/import/sync.
+- Health endpoints — `/api/v1/health` and `/api/v1/health/ready` return `200` with PostgreSQL available.
+- Optional Sentry reporting is wired for API (HTTP 500s) and web (global handlers + error boundary); it stays disabled until `SENTRY_DSN` / `VITE_SENTRY_DSN` are set.
 
 ## Security notes
 
