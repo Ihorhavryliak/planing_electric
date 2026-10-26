@@ -163,6 +163,32 @@ async function main() {
   await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
   await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
 
+  // Select the socket, rotate it, and duplicate it.
+  await page.getByRole('button', { name: 'Select tool' }).click();
+  await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.getByRole('button', { name: 'Duplicate' }).waitFor();
+  await page.getByRole('textbox', { name: /Rotation/ }).fill('90');
+  await page.getByRole('textbox', { name: /Rotation/ }).blur();
+  await page.getByRole('button', { name: 'Duplicate' }).click();
+  const pointsSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Points', exact: true }),
+  });
+  await pointsSection.getByText('2', { exact: true }).first().waitFor({ timeout: 10000 });
+
+  // Zoom controls and a viewport resize.
+  const zoomLabel = page.locator('button[title^="Reset to 100%"]');
+  await zoomLabel.click();
+  const beforeZoom = (await zoomLabel.innerText()).trim();
+  await page.getByRole('button', { name: 'Zoom in' }).click();
+  await page.waitForFunction(
+    (previous) =>
+      document.querySelector('button[title^="Reset to 100%"]')?.textContent?.trim() !==
+      previous,
+    beforeZoom,
+  );
+  await page.setViewportSize({ width: 900, height: 800 });
+  await planCanvas.waitFor();
+
   // 3D view loads lazily and renders a WebGL canvas.
   await page.getByRole('button', { name: '3D view' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
