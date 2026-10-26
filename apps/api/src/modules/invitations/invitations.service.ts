@@ -71,18 +71,21 @@ export class InvitationsService {
     const link = `${webOrigin}/invite/${rawToken}`;
     await this.mail.send(
       input.email,
-      'DrawMyPlace invitation / Запрошення до організації',
+      'DrawMyPlace invitation / Запрошення до організації / Приглашение в организацию',
       [
         `You have been invited to join an organization as ${input.role}.`,
         `Вас запрошено приєднатися до організації з роллю ${input.role}.`,
+        `Вас пригласили присоединиться к организации с ролью ${input.role}.`,
         '',
         'Accept the invitation:',
         'Прийняти запрошення:',
+        'Принять приглашение:',
         '',
         link,
         '',
         `The invitation expires in ${input.expiresInDays} day(s).`,
         `Запрошення дійсне ${input.expiresInDays} дн.`,
+        `Приглашение действует ${input.expiresInDays} дн.`,
       ].join('\n'),
     );
 

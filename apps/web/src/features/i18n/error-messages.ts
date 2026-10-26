@@ -49,6 +49,55 @@ const uk: Record<string, string> = {
     'Варіант не знайдено або доступ заборонено',
 };
 
+const ru: Record<string, string> = {
+  'Invalid email or password': 'Неверный email или пароль',
+  'Authentication required': 'Требуется аутентификация',
+  'Invalid or expired session': 'Сессия недействительна или просрочена',
+  'An account with this email already exists':
+    'Аккаунт с таким email уже существует',
+  'Password must be at least 10 characters':
+    'Пароль должен содержать не менее 10 символов',
+  'Password must be at most 128 characters':
+    'Пароль должен содержать не более 128 символов',
+  'Email must be at most 254 characters':
+    'Email должен содержать не более 254 символов',
+  'Enter a valid email address': 'Введите корректный email-адрес',
+  'Name is required': 'Имя обязательно',
+  'Name must be at most 100 characters':
+    'Имя должно содержать не более 100 символов',
+  'Too many authentication attempts. Try again later.':
+    'Слишком много попыток входа. Попробуйте позже.',
+  'Project not found': 'Проект не найден',
+  'Floor not found': 'Этаж не найден',
+  'Plan not found': 'План не найден',
+  'Read-only access': 'Доступ только для чтения',
+  'Project manager access required': 'Требуется доступ менеджера проекта',
+  'Not allowed to manage members': 'Нет разрешения управлять участниками',
+  'Not a member of this organization':
+    'Вы не являетесь участником этой организации',
+  'Organization not found': 'Организация не найдена',
+  'Estimate not found': 'Смета не найдена',
+  'Opening not found': 'Проём не найден',
+  'Opening must fit within the wall length':
+    'Проём должен помещаться в длину стены',
+  'Opening must reference a wall on this plan':
+    'Проём должен ссылаться на стену этого плана',
+  'Dimension points must not coincide': 'Точки размера не должны совпадать',
+  'Current password is incorrect': 'Текущий пароль неверен',
+  'Password is incorrect': 'Пароль неверен',
+  'Reset link is invalid or expired':
+    'Ссылка для сброса недействительна или просрочена',
+  'Verification link is invalid or expired':
+    'Ссылка для подтверждения недействительна или просрочена',
+  'Project revision mismatch': 'Проект был изменён в другой сессии',
+  'Plan version mismatch': 'План был изменён в другой сессии',
+  'Export link is invalid or expired':
+    'Ссылка для экспорта недействительна или просрочена',
+  'User not found': 'Пользователь не найден',
+  'Variant not found or access denied':
+    'Вариант не найден или доступ запрещён',
+};
+
 let activeLocale: Locale = 'en';
 
 export function setErrorLocale(locale: Locale): void {
@@ -58,6 +107,6 @@ export function setErrorLocale(locale: Locale): void {
 /** Translates known server messages; unknown messages are returned unchanged. */
 export function localizeMessage(message: string, locale = activeLocale): string {
   if (locale === 'en') return message;
-  const dictionary = locale === 'uk' ? uk : uk;
+  const dictionary = locale === 'ua' ? uk : ru;
   return dictionary[message] ?? message;
 }

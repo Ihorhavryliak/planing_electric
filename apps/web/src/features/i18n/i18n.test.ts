@@ -24,46 +24,52 @@ function memoryStorage(initial: Record<string, string> = {}) {
 
 describe('i18n', () => {
   it('accepts only supported locales', () => {
-    expect(isLocale('uk')).toBe(true);
+    expect(isLocale('ua')).toBe(true);
+    expect(isLocale('ru')).toBe(true);
     expect(isLocale('en')).toBe(true);
-    expect(isLocale('pl')).toBe(true);
+    expect(isLocale('pl')).toBe(false);
     expect(isLocale('de')).toBe(false);
   });
 
-  it('reads and persists the locale', () => {
-    expect(readLocale(memoryStorage({ [LOCALE_STORAGE_KEY]: 'uk' }))).toBe('uk');
+  it('reads and persists the locale, migrating the legacy uk value', () => {
+    expect(readLocale(memoryStorage({ [LOCALE_STORAGE_KEY]: 'ua' }))).toBe(
+      'ua',
+    );
+    expect(readLocale(memoryStorage({ [LOCALE_STORAGE_KEY]: 'uk' }))).toBe(
+      'ua',
+    );
     expect(readLocale(null)).toBe('en');
     const storage = memoryStorage();
-    writeLocale(storage, 'pl');
-    expect(storage.data[LOCALE_STORAGE_KEY]).toBe('pl');
+    writeLocale(storage, 'ru');
+    expect(storage.data[LOCALE_STORAGE_KEY]).toBe('ru');
   });
 
   it('translates and interpolates params', () => {
-    expect(translate('uk', 'nav.materials')).toBe('Матеріали');
+    expect(translate('ua', 'nav.materials')).toBe('Матеріали');
+    expect(translate('ru', 'nav.materials')).toBe('Материалы');
     expect(translate('en', 'nav.materials')).toBe('Materials');
     expect(translate('en', 'missing.key')).toBe('missing.key');
   });
 
-  it('falls back to English for missing Polish keys', () => {
-    expect(translate('pl', 'nav.settings')).toBe('Settings');
-  });
-
   it('maps locales to Intl tags', () => {
-    expect(formatLocale('uk')).toBe('uk-UA');
-    expect(formatLocale('pl')).toBe('pl-PL');
+    expect(formatLocale('ua')).toBe('uk-UA');
+    expect(formatLocale('ru')).toBe('ru-RU');
     expect(formatLocale('en')).toBe('en-US');
   });
 
   it('maps locales to currencies and translated units', () => {
-    expect(currencyFor('uk')).toBe('UAH');
-    expect(translateUnit('uk', 'm')).toBe('м');
-    expect(translateUnit('uk', 'm2')).toBe('м²');
-    expect(translateUnit('uk', 'pcs')).toBe('pcs');
+    expect(currencyFor('ua')).toBe('UAH');
+    expect(currencyFor('ru')).toBe('RUB');
+    expect(translateUnit('ua', 'm')).toBe('м');
+    expect(translateUnit('ru', 'm2')).toBe('м²');
+    expect(translateUnit('en', 'pcs')).toBe('pcs');
   });
 
-  it('localizes known API errors and leaves unknown ones intact', () => {
-    setErrorLocale('uk');
+  it('localizes known API errors in Ukrainian and Russian', () => {
+    setErrorLocale('ua');
     expect(localizeMessage('Project not found')).toBe('Проєкт не знайдено');
+    setErrorLocale('ru');
+    expect(localizeMessage('Project not found')).toBe('Проект не найден');
     expect(localizeMessage('Unknown server message')).toBe(
       'Unknown server message',
     );

@@ -83,15 +83,18 @@ async function main() {
   );
   await page.getByRole('button', { name: /^Theme:/ }).click();
 
-  // Ukrainian locale persists across reload, then switch back to English.
-  await page.getByLabel('Language').selectOption('uk');
+  // Ukrainian locale persists across reload; Russian and English work too.
+  await page.getByLabel('Language').selectOption('ua');
   await page.getByRole('button', { name: 'Вийти' }).waitFor();
   await page.getByRole('heading', { name: 'Ваші електроплани' }).waitFor();
   await page.reload();
   await page.waitForURL('**/app');
   await page.getByRole('button', { name: 'Вийти' }).waitFor();
   await page.getByRole('heading', { name: 'Ваші електроплани' }).waitFor();
-  await page.getByLabel('Мова').selectOption('en');
+  await page.getByLabel('Мова').selectOption('ru');
+  await page.getByRole('button', { name: 'Выйти' }).waitFor();
+  await page.getByRole('heading', { name: 'Ваши электропланы' }).waitFor();
+  await page.getByLabel('Язык').selectOption('en');
   await page.getByRole('button', { name: 'Sign out' }).waitFor();
 
   await page.getByPlaceholder('Test apartment').fill('Browser Check Project');
@@ -104,11 +107,14 @@ async function main() {
 
   await page.getByRole('link', { name: /open plan editor/i }).click();
 
-  // The editor shell switches to Ukrainian and back.
-  await page.getByLabel('Language').selectOption('uk');
+  // The editor shell switches between Ukrainian, Russian and English.
+  await page.getByLabel('Language').selectOption('ua');
   await page.getByRole('button', { name: 'Додати поверх' }).waitFor();
   await page.getByText('Почніть із поверху').waitFor();
-  await page.getByLabel('Мова').selectOption('en');
+  await page.getByLabel('Мова').selectOption('ru');
+  await page.getByRole('button', { name: 'Добавить этаж' }).waitFor();
+  await page.getByText('Начните с этажа').waitFor();
+  await page.getByLabel('Язык').selectOption('en');
   await page.getByRole('button', { name: 'Add floor' }).waitFor();
 
   await page.getByRole('button', { name: 'Add floor' }).click();

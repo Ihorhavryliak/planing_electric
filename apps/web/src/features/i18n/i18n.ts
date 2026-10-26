@@ -1,14 +1,16 @@
-export type Locale = 'uk' | 'en' | 'pl';
+import { ru } from './ru';
+
+export type Locale = 'ua' | 'ru' | 'en';
 
 export const LOCALE_STORAGE_KEY = 'drawmyplace-locale';
 
 export const LOCALES: Array<{ value: Locale; label: string }> = [
-  { value: 'uk', label: 'Українська' },
+  { value: 'ua', label: 'Українська' },
+  { value: 'ru', label: 'Русский' },
   { value: 'en', label: 'English' },
-  { value: 'pl', label: 'Polski' },
 ];
 
-type Dictionary = Record<string, string>;
+export type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
   'nav.organizations': 'Organizations',
@@ -362,7 +364,7 @@ const en: Dictionary = {
   'landing.item.local':
     'Local-first mode with JSON import/export and sync to an account',
   'landing.item.i18n':
-    'English, Ukrainian and Polish interface with dark and light themes',
+    'English, Ukrainian and Russian interface with dark and light themes',
   'landing.footer': 'DrawMyPlace · React · NestJS · PostgreSQL',
 
 
@@ -749,7 +751,7 @@ const en: Dictionary = {
     'The two points are {distance} drawing units apart. How far apart are they in reality?',
 };
 
-const uk: Dictionary = {
+const ua: Dictionary = {
   'nav.organizations': 'Організації',
   'nav.materials': 'Матеріали',
   'nav.notifications': 'Сповіщення',
@@ -1109,7 +1111,7 @@ const uk: Dictionary = {
   'landing.item.local':
     'Локальний режим з імпортом/експортом JSON і синхронізацією з акаунтом',
   'landing.item.i18n':
-    'Інтерфейс англійською, українською та польською, темна й світла теми',
+    'Інтерфейс англійською, українською та російською, темна й світла теми',
   'landing.footer': 'DrawMyPlace · React · NestJS · PostgreSQL',
 
 
@@ -1504,14 +1506,12 @@ const uk: Dictionary = {
 
 const dictionaries: Record<Locale, Dictionary> = {
   en,
-  uk,
-  // Polish is intentionally maintained as a target catalog; missing keys fall
-  // back to English until the translation pass is complete.
-  pl: { ...en },
+  ua,
+  ru,
 };
 
 export function isLocale(value: unknown): value is Locale {
-  return value === 'uk' || value === 'en' || value === 'pl';
+  return value === 'ua' || value === 'ru' || value === 'en';
 }
 
 export function readLocale(
@@ -1519,6 +1519,8 @@ export function readLocale(
 ): Locale {
   try {
     const stored = storage?.getItem(LOCALE_STORAGE_KEY);
+    // Legacy value from the earlier Ukrainian-only catalog.
+    if (stored === 'uk') return 'ua';
     if (isLocale(stored)) return stored;
   } catch {
     // ignore
@@ -1550,12 +1552,12 @@ export function translate(
 }
 
 export function formatLocale(locale: Locale): string {
-  return locale === 'uk' ? 'uk-UA' : locale === 'pl' ? 'pl-PL' : 'en-US';
+  return locale === 'ua' ? 'uk-UA' : locale === 'ru' ? 'ru-RU' : 'en-US';
 }
 
 const CURRENCIES: Record<Locale, string> = {
-  uk: 'UAH',
-  pl: 'PLN',
+  ua: 'UAH',
+  ru: 'RUB',
   en: 'USD',
 };
 

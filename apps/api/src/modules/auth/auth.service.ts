@@ -152,10 +152,11 @@ export class AuthService {
     const webOrigin = this.config.get<string>('WEB_ORIGIN') ?? '';
     await this.mail.send(
       user.email,
-      'Verify your DrawMyPlace email / Підтвердіть email',
+      'Verify your DrawMyPlace email / Підтвердіть email / Подтвердите email',
       [
         'Confirm your email address within 24 hours:',
-        `Підтвердіть email-адресу протягом 24 годин:`,
+        'Підтвердіть email-адресу протягом 24 годин:',
+        'Подтвердите email-адрес в течение 24 часов:',
         '',
         `${webOrigin}/verify-email/${token}`,
       ].join('\n'),
@@ -239,15 +240,17 @@ export class AuthService {
     const link = `${webOrigin}/reset-password/${token}`;
     await this.mail.send(
       user.email,
-      'Reset your DrawMyPlace password / Скидання пароля',
+      'Reset your DrawMyPlace password / Скидання пароля / Сброс пароля',
       [
         'Use this link within one hour to reset your password:',
         'Використайте це посилання протягом години, щоб змінити пароль:',
+        'Используйте эту ссылку в течение часа, чтобы изменить пароль:',
         '',
         link,
         '',
         'If you did not request this, ignore this email.',
         'Якщо ви не надсилали запит, проігноруйте цей лист.',
+        'Если вы не отправляли запрос, проигнорируйте это письмо.',
       ].join('\n'),
     );
 
