@@ -100,7 +100,9 @@ restart decisions.
 
 ## 8. Logging and monitoring
 
-- Emit structured logs from the API and ship them to the platform log sink.
+- The API logs one line per request (method, path, status, duration, request id)
+  and returns `X-Request-Id`; use it to correlate reports.
+- Ship API logs to the platform log sink.
 - Alert on:
   - `/health/ready` failures
   - sustained 5xx rate

@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { RequestLoggerInterceptor } from './common/observability/request-logger.interceptor';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env';
 import { DatabaseModule } from './database/database.module';
@@ -46,6 +48,12 @@ import { UsersModule } from './modules/users/users.module';
     OrganizationsModule,
     ProjectsModule,
     UsersModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestLoggerInterceptor,
+    },
   ],
 })
 export class AppModule {}
