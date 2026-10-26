@@ -110,6 +110,12 @@ async function main() {
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
+  // 3D view loads lazily and renders a WebGL canvas.
+  await page.getByRole('button', { name: '3D view' }).click();
+  await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
+  await page.locator('canvas').last().waitFor({ timeout: 20000 });
+  await page.getByRole('button', { name: '2D edit' }).click();
+
   // Replace the raster plan with a PDF and render its page.
   await page.locator('input[type=file]').setInputFiles(pdfPath);
   await page.getByRole('button', { name: 'Use this page' }).click();

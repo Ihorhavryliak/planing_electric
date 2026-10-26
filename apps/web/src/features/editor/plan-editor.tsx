@@ -44,6 +44,8 @@ import {
   Upload,
 } from 'lucide-react';
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -88,6 +90,10 @@ import {
   uploadPlanPreview,
 } from './editor-api';
 import { EditorCanvas } from './editor-canvas';
+
+const ThreeView = lazy(() =>
+  import('./three-view').then((module) => ({ default: module.ThreeView })),
+);
 import {
   EMPTY_HISTORY,
   addHistoryEntry,
@@ -412,6 +418,7 @@ export function PlanEditor({
   const routesRef = useRef(routes);
   const routeRequestRef = useRef(new Map<string, number>());
 
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
@@ -1966,6 +1973,7 @@ export function PlanEditor({
     <>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="relative h-[65vh] min-h-[440px] lg:h-[calc(100vh-12rem)]">
+          {viewMode === '2d' ? (
           <EditorCanvas
             image={image}
             underlay={underlay}
@@ -2023,6 +2031,25 @@ export function PlanEditor({
             onUndo={() => void applyHistory('undo')}
             onRedo={() => void applyHistory('redo')}
           />
+          ) : (
+            <Suspense
+              fallback={
+                <div className="flex h-full min-h-[440px] items-center justify-center rounded-2xl border border-white/10 bg-slate-950 text-sm text-slate-400">
+                  <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-amber-300" />
+                  Loading 3D view…
+                </div>
+              }
+            >
+              <ThreeView
+                walls={walls}
+                openings={openings}
+                rooms={rooms}
+                points={points}
+                routes={routes}
+                metersPerUnit={metersPerUnit}
+              />
+            </Suspense>
+          )}
 
           {overlayBusy ? (
             <OverlayCard>
@@ -2128,6 +2155,23 @@ export function PlanEditor({
             </p>
             <div className="mt-3">
               <SaveStatus status={status} error={saveError} onRetry={retry} />
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant={viewMode === '2d' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('2d')}
+              >
+                2D edit
+              </Button>
+              <Button
+                variant={viewMode === '3d' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('3d')}
+              >
+                3D view
+              </Button>
             </div>
 
             {remoteUpdate ? (
