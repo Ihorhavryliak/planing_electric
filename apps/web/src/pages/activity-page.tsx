@@ -1,12 +1,14 @@
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { listActivity, type ActivityLogEntry } from '@/features/activity/activity-api';
 import { getErrorMessage } from '@/lib/api';
 
 export function ActivityPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
+  const { formatDate } = useI18n();
   const [entries, setEntries] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function ActivityPage() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-white">{entry.action}</span>
                   <span className="text-xs text-slate-500">
-                    {new Date(entry.createdAt).toLocaleString()}
+                    {formatDate(entry.createdAt)}
                   </span>
                 </div>
                 {entry.resourceType ? (

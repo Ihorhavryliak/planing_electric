@@ -83,6 +83,15 @@ async function main() {
   );
   await page.getByRole('button', { name: /^Theme:/ }).click();
 
+  // Ukrainian locale persists across reload, then switch back to English.
+  await page.getByLabel('Language').selectOption('uk');
+  await page.getByRole('button', { name: 'Вийти' }).waitFor();
+  await page.reload();
+  await page.waitForURL('**/app');
+  await page.getByRole('button', { name: 'Вийти' }).waitFor();
+  await page.getByLabel('Мова').selectOption('en');
+  await page.getByRole('button', { name: 'Sign out' }).waitFor();
+
   await page.getByPlaceholder('Test apartment').fill('Browser Check Project');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('link', { name: /open project/i }).first().click();

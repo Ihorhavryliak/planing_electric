@@ -2,10 +2,12 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
+import { setErrorLocale } from './error-messages';
 import {
   formatLocale,
   readLocale,
@@ -28,6 +30,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() =>
     readLocale(typeof window === 'undefined' ? null : window.localStorage),
   );
+
+  useEffect(() => {
+    setErrorLocale(locale);
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);

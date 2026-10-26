@@ -2,6 +2,7 @@ import { Download, LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   createExportLinks,
@@ -15,6 +16,7 @@ function total(estimate: PublicEstimate): number {
 }
 
 export function AllEstimatesPage() {
+  const { formatDate } = useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function AllEstimatesPage() {
                     </span>
                   </p>
                   <p className="text-xs text-slate-500">
-                    {new Date(estimate.createdAt).toLocaleString()} ·{' '}
+                    {formatDate(estimate.createdAt)} ·{' '}
                     {estimate.items.length} lines · {total(estimate).toFixed(2)}
                   </p>
                 </div>

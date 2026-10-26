@@ -26,13 +26,14 @@ import {
 } from '@/features/projects/projects-api';
 import { searchUserByEmail } from '@/features/users/users-api';
 import { VariantsPanel } from '@/features/variants/variants-panel';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
-import { formatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export function ProjectPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
+  const { formatDate } = useI18n();
   const [project, setProject] = useState<PublicProject | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -275,8 +276,8 @@ export function ProjectPage() {
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-400">
-                Created {formatDateTime(project.createdAt)} · Updated{' '}
-                {formatDateTime(project.updatedAt)} · Revision {project.revision}
+                Created {formatDate(project.createdAt)} · Updated{' '}
+                {formatDate(project.updatedAt)} · Revision {project.revision}
               </p>
             </div>
 

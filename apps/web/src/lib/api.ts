@@ -1,3 +1,5 @@
+import { localizeMessage } from '@/features/i18n/error-messages';
+
 const API_PREFIX = '/api/v1';
 
 export class ApiError extends Error {
@@ -83,6 +85,6 @@ export async function apiRequest<T>(
 
 export function getErrorMessage(error: unknown): string {
   return error instanceof ApiError
-    ? error.message
+    ? localizeMessage(error.message)
     : 'Something went wrong. Please try again.';
 }

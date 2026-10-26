@@ -2,6 +2,7 @@ import { ArrowLeft, Bell, CheckCheck, LoaderCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   listNotifications,
@@ -12,6 +13,7 @@ import {
 import { getErrorMessage } from '@/lib/api';
 
 export function NotificationsPage() {
+  const { formatDate } = useI18n();
   const [items, setItems] = useState<NotificationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export function NotificationsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-medium text-white">{item.type}</span>
                   <span className="text-xs text-slate-500">
-                    {new Date(item.createdAt).toLocaleString()}
+                    {formatDate(item.createdAt)}
                   </span>
                 </div>
                 {!item.readAt ? (

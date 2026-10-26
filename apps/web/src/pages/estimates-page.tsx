@@ -8,6 +8,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   createExportLinks,
@@ -20,6 +21,7 @@ import { getErrorMessage } from '@/lib/api';
 
 export function EstimatesPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
+  const { formatDate } = useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export function EstimatesPage() {
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500">
-                      {new Date(estimate.createdAt).toLocaleString()}
+                      {formatDate(estimate.createdAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

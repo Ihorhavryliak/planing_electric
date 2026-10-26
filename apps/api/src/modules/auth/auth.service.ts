@@ -152,8 +152,13 @@ export class AuthService {
     const webOrigin = this.config.get<string>('WEB_ORIGIN') ?? '';
     await this.mail.send(
       user.email,
-      'Verify your DrawMyPlace email',
-      `Confirm your email address within 24 hours:\n\n${webOrigin}/verify-email/${token}`,
+      'Verify your DrawMyPlace email / Підтвердіть email',
+      [
+        'Confirm your email address within 24 hours:',
+        `Підтвердіть email-адресу протягом 24 годин:`,
+        '',
+        `${webOrigin}/verify-email/${token}`,
+      ].join('\n'),
     );
   }
 
@@ -234,8 +239,16 @@ export class AuthService {
     const link = `${webOrigin}/reset-password/${token}`;
     await this.mail.send(
       user.email,
-      'Reset your DrawMyPlace password',
-      `Use this link within one hour to reset your password:\n\n${link}\n\nIf you did not request this, ignore this email.`,
+      'Reset your DrawMyPlace password / Скидання пароля',
+      [
+        'Use this link within one hour to reset your password:',
+        'Використайте це посилання протягом години, щоб змінити пароль:',
+        '',
+        link,
+        '',
+        'If you did not request this, ignore this email.',
+        'Якщо ви не надсилали запит, проігноруйте цей лист.',
+      ].join('\n'),
     );
 
     return this.config.get<string>('NODE_ENV') !== 'production'

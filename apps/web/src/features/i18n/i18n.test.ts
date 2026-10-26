@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { localizeMessage, setErrorLocale } from './error-messages';
 import {
   LOCALE_STORAGE_KEY,
   formatLocale,
@@ -49,5 +50,15 @@ describe('i18n', () => {
     expect(formatLocale('uk')).toBe('uk-UA');
     expect(formatLocale('pl')).toBe('pl-PL');
     expect(formatLocale('en')).toBe('en-US');
+  });
+
+  it('localizes known API errors and leaves unknown ones intact', () => {
+    setErrorLocale('uk');
+    expect(localizeMessage('Project not found')).toBe('Проєкт не знайдено');
+    expect(localizeMessage('Unknown server message')).toBe(
+      'Unknown server message',
+    );
+    setErrorLocale('en');
+    expect(localizeMessage('Project not found')).toBe('Project not found');
   });
 });
