@@ -279,7 +279,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.2 **Каталог підтипів пристроїв**: 37 підтипів у 6 категоріях (розподіл, коробки, живлення, керування, освітлення, низька напруга), палітра в редакторі, збереження підтипу в точці, редагування у властивостях, підтримка локального режиму.
 - [x] 15.3 **Монтажні елементи**: спосіб монтажу траси (стеля/підлога/стіна/штроба) з шириною й глибиною штроби, автоматичний підрахунок проходів крізь стіни з маркерами на плані, підписи кіл на трасах, панель шарів із збереженням видимості, приховування шарів вимикає й hit-testing.
 - [x] 15.4 **Live takeoff у редакторі**: стіни (довжина, вузли, сегменти, площа брутто/нетто, об'єм), кімнати (площа, периметр), пристрої за типами й підтипами, кабель за колами та вартість кабелю за матеріалами; редаговані висота стін і товщина за замовчуванням із збереженням; працює в серверному й локальному редакторах.
-- [ ] 15.5 **Панель Validation**: агрегувати errors/warnings по всьому плану (кола, кабель, отвори, непідключені пристрої) з кількістю та переходом до проблемного об'єкта.
+- [x] 15.5 **Панель Validation**: 14 правил для кіл, кабелю, пристроїв, отворів і калібрування; агреговані рядки з кількістю, фільтри за severity, перехід до проблемної точки/траси/стіни/отвору/кола або секції масштабу; працює в серверному й локальному редакторах.
 - [ ] 15.6 **UX редактора**: preview-режим, command palette, оверлей гарячих клавіш, zoom інтерфейсу, колапс панелей, навігація по кімнатах, grid/snap/ortho.
 - [ ] 15.7 **Split 2D/3D**: одночасний перегляд і редагування 2D зліва й 3D справа; синхронізація камери/виділення.
 - [ ] 15.8 **Documentation workspace**: вкладки Materials / Cost estimate / Validation / Variants / Print PDF в одному місці.
@@ -393,3 +393,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 84, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice; the smoke script now refreshes the canvas box after sidebar scrolling to make drawing coordinates deterministic.
 - Issues/blockers: cable cost uses required length including waste (not purchase rounding); walls without thickness share the default and volume uses length-weighted average thickness.
 - Next action: plan-wide validation panel (15.5).
+
+### 2026-10-26 — session 21: plan validation panel
+- Completed: a pure `validatePlan` engine with calibration, duplicate/unknown/unused circuits, devices and routes without circuits, unknown cable materials, zero-length and loose-ended routes, isolated devices, openings outside/missing walls, and routes crossing walls without a chase; aggregated issues keep counts and target lists; a validation panel shows severity totals, filter chips and jumps to the affected object (or the scale section); server and local editors share it; 8 new tests cover the rules.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 92, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice.
+- Issues/blockers: issues are recalculated client-side from loaded drawing data, not persisted; calibration target scrolls to the scale section instead of starting the calibration tool.
+- Next action: editor UX polish (15.6).

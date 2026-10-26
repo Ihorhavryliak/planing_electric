@@ -19,6 +19,11 @@ import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
 import { LayersPanel } from '@/features/editor/layers-panel';
 import { TakeoffPanel } from '@/features/editor/takeoff-panel';
+import { ValidationPanel } from '@/features/editor/validation-panel';
+import {
+  validatePlan,
+  type ValidationTarget,
+} from '@/features/editor/validation';
 import { useTakeoffSettings } from '@/features/editor/takeoff-settings';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
@@ -198,6 +203,68 @@ export function LocalEditorPage() {
       }),
     [drawing, metersPerUnit, localCable, takeoffSettings],
   );
+
+  const validationIssues = useMemo(
+    () =>
+      validatePlan({
+        calibration: drawing?.calibration ?? null,
+        circuits: drawing?.circuits ?? [],
+        points: drawing?.points ?? [],
+        routes: drawing?.routes ?? [],
+        walls: drawing?.walls ?? [],
+        openings: drawing?.openings ?? [],
+      }),
+    [drawing],
+  );
+
+  function focusValidationTarget(target: ValidationTarget) {
+    const clearSelections = () => {
+      setSelectedPointId(null);
+      setSelectedRouteId(null);
+      setSelectedWallId(null);
+      setSelectedOpeningId(null);
+      setSelectedRoomId(null);
+      setSelectedDimensionId(null);
+    };
+
+    switch (target.kind) {
+      case 'point':
+        clearSelections();
+        setSelectedPointId(target.id);
+        break;
+      case 'route':
+        clearSelections();
+        setSelectedRouteId(target.id);
+        break;
+      case 'wall':
+        clearSelections();
+        setSelectedWallId(target.id);
+        break;
+      case 'opening':
+        clearSelections();
+        setSelectedOpeningId(target.id);
+        break;
+      case 'room':
+        clearSelections();
+        setSelectedRoomId(target.id);
+        break;
+      case 'circuit': {
+        const route = drawing?.routes.find(
+          (item) => item.circuitId === target.id,
+        );
+        const point = drawing?.points.find(
+          (item) => item.properties.circuitId === target.id,
+        );
+
+        clearSelections();
+        if (route) setSelectedRouteId(route.id);
+        else if (point) setSelectedPointId(point.id);
+        break;
+      }
+      case 'calibration':
+        break;
+    }
+  }
 
   function update(mutator: (current: LocalDrawing) => LocalDrawing) {
     setDrawing((current) => (current ? mutator(current) : current));
@@ -661,6 +728,11 @@ export function LocalEditorPage() {
               setSelectedRoomId(null);
               setSelectedDimensionId(null);
             }}
+          />
+
+          <ValidationPanel
+            issues={validationIssues}
+            onSelectTarget={focusValidationTarget}
           />
 
           <LayersPanel

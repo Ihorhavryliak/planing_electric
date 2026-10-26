@@ -408,6 +408,17 @@ async function main() {
   await page.getByRole('button', { name: 'Use this page' }).click();
   await page.getByText(/Loading underlay|Rendering PDF page/).waitFor({ state: 'hidden', timeout: 30000 });
 
+  // Validation aggregates plan issues and jumps to the affected device.
+  const validationSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Validation', exact: true }),
+  });
+  const isolatedIssue = validationSection.getByRole('button', {
+    name: /Devices not connected to any route/,
+  });
+  await isolatedIssue.waitFor({ timeout: 15000 });
+  await isolatedIssue.click();
+  await page.getByRole('button', { name: 'Duplicate' }).waitFor();
+
   // Hide the devices layer; it must survive a reload and be restorable.
   const layersSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Layers', exact: true }),
@@ -442,6 +453,7 @@ async function main() {
   await page.getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL('**/local/*');
   await page.locator('canvas').waitFor();
+  await page.getByText('Plan scale is not calibrated.').waitFor();
   const localCanvas = await page.locator('canvas').boundingBox();
   if (!localCanvas) throw new Error('Local canvas is not visible');
   await page.getByRole('button', { name: 'Draw wall tool' }).click();

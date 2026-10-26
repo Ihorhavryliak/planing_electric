@@ -61,6 +61,11 @@ import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
 import { LayersPanel } from './layers-panel';
 import { TakeoffPanel } from './takeoff-panel';
+import { ValidationPanel } from './validation-panel';
+import {
+  validatePlan,
+  type ValidationTarget,
+} from './validation';
 import { useTakeoffSettings } from './takeoff-settings';
 import {
   buildTakeoff,
@@ -2091,6 +2096,22 @@ export function PlanEditor({
     materials,
     takeoffSettings,
   ]);
+  const validationIssues = useMemo(
+    () =>
+      validatePlan({
+        calibration,
+        circuits,
+        points,
+        routes,
+        walls,
+        openings,
+        materialIds:
+          materials.length > 0
+            ? materials.map((material) => material.id)
+            : undefined,
+      }),
+    [calibration, circuits, points, routes, walls, openings, materials],
+  );
 
   async function saveCircuits(next: Circuit[]) {
     try {
@@ -2124,6 +2145,41 @@ export function PlanEditor({
 
   function handleDeleteCircuit(id: string) {
     void saveCircuits(circuits.filter((circuit) => circuit.id !== id));
+  }
+
+  function focusValidationTarget(target: ValidationTarget) {
+    switch (target.kind) {
+      case 'point':
+        selectPoint(target.id);
+        break;
+      case 'route':
+        selectRoute(target.id);
+        break;
+      case 'wall':
+        selectWall(target.id);
+        break;
+      case 'opening':
+        selectOpening(target.id);
+        break;
+      case 'room':
+        selectRoom(target.id);
+        break;
+      case 'circuit': {
+        const route = routes.find((item) => item.circuitId === target.id);
+        const point = points.find(
+          (item) => item.properties.circuitId === target.id,
+        );
+
+        if (route) selectRoute(route.id);
+        else if (point) selectPoint(point.id);
+        break;
+      }
+      case 'calibration':
+        document
+          .getElementById('scale-section')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+    }
   }
 
   return (
@@ -2422,7 +2478,10 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section
+            id="scale-section"
+            className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+          >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.scale')}
@@ -2606,6 +2665,11 @@ export function PlanEditor({
               );
               if (route) selectRoute(route.id);
             }}
+          />
+
+          <ValidationPanel
+            issues={validationIssues}
+            onSelectTarget={focusValidationTarget}
           />
 
           <LayersPanel

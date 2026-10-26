@@ -718,6 +718,39 @@ const en: Dictionary = {
   'takeoff.unassigned': 'Unassigned',
   'takeoff.wallHeight': 'Wall height, m',
   'takeoff.defaultThickness': 'Wall thickness, m',
+  'validation.title': 'Validation',
+  'validation.hint':
+    'Plan-wide checks for circuits, cable, devices and openings.',
+  'validation.clean': 'Clean',
+  'validation.all': 'All',
+  'validation.errors': 'Errors',
+  'validation.warnings': 'Warnings',
+  'validation.info': 'Info',
+  'validation.empty': 'No issues found. The plan looks consistent.',
+  'validation.noneInFilter': 'No issues in this filter.',
+  'validation.uncalibrated': 'Plan scale is not calibrated.',
+  'validation.duplicateCircuit': 'Duplicate circuit code “{code}”.',
+  'validation.pointWithoutCircuit': 'Devices without a circuit: {count}',
+  'validation.pointUnknownCircuit':
+    'Devices reference unknown circuits: {codes}',
+  'validation.routeWithoutCircuit': 'Cable routes without a circuit: {count}',
+  'validation.routeUnknownCircuit':
+    'Routes reference unknown circuits: {codes}',
+  'validation.routeUnknownMaterial':
+    'Routes reference unknown cable materials: {count}',
+  'validation.routeZeroLength': 'Zero-length routes: {count}',
+  'validation.routeUnconnectedEnds':
+    'Routes with unconnected ends: {count}',
+  'validation.routeCrossesWall':
+    'Routes cross walls without a chase: {count}',
+  'validation.isolatedPoint':
+    'Devices not connected to any route: {count}',
+  'validation.openingOutsideWall':
+    'Openings extend beyond their wall: {count}',
+  'validation.openingMissingWall':
+    'Openings reference missing walls: {count}',
+  'validation.unusedCircuit': 'Unused circuits: {count}',
+
 
 
 
@@ -1586,6 +1619,39 @@ const ua: Dictionary = {
   'takeoff.unassigned': 'Без кола',
   'takeoff.wallHeight': 'Висота стін, м',
   'takeoff.defaultThickness': 'Товщина стін, м',
+  'validation.title': 'Перевірка',
+  'validation.hint':
+    'Перевірки всього плану: кола, кабель, пристрої та отвори.',
+  'validation.clean': 'Без помилок',
+  'validation.all': 'Усі',
+  'validation.errors': 'Помилки',
+  'validation.warnings': 'Попередження',
+  'validation.info': 'Інфо',
+  'validation.empty': 'Проблем не знайдено. План виглядає узгодженим.',
+  'validation.noneInFilter': 'У цьому фільтрі немає проблем.',
+  'validation.uncalibrated': 'Масштаб плану не відкалібровано.',
+  'validation.duplicateCircuit': 'Дублікат коду кола «{code}».',
+  'validation.pointWithoutCircuit': 'Пристрої без кола: {count}',
+  'validation.pointUnknownCircuit':
+    'Пристрої посилаються на невідомі кола: {codes}',
+  'validation.routeWithoutCircuit': 'Кабельні траси без кола: {count}',
+  'validation.routeUnknownCircuit':
+    'Траси посилаються на невідомі кола: {codes}',
+  'validation.routeUnknownMaterial':
+    'Траси посилаються на невідомі матеріали кабелю: {count}',
+  'validation.routeZeroLength': 'Траси нульової довжини: {count}',
+  'validation.routeUnconnectedEnds':
+    'Траси з непід’єднаними кінцями: {count}',
+  'validation.routeCrossesWall':
+    'Траси перетинають стіни без штроби: {count}',
+  'validation.isolatedPoint':
+    'Пристрої без жодної траси: {count}',
+  'validation.openingOutsideWall':
+    'Отвори виходять за межі стіни: {count}',
+  'validation.openingMissingWall':
+    'Отвори посилаються на відсутні стіни: {count}',
+  'validation.unusedCircuit': 'Невикористані кола: {count}',
+
 
 
 

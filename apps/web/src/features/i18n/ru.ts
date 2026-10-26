@@ -704,6 +704,39 @@ export const ru: Dictionary = {
   'takeoff.unassigned': 'Без цепи',
   'takeoff.wallHeight': 'Высота стен, м',
   'takeoff.defaultThickness': 'Толщина стен, м',
+  'validation.title': 'Проверка',
+  'validation.hint':
+    'Проверки всего плана: цепи, кабель, устройства и проёмы.',
+  'validation.clean': 'Без ошибок',
+  'validation.all': 'Все',
+  'validation.errors': 'Ошибки',
+  'validation.warnings': 'Предупреждения',
+  'validation.info': 'Инфо',
+  'validation.empty': 'Проблем не найдено. План выглядит согласованным.',
+  'validation.noneInFilter': 'В этом фильтре нет проблем.',
+  'validation.uncalibrated': 'Масштаб плана не откалиброван.',
+  'validation.duplicateCircuit': 'Дубликат кода цепи «{code}».',
+  'validation.pointWithoutCircuit': 'Устройства без цепи: {count}',
+  'validation.pointUnknownCircuit':
+    'Устройства ссылаются на неизвестные цепи: {codes}',
+  'validation.routeWithoutCircuit': 'Кабельные трассы без цепи: {count}',
+  'validation.routeUnknownCircuit':
+    'Трассы ссылаются на неизвестные цепи: {codes}',
+  'validation.routeUnknownMaterial':
+    'Трассы ссылаются на неизвестные материалы кабеля: {count}',
+  'validation.routeZeroLength': 'Трассы нулевой длины: {count}',
+  'validation.routeUnconnectedEnds':
+    'Трассы с неподключёнными концами: {count}',
+  'validation.routeCrossesWall':
+    'Трассы пересекают стены без штробы: {count}',
+  'validation.isolatedPoint':
+    'Устройства без единой трассы: {count}',
+  'validation.openingOutsideWall':
+    'Проёмы выходят за границы стены: {count}',
+  'validation.openingMissingWall':
+    'Проёмы ссылаются на отсутствующие стены: {count}',
+  'validation.unusedCircuit': 'Неиспользуемые цепи: {count}',
+
 
 
 
