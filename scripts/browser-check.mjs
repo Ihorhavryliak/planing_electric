@@ -207,6 +207,34 @@ async function main() {
   await page.waitForURL('**/local/*');
   await page.locator('canvas').waitFor();
 
+  // Export, import and sync the local project.
+  await page.goto(`${WEB}/local`);
+  const localRow = page.getByRole('listitem').filter({ hasText: 'Local check' });
+  const exportPromise = page.waitForEvent('download');
+  await localRow.getByRole('button', { name: /JSON/ }).click();
+  const exported = await exportPromise;
+  if (!exported.suggestedFilename().endsWith('.json')) {
+    throw new Error('Local project was not exported as JSON');
+  }
+  const exportPath = await exported.path();
+  if (!exportPath) throw new Error('Export path is missing');
+
+  await page.locator('input[type=file]').setInputFiles(exportPath);
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Local check' })
+    .nth(1)
+    .waitFor({ timeout: 10000 });
+
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Local check' })
+    .first()
+    .getByRole('button', { name: /Sync to account/ })
+    .click();
+  await page.waitForURL('**/app/projects/*/editor', { timeout: 30000 });
+  await page.getByText('Save state').waitFor({ timeout: 20000 });
+
   console.log(JSON.stringify({ ok: true, errors }, null, 2));
   await browser.close();
 }
