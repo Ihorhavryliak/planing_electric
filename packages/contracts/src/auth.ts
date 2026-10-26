@@ -39,6 +39,16 @@ export const publicUserSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z
+    .string()
+    .min(10, 'Password must be at least 10 characters')
+    .max(128, 'Password must be at most 128 characters'),
+});
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const verifyEmailSchema = z.object({
   token: z.string().min(10).max(256),
 });

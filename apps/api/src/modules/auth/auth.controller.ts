@@ -10,11 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  type ChangePasswordInput,
   type ForgotPasswordInput,
   type LoginInput,
   type PublicUser,
@@ -105,6 +107,21 @@ export class AuthController {
     input: ResetPasswordInput,
   ): Promise<void> {
     await this.auth.resetPassword(input);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @CurrentUser() user: PublicUser,
+    @Body(new ZodValidationPipe(changePasswordSchema))
+    input: ChangePasswordInput,
+  ): Promise<void> {
+    await this.auth.changePassword(
+      user.id,
+      input.currentPassword,
+      input.newPassword,
+    );
   }
 
   @Post('verify-email')

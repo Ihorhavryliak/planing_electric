@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
-import { getErrorMessage } from '@/lib/api';
+import { apiRequest, getErrorMessage } from '@/lib/api';
 
 export function SettingsPage() {
   const { user, refresh } = useAuth();
@@ -13,6 +13,32 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+
+  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setChangingPassword(true);
+    setPasswordError(null);
+    setPasswordSaved(false);
+    try {
+      await apiRequest<void>('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setPasswordSaved(true);
+    } catch (err) {
+      setPasswordError(getErrorMessage(err));
+    } finally {
+      setChangingPassword(false);
+    }
+  }
 
   useEffect(() => {
     setName(user?.name ?? '');
@@ -93,6 +119,54 @@ export function SettingsPage() {
             </Button>
             {saved ? (
               <span className="text-xs text-emerald-300">Saved</span>
+            ) : null}
+          </div>
+        </form>
+
+        <form
+          className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5"
+          onSubmit={handlePasswordChange}
+        >
+          <h2 className="text-sm font-semibold text-white">Change password</h2>
+          <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
+            Current password
+            <Input
+              className="mt-1.5"
+              type="password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </label>
+          <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
+            New password
+            <Input
+              className="mt-1.5"
+              type="password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              required
+              minLength={10}
+              autoComplete="new-password"
+            />
+          </label>
+          {passwordError ? (
+            <p role="alert" className="text-sm text-rose-300">
+              {passwordError}
+            </p>
+          ) : null}
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={changingPassword}>
+              {changingPassword ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {changingPassword ? 'Saving…' : 'Update password'}
+            </Button>
+            {passwordSaved ? (
+              <span className="text-xs text-emerald-300">Password updated</span>
             ) : null}
           </div>
         </form>

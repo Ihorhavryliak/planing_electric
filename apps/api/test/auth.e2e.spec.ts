@@ -330,6 +330,29 @@ describe('Authentication API', () => {
       .expect(400);
   });
 
+  it('changes a password only with the current password', async () => {
+    const email = nextEmail();
+    const registration = await register(email).expect(201);
+    const cookie = firstSetCookie(registration);
+
+    await server()
+      .post(`${API}/auth/change-password`)
+      .set('Cookie', cookie)
+      .send({ currentPassword: 'wrong-password', newPassword: 'new-password-1' })
+      .expect(401);
+
+    await server()
+      .post(`${API}/auth/change-password`)
+      .set('Cookie', cookie)
+      .send({ currentPassword: PASSWORD, newPassword: 'new-password-1' })
+      .expect(204);
+
+    await server()
+      .post(`${API}/auth/login`)
+      .send({ email, password: 'new-password-1' })
+      .expect(200);
+  });
+
   it('does not reveal whether an email exists when resetting a password', async () => {
     const response = await server()
       .post(`${API}/auth/forgot-password`)
