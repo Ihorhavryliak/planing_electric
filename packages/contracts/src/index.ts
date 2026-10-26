@@ -10,6 +10,7 @@ export * from './opening';
 export * from './organization';
 export * from './project';
 export * from './structure';
+export * from './variant';
 
 export const uuidSchema = z.string().uuid();
 

@@ -39,3 +39,5 @@ export const electricalPointTypeEnum = pgEnum('electrical_point_type', [
 export const estimateStatusEnum = pgEnum('estimate_status', ['draft', 'final']);
 
 export const openingTypeEnum = pgEnum('opening_type', ['door', 'window']);
+
+export const variantStatusEnum = pgEnum('variant_status', ['active', 'archived']);

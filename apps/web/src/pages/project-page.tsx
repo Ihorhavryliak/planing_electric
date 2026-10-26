@@ -25,6 +25,7 @@ import {
   updateProject,
 } from '@/features/projects/projects-api';
 import { searchUserByEmail } from '@/features/users/users-api';
+import { VariantsPanel } from '@/features/variants/variants-panel';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
@@ -498,6 +499,8 @@ export function ProjectPage() {
               </ul>
             )}
           </section>
+
+          <VariantsPanel projectId={projectId} />
         </main>
       </div>
     </div>

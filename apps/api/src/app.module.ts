@@ -21,6 +21,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { UsersModule } from './modules/users/users.module';
+import { VariantsModule } from './modules/variants/variants.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UsersModule } from './modules/users/users.module';
     OrganizationsModule,
     ProjectsModule,
     UsersModule,
+    VariantsModule,
   ],
   providers: [
     {

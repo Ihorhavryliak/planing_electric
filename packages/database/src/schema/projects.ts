@@ -4,6 +4,7 @@ import {
   planSourceTypeEnum,
   projectRoleEnum,
   projectStatusEnum,
+  variantStatusEnum,
 } from './enums';
 import type { EditorViewport, Point2D, UnderlaySettings } from './types';
 
@@ -137,4 +138,31 @@ export const calibrations = pgTable(
       .defaultNow(),
   },
   (table) => [uniqueIndex('calibrations_plan_unique').on(table.planId)],
+);
+
+export const projectVariants = pgTable(
+  'project_variants',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    status: variantStatusEnum('status').notNull().default('active'),
+    /** Immutable snapshot of the project's floors and drawing data. */
+    data: jsonb('data').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('project_variants_project_idx').on(table.projectId),
+    uniqueIndex('project_variants_project_name_unique').on(
+      table.projectId,
+      table.name,
+    ),
+  ],
 );
