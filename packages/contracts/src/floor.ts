@@ -38,11 +38,13 @@ export const breakerSettingsSchema = z.object({
   ratingA: z.number().positive().max(2_000),
   curve: breakerCurveSchema,
   breakingCapacityKa: z.number().positive().max(200),
+  poles: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
 });
 
 export const rcdSettingsSchema = z.object({
   ratingA: z.number().positive().max(2_000),
   sensitivityMa: z.number().positive().max(1_000),
+  poles: z.union([z.literal(2), z.literal(4)]).optional(),
 });
 
 export const circuitElectricalSettingsSchema = z
@@ -54,6 +56,17 @@ export const circuitElectricalSettingsSchema = z
     cable: cableSettingsSchema.partial(),
     breaker: breakerSettingsSchema.partial(),
     /** null disables the RCD for this circuit. */
+    rcd: rcdSettingsSchema.partial().nullable(),
+  })
+  .partial();
+
+export const panelBoardSchema = z
+  .object({
+    name: z.string().trim().max(80),
+    location: z.string().trim().max(120).nullable(),
+    rows: z.number().int().min(1).max(20),
+    waysPerRow: z.number().int().min(1).max(24),
+    mainBreaker: breakerSettingsSchema.partial(),
     rcd: rcdSettingsSchema.partial().nullable(),
   })
   .partial();
@@ -71,6 +84,7 @@ export const electricalSettingsSchema = z
     maxVoltageDropLightingPercent: z.number().positive().max(100),
     maxVoltageDropPowerPercent: z.number().positive().max(100),
     circuits: z.record(z.string(), circuitElectricalSettingsSchema),
+    board: panelBoardSchema,
   })
   .partial();
 
@@ -176,6 +190,7 @@ export type CircuitElectricalSettings = z.infer<
   typeof circuitElectricalSettingsSchema
 >;
 export type ElectricalSettings = z.infer<typeof electricalSettingsSchema>;
+export type PanelBoard = z.infer<typeof panelBoardSchema>;
 export type FloorNameInput = z.infer<typeof floorNameSchema>;
 export type CreateFloorInput = z.infer<typeof createFloorSchema>;
 export type PlanSourceType = z.infer<typeof planSourceTypeSchema>;

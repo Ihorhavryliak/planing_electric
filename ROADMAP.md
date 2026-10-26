@@ -297,7 +297,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 16.2 **Розрахунок падіння напруги (voltage drop)**: перевірка кожної лінії від щита до найдальшого споживача; врахування довжини траси, перерізу, матеріалу жили та струму; попередження при перевищенні допустимого ΔU (наприклад, 5% для силових, 3% для освітлення).
 - [x] 16.3 **Розрахунок струмів короткого замикання (short-circuit current)**: оцінка струму КЗ на кожній лінії для перевірки відключаючої здатності автоматів і селективності; мінімальний набір — однофазне КЗ у кінці лінії.
 - [x] 16.4 **Автоматична перевірка перерізів і захистів**: модуль, що зіставляє розрахунковий струм, номінал автомата/ПЗВ і переріз кабелю; інтеграція з панеллю Validation (15.5) як нові правила; блокування генерації кошторису при критичних невідповідностях.
-- [ ] 16.5 **Редактор графіків щитів (panel schedules)**: окремий модуль для компонування щитів, призначення автоматів/ПЗВ/дифавтоматів на конкретні лінії, розрахунок заповнення щита; автогенерація графіка щита для експорту (PDF/CSV).
+- [x] 16.5 **Редактор графіків щитів (panel schedules)**: окремий модуль для компонування щитів, призначення автоматів/ПЗВ/дифавтоматів на конкретні лінії, розрахунок заповнення щита; автогенерація графіка щита для експорту (PDF/CSV).
 - [ ] 16.6 **Поглиблена однолінійна схема**: розширити наявний експорт 15.9 до повноцінної однолінійної схеми з вводом, щитами, групами, номіналами захисних апаратів і перерізами; зв'язок «план → схема» (зміна на плані відображається на схемі).
 - [ ] 16.7 **Автоматична нумерація кіл, проводів і клем**: наскрізна адресація (наприклад, `Q1-1L1`, `W12`, `X1:3`) з оновленням при зміні схеми; використання нумерації в кабельному журналі, специфікаціях і SVG-схемі.
 - [ ] 16.8 **Бібліотека стандартних символів і виробів**: символи за ГОСТ/ДСТУ/IEC з прив'язкою до реальних артикулів (автомати, ПЗВ, розетки, клеми); розширення наявного каталогу підтипів (15.2) до повноцінної бібліотеки з сумісністю між символами й матеріалами.
@@ -577,3 +577,10 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 105, contracts 39, calculations 50, database 2; 261 tests), `node scripts/browser-check.mjs` (point/route/wall/room hover content, disable/enable persistence, touch long-press).
 - Issues/blockers: dimension/opening hover uses the same 8 px hit tolerance as selection; hover hints are desktop-first and intentionally hidden on touch until long-press.
 - Next action: Phase 19 or the next roadmap backlog.
+
+### 2026-10-26 — session 35: panel schedules (16.5)
+- Completed: a panel-board model in `plan.calculationSettings.electrical.board` (name, location, DIN rows, ways per row, incoming breaker and optional RCD), modular poles on breakers/RCDs, and a `buildPanelSchedule` calculation that lays circuits out by module width, reports used/reserve ways, fill percentage and overflow/near-full/incoming-breaker issues.
+- Completed: a Panel schedule panel in server and local editors with board settings, fill bar, per-circuit rows (breaker, RCD, cable, current, ΔU, phase), issue messages and circuit jumping. CSV export (UTF-8 with BOM, `;` separator) and a print-to-PDF layout with board metadata and table. Panel issues are integrated into Validation; overflow blocks estimate generation in the UI and API (`PANEL_OVERFLOW`).
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 105, contracts 40, calculations 55, database 2; 267 tests), `node scripts/browser-check.mjs` (panel schedule renders, 1/36 fill badge, CSV download).
+- Issues/blockers: one board per plan (no multi-board hierarchy yet); PDF is produced through the browser print dialog rather than a server-side PDF generator.
+- Next action: advanced single-line diagram (16.6) and automatic numbering (16.7).

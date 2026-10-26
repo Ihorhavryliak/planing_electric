@@ -756,6 +756,12 @@ export const ru: Dictionary = {
     'Проёмы ссылаются на отсутствующие стены: {count}',
   'validation.unusedCircuit': 'Неиспользуемые цепи: {count}',
   'validation.pinnedPointMissing': 'Трассы ссылаются на удалённую точку: {count}',
+  'validation.panelOverflow':
+    'Переполнение щита: {used} модулей не помещаются в {total} мест.',
+  'validation.panelNearlyFull':
+    'Щит заполнен на {percent}%; оставляйте не менее 20% резерва.',
+  'validation.mainBreakerUndersized':
+    'Вводной автомат {rating} А меньше рекомендуемого {recommended} А.',
   'validation.pinnedEndMismatch':
     'Прикреплённые концы кабеля не совпадают с координатами точек: {count}',
   'validation.electricalUncalibrated':
@@ -954,6 +960,41 @@ export const ru: Dictionary = {
   'tooltip.fit': 'Вписать весь план в вид (0)',
   'tooltip.download': 'Скачать текущий вид как PNG',
   'tooltip.preview': 'Скрыть панели и заблокировать редактирование',
+  'panel.title': 'График щита',
+  'panel.hint':
+    'Компоновка щита, аппараты защиты и резервные модули. Экспорт в CSV или печать в PDF.',
+  'panel.fill': '{used} / {total} модулей',
+  'panel.reserve': 'Резерв',
+  'panel.name': 'Название щита',
+  'panel.location': 'Расположение',
+  'panel.rows': 'Рядов',
+  'panel.waysPerRow': 'Модулей в ряду',
+  'panel.mainBreaker': 'Вводной автомат',
+  'panel.way': 'Модуль',
+  'panel.phase': 'Фаза',
+  'panel.status': 'Статус',
+  'panel.statusOk': 'ОК',
+  'panel.statusWarning': 'Внимание',
+  'panel.statusError': 'Ошибка',
+  'panel.printBlocked':
+    'Окно печати заблокировано. Разрешите всплывающие окна, чтобы напечатать график щита.',
+  'panel.circuit': 'Цепь',
+  'panel.protection': 'Защита',
+  'panel.rcd': 'УЗО',
+  'panel.cable': 'Кабель',
+  'panel.load': 'Ток, А',
+  'panel.drop': 'ΔU',
+  'panel.exportCsv': 'CSV',
+  'panel.print': 'Печать / PDF',
+  'panel.noCircuits': 'К щиту не назначено ни одной цепи.',
+  'panel.module': 'мод.',
+  'panel.issue.panelOverflow':
+    'Переполнение щита: {used} модулей не помещаются в {total} мест.',
+  'panel.issue.panelNearlyFull':
+    'Щит заполнен на {percent}%; оставляйте не менее 20% резерва.',
+  'panel.issue.mainBreakerUndersized':
+    'Вводной автомат {rating} А меньше рекомендуемого {recommended} А.',
+
   'editor.hoverHints.enable': 'Включить подсказки при наведении',
   'editor.hoverHints.disable': 'Отключить подсказки при наведении',
   'hover.circuit': 'Цепь',

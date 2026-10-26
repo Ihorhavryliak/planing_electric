@@ -67,6 +67,7 @@ import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
 import { ElectricalPanel } from './electrical-panel';
+import { PanelSchedulePanel } from './panel-schedule-panel';
 import { buildElectricalPlan } from './electrical';
 import { LayersPanel } from './layers-panel';
 import { TakeoffPanel } from './takeoff-panel';
@@ -78,6 +79,7 @@ import {
 } from './validation';
 import { useTakeoffSettings } from './takeoff-settings';
 import {
+  buildPanelSchedule,
   buildTakeoff,
   countRoutePenetrations,
 } from '@drawmyplace/calculations';
@@ -2205,6 +2207,10 @@ export function PlanEditor({
       metersPerUnit,
     ],
   );
+  const panelSchedule = useMemo(
+    () => buildPanelSchedule(electrical),
+    [electrical],
+  );
   const penetrationCounts = useMemo(
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
@@ -2277,6 +2283,7 @@ export function PlanEditor({
             ? materials.map((material) => material.id)
             : undefined,
         electrical,
+        panelSchedule,
       }),
     [
       calibration,
@@ -2287,11 +2294,12 @@ export function PlanEditor({
       openings,
       materials,
       electrical,
+      panelSchedule,
     ],
   );
-  const electricalBlocked = electrical.issues.some(
-    (issue) => issue.severity === 'error',
-  );
+  const electricalBlocked =
+    electrical.issues.some((issue) => issue.severity === 'error') ||
+    panelSchedule.issues.some((issue) => issue.severity === 'error');
 
   async function saveCircuits(next: Circuit[]) {
     try {
@@ -2605,6 +2613,11 @@ export function PlanEditor({
         else if (point) selectPoint(point.id);
         break;
       }
+      case 'panel':
+        document
+          .querySelector('[data-testid="panel-schedule"]')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
       case 'calibration':
         document
           .getElementById('scale-section')
@@ -3284,6 +3297,30 @@ export function PlanEditor({
             onAdd={handleAddCircuit}
             onUpdate={handleUpdateCircuit}
             onDelete={handleDeleteCircuit}
+          />
+
+          <PanelSchedulePanel
+            schedule={panelSchedule}
+            fileName={`${floorName}-panel`}
+            onBoardChange={(board) =>
+              handleElectricalSettingsChange({
+                ...electrical.settings,
+                board,
+              })
+            }
+            onSelectCircuit={(circuitId) => {
+              const route = routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (route) {
+                selectRoute(route.id);
+                return;
+              }
+              const point = points.find(
+                (item) => item.properties.circuitId === circuitId,
+              );
+              if (point) selectPoint(point.id);
+            }}
           />
 
           <ElectricalPanel

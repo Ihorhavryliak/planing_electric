@@ -25,6 +25,9 @@ export type ValidationCode =
   | 'unusedCircuit'
   | 'pinnedPointMissing'
   | 'pinnedEndMismatch'
+  | 'panelOverflow'
+  | 'panelNearlyFull'
+  | 'mainBreakerUndersized'
   | ElectricalIssueCode;
 
 export type ValidationTarget =
@@ -32,7 +35,8 @@ export type ValidationTarget =
       kind: 'point' | 'route' | 'wall' | 'opening' | 'room' | 'circuit';
       id: string;
     }
-  | { kind: 'calibration' };
+  | { kind: 'calibration' }
+  | { kind: 'panel' };
 
 export interface ValidationIssue {
   id: string;
@@ -86,6 +90,7 @@ export interface ValidationInput {
   materialIds?: readonly string[];
   /** Load, voltage-drop and protection results for the electrical rules. */
   electrical?: ElectricalPlanResult | null;
+  panelSchedule?: import('@drawmyplace/calculations').PanelSchedule | null;
 }
 
 const ENDPOINT_TOLERANCE = 1e-6;
@@ -369,6 +374,12 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
 
   if (unusedCircuits.length > 0) {
     issues.push(issue('unusedCircuit', 'info', unusedCircuits));
+  }
+
+  for (const panelIssue of input.panelSchedule?.issues ?? []) {
+    issues.push(
+      issue(panelIssue.code, panelIssue.severity, [{ kind: 'panel' }], panelIssue.params),
+    );
   }
 
   for (const electricalIssue of input.electrical?.issues ?? []) {

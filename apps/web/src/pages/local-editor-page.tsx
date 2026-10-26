@@ -29,7 +29,9 @@ import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
 import { ElectricalPanel } from '@/features/editor/electrical-panel';
+import { PanelSchedulePanel } from '@/features/editor/panel-schedule-panel';
 import { buildElectricalPlan } from '@/features/editor/electrical';
+import { buildPanelSchedule } from '@drawmyplace/calculations';
 import { LayersPanel } from '@/features/editor/layers-panel';
 import { TakeoffPanel } from '@/features/editor/takeoff-panel';
 import { ValidationPanel } from '@/features/editor/validation-panel';
@@ -312,6 +314,11 @@ export function LocalEditorPage() {
     [drawing, routeLengths, metersPerUnit],
   );
 
+  const panelSchedule = useMemo(
+    () => buildPanelSchedule(electrical),
+    [electrical],
+  );
+
   const validationIssues = useMemo(
     () =>
       validatePlan({
@@ -322,8 +329,9 @@ export function LocalEditorPage() {
         walls: drawing?.walls ?? [],
         openings: drawing?.openings ?? [],
         electrical,
+        panelSchedule,
       }),
-    [drawing, electrical],
+    [drawing, electrical, panelSchedule],
   );
 
   function focusValidationTarget(target: ValidationTarget) {
@@ -370,6 +378,11 @@ export function LocalEditorPage() {
         else if (point) setSelectedPointId(point.id);
         break;
       }
+      case 'panel':
+        document
+          .querySelector('[data-testid="panel-schedule"]')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
       case 'calibration':
         break;
     }
@@ -1435,6 +1448,32 @@ export function LocalEditorPage() {
                 ),
               }))
             }
+          />
+
+          <PanelSchedulePanel
+            schedule={panelSchedule}
+            fileName={`${name || 'local-project'}-panel`}
+            onBoardChange={(board) =>
+              update((current) => ({
+                ...current,
+                electrical: {
+                  ...(current.electrical ?? {}),
+                  board,
+                },
+              }))
+            }
+            onSelectCircuit={(circuitId) => {
+              const route = drawing?.routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (!route) return;
+              setSelectedRouteId(route.id);
+              setSelectedPointId(null);
+              setSelectedWallId(null);
+              setSelectedOpeningId(null);
+              setSelectedRoomId(null);
+              setSelectedDimensionId(null);
+            }}
           />
 
           <ElectricalPanel

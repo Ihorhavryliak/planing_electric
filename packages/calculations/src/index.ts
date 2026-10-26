@@ -6,3 +6,4 @@ export * from './drops';
 export * from './penetration';
 export * from './takeoff';
 export * from './electrical';
+export * from './panel';

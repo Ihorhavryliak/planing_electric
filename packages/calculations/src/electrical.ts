@@ -12,6 +12,8 @@ export type SupplyType = 'single-phase' | 'three-phase';
 export type LoadKind = 'lighting' | 'power' | 'mixed';
 export type BreakerCurve = 'B' | 'C' | 'D';
 export type Phase = 'L1' | 'L2' | 'L3';
+export type BreakerPoles = 1 | 2 | 3 | 4;
+export type RcdPoles = 2 | 4;
 
 export interface CableSettings {
   material: ConductorMaterial;
@@ -25,11 +27,14 @@ export interface BreakerSettings {
   ratingA: number;
   curve: BreakerCurve;
   breakingCapacityKa: number;
+  /** Modular width / number of protected poles. */
+  poles: BreakerPoles;
 }
 
 export interface RcdSettings {
   ratingA: number;
   sensitivityMa: number;
+  poles: RcdPoles;
 }
 
 export interface CircuitElectricalSettings {
@@ -40,6 +45,26 @@ export interface CircuitElectricalSettings {
   phases?: 1 | 3;
   cable?: Partial<CableSettings>;
   breaker?: Partial<BreakerSettings>;
+  rcd?: Partial<RcdSettings> | null;
+}
+
+export interface PanelBoardSettings {
+  name: string;
+  location: string | null;
+  /** Number of DIN rows. */
+  rows: number;
+  /** Modular ways per row. */
+  waysPerRow: number;
+  mainBreaker: BreakerSettings;
+  rcd: RcdSettings | null;
+}
+
+export interface PanelBoardInput {
+  name?: string;
+  location?: string | null;
+  rows?: number;
+  waysPerRow?: number;
+  mainBreaker?: Partial<BreakerSettings>;
   rcd?: Partial<RcdSettings> | null;
 }
 
@@ -56,6 +81,7 @@ export interface ElectricalSettings {
   maxVoltageDropLightingPercent: number;
   maxVoltageDropPowerPercent: number;
   circuits: Record<string, CircuitElectricalSettings>;
+  board: PanelBoardSettings;
 }
 
 export type ElectricalSettingsInput = {
@@ -69,6 +95,7 @@ export type ElectricalSettingsInput = {
   maxVoltageDropLightingPercent?: number;
   maxVoltageDropPowerPercent?: number;
   circuits?: Record<string, CircuitElectricalSettings>;
+  board?: PanelBoardInput;
 };
 
 export interface ElectricalDevice {
@@ -167,15 +194,30 @@ export const DEFAULT_ELECTRICAL_SETTINGS: ElectricalSettings = {
     ratingA: 16,
     curve: 'C',
     breakingCapacityKa: 6,
+    poles: 1,
   },
   defaultRcd: {
     ratingA: 25,
     sensitivityMa: 30,
+    poles: 2,
   },
   sourceFaultCurrentKa: 6,
   maxVoltageDropLightingPercent: 3,
   maxVoltageDropPowerPercent: 5,
   circuits: {},
+  board: {
+    name: 'Main board',
+    location: null,
+    rows: 3,
+    waysPerRow: 12,
+    mainBreaker: {
+      ratingA: 40,
+      curve: 'C',
+      breakingCapacityKa: 6,
+      poles: 2,
+    },
+    rcd: null,
+  },
 };
 
 /** Copper PVC-insulated conductors in a wall, IEC 60364-5-52 (B1). */
@@ -322,6 +364,24 @@ function clampFactor(value: number | undefined, fallback: number): number {
   return Math.min(1, Math.max(0.01, value));
 }
 
+function breakerPoles(
+  value: number | undefined,
+  fallback: BreakerPoles,
+): BreakerPoles {
+  return value === 1 || value === 2 || value === 3 || value === 4
+    ? value
+    : fallback;
+}
+
+function rcdPoles(value: number | undefined, fallback: RcdPoles): RcdPoles {
+  return value === 2 || value === 4 ? value : fallback;
+}
+
+function clampInteger(value: number | undefined, fallback: number, min: number, max: number): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
 function mergeSettings(input?: ElectricalSettingsInput | null): ElectricalSettings {
   const supply = input?.supply ?? DEFAULT_ELECTRICAL_SETTINGS.supply;
   const base = DEFAULT_ELECTRICAL_SETTINGS;
@@ -345,6 +405,10 @@ function mergeSettings(input?: ElectricalSettingsInput | null): ElectricalSettin
         input?.defaultBreaker?.breakingCapacityKa,
         base.defaultBreaker.breakingCapacityKa,
       ),
+      poles: breakerPoles(
+        input?.defaultBreaker?.poles,
+        base.defaultBreaker.poles,
+      ),
     },
     defaultRcd:
       input?.defaultRcd === null
@@ -357,6 +421,10 @@ function mergeSettings(input?: ElectricalSettingsInput | null): ElectricalSettin
             sensitivityMa: positive(
               input?.defaultRcd?.sensitivityMa,
               base.defaultRcd?.sensitivityMa ?? 30,
+            ),
+            poles: rcdPoles(
+              input?.defaultRcd?.poles,
+              base.defaultRcd?.poles ?? 2,
             ),
           },
     sourceFaultCurrentKa: positive(
@@ -372,6 +440,42 @@ function mergeSettings(input?: ElectricalSettingsInput | null): ElectricalSettin
       base.maxVoltageDropPowerPercent,
     ),
     circuits: input?.circuits ?? {},
+    board: {
+      name: input?.board?.name?.trim() || base.board.name,
+      location: input?.board?.location?.trim() || null,
+      rows: clampInteger(input?.board?.rows, base.board.rows, 1, 20),
+      waysPerRow: clampInteger(
+        input?.board?.waysPerRow,
+        base.board.waysPerRow,
+        1,
+        24,
+      ),
+      mainBreaker: {
+        ratingA: positive(
+          input?.board?.mainBreaker?.ratingA,
+          base.board.mainBreaker.ratingA,
+        ),
+        curve: input?.board?.mainBreaker?.curve ?? base.board.mainBreaker.curve,
+        breakingCapacityKa: positive(
+          input?.board?.mainBreaker?.breakingCapacityKa,
+          base.board.mainBreaker.breakingCapacityKa,
+        ),
+        poles: breakerPoles(
+          input?.board?.mainBreaker?.poles,
+          supply === 'three-phase' ? 4 : 2,
+        ),
+      },
+      rcd:
+        input?.board?.rcd === null
+          ? null
+          : input?.board?.rcd
+            ? {
+                ratingA: positive(input.board.rcd.ratingA, 25),
+                sensitivityMa: positive(input.board.rcd.sensitivityMa, 30),
+                poles: rcdPoles(input.board.rcd.poles, 2),
+              }
+            : base.board.rcd,
+    },
   };
 }
 
@@ -610,6 +714,10 @@ export function calculateElectrical(input: {
         configured.breaker?.breakingCapacityKa,
         settings.defaultBreaker.breakingCapacityKa,
       ),
+      poles: breakerPoles(
+        configured.breaker?.poles,
+        phases === 3 ? 3 : settings.defaultBreaker.poles,
+      ),
     };
     const rcd =
       configured.rcd === null
@@ -624,8 +732,17 @@ export function calculateElectrical(input: {
                 configured.rcd.sensitivityMa,
                 settings.defaultRcd?.sensitivityMa ?? STANDARD_RCD_SENSITIVITY_MA,
               ),
+              poles: rcdPoles(
+                configured.rcd.poles,
+                phases === 3 ? 4 : settings.defaultRcd?.poles ?? 2,
+              ),
             }
-          : settings.defaultRcd;
+          : settings.defaultRcd
+            ? {
+                ...settings.defaultRcd,
+                poles: phases === 3 ? 4 : settings.defaultRcd.poles,
+              }
+            : null;
 
     const ampacityA = cableAmpacity(cable.material, cable.sectionMm2);
     const voltageDropLimitPercent =

@@ -776,6 +776,12 @@ const en: Dictionary = {
     'Openings reference missing walls: {count}',
   'validation.unusedCircuit': 'Unused circuits: {count}',
   'validation.pinnedPointMissing': 'Routes reference a deleted point: {count}',
+  'validation.panelOverflow':
+    'Board overflow: {used} modules do not fit into {total} ways.',
+  'validation.panelNearlyFull':
+    'Board is {percent}% full; keep at least 20% reserve.',
+  'validation.mainBreakerUndersized':
+    'Main breaker {rating} A is below the recommended {recommended} A.',
   'validation.pinnedEndMismatch':
     'Pinned cable ends do not match their point coordinates: {count}',
   'validation.electricalUncalibrated':
@@ -975,6 +981,41 @@ const en: Dictionary = {
   'tooltip.fit': 'Fit the whole plan in view (0)',
   'tooltip.download': 'Download the current view as PNG',
   'tooltip.preview': 'Hide panels and lock editing for a clean view',
+  'panel.title': 'Panel schedule',
+  'panel.hint':
+    'Board layout, protection devices and reserve ways. Export to CSV or print to PDF.',
+  'panel.fill': '{used} / {total} ways',
+  'panel.reserve': 'Reserve',
+  'panel.name': 'Board name',
+  'panel.location': 'Location',
+  'panel.rows': 'Rows',
+  'panel.waysPerRow': 'Ways per row',
+  'panel.mainBreaker': 'Main breaker',
+  'panel.way': 'Way',
+  'panel.phase': 'Phase',
+  'panel.status': 'Status',
+  'panel.statusOk': 'OK',
+  'panel.statusWarning': 'Warning',
+  'panel.statusError': 'Error',
+  'panel.printBlocked':
+    'The print window was blocked. Allow pop-ups to print the panel schedule.',
+  'panel.circuit': 'Circuit',
+  'panel.protection': 'Protection',
+  'panel.rcd': 'RCD',
+  'panel.cable': 'Cable',
+  'panel.load': 'Load, A',
+  'panel.drop': 'ΔU',
+  'panel.exportCsv': 'CSV',
+  'panel.print': 'Print / PDF',
+  'panel.noCircuits': 'No circuits assigned to the board.',
+  'panel.module': 'modules',
+  'panel.issue.panelOverflow':
+    'Board overflow: {used} modules do not fit into {total} ways.',
+  'panel.issue.panelNearlyFull':
+    'Board is {percent}% full; keep at least 20% reserve.',
+  'panel.issue.mainBreakerUndersized':
+    'Main breaker {rating} A is below the recommended {recommended} A.',
+
   'editor.hoverHints.enable': 'Enable hover hints',
   'editor.hoverHints.disable': 'Disable hover hints',
   'hover.circuit': 'Circuit',
@@ -1996,6 +2037,12 @@ const ua: Dictionary = {
     'Отвори посилаються на відсутні стіни: {count}',
   'validation.unusedCircuit': 'Невикористані кола: {count}',
   'validation.pinnedPointMissing': 'Траси посилаються на видалену точку: {count}',
+  'validation.panelOverflow':
+    'Переповнення щита: {used} модулів не вміщуються у {total} місць.',
+  'validation.panelNearlyFull':
+    'Щит заповнений на {percent}%; залишайте щонайменше 20% резерву.',
+  'validation.mainBreakerUndersized':
+    'Ввідний автомат {rating} А менший за рекомендований {recommended} А.',
   'validation.pinnedEndMismatch':
     'Прикріплені кінці кабелю не збігаються з координатами точок: {count}',
   'validation.electricalUncalibrated':
@@ -2195,6 +2242,41 @@ const ua: Dictionary = {
   'tooltip.fit': 'Вписати весь план у вид (0)',
   'tooltip.download': 'Завантажити поточний вид як PNG',
   'tooltip.preview': 'Сховати панелі й заблокувати редагування для чистого вигляду',
+  'panel.title': 'Графік щита',
+  'panel.hint':
+    'Компонування щита, апарати захисту та резервні модулі. Експорт у CSV або друк у PDF.',
+  'panel.fill': '{used} / {total} модулів',
+  'panel.reserve': 'Резерв',
+  'panel.name': 'Назва щита',
+  'panel.location': 'Розташування',
+  'panel.rows': 'Рядів',
+  'panel.waysPerRow': 'Модулів у ряді',
+  'panel.mainBreaker': 'Ввідний автомат',
+  'panel.way': 'Модуль',
+  'panel.phase': 'Фаза',
+  'panel.status': 'Стан',
+  'panel.statusOk': 'ОК',
+  'panel.statusWarning': 'Увага',
+  'panel.statusError': 'Помилка',
+  'panel.printBlocked':
+    'Вікно друку заблоковано. Дозвольте спливаючі вікна, щоб надрукувати графік щита.',
+  'panel.circuit': 'Коло',
+  'panel.protection': 'Захист',
+  'panel.rcd': 'ПЗВ',
+  'panel.cable': 'Кабель',
+  'panel.load': 'Струм, А',
+  'panel.drop': 'ΔU',
+  'panel.exportCsv': 'CSV',
+  'panel.print': 'Друк / PDF',
+  'panel.noCircuits': 'До щита не призначено жодного кола.',
+  'panel.module': 'мод.',
+  'panel.issue.panelOverflow':
+    'Переповнення щита: {used} модулів не вміщуються у {total} місць.',
+  'panel.issue.panelNearlyFull':
+    'Щит заповнений на {percent}%; залишайте щонайменше 20% резерву.',
+  'panel.issue.mainBreakerUndersized':
+    'Ввідний автомат {rating} А менший за рекомендований {recommended} А.',
+
   'editor.hoverHints.enable': 'Увімкнути підказки при наведенні',
   'editor.hoverHints.disable': 'Вимкнути підказки при наведенні',
   'hover.circuit': 'Коло',

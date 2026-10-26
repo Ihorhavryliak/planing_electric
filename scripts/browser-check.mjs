@@ -434,6 +434,17 @@ async function main() {
   }
   await electricalSection.getByText('L1', { exact: true }).first().waitFor();
 
+  // Panel schedule lays out protection modules and exports CSV.
+  const panelSection = page.getByTestId('panel-schedule');
+  await panelSection.waitFor();
+  await panelSection.getByText(/\/ 36/).waitFor();
+  const panelDownload = page.waitForEvent('download');
+  await panelSection.getByTestId('panel-export-csv').click();
+  const panelFile = await panelDownload;
+  if (!panelFile.suggestedFilename().endsWith('.csv')) {
+    throw new Error('Panel schedule CSV export did not produce a CSV file.');
+  }
+
   // Mis-sized protection blocks estimate generation until it is fixed.
   const cableSelect = electricalSection.getByLabel('Default cable');
   const breakerSelect = electricalSection.getByLabel('Default breaker');

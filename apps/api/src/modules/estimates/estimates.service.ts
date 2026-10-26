@@ -1,5 +1,8 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { calculateElectrical } from '@drawmyplace/calculations';
+import {
+  buildPanelSchedule,
+  calculateElectrical,
+} from '@drawmyplace/calculations';
 
 function escapePdf(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
@@ -93,6 +96,16 @@ export class EstimatesService {
     const criticalElectrical = electrical.issues.filter(
       (issue) => issue.severity === 'error',
     );
+
+    const panel = buildPanelSchedule(electrical);
+    if (panel.issues.some((issue) => issue.code === 'panelOverflow')) {
+      throw new BadRequestException({
+        code: 'PANEL_OVERFLOW',
+        message:
+          'The panel schedule overflows. Reduce circuits or increase board ways before generating an estimate.',
+        issues: panel.issues,
+      });
+    }
 
     if (criticalElectrical.length > 0) {
       throw new BadRequestException({

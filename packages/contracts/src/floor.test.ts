@@ -69,6 +69,37 @@ describe('floor and plan contracts', () => {
     ).toBe(false);
   });
 
+  it('accepts panel board settings and protection poles', () => {
+    const parsed = updatePlanSchema.parse({
+      calculationSettings: {
+        electrical: {
+          defaultBreaker: { ratingA: 16, poles: 2 },
+          defaultRcd: { ratingA: 25, sensitivityMa: 30, poles: 4 },
+          board: {
+            name: 'ЩР-1',
+            location: 'Hall',
+            rows: 4,
+            waysPerRow: 12,
+            mainBreaker: { ratingA: 40, poles: 4 },
+            rcd: null,
+          },
+        },
+      },
+    });
+
+    expect(parsed.calculationSettings?.electrical?.board?.rows).toBe(4);
+    expect(
+      parsed.calculationSettings?.electrical?.defaultBreaker?.poles,
+    ).toBe(2);
+    expect(
+      updatePlanSchema.safeParse({
+        calculationSettings: {
+          electrical: { board: { rows: 0 } },
+        },
+      }).success,
+    ).toBe(false);
+  });
+
   it('accepts page changes and underlay updates', () => {
     expect(updatePlanSchema.parse({ page: 3 })).toEqual({ page: 3 });
     expect(
