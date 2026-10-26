@@ -128,6 +128,36 @@ async function main() {
   await page.getByRole('button', { name: 'Add door' }).click();
   await page.getByRole('button', { name: 'Add window' }).click();
 
+  const at = (x, y) => ({
+    x: canvasBox.x + canvasBox.width * x,
+    y: canvasBox.y + canvasBox.height * y,
+  });
+
+  // Calibrate so the calculation panel can show real lengths.
+  await page.getByRole('button', { name: 'Calibrate scale tool' }).click();
+  await page.mouse.click(at(0.2, 0.2).x, at(0.2, 0.2).y);
+  await page.mouse.click(at(0.8, 0.2).x, at(0.8, 0.2).y);
+  await page.getByLabel('Real distance').fill('4');
+  await page.getByRole('button', { name: 'Set scale' }).click();
+
+  // Place a socket and draw a cable route between two points.
+  await page.getByRole('button', { name: 'Place socket' }).click();
+  await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.getByRole('button', { name: 'Draw cable route tool' }).click();
+  await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
+  await page.keyboard.press('Enter');
+
+  // Room outline and a dimension.
+  await page.getByRole('button', { name: 'Draw room outline tool' }).click();
+  await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
+  await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
+  await page.mouse.click(at(0.55, 0.85).x, at(0.55, 0.85).y);
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Add dimension tool' }).click();
+  await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
+  await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
+
   // 3D view loads lazily and renders a WebGL canvas.
   await page.getByRole('button', { name: '3D view' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
