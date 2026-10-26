@@ -2047,6 +2047,11 @@ export function PlanEditor({
                 points={points}
                 routes={routes}
                 metersPerUnit={metersPerUnit}
+                viewport={viewport}
+                selectedWallId={selectedWallId}
+                selectedRoomId={selectedRoomId}
+                selectedPointId={selectedPointId}
+                selectedRouteId={selectedRouteId}
               />
             </Suspense>
           )}

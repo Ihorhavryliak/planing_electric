@@ -19,6 +19,11 @@ interface ThreeViewProps {
   points: readonly PublicPoint[];
   routes: readonly PublicRoute[];
   metersPerUnit: number | null;
+  viewport: { x: number; y: number; zoom: number };
+  selectedWallId: string | null;
+  selectedRoomId: string | null;
+  selectedPointId: string | null;
+  selectedRouteId: string | null;
 }
 
 const WALL_COLOR = 0xe2e8f0;
@@ -48,7 +53,15 @@ export function ThreeView({
   points,
   routes,
   metersPerUnit,
+  viewport,
+  selectedWallId,
+  selectedRoomId,
+  selectedPointId,
+  selectedRouteId,
 }: ThreeViewProps) {
+  const [showPoints, setShowPoints] = useState(true);
+  const [showRoutes, setShowRoutes] = useState(true);
+  const [showCeiling, setShowCeiling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef(new THREE.Group());
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -154,11 +167,30 @@ export function ThreeView({
           (point) => new THREE.Vector2(point.x, -point.y),
         ),
       );
-      const geometry = new THREE.ShapeGeometry(shape);
-      const mesh = new THREE.Mesh(geometry, floorMaterial.clone());
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.position.y = 0.5;
-      group.add(mesh);
+      const floorGeometry = new THREE.ShapeGeometry(shape);
+      const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial.clone());
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.position.y = 0.5;
+      if (room.id === selectedRoomId) {
+        (floorMesh.material as THREE.MeshStandardMaterial).color.set(0xfbbf24);
+      }
+      group.add(floorMesh);
+
+      if (showCeiling) {
+        const ceilingMesh = new THREE.Mesh(
+          new THREE.ShapeGeometry(shape),
+          new THREE.MeshStandardMaterial({
+            color: 0x1e293b,
+            roughness: 1,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.6,
+          }),
+        );
+        ceilingMesh.rotation.x = -Math.PI / 2;
+        ceilingMesh.position.y = wallHeight;
+        group.add(ceilingMesh);
+      }
     }
 
     for (const wall of walls) {
@@ -181,7 +213,14 @@ export function ThreeView({
         if (length <= 0) continue;
         const height = box.z1 - box.z0;
         const geometry = new THREE.BoxGeometry(length, height, thickness);
-        const mesh = new THREE.Mesh(geometry, wallMaterial);
+        const material =
+          wall.id === selectedWallId
+            ? new THREE.MeshStandardMaterial({
+                color: 0xfbbf24,
+                roughness: 0.7,
+              })
+            : wallMaterial;
+        const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(
           (box.a.x + box.b.x) / 2,
           (box.z0 + box.z1) / 2,
@@ -192,26 +231,38 @@ export function ThreeView({
       }
     }
 
-    for (const point of points) {
-      const geometry = new THREE.CylinderGeometry(10, 10, 18, 16);
-      const material = new THREE.MeshStandardMaterial({
-        color: POINT_COLOR,
-        emissive: POINT_COLOR,
-        emissiveIntensity: 0.3,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(point.x, 10, point.y);
-      group.add(mesh);
+    if (showPoints) {
+      for (const point of points) {
+        const selected = point.id === selectedPointId;
+        const geometry = new THREE.CylinderGeometry(
+          selected ? 16 : 10,
+          selected ? 16 : 10,
+          selected ? 26 : 18,
+          16,
+        );
+        const material = new THREE.MeshStandardMaterial({
+          color: selected ? 0xf472b6 : POINT_COLOR,
+          emissive: selected ? 0xf472b6 : POINT_COLOR,
+          emissiveIntensity: 0.3,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(point.x, 10, point.y);
+        group.add(mesh);
+      }
     }
 
-    for (const route of routes) {
-      const geometry = new THREE.BufferGeometry().setFromPoints(
-        route.geometry.map(
-          (point) => new THREE.Vector3(point.x, 4, point.y),
-        ),
-      );
-      const material = new THREE.LineBasicMaterial({ color: ROUTE_COLOR });
-      group.add(new THREE.Line(geometry, material));
+    if (showRoutes) {
+      for (const route of routes) {
+        const geometry = new THREE.BufferGeometry().setFromPoints(
+          route.geometry.map(
+            (point) => new THREE.Vector3(point.x, 4, point.y),
+          ),
+        );
+        const material = new THREE.LineBasicMaterial({
+          color: route.id === selectedRouteId ? 0xf472b6 : ROUTE_COLOR,
+        });
+        group.add(new THREE.Line(geometry, material));
+      }
     }
 
     const bounds = new THREE.Box3();
@@ -239,7 +290,28 @@ export function ThreeView({
         controlsRef.current.update();
       }
     }
-  }, [walls, openings, rooms, points, routes, metersPerUnit]);
+  }, [
+    walls,
+    openings,
+    rooms,
+    points,
+    routes,
+    metersPerUnit,
+    showPoints,
+    showRoutes,
+    showCeiling,
+    selectedWallId,
+    selectedRoomId,
+    selectedPointId,
+    selectedRouteId,
+  ]);
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    controls.target.set(viewport.x, 0, viewport.y);
+    controls.update();
+  }, [viewport.x, viewport.y]);
 
   async function exportGlb() {
     setExporting(true);
@@ -273,6 +345,32 @@ export function ThreeView({
       <div className="absolute top-3 left-3 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
         <Box className="h-4 w-4 text-amber-300" />
         3D view · drag to orbit, scroll to zoom
+      </div>
+      <div className="absolute top-16 left-3 flex flex-col gap-1 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showPoints}
+            onChange={(event) => setShowPoints(event.target.checked)}
+          />
+          Points
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showRoutes}
+            onChange={(event) => setShowRoutes(event.target.checked)}
+          />
+          Routes
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showCeiling}
+            onChange={(event) => setShowCeiling(event.target.checked)}
+          />
+          Ceiling
+        </label>
       </div>
       <button
         type="button"
