@@ -551,7 +551,18 @@ async function main() {
   }
   await reloadedDevicesToggle.click();
 
-  // Local-first: create an anonymous project, draw a wall, and reload it.
+  // Local-first demo project loads with rooms, circuits and routes.
+  await page.goto(`${WEB}/local`);
+  await page.getByRole('button', { name: 'Load demo' }).click();
+  await page.waitForURL('**/local/*');
+  await page.locator('canvas').waitFor();
+  if ((await page.getByLabel('Project name').inputValue()) !== 'Demo apartment') {
+    throw new Error('Demo project name was not loaded.');
+  }
+  await page.getByText('Living room').first().waitFor();
+  await page.getByText(/Lighting/).first().waitFor();
+
+  // Create an anonymous project, draw a wall, and reload it.
   await page.goto(`${WEB}/local`);
   await page.getByPlaceholder('New local project').fill('Local check');
   await page.getByRole('button', { name: 'Create', exact: true }).click();

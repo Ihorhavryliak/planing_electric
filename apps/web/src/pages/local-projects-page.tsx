@@ -3,6 +3,7 @@ import {
   Download,
   LoaderCircle,
   Plus,
+  Sparkles,
   Trash2,
   Upload,
   UserRound,
@@ -27,6 +28,7 @@ import {
   updatePlan,
 } from '@/features/editor/editor-api';
 import { createProject } from '@/features/projects/projects-api';
+import { createDemoLocalProject } from '@/features/local/demo-project';
 import {
   createLocalProject,
   deleteLocalProject,
@@ -67,6 +69,25 @@ export function LocalProjectsPage() {
       const project = createLocalProject(name.trim() || t('local.defaultName'));
       await saveLocalProject(project);
       setName('');
+      navigate(`/local/${project.id}`);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDemo() {
+    setBusy(true);
+    setError(null);
+    try {
+      const project = createDemoLocalProject(t('local.demoName'), {
+        livingRoom: t('demo.livingRoom'),
+        kitchen: t('demo.kitchen'),
+        bedroom: t('demo.bedroom'),
+        bathroom: t('demo.bathroom'),
+      });
+      await saveLocalProject(project);
       navigate(`/local/${project.id}`);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -250,6 +271,15 @@ export function LocalProjectsPage() {
           <Button type="submit" disabled={busy}>
             <Plus className="h-4 w-4" />
             {t('local.create')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void handleDemo()}
+          >
+            <Sparkles className="h-4 w-4" />
+            {t('local.demo')}
           </Button>
           <Button
             type="button"

@@ -285,7 +285,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.8 **Documentation workspace**: сторінка `/app/projects/:projectId/documentation` з вкладками Materials (каталог, ціни, використання трасами), Cost estimate (створені кошториси, PDF), Validation (усі правила плану), Variants (існуюча панель) і Print PDF (друкований підсумок із живими кількостями, кнопка друку та PDF кошторису); вибір поверху, посилання з проєкту.
 - [x] 15.9 **Експорт**: SVG 2D-плану (стіни, отвори, кімнати, розміри, траси, точки, кола), SVG однолінійної електричної схеми за колами з довжинами кабелю, повний JSON проєкту (проєкт, поверхи, плани, креслення, матеріали); експорт у редакторі, документації та локальному редакторі.
 - [x] 15.10 **3D-режими**: Orbit / Walk (WASD + огляд мишею) / Third person, X-ray з прозорими стінами й підлогою, горизонтальний переріз із повзунком висоти, денне світло, ізоляція вибраного об’єкта та чекбокси стін/кімнат/пристроїв/трас/стелі.
-- [ ] 15.11 **Demo-проєкт і локалізації**: стартовий демо-план, повернення російської локалі або додавання нових мов за потреби.
+- [x] 15.11 **Demo-проєкт і локалізації**: кнопка «Завантажити демо» створює локальну квартиру з 4 кімнатами, 15 пристроями, 5 колами, 14 трасами, отворами, розмірами й калібруванням (далі синхронізується на сервер); російська лока́ль повертається прапорцем `VITE_ENABLE_RU=true` без зміни типового інтерфейсу `ua`/`en`.
 
 **Критерії завершення:** електричний проєкт можна вести не лише як набір точок і трас, а як структуровані кола з пристроями, монтажними елементами, живим кошторисом і валідацією; редактор має split 2D/3D, зручну навігацію та експорт плану/схеми.
 
@@ -429,3 +429,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 97, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (walk hint, x-ray, daylight, section slider, isolation).
 - Issues/blockers: walk mode has no collision detection and stays at a constant eye height; section is a single horizontal plane, not an arbitrary clipping box.
 - Next action: demo project and localization pass (15.11).
+
+### 2026-10-26 — session 27: demo project and localization flag
+- Completed: a ready-to-edit local demo apartment (living room, kitchen, bedroom, bathroom) with calibrated 9 m × 6 m plan, 6 walls, 5 openings, 2 dimensions, 15 devices across 5 circuits, 14 cable routes with chase/ceiling/wall mounting, localized room names and a viewport preset; one-click loading from the local projects page, after which the existing “Sync to account” path creates a real server project. The Russian catalog can be exposed without code changes with `VITE_ENABLE_RU=true`; stored Russian falls back to English while the flag is off. Added demo unit tests (100 web tests total).
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (demo plan loads with rooms and circuits).
+- Issues/blockers: there is still no server-side “new project from template” action; the demo is local-first and synced through the existing local-to-account flow.
+- Next action: post-MVP backlog / final acceptance pass.

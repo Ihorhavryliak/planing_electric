@@ -215,6 +215,13 @@ export const ru: Dictionary = {
   'local.namePlaceholder': 'Новый локальный проект',
   'local.defaultName': 'Локальный проект',
   'local.create': 'Создать',
+  'local.demo': 'Загрузить демо',
+  'local.demoName': 'Демо-квартира',
+  'demo.livingRoom': 'Гостиная',
+  'demo.kitchen': 'Кухня',
+  'demo.bedroom': 'Спальня',
+  'demo.bathroom': 'Ванная',
+
   'local.import': 'Импорт JSON',
   'local.loading': 'Загрузка локальных проектов…',
   'local.empty': 'Локальных проектов пока нет.',

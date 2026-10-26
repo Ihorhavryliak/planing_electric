@@ -4,11 +4,17 @@ export type Locale = 'ua' | 'ru' | 'en';
 
 export const LOCALE_STORAGE_KEY = 'drawmyplace-locale';
 
-// Russian is kept as a ready catalog but temporarily hidden from the switcher.
+// Russian ships as a ready catalog; enable it with VITE_ENABLE_RU=true.
+export const RU_ENABLED = import.meta.env?.VITE_ENABLE_RU === 'true';
+
 export const LOCALES: Array<{ value: Locale; label: string }> = [
   { value: 'ua', label: 'Українська' },
   { value: 'en', label: 'English' },
 ];
+
+if (RU_ENABLED) {
+  LOCALES.push({ value: 'ru', label: 'Русский' });
+}
 
 export type Dictionary = Record<string, string>;
 
@@ -227,6 +233,13 @@ const en: Dictionary = {
   'local.namePlaceholder': 'New local project',
   'local.defaultName': 'Local project',
   'local.create': 'Create',
+  'local.demo': 'Load demo',
+  'local.demoName': 'Demo apartment',
+  'demo.livingRoom': 'Living room',
+  'demo.kitchen': 'Kitchen',
+  'demo.bedroom': 'Bedroom',
+  'demo.bathroom': 'Bathroom',
+
   'local.import': 'Import JSON',
   'local.loading': 'Loading local projects…',
   'local.empty': 'No local projects yet.',
@@ -1225,6 +1238,13 @@ const ua: Dictionary = {
   'local.namePlaceholder': 'Новий локальний проєкт',
   'local.defaultName': 'Локальний проєкт',
   'local.create': 'Створити',
+  'local.demo': 'Завантажити демо',
+  'local.demoName': 'Демо-квартира',
+  'demo.livingRoom': 'Вітальня',
+  'demo.kitchen': 'Кухня',
+  'demo.bedroom': 'Спальня',
+  'demo.bathroom': 'Ванна',
+
   'local.import': 'Імпорт JSON',
   'local.loading': 'Завантаження локальних проєктів…',
   'local.empty': 'Локальних проєктів ще немає.',
@@ -2028,8 +2048,7 @@ export function readLocale(
     const stored = storage?.getItem(LOCALE_STORAGE_KEY);
     // Legacy value from the earlier Ukrainian-only catalog.
     if (stored === 'uk') return 'ua';
-    // Russian is staged but not selectable yet.
-    if (stored === 'ru') return 'en';
+    if (stored === 'ru') return RU_ENABLED ? 'ru' : 'en';
     if (isLocale(stored)) return stored;
   } catch {
     // ignore
