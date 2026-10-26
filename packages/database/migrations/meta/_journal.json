@@ -50,6 +50,13 @@
       "when": 1792906000000,
       "tag": "0006_email_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792907000000,
+      "tag": "0007_openings",
+      "breakpoints": true
     }
   ]
 }

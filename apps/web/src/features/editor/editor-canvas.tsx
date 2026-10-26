@@ -3,6 +3,7 @@ import type {
   ElectricalPointType,
   PublicCalibration,
   PublicDimension,
+  PublicOpening,
   PublicPoint,
   PublicRoom,
   PublicRoute,
@@ -55,6 +56,7 @@ import {
   visibleWorldBounds,
   type Vec2,
 } from './editor-geometry';
+import { drawOpeningsOverlay, type OpeningRenderItem } from './opening-overlay';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
 import { drawRoutesOverlay, type RouteRenderItem } from './route-overlay';
 import {
@@ -187,6 +189,8 @@ interface EditorCanvasProps {
   calibration: PublicCalibration | null;
   walls: readonly PublicWall[];
   selectedWallId: string | null;
+  openings: readonly PublicOpening[];
+  selectedOpeningId: string | null;
   rooms: readonly PublicRoom[];
   selectedRoomId: string | null;
   dimensions: readonly PublicDimension[];
@@ -354,6 +358,8 @@ export function EditorCanvas({
   calibration,
   walls,
   selectedWallId,
+  openings,
+  selectedOpeningId,
   rooms,
   selectedRoomId,
   dimensions,
@@ -617,6 +623,20 @@ export function EditorCanvas({
     [walls, wallDrag, worldBounds],
   );
 
+  const renderOpenings = useMemo<OpeningRenderItem[]>(
+    () =>
+      openings.map((opening) => ({
+        id: opening.id,
+        wallId: opening.wallId,
+        type: opening.type,
+        offset: opening.offset,
+        width: opening.width,
+        flipped: opening.flipped,
+        label: opening.label,
+      })),
+    [openings],
+  );
+
   const renderRooms = useMemo<RoomRenderItem[]>(
     () =>
       rooms
@@ -791,6 +811,14 @@ export function EditorCanvas({
       hoverWorld,
       metersPerUnit,
     );
+    drawOpeningsOverlay(
+      context,
+      size,
+      viewport,
+      renderOpenings,
+      renderWalls,
+      selectedOpeningId,
+    );
     drawCalibrationOverlay(
       context,
       size,
@@ -832,8 +860,10 @@ export function EditorCanvas({
     renderPoints,
     renderRoutes,
     renderWalls,
+    renderOpenings,
     renderRooms,
     renderDimensions,
+    selectedOpeningId,
     selectedPointId,
     selectedRouteId,
     selectedWallId,

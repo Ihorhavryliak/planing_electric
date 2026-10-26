@@ -1,5 +1,6 @@
 import type {
   CreateDimensionInput,
+  CreateOpeningInput,
   CreatePointInput,
   CreateRoomInput,
   CreateRouteInput,
@@ -8,12 +9,14 @@ import type {
   PlanDrawing,
   PublicCalibration,
   PublicDimension,
+  PublicOpening,
   PublicPoint,
   PublicRoom,
   PublicRoute,
   PublicWall,
   SetCalibrationInput,
   UpdateDimensionInput,
+  UpdateOpeningInput,
   UpdatePointInput,
   UpdateRoomInput,
   UpdateRouteInput,
@@ -75,6 +78,30 @@ export function updateWall(
 
 export async function deleteWall(wallId: string): Promise<void> {
   await apiRequest<void>(`/walls/${wallId}`, { method: 'DELETE' });
+}
+
+export function createOpening(
+  planId: string,
+  input: CreateOpeningInput,
+): Promise<PublicOpening> {
+  return apiRequest<PublicOpening>(`/plans/${planId}/openings`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateOpening(
+  openingId: string,
+  input: UpdateOpeningInput,
+): Promise<PublicOpening> {
+  return apiRequest<PublicOpening>(`/openings/${openingId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteOpening(openingId: string): Promise<void> {
+  await apiRequest<void>(`/openings/${openingId}`, { method: 'DELETE' });
 }
 
 export function createRoom(

@@ -13,7 +13,11 @@ import {
 } from 'drizzle-orm/pg-core';
 import { floors, projects } from './projects';
 import { organizations, users } from './identity';
-import { electricalPointTypeEnum, estimateStatusEnum } from './enums';
+import {
+  electricalPointTypeEnum,
+  estimateStatusEnum,
+  openingTypeEnum,
+} from './enums';
 import type { CalculationSettings, Point2D } from './types';
 
 export const materials = pgTable(
@@ -66,6 +70,37 @@ export const walls = pgTable(
       .defaultNow(),
   },
   (table) => [index('walls_floor_idx').on(table.floorId)],
+);
+
+export const openings = pgTable(
+  'openings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    wallId: uuid('wall_id')
+      .notNull()
+      .references(() => walls.id, { onDelete: 'cascade' }),
+    type: openingTypeEnum('type').notNull(),
+    /** Distance from the wall start to the opening start, drawing units. */
+    offset: doublePrecision('offset').notNull(),
+    width: doublePrecision('width').notNull(),
+    height: doublePrecision('height').notNull().default(210),
+    sillHeight: doublePrecision('sill_height').notNull().default(0),
+    flipped: boolean('flipped').notNull().default(false),
+    label: text('label'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('openings_floor_idx').on(table.floorId),
+    index('openings_wall_idx').on(table.wallId),
+  ],
 );
 
 export const rooms = pgTable(

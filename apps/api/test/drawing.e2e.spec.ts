@@ -5,6 +5,7 @@ import type {
   PublicCalibration,
   PublicDimension,
   PublicFloor,
+  PublicOpening,
   PublicPlan,
   PublicPoint,
   PublicProject,
@@ -241,6 +242,7 @@ describe('Drawing API', () => {
       planId: fixture.plan.id,
       calibration: null,
       walls: [],
+      openings: [],
       rooms: [],
       dimensions: [],
       points: [],
@@ -425,6 +427,80 @@ describe('Drawing API', () => {
       .set('Cookie', fixture.cookie)
       .send({ label: 'x' })
       .expect(404);
+  });
+
+  it('creates, updates and deletes doors and windows on walls', async () => {
+    const fixture = await createFixture();
+    const wall = await addWall(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 1000, y: 0 },
+      ],
+    });
+
+    const door = (
+      await server()
+        .post(`${API}/plans/${fixture.plan.id}/openings`)
+        .set('Cookie', fixture.cookie)
+        .send({ wallId: wall.id, type: 'door', offset: 100, width: 900 })
+        .expect(201)
+    ).body as PublicOpening;
+    expect(door).toMatchObject({
+      wallId: wall.id,
+      type: 'door',
+      offset: 100,
+      width: 900,
+    });
+
+    const window = (
+      await server()
+        .post(`${API}/plans/${fixture.plan.id}/openings`)
+        .set('Cookie', fixture.cookie)
+        .send({
+          wallId: wall.id,
+          type: 'window',
+          offset: 100,
+          width: 600,
+          sillHeight: 90,
+          height: 130,
+        })
+        .expect(201)
+    ).body as PublicOpening;
+    expect(window).toMatchObject({ type: 'window', sillHeight: 90 });
+
+    const drawing = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/drawing`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanDrawing;
+    expect(drawing.openings).toHaveLength(2);
+
+    const updated = await server()
+      .patch(`${API}/openings/${door.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({ offset: 100, flipped: true })
+      .expect(200);
+    expect(updated.body).toMatchObject({ offset: 100, flipped: true });
+
+    await server()
+      .post(`${API}/plans/${fixture.plan.id}/openings`)
+      .set('Cookie', fixture.cookie)
+      .send({ wallId: wall.id, type: 'door', offset: 900, width: 200 })
+      .expect(400);
+
+    await server()
+      .delete(`${API}/openings/${door.id}`)
+      .set('Cookie', fixture.cookie)
+      .expect(204);
+
+    const after = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/drawing`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanDrawing;
+    expect(after.openings.map((opening) => opening.id)).toEqual([window.id]);
   });
 
   it('creates, updates and deletes electrical points', async () => {

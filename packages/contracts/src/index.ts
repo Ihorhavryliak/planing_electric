@@ -6,6 +6,7 @@ export * from './estimate';
 export * from './floor';
 export * from './invitation';
 export * from './material';
+export * from './opening';
 export * from './organization';
 export * from './project';
 export * from './structure';

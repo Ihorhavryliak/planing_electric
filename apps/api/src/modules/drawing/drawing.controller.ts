@@ -15,17 +15,20 @@ import {
 } from '@nestjs/common';
 import {
   createDimensionSchema,
+  createOpeningSchema,
   createPointSchema,
   createRoomSchema,
   createRouteSchema,
   createWallSchema,
   setCalibrationSchema,
   updateDimensionSchema,
+  updateOpeningSchema,
   updatePointSchema,
   updateRoomSchema,
   updateRouteSchema,
   updateWallSchema,
   type CreateDimensionInput,
+  type CreateOpeningInput,
   type CreatePointInput,
   type CreateRoomInput,
   type CreateRouteInput,
@@ -34,6 +37,7 @@ import {
   type PlanDrawing,
   type PublicCalibration,
   type PublicDimension,
+  type PublicOpening,
   type PublicPoint,
   type PublicRoom,
   type PublicRoute,
@@ -41,6 +45,7 @@ import {
   type PublicWall,
   type SetCalibrationInput,
   type UpdateDimensionInput,
+  type UpdateOpeningInput,
   type UpdatePointInput,
   type UpdateRoomInput,
   type UpdateRouteInput,
@@ -122,6 +127,37 @@ export class DrawingController {
     @Param('wallId', uuid()) wallId: string,
   ): Promise<void> {
     return this.drawing.deleteWall(user.id, wallId);
+  }
+
+  // --------------------------------------------------------------- openings
+
+  @Post('plans/:planId/openings')
+  createOpening(
+    @CurrentUser() user: PublicUser,
+    @Param('planId', uuid()) planId: string,
+    @Body(new ZodValidationPipe(createOpeningSchema))
+    input: CreateOpeningInput,
+  ): Promise<PublicOpening> {
+    return this.drawing.createOpening(user.id, planId, input);
+  }
+
+  @Patch('openings/:openingId')
+  updateOpening(
+    @CurrentUser() user: PublicUser,
+    @Param('openingId', uuid()) openingId: string,
+    @Body(new ZodValidationPipe(updateOpeningSchema))
+    input: UpdateOpeningInput,
+  ): Promise<PublicOpening> {
+    return this.drawing.updateOpening(user.id, openingId, input);
+  }
+
+  @Delete('openings/:openingId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteOpening(
+    @CurrentUser() user: PublicUser,
+    @Param('openingId', uuid()) openingId: string,
+  ): Promise<void> {
+    return this.drawing.deleteOpening(user.id, openingId);
   }
 
   // ------------------------------------------------------------------ rooms

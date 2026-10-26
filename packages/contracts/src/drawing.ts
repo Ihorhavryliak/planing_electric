@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { publicOpeningSchema } from './opening';
 import {
   publicDimensionSchema,
   publicRoomSchema,
@@ -151,6 +152,7 @@ export const planDrawingSchema = z.object({
   planId: z.string().uuid(),
   calibration: publicCalibrationSchema.nullable(),
   walls: z.array(publicWallSchema),
+  openings: z.array(publicOpeningSchema),
   rooms: z.array(publicRoomSchema),
   dimensions: z.array(publicDimensionSchema),
   points: z.array(publicPointSchema),

@@ -9,6 +9,7 @@ import {
 import {
   setCalibrationSchema,
   type CreateDimensionInput,
+  type CreateOpeningInput,
   type CreatePointInput,
   type CreateRoomInput,
   type CreateRouteInput,
@@ -17,6 +18,7 @@ import {
   type PlanDrawing,
   type PublicCalibration,
   type PublicDimension,
+  type PublicOpening,
   type PublicPoint,
   type PublicRoom,
   type PublicRoute,
@@ -24,6 +26,7 @@ import {
   type RouteCalculation,
   type SetCalibrationInput,
   type UpdateDimensionInput,
+  type UpdateOpeningInput,
   type UpdatePointInput,
   type UpdateRoomInput,
   type UpdateRouteInput,
@@ -45,6 +48,7 @@ import { ProjectsRepository } from '../projects/projects.repository';
 import {
   toPublicCalibration,
   toPublicDimension,
+  toPublicOpening,
   toPublicPoint,
   toPublicRoom,
   toPublicRoute,
@@ -53,6 +57,7 @@ import {
 import {
   DrawingRepository,
   type DimensionRow,
+  type OpeningRow,
   type PointRow,
   type RoomRow,
   type RouteRow,
@@ -60,6 +65,7 @@ import {
 } from './drawing.repository';
 
 export const MAX_WALLS_PER_FLOOR = 2000;
+export const MAX_OPENINGS_PER_FLOOR = 2000;
 export const MAX_ROOMS_PER_FLOOR = 1000;
 export const MAX_DIMENSIONS_PER_FLOOR = 2000;
 export const MAX_POINTS_PER_FLOOR = 5000;
@@ -87,10 +93,11 @@ export class DrawingService {
 
   async getDrawing(ownerId: string, planId: string): Promise<PlanDrawing> {
     const plan = await this.requireOwnedPlan(ownerId, planId);
-    const [calibration, walls, rooms, dimensions, points, routes] =
+    const [calibration, walls, openings, rooms, dimensions, points, routes] =
       await Promise.all([
         this.drawing.findCalibration(plan.id),
         this.drawing.listWalls(plan.floorId),
+        this.drawing.listOpenings(plan.floorId),
         this.drawing.listRooms(plan.floorId),
         this.drawing.listDimensions(plan.floorId),
         this.drawing.listPoints(plan.floorId),
@@ -101,6 +108,7 @@ export class DrawingService {
       planId: plan.id,
       calibration: calibration ? toPublicCalibration(calibration) : null,
       walls: walls.map(toPublicWall),
+      openings: openings.map(toPublicOpening),
       rooms: rooms.map(toPublicRoom),
       dimensions: dimensions.map(toPublicDimension),
       points: points.map(toPublicPoint),
@@ -181,6 +189,99 @@ export class DrawingService {
   async deleteWall(ownerId: string, wallId: string): Promise<void> {
     const wall = await this.requireOwnedWall(ownerId, wallId);
     await this.drawing.deleteWall(wall.id);
+  }
+
+  // --------------------------------------------------------------- openings
+
+  async createOpening(
+    ownerId: string,
+    planId: string,
+    input: CreateOpeningInput,
+  ): Promise<PublicOpening> {
+    const plan = await this.requireEditablePlan(ownerId, planId);
+
+    if (
+      (await this.drawing.countOpenings(plan.floorId)) >= MAX_OPENINGS_PER_FLOOR
+    ) {
+      throw new ConflictException(
+        `A floor can have at most ${MAX_OPENINGS_PER_FLOOR} openings`,
+      );
+    }
+
+    const wall = await this.drawing.findWall(input.wallId);
+    if (!wall || wall.floorId !== plan.floorId) {
+      throw new BadRequestException('Opening must reference a wall on this plan');
+    }
+    this.validateOpeningAgainstWall(wall, input.offset, input.width);
+
+    const created = await this.drawing.createOpening(
+      plan.floorId,
+      wall.id,
+      input,
+    );
+    await this.emitFloor(plan.floorId, 'opening.created');
+    return toPublicOpening(created);
+  }
+
+  async updateOpening(
+    ownerId: string,
+    openingId: string,
+    input: UpdateOpeningInput,
+  ): Promise<PublicOpening> {
+    const opening = await this.requireOwnedOpening(ownerId, openingId);
+    const wallId = input.wallId ?? opening.wallId;
+    const wall = await this.drawing.findWall(wallId);
+
+    if (!wall || wall.floorId !== opening.floorId) {
+      throw new BadRequestException('Opening must reference a wall on this plan');
+    }
+
+    this.validateOpeningAgainstWall(
+      wall,
+      input.offset ?? opening.offset,
+      input.width ?? opening.width,
+    );
+
+    const updated = await this.drawing.updateOpening(opening.id, input);
+    await this.emitFloor(opening.floorId, 'opening.updated');
+    return toPublicOpening(updated);
+  }
+
+  async deleteOpening(ownerId: string, openingId: string): Promise<void> {
+    const opening = await this.requireOwnedOpening(ownerId, openingId);
+    await this.drawing.deleteOpening(opening.id);
+    await this.emitFloor(opening.floorId, 'opening.deleted');
+  }
+
+  private validateOpeningAgainstWall(
+    wall: WallRow,
+    offset: number,
+    width: number,
+  ): void {
+    const length = wall.geometry.reduce((total, point, index) => {
+      const next = wall.geometry[index + 1];
+      return next
+        ? total + Math.hypot(next.x - point.x, next.y - point.y)
+        : total;
+    }, 0);
+
+    if (length > 0 && offset + width > length + 1e-6) {
+      throw new BadRequestException(
+        'Opening must fit within the wall length',
+      );
+    }
+  }
+
+  private async requireOwnedOpening(
+    ownerId: string,
+    openingId: string,
+  ): Promise<OpeningRow> {
+    const opening = await this.drawing.findOpening(openingId);
+    if (!opening) {
+      throw new NotFoundException('Opening not found');
+    }
+    await this.requireEditableFloor(ownerId, opening.floorId);
+    return opening;
   }
 
   // ------------------------------------------------------------------ rooms

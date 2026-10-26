@@ -8,6 +8,7 @@ import {
   wallGeometrySchema,
   type PublicCalibration,
   type PublicDimension,
+  type PublicOpening,
   type PublicPoint,
   type PublicRoom,
   type PublicRoute,
@@ -16,6 +17,7 @@ import {
 import type {
   CalibrationRow,
   DimensionRow,
+  OpeningRow,
   PointRow,
   RoomRow,
   RouteRow,
@@ -40,6 +42,22 @@ export function toPublicWall(row: WallRow): PublicWall {
     floorId: row.floorId,
     geometry: wallGeometrySchema.parse(row.geometry),
     thickness: row.thickness,
+    label: row.label,
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export function toPublicOpening(row: OpeningRow): PublicOpening {
+  return {
+    id: row.id,
+    floorId: row.floorId,
+    wallId: row.wallId,
+    type: row.type,
+    offset: row.offset,
+    width: row.width,
+    height: row.height,
+    sillHeight: row.sillHeight,
+    flipped: row.flipped,
     label: row.label,
     updatedAt: row.updatedAt.toISOString(),
   };

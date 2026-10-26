@@ -5,6 +5,7 @@ import {
   calibrations,
   dimensions,
   electricalPoints,
+  openings,
   rooms,
   walls,
   type Database,
@@ -12,11 +13,13 @@ import {
 } from '@drawmyplace/database';
 import type {
   CreateDimensionInput,
+  CreateOpeningInput,
   CreatePointInput,
   CreateRoomInput,
   CreateRouteInput,
   CreateWallInput,
   UpdateDimensionInput,
+  UpdateOpeningInput,
   UpdatePointInput,
   UpdateRoomInput,
   UpdateRouteInput,
@@ -26,6 +29,7 @@ import { DatabaseService } from '../../database/database.service';
 
 export type CalibrationRow = typeof calibrations.$inferSelect;
 export type WallRow = typeof walls.$inferSelect;
+export type OpeningRow = typeof openings.$inferSelect;
 export type RoomRow = typeof rooms.$inferSelect;
 export type DimensionRow = typeof dimensions.$inferSelect;
 export type PointRow = typeof electricalPoints.$inferSelect;
@@ -193,6 +197,89 @@ export class DrawingRepository {
 
   async deleteWall(wallId: string): Promise<void> {
     await this.db.delete(walls).where(eq(walls.id, wallId));
+  }
+
+  // --------------------------------------------------------------- openings
+
+  listOpenings(floorId: string): Promise<OpeningRow[]> {
+    return this.db
+      .select()
+      .from(openings)
+      .where(eq(openings.floorId, floorId))
+      .orderBy(asc(openings.createdAt), asc(openings.id));
+  }
+
+  async countOpenings(floorId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ value: count() })
+      .from(openings)
+      .where(eq(openings.floorId, floorId));
+    return Number(row?.value ?? 0);
+  }
+
+  async findOpening(openingId: string): Promise<OpeningRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(openings)
+      .where(eq(openings.id, openingId))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async createOpening(
+    floorId: string,
+    wallId: string,
+    input: CreateOpeningInput,
+  ): Promise<OpeningRow> {
+    const [row] = await this.db
+      .insert(openings)
+      .values({
+        floorId,
+        wallId,
+        type: input.type,
+        offset: input.offset,
+        width: input.width,
+        height: input.height ?? 210,
+        sillHeight: input.sillHeight ?? 0,
+        flipped: input.flipped ?? false,
+        label: input.label ?? null,
+      })
+      .returning();
+    if (!row) {
+      throw new Error('Failed to create opening');
+    }
+    return row;
+  }
+
+  async updateOpening(
+    openingId: string,
+    input: UpdateOpeningInput,
+  ): Promise<OpeningRow> {
+    const [row] = await this.db
+      .update(openings)
+      .set({
+        updatedAt: new Date(),
+        ...(input.wallId !== undefined ? { wallId: input.wallId } : {}),
+        ...(input.type !== undefined ? { type: input.type } : {}),
+        ...(input.offset !== undefined ? { offset: input.offset } : {}),
+        ...(input.width !== undefined ? { width: input.width } : {}),
+        ...(input.height !== undefined ? { height: input.height } : {}),
+        ...(input.sillHeight !== undefined
+          ? { sillHeight: input.sillHeight }
+          : {}),
+        ...(input.flipped !== undefined ? { flipped: input.flipped } : {}),
+        ...(input.label !== undefined ? { label: input.label } : {}),
+      })
+      .where(eq(openings.id, openingId))
+      .returning();
+    if (!row) {
+      throw new Error('Failed to update opening');
+    }
+    return row;
+  }
+
+  async deleteOpening(openingId: string): Promise<void> {
+    await this.db.delete(openings).where(eq(openings.id, openingId));
   }
 
   // ------------------------------------------------------------------ rooms

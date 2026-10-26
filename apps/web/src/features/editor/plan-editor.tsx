@@ -1,5 +1,6 @@
 import type {
   CreateDimensionInput,
+  CreateOpeningInput,
   CreatePointInput,
   CreateRoomInput,
   CreateRouteInput,
@@ -9,6 +10,7 @@ import type {
   LengthUnitInput,
   PublicCalibration,
   PublicDimension,
+  PublicOpening,
   PublicPlan,
   PlanCalculation,
   PublicPoint,
@@ -18,6 +20,7 @@ import type {
   SetCalibrationInput,
   UnderlaySettings,
   UpdateDimensionInput,
+  UpdateOpeningInput,
   UpdatePointInput,
   UpdateRoomInput,
   UpdateRouteInput,
@@ -53,11 +56,13 @@ import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import {
   createDimension,
+  createOpening,
   createPoint,
   createRoom,
   createRoute,
   createWall,
   deleteDimension,
+  deleteOpening,
   deletePoint,
   deleteRoom,
   deleteRoute,
@@ -67,6 +72,7 @@ import {
   removeCalibration,
   saveCalibration,
   updateDimension,
+  updateOpening,
   updatePoint,
   updateRoom,
   updateRoute,
@@ -177,6 +183,35 @@ function createWallInput(wall: PublicWall): CreateWallInput {
 
 function updateWallInput(wall: PublicWall): UpdateWallInput {
   return createWallInput(wall);
+}
+
+function createOpeningInput(opening: PublicOpening): CreateOpeningInput {
+  return {
+    wallId: opening.wallId,
+    type: opening.type,
+    offset: opening.offset,
+    width: opening.width,
+    height: opening.height,
+    sillHeight: opening.sillHeight,
+    flipped: opening.flipped,
+    label: opening.label,
+  };
+}
+
+function updateOpeningInput(opening: PublicOpening): UpdateOpeningInput {
+  return createOpeningInput(opening);
+}
+
+function wallLength(geometry: readonly Vec2[]): number {
+  let total = 0;
+  for (let index = 0; index < geometry.length - 1; index += 1) {
+    const start = geometry[index];
+    const end = geometry[index + 1];
+    if (start && end) {
+      total += Math.hypot(end.x - start.x, end.y - start.y);
+    }
+  }
+  return total;
 }
 
 function createRoomInput(room: PublicRoom): CreateRoomInput {
@@ -387,6 +422,10 @@ export function PlanEditor({
   const [estimateBusy, setEstimateBusy] = useState(false);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
+  const [openings, setOpenings] = useState<PublicOpening[]>([]);
+  const [selectedOpeningId, setSelectedOpeningId] = useState<string | null>(
+    null,
+  );
   const [rooms, setRooms] = useState<PublicRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState<PublicDimension[]>([]);
@@ -395,13 +434,16 @@ export function PlanEditor({
   >(null);
   const [layoutError, setLayoutError] = useState<string | null>(null);
   const wallsRef = useRef(walls);
+  const openingsRef = useRef(openings);
   const roomsRef = useRef(rooms);
   const dimensionsRef = useRef(dimensions);
   const wallRequestRef = useRef(new Map<string, number>());
+  const openingRequestRef = useRef(new Map<string, number>());
   const roomRequestRef = useRef(new Map<string, number>());
   const dimensionRequestRef = useRef(new Map<string, number>());
 
   wallsRef.current = walls;
+  openingsRef.current = openings;
   roomsRef.current = rooms;
   dimensionsRef.current = dimensions;
   const [calculation, setCalculation] = useState<PlanCalculation | null>(null);
@@ -488,6 +530,9 @@ export function PlanEditor({
     routeRequestRef.current.clear();
     setWalls([]);
     setSelectedWallId(null);
+    setOpenings([]);
+    setSelectedOpeningId(null);
+    openingRequestRef.current.clear();
     setRooms([]);
     setSelectedRoomId(null);
     setDimensions([]);
@@ -505,6 +550,7 @@ export function PlanEditor({
           setPoints(drawing.points);
           setRoutes(drawing.routes);
           setWalls(drawing.walls);
+          setOpenings(drawing.openings);
           setRooms(drawing.rooms);
           setDimensions(drawing.dimensions);
         }
@@ -595,6 +641,7 @@ export function PlanEditor({
     setPoints(drawing.points);
     setRoutes(drawing.routes);
     setWalls(drawing.walls);
+    setOpenings(drawing.openings);
     setRooms(drawing.rooms);
     setDimensions(drawing.dimensions);
     setSelectedPointId((current) =>
@@ -609,6 +656,11 @@ export function PlanEditor({
     );
     setSelectedWallId((current) =>
       current && drawing.walls.some((wall) => wall.id === current)
+        ? current
+        : null,
+    );
+    setSelectedOpeningId((current) =>
+      current && drawing.openings.some((opening) => opening.id === current)
         ? current
         : null,
     );
@@ -710,6 +762,7 @@ export function PlanEditor({
     if (id) {
       setSelectedRouteId(null);
       setSelectedWallId(null);
+      setSelectedOpeningId(null);
       setSelectedRoomId(null);
       setSelectedDimensionId(null);
     }
@@ -721,6 +774,7 @@ export function PlanEditor({
     if (id) {
       setSelectedPointId(null);
       setSelectedWallId(null);
+      setSelectedOpeningId(null);
       setSelectedRoomId(null);
       setSelectedDimensionId(null);
     }
@@ -732,6 +786,19 @@ export function PlanEditor({
     if (id) {
       setSelectedPointId(null);
       setSelectedRouteId(null);
+      setSelectedOpeningId(null);
+      setSelectedRoomId(null);
+      setSelectedDimensionId(null);
+    }
+  }
+
+  function selectOpening(id: string | null) {
+    setSelectedOpeningId(id);
+
+    if (id) {
+      setSelectedPointId(null);
+      setSelectedRouteId(null);
+      setSelectedWallId(null);
       setSelectedRoomId(null);
       setSelectedDimensionId(null);
     }
@@ -744,6 +811,7 @@ export function PlanEditor({
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedWallId(null);
+      setSelectedOpeningId(null);
       setSelectedDimensionId(null);
     }
   }
@@ -755,6 +823,7 @@ export function PlanEditor({
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedWallId(null);
+      setSelectedOpeningId(null);
       setSelectedRoomId(null);
     }
   }
@@ -997,7 +1066,17 @@ export function PlanEditor({
       await deleteWall(id);
       wallRequestRef.current.delete(id);
       setWalls((current) => current.filter((wall) => wall.id !== id));
+      setOpenings((current) =>
+        current.filter((opening) => opening.wallId !== id),
+      );
       setSelectedWallId((current) => (current === id ? null : current));
+      setSelectedOpeningId((current) =>
+        current &&
+        openingsRef.current.find((opening) => opening.id === current)
+          ?.wallId === id
+          ? null
+          : current,
+      );
 
       if (deleted) {
         const input = createWallInput(deleted);
@@ -1013,6 +1092,110 @@ export function PlanEditor({
             if (activeId) {
               await deleteWall(activeId);
             }
+          },
+        });
+      }
+    } catch (deleteError) {
+      setLayoutError(getErrorMessage(deleteError));
+    }
+  }
+
+  async function handleAddOpening(wall: PublicWall, type: 'door' | 'window') {
+    setLayoutError(null);
+    const length = wallLength(wall.geometry);
+    const width = Math.max(1, Math.min(length * 0.25, 1000));
+    const offset = Math.max(0, (length - width) / 2);
+
+    try {
+      const created = await createOpening(plan.id, {
+        wallId: wall.id,
+        type,
+        offset,
+        width,
+        height: type === 'door' ? 210 : 130,
+        sillHeight: type === 'window' ? 90 : 0,
+      });
+      setOpenings((current) => [...current, created]);
+      selectOpening(created.id);
+
+      const input = createOpeningInput(created);
+      let activeId = created.id;
+      pushHistory({
+        label: type === 'door' ? 'Add door' : 'Add window',
+        undo: async () => {
+          await deleteOpening(activeId);
+        },
+        redo: async () => {
+          const next = await createOpening(plan.id, input);
+          activeId = next.id;
+        },
+      });
+    } catch (createError) {
+      setLayoutError(getErrorMessage(createError));
+    }
+  }
+
+  async function handlePatchOpening(id: string, patch: UpdateOpeningInput) {
+    const previous = openingsRef.current.find((opening) => opening.id === id);
+    if (!previous) return;
+
+    const requestId = (openingRequestRef.current.get(id) ?? 0) + 1;
+    openingRequestRef.current.set(id, requestId);
+    setLayoutError(null);
+    setOpenings((current) =>
+      current.map((opening) =>
+        opening.id === id ? { ...opening, ...patch } : opening,
+      ),
+    );
+
+    try {
+      const saved = await updateOpening(id, patch);
+      if (openingRequestRef.current.get(id) === requestId) {
+        setOpenings((current) =>
+          current.map((opening) => (opening.id === id ? saved : opening)),
+        );
+        pushHistory({
+          label: 'Edit opening',
+          undo: async () => {
+            await updateOpening(id, updateOpeningInput(previous));
+          },
+          redo: async () => {
+            await updateOpening(id, updateOpeningInput(saved));
+          },
+        });
+      }
+    } catch (patchError) {
+      if (openingRequestRef.current.get(id) === requestId) {
+        setOpenings((current) =>
+          current.map((opening) =>
+            opening.id === id ? previous : opening,
+          ),
+        );
+      }
+      setLayoutError(getErrorMessage(patchError));
+    }
+  }
+
+  async function handleDeleteOpening(id: string) {
+    setLayoutError(null);
+    const deleted = openingsRef.current.find((opening) => opening.id === id);
+    try {
+      await deleteOpening(id);
+      openingRequestRef.current.delete(id);
+      setOpenings((current) => current.filter((opening) => opening.id !== id));
+      setSelectedOpeningId((current) => (current === id ? null : current));
+
+      if (deleted) {
+        const input = createOpeningInput(deleted);
+        let activeId: string | null = null;
+        pushHistory({
+          label: 'Delete opening',
+          undo: async () => {
+            const next = await createOpening(plan.id, input);
+            activeId = next.id;
+          },
+          redo: async () => {
+            if (activeId) await deleteOpening(activeId);
           },
         });
       }
@@ -1766,6 +1949,8 @@ export function PlanEditor({
     routes.find((route) => route.id === selectedRouteId) ?? null;
   const selectedWall =
     walls.find((wall) => wall.id === selectedWallId) ?? null;
+  const selectedOpening =
+    openings.find((opening) => opening.id === selectedOpeningId) ?? null;
   const selectedRoom =
     rooms.find((room) => room.id === selectedRoomId) ?? null;
   const selectedDimension =
@@ -1793,6 +1978,8 @@ export function PlanEditor({
             selectedRouteId={selectedRouteId}
             walls={walls}
             selectedWallId={selectedWallId}
+            openings={openings}
+            selectedOpeningId={selectedOpeningId}
             rooms={rooms}
             selectedRoomId={selectedRoomId}
             dimensions={dimensions}
@@ -2136,6 +2323,148 @@ export function PlanEditor({
               onDelete={() => void handleDeleteWall(selectedWall.id)}
             />
           ) : null}
+
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-white">
+                Openings
+              </h2>
+              <span className="text-xs text-slate-500">{openings.length}</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Select a wall, then add a door or window.
+            </p>
+            {selectedWall ? (
+              <div className="mt-2 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleAddOpening(selectedWall, 'door')}
+                >
+                  Add door
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleAddOpening(selectedWall, 'window')}
+                >
+                  Add window
+                </Button>
+              </div>
+            ) : null}
+
+            {openings.length > 0 ? (
+              <ul className="mt-3 space-y-1">
+                {openings.map((opening) => (
+                  <li key={opening.id}>
+                    <button
+                      type="button"
+                      onClick={() => selectOpening(opening.id)}
+                      className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs ${
+                        opening.id === selectedOpeningId
+                          ? 'bg-amber-400/15 text-amber-100'
+                          : 'text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="capitalize">{opening.type}</span>
+                      <span className="text-slate-500">
+                        {opening.width.toFixed(0)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {selectedOpening ? (
+              <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-xs text-slate-400">
+                    Offset
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      defaultValue={selectedOpening.offset}
+                      className="mt-1 h-8"
+                      onBlur={(event) =>
+                        void handlePatchOpening(selectedOpening.id, {
+                          offset: Math.max(0, Number(event.target.value) || 0),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="text-xs text-slate-400">
+                    Width
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={selectedOpening.width}
+                      className="mt-1 h-8"
+                      onBlur={(event) =>
+                        void handlePatchOpening(selectedOpening.id, {
+                          width: Math.max(1, Number(event.target.value) || 1),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="text-xs text-slate-400">
+                    Height
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      defaultValue={selectedOpening.height}
+                      className="mt-1 h-8"
+                      onBlur={(event) =>
+                        void handlePatchOpening(selectedOpening.id, {
+                          height: Math.max(1, Number(event.target.value) || 1),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="text-xs text-slate-400">
+                    Sill
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      defaultValue={selectedOpening.sillHeight}
+                      className="mt-1 h-8"
+                      onBlur={(event) =>
+                        void handlePatchOpening(selectedOpening.id, {
+                          sillHeight: Math.max(
+                            0,
+                            Number(event.target.value) || 0,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="flex items-center gap-2 text-xs text-slate-400">
+                  <input
+                    type="checkbox"
+                    checked={selectedOpening.flipped}
+                    onChange={(event) =>
+                      void handlePatchOpening(selectedOpening.id, {
+                        flipped: event.target.checked,
+                      })
+                    }
+                  />
+                  Flip door swing
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleDeleteOpening(selectedOpening.id)}
+                >
+                  Delete opening
+                </Button>
+              </div>
+            ) : null}
+          </section>
 
           {selectedRoom ? (
             <RoomPropertiesPanel
