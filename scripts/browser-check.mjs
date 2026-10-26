@@ -125,7 +125,16 @@ async function main() {
 
   const fileInput = page.locator('input[type=file]');
   await fileInput.setInputFiles(pngPath);
-  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  try {
+    await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  } catch (underlayError) {
+    await page.screenshot({ path: path.join(dir, 'underlay-failure.png') });
+    console.error('Underlay diagnostics', {
+      errors,
+      body: (await page.locator('body').innerText()).slice(0, 1200),
+    });
+    throw underlayError;
+  }
 
   // The quick guide is visible on the first editor visit, has a full-screen
   // walkthrough and can be collapsed afterwards.

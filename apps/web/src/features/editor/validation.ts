@@ -1,4 +1,5 @@
 import {
+  findClashes,
   findRoutePenetrations,
   polylineLength,
   type ElectricalIssueCode,
@@ -24,6 +25,8 @@ export type ValidationCode =
   | 'routeZeroLength'
   | 'routeUnconnectedEnds'
   | 'routeCrossesWall'
+  | 'routeClash'
+  | 'routePointClash'
   | 'isolatedPoint'
   | 'openingOutsideWall'
   | 'openingMissingWall'
@@ -90,7 +93,7 @@ export interface ValidationRoute {
 
 export interface ValidationInput {
   calibration: { metersPerUnit: number } | null;
-  circuits: readonly { id: string }[];
+  circuits: readonly { id: string; name?: string }[];
   points: readonly ValidationPoint[];
   routes: readonly ValidationRoute[];
   walls: readonly ValidationWall[];
@@ -386,6 +389,72 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
 
   if (unusedCircuits.length > 0) {
     issues.push(issue('unusedCircuit', 'info', unusedCircuits));
+  }
+
+  const circuitNames = new Map(
+    input.circuits.map((circuit) => [
+      circuit.id,
+      circuit.name ?? circuit.id.slice(0, 8),
+    ]),
+  );
+  const clashes = findClashes({
+    routes: input.routes.map((route) => ({
+      id: route.id,
+      circuitId: route.circuitId,
+      geometry: route.geometry,
+      mounting: route.settings.mounting ?? null,
+    })),
+    points: input.points.map((point) => ({
+      id: point.id,
+      type: point.type,
+      x: point.x,
+      y: point.y,
+      circuitId: point.properties.circuitId ?? null,
+    })),
+  });
+
+  for (const clash of clashes) {
+    if (clash.kind === 'route-route') {
+      const route = input.routes.find((item) => item.id === clash.routeId);
+      const other = input.routes.find((item) => item.id === clash.otherId);
+
+      issues.push(
+        issue(
+          'routeClash',
+          clash.severity,
+          [
+            { kind: 'route', id: clash.routeId },
+            { kind: 'route', id: clash.otherId },
+          ],
+          {
+            route: route?.circuitId
+              ? (circuitNames.get(route.circuitId) ?? route.circuitId)
+              : clash.routeId.slice(0, 8),
+            other: other?.circuitId
+              ? (circuitNames.get(other.circuitId) ?? other.circuitId)
+              : clash.otherId.slice(0, 8),
+          },
+        ),
+      );
+    } else {
+      const route = input.routes.find((item) => item.id === clash.routeId);
+
+      issues.push(
+        issue(
+          'routePointClash',
+          clash.severity,
+          [
+            { kind: 'route', id: clash.routeId },
+            { kind: 'point', id: clash.otherId },
+          ],
+          {
+            route: route?.circuitId
+              ? (circuitNames.get(route.circuitId) ?? route.circuitId)
+              : clash.routeId.slice(0, 8),
+          },
+        ),
+      );
+    }
   }
 
   for (const room of input.rooms ?? []) {

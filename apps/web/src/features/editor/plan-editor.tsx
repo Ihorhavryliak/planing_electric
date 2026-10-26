@@ -82,6 +82,7 @@ import {
   buildPanelSchedule,
   buildTakeoff,
   countRoutePenetrations,
+  findClashes,
 } from '@drawmyplace/calculations';
 import { useEditorLayers } from './editor-layers';
 import { DevicePalette } from './device-palette';
@@ -2211,6 +2212,20 @@ export function PlanEditor({
     () => buildPanelSchedule(electrical),
     [electrical],
   );
+  const clashes = useMemo(
+    () =>
+      findClashes({
+        routes,
+        points: points.map((point) => ({
+          id: point.id,
+          type: point.type,
+          x: point.x,
+          y: point.y,
+          circuitId: point.properties.circuitId ?? null,
+        })),
+      }),
+    [routes, points],
+  );
   const penetrationCounts = useMemo(
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
@@ -2659,6 +2674,7 @@ export function PlanEditor({
         selectedRoomId={selectedRoomId}
         selectedPointId={selectedPointId}
         selectedRouteId={selectedRouteId}
+        clashes={clashes}
         onSelect={handleThreeSelect}
       />
     </Suspense>

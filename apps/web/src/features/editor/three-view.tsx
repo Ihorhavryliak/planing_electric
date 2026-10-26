@@ -25,6 +25,12 @@ interface ThreeViewProps {
   selectedRoomId: string | null;
   selectedPointId: string | null;
   selectedRouteId: string | null;
+  clashes?: readonly {
+    id: string;
+    point: { x: number; y: number };
+    severity: 'error' | 'warning';
+    routeId: string;
+  }[];
   onSelect?: (target: {
     kind: 'wall' | 'room' | 'point' | 'route';
     id: string;
@@ -63,6 +69,7 @@ export function ThreeView({
   selectedRoomId,
   selectedPointId,
   selectedRouteId,
+  clashes = [],
   onSelect,
 }: ThreeViewProps) {
   const { t } = useI18n();
@@ -71,6 +78,7 @@ export function ThreeView({
   const [showWalls, setShowWalls] = useState(true);
   const [showRooms, setShowRooms] = useState(true);
   const [showCeiling, setShowCeiling] = useState(false);
+  const [showClashes, setShowClashes] = useState(true);
   const [isolate, setIsolate] = useState(false);
   const [mode, setMode] = useState<'orbit' | 'walk' | 'third'>('orbit');
   const [xray, setXray] = useState(false);
@@ -543,6 +551,25 @@ export function ThreeView({
       }
     }
 
+    if (showClashes) {
+      for (const clash of clashes) {
+        const error = clash.severity === 'error';
+        const marker = new THREE.Mesh(
+          new THREE.OctahedronGeometry(18, 0),
+          new THREE.MeshStandardMaterial({
+            color: error ? 0xef4444 : 0xf59e0b,
+            emissive: error ? 0xef4444 : 0xf59e0b,
+            emissiveIntensity: 0.8,
+            transparent: true,
+            opacity: 0.9,
+          }),
+        );
+        marker.userData = { kind: 'route', id: clash.routeId };
+        marker.position.set(clash.point.x, 20, clash.point.y);
+        group.add(marker);
+      }
+    }
+
     const bounds = new THREE.Box3();
     for (const wall of walls) {
       for (const point of wall.geometry) {
@@ -581,6 +608,8 @@ export function ThreeView({
     rooms,
     points,
     routes,
+    clashes,
+    showClashes,
     metersPerUnit,
     showPoints,
     showRoutes,
@@ -682,6 +711,16 @@ export function ThreeView({
           />
           {t('editor.ceiling')}
         </label>
+        {clashes.length > 0 ? (
+          <label className="flex items-center gap-2 text-rose-200">
+            <input
+              type="checkbox"
+              checked={showClashes}
+              onChange={(event) => setShowClashes(event.target.checked)}
+            />
+            {t('editor.clashes')} ({clashes.length})
+          </label>
+        ) : null}
       </div>
       <button
         type="button"

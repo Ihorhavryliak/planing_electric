@@ -286,4 +286,95 @@ describe('plan validation', () => {
     );
     expect(issue?.norm).toContain('ДБН');
   });
+
+  it('flags cable routes that cross on the same mounting level', () => {
+    const input = baseInput();
+    input.circuits = [{ id: 'C1', name: 'Sockets' }, { id: 'C2', name: 'Lighting' }];
+    input.points = [
+      ...input.points,
+      {
+        id: 'p3',
+        type: 'light',
+        x: 50,
+        y: 50,
+        properties: { circuitId: 'C2' },
+      },
+    ];
+    input.routes = [
+      ...input.routes,
+      {
+        id: 'r2',
+        circuitId: 'C2',
+        geometry: [
+          { x: 50, y: -50 },
+          { x: 50, y: 50 },
+        ],
+        settings: { mounting: 'ceiling' },
+      },
+    ];
+
+    const issue = validatePlan(input).find((item) => item.code === 'routeClash');
+    expect(issue?.severity).toBe('error');
+    expect(issue?.params).toEqual({ route: 'Sockets', other: 'Lighting' });
+    expect(issue?.targets).toEqual([
+      { kind: 'route', id: 'r1' },
+      { kind: 'route', id: 'r2' },
+    ]);
+  });
+
+  it('ignores crossings when routes are on different mounting levels', () => {
+    const input = baseInput();
+    input.circuits = [{ id: 'C1' }, { id: 'C2' }];
+    input.points = [
+      ...input.points,
+      { id: 'p3', type: 'light', x: 50, y: 50, properties: { circuitId: 'C2' } },
+    ];
+    input.routes = [
+      ...input.routes,
+      {
+        id: 'r2',
+        circuitId: 'C2',
+        geometry: [
+          { x: 50, y: -50 },
+          { x: 50, y: 50 },
+        ],
+        settings: { mounting: 'floor' },
+      },
+    ];
+
+    expect(codes(input)).not.toContain('routeClash');
+  });
+
+  it('flags routes passing through another circuit device', () => {
+    const input = baseInput();
+    input.circuits = [{ id: 'C1', name: 'Sockets' }, { id: 'C2', name: 'Lighting' }];
+    input.points = [
+      ...input.points,
+      {
+        id: 'p3',
+        type: 'switch',
+        x: 50,
+        y: 0,
+        properties: { circuitId: 'C2' },
+      },
+    ];
+    input.routes = [
+      ...input.routes,
+      {
+        id: 'r2',
+        circuitId: 'C2',
+        geometry: [
+          { x: 50, y: 0 },
+          { x: 50, y: 80 },
+        ],
+        settings: { mounting: 'ceiling' },
+      },
+    ];
+
+    const issue = validatePlan(input).find(
+      (item) => item.code === 'routePointClash',
+    );
+    expect(issue?.severity).toBe('error');
+    expect(issue?.params).toEqual({ route: 'Sockets' });
+  });
 });

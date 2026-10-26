@@ -768,6 +768,10 @@ const en: Dictionary = {
     'Routes with unconnected ends: {count}',
   'validation.routeCrossesWall':
     'Routes cross walls without a chase: {count}',
+  'validation.routeClash':
+    'Cable routes “{route}” and “{other}” cross on the same level.',
+  'validation.routePointClash':
+    'Cable route “{route}” passes through a device on another circuit.',
   'validation.isolatedPoint':
     'Devices not connected to any route: {count}',
   'validation.openingOutsideWall':
@@ -1313,6 +1317,7 @@ const en: Dictionary = {
   'editor.useThisPage': 'Use this page',
   'editor.threeViewHint': '3D view · drag to orbit, scroll to zoom',
   'editor.ceiling': 'Ceiling',
+  'editor.clashes': 'Clashes',
   'editor.exportFailed': 'Export failed',
   'editor.calibrationTitle': 'Set the plan scale',
 
@@ -2089,6 +2094,10 @@ const ua: Dictionary = {
     'Траси з непід’єднаними кінцями: {count}',
   'validation.routeCrossesWall':
     'Траси перетинають стіни без штроби: {count}',
+  'validation.routeClash':
+    'Кабельні траси «{route}» і «{other}» перетинаються на одному рівні.',
+  'validation.routePointClash':
+    'Кабельна траса «{route}» проходить крізь пристрій іншого кола.',
   'validation.isolatedPoint':
     'Пристрої без жодної траси: {count}',
   'validation.openingOutsideWall':
@@ -2635,6 +2644,7 @@ const ua: Dictionary = {
   'editor.threeViewHint':
     '3D-вигляд · перетягніть, щоб обертати, прокрутіть, щоб масштабувати',
   'editor.ceiling': 'Стеля',
+  'editor.clashes': 'Колізії',
   'editor.exportFailed': 'Не вдалося експортувати',
   'editor.calibrationTitle': 'Задайте масштаб плану',
 

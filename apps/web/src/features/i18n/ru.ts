@@ -748,6 +748,10 @@ export const ru: Dictionary = {
     'Трассы с неподключёнными концами: {count}',
   'validation.routeCrossesWall':
     'Трассы пересекают стены без штробы: {count}',
+  'validation.routeClash':
+    'Кабельные трассы «{route}» и «{other}» пересекаются на одном уровне.',
+  'validation.routePointClash':
+    'Кабельная трасса «{route}» проходит через устройство другой цепи.',
   'validation.isolatedPoint':
     'Устройства без единой трассы: {count}',
   'validation.openingOutsideWall':
@@ -1293,6 +1297,7 @@ export const ru: Dictionary = {
   'editor.threeViewHint':
     '3D-вид · перетащите, чтобы вращать, прокрутите, чтобы масштабировать',
   'editor.ceiling': 'Потолок',
+  'editor.clashes': 'Коллизии',
   'editor.exportFailed': 'Не удалось экспортировать',
   'editor.calibrationTitle': 'Задайте масштаб плана',
   'editor.calibrationIntro':

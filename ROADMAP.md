@@ -304,7 +304,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 16.9 **Нормоконтроль (ПУЭ/ДБН)**: набір вбудованих правил — відповідність перерізу струму захисту, обов'язкове ПЗВ на певні групи, вимоги до монтажу в вологих зонах; розширення `validatePlan` (15.5) з посиланнями на нормативні пункти.
 - [ ] 16.10 **Експорт DWG/DXF**: експорт 2D-плану (стіни, отвори, кімнати, точки, траси, розміри) для обміну з AutoCAD/Revit; мінімально — сумісність з AutoCAD R2018 DXF.
 - [ ] 16.11 **Експорт IFC для BIM**: передача стін, отворів, точок і трас як IFC-сутностей; необхідно для участі в BIM-проєктах і перевірки колізій у Navisworks/Solibri.
-- [ ] 16.12 **Перевірка колізій (clash detection)**: використати наявний 3D-вид (12, 15.7, 15.10) для перевірки перетину кабельних трас з іншими інженерними мережами або несучими конструкціями; список колізій з переходом до об'єкта.
+- [x] 16.12 **Перевірка колізій (clash detection)**: використати наявний 3D-вид (12, 15.7, 15.10) для перевірки перетину кабельних трас з іншими інженерними мережами або несучими конструкціями; список колізій з переходом до об'єкта.
 - [x] 16.13 **Гнучкі шаблони звітів**: кабельний журнал, специфікація обладнання, відомість етажних щитів; шаблони з можливістю вибору полів і вивантаження в Excel/PDF; розширення наявного експорту кошторису (Фаза 6) та документації (15.8).
 
 **Критерії завершення:** електричний проєкт проходить перевірку навантажень, падіння напруги й узгодженість захистів; має графік щита, однолінійну схему та кабельний журнал; експортується в DWG/DXF та IFC; критичні невідповідності блокують фінальний експорт кошторису.
@@ -688,3 +688,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 125, contracts 40, calculations 55, database 2; 287 tests). XLSX unit tests cover CRC-32, column letters, ZIP structure, sheet sanitization and cell XML; report tests cover grouping, field selection, totals, CSV and a three-sheet workbook. Browser check now verifies the reports empty state, field toggles, Excel downloads and validates the saved workbooks as ZIP/XLSX.
 - Issues/blockers: PDF is produced through the print dialog rather than a server-side PDF renderer; the XLSX writer intentionally omits formulas, merged cells and shared strings.
 - Next action: IFC export (16.11) and clash detection (16.12), symbol library (16.8) or onboarding (Phase 17).
+
+### 2026-10-27 — session 40: cable-route clash detection (16.12)
+- Completed: pure `findClashes` calculation detects route-route crossings on the same mounting level (different circuits are errors, same-circuit crossings warn), ignores crossings at shared route endpoints, and flags routes running through unrelated devices (junction boxes warn, other devices error). An optional clearance threshold supports parallel-run proximity checks without flooding the default report.
+- Completed: clashes feed `validatePlan`, so the shared Validation panel lists them with targets that jump to the route and the conflicting route/device; both server and local editors benefit.
+- Completed: 3D view renders red/amber octahedron markers at every clash with a "Clashes (n)" visibility toggle; markers select the affected route through the existing raycast selection.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 128, contracts 40, calculations 64, database 2; 299 tests). New calculations tests cover crossings, mounting separation, shared endpoints, device clashes, distances, proximity and deduplication; web validation tests cover error/warning cases.
+- Issues/blockers: wall/structural clashes are not classified separately because walls have no load-bearing flag; proximity clearance is opt-in and expressed in drawing units.
+- Next action: IFC export (16.11), symbol library (16.8) or onboarding (Phase 17).
