@@ -144,6 +144,24 @@ async function main() {
     throw new Error('Toolbar tooltip did not show its usage hint.');
   }
 
+  // Fullscreen uses the browser API and exits cleanly with Esc.
+  const fullscreenButton = page.getByTestId('editor-fullscreen');
+  await fullscreenButton.click();
+  await page.waitForFunction(() => document.fullscreenElement !== null);
+  if ((await fullscreenButton.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('Fullscreen button did not reflect the active state.');
+  }
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  // Headless Chromium does not implement the browser-level Esc exit, so fall
+  // back to the same button there. Real browsers exit on Esc.
+  if (await page.evaluate(() => document.fullscreenElement !== null)) {
+    await fullscreenButton.click();
+  }
+  await page.waitForFunction(() => document.fullscreenElement === null);
+  await page.getByRole('button', { name: 'Fullscreen editor' }).waitFor();
+  await page.locator('canvas').first().waitFor();
+
   const circuitsSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Circuits', exact: true }),
   });

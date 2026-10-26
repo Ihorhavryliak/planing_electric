@@ -951,6 +951,16 @@ export const ru: Dictionary = {
   'tooltip.fit': 'Вписать весь план в вид (0)',
   'tooltip.download': 'Скачать текущий вид как PNG',
   'tooltip.preview': 'Скрыть панели и заблокировать редактирование',
+  'editor.fullscreen.enter': 'Редактор на весь экран',
+  'editor.fullscreen.exit': 'Выйти из полноэкранного режима',
+  'editor.fullscreen.hint': 'Развернуть редактор, не покидая страницу',
+  'editor.fullscreen.unsupported':
+    'Полноэкранный режим недоступен в этом браузере или встроенном фрейме. Используйте режим просмотра для чистого полотна.',
+  'editor.fullscreen.usePreview': 'Режим просмотра',
+  'editor.fullscreen.dismiss': 'Закрыть',
+  'tooltip.fullscreen': 'Развернуть редактор на весь экран (F11 или Shift+F)',
+  'hotkeys.fullscreen': 'Войти или выйти из полноэкранного режима',
+
   'tooltip.panels': 'Показать или скрыть боковую панель',
   'tooltip.help': 'Открыть руководство из шести шагов',
 

@@ -63,6 +63,7 @@ export function HotkeysOverlay({ open, onClose }: HotkeysOverlayProps) {
         { keys: ['Ctrl', 'Z'], label: t('hotkeys.undo') },
         { keys: ['Ctrl', 'Shift', 'Z'], label: t('hotkeys.redo') },
         { keys: ['Ctrl', 'K'], label: t('hotkeys.palette') },
+        { keys: ['F11', 'Shift', 'F'], label: t('hotkeys.fullscreen') },
         { keys: ['?'], label: t('hotkeys.help') },
       ],
     },

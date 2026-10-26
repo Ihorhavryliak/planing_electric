@@ -324,6 +324,60 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** новий користувач бачить редакторський тур один раз, може пропустити, стан зберігається між сесіями та пристроями (для акаунта); порожні стани ведуть до першого проєкту без модальних вікон.
 
+#### 18.1 Повноекранний режим редактора
+
+- [x] 18.1.1 Кнопка «На весь екран» на панелі інструментів та в command palette (15.6), гаряча клавіша `F11` (перехопити лише коли фокус у редакторі) та `Shift+F`.
+- [x] 18.1.2 Використати браузерний **Fullscreen API** (`element.requestFullscreen()` / `document.exitFullscreen()`), а не CSS-фіксацію; цільовий елемент — контейнер редактора, не `document.body` (щоб зберегти панелі).
+- [x] 18.1.3 Слухати `fullscreenchange` (включно з виходом через `Esc` браузера) і синхронізувати стан кнопки; після входу — викликати `fitRequest`, щоб полотно перерахувало viewport.
+- [x] 18.1.4 Не входити в fullscreen автоматично; стан не зберігати між сесіями (лише в межах вкладки). У local-first і серверному редакторі — однакова поведінка.
+- [x] 18.1.5 Graceful fallback: якщо API недоступний (iOS Safari < 16, iframe без `allowfullscreen`) — показати повідомлення й запропонувати `preview`-режим (15.6).
+- [x] 18.1.6 Інтеграція з preview-режимом: у fullscreen панелі залишаються видимими; `preview` + fullscreen — окремий стан «кіоск» (без панелей, без тулбара, лише pan/zoom).
+- [x] 18.1.7 Локалізація `ua`/`en` (`editor.fullscreen.enter`, `.exit`, `.unsupported`) та `aria-pressed` на кнопці.
+- [x] 18.1.8 Playwright: вхід/вихід через кнопку та `Esc`, перевірка `document.fullscreenElement`, перевірка що після виходу тулбар і полотно на місці.
+
+#### 18.2 Прикріплення кабелю до пристрою (pin/unpin)
+
+Замінює coordinate-based attachment (Фаза 4, `moveAttachedRouteEnds`) на явний зв'язок за `pointId`, з можливістю прикріпити та відкріпити вручну.
+
+- [ ] 18.2.1 Розширити модель траси в контрактах: `route.pinned = { start?: { pointId: string; vertexIndex?: number }; end?: { pointId: string; vertexIndex?: number } }` (або окремі поля `startPointId` / `endPointId`, якщо простіше для міграції). Оновити Zod-схему в `packages/contracts` та Drizzle `routes` (nullable колонки `start_point_id`, `end_point_id` з `onDelete: 'set null'`).
+- [ ] 18.2.2 Міграція `0011_route_pins`: додати колонки, перенести наявні зв'язки, де кінець траси збігається з точкою (у межах допуску), у `pinned`; решта лишається «вільними» кінцями.
+- [ ] 18.2.3 UI прикріплення: коли кінець траси перетягують поблизу пристрою — показувати іконку магніту; відпускання в радіусі прив'язки створює `pinned.end` (або `.start`). Явна дія «Прикріпити до найближчого пристрою» в контекстному меню та property panel.
+- [ ] 18.2.4 UI відкріплення: іконка магніту/замка біля прикріпленого кінця; клік — «Відкріпити»; також кнопка в property panel і команда в command palette. Після відкріплення кінець лишається в поточних координатах (не стрибає).
+- [ ] 18.2.5 Поведінка при переміщенні пристрою: прикріплений кінець траси слідує за точкою (замінює coordinate-based логіку); якщо прикріплено обидва кінці й пристрій переміщено — траса перераховує геометрію, довжина оновлюється.
+- [ ] 18.2.6 Видалення пристрою з прикріпленим кабелем: діалог «Відкріпити кабель / Скасувати»; ніколи не видаляти трасу без підтвердження. У bulk-delete — попередження зі списком.
+- [ ] 18.2.7 Валідація (`validatePlan`, 15.5): нові правила — «траса прикріплена до видаленої точки» (не має траплятися, але захист), «прикріплений кінець не збігається з координатами точки після ручного редагування вигину» (попередження + кнопка «Синхронізувати»).
+- [ ] 18.2.8 Візуалізація: маркер прикріплення (магніт) на кінці траси в 2D та 3D; різні кольори для `start`/`end`; відображення в SVG-експорті (15.9) та в кабельному журналі (16.13).
+- [ ] 18.2.9 Локальний режим: `pinned` зберігається в drawing payload, нормалізація старих знімків (де лише координати) — під час імпорту намагатися відновити `pinned` за допуском.
+- [ ] 18.2.10 Тести: юніт для `attachRouteEnd` / `detachRouteEnd` / `movePinnedRouteEnds`; контрактні для Zod; API e2e для CRUD траси з `pinned`; локальне сховище; Playwright — прикріпити, перемістити пристрій, відкріпити, перевірити збереження.
+
+#### 18.3 Підказки при наведенні на полотно
+
+- [ ] 18.3.1 Хук `useCanvasHover`: слухає `pointermove` на полотні, дебаунс ~40–60 мс, викликає наявний hit-test (Фаза 4) лише якщо курсор зсунувся > 4 px; повертає `{ target, screenPos }` або `null`.
+- [ ] 18.3.2 Вміст tooltip за типом об'єкта:
+  - **Точка:** тип + підтип (15.2), коло, підпис, висота, прикріплені траси (кількість).
+  - **Траса:** тип кабелю, коло, довжина з розбивкою (геометрія + спуски + відходи = підсумок), спосіб монтажу (15.3), кількість проходів крізь стіни, чи прикріплені кінці.
+  - **Стіна:** довжина, товщина, висота, площа брутто/нетто, кількість отворів.
+  - **Кімната:** назва, площа, периметр.
+  - **Отвір:** тип, ширина × висота, чи в межах стіни.
+  - **Розмір:** значення в поточних одиницях.
+- [ ] 18.3.3 Позиціювання: біля курсора зі зсувом 12 px; автоматичне перевертання біля країв viewport; `position: fixed` + портал, щоб не обрізалося панелями.
+- [ ] 18.3.4 Затримка появи 350 мс і зникнення 80 мс, щоб не блимало під час панорамування; під час `pan`/`zoom`/`draw` — приховувати.
+- [ ] 18.3.5 Перемикач «Підказки при наведенні» в налаштуваннях редактора (15.6) і command palette; збереження в `localStorage` (`dmp:editor:hoverHints`), типово `true` на десктопі, `false` на touch.
+- [ ] 18.3.6 Touch: long-press (500 мс) показує той самий tooltip; тап поза об'єктом закриває.
+- [ ] 18.3.7 Доступність: `prefers-reduced-motion` вимикає анімацію появи; tooltip не перехоплює фокус; для скрін-рідерів — `aria-live="polite"` лише при long-press/focus, не при простому hover (щоб не спамити).
+- [ ] 18.3.8 Продуктивність: hit-test на hover не запускає React-рендер усього полотна; tooltip рендериться окремим порталом; перевірити на плані з 500+ точок і 200+ трас (використати наявне viewport culling, Фаза 8).
+- [ ] 18.3.9 Локалізація `ua`/`en` (`canvas.hover.point`, `.route`, `.wall`, `.room`, `.opening`, `.dimension` та поля).
+- [ ] 18.3.10 Playwright: навести на точку/трасу/стіну/кімнату — перевірити появу tooltip і ключові поля; вимкнути в налаштуваннях — перевірити, що не з'являється; long-press на touch-емуляції.
+
+#### 18.4 Спільне
+
+- [ ] 18.4.1 `scripts/browser-check.mjs`: додати кроки для fullscreen (через `?tour=off` або окремий `?fullscreen=1`), hover tooltip і прикріплення/відкріплення кабелю.
+- [ ] 18.4.2 Оновити документацію користувача (розділ «Редактор») зі скріншотами трьох функцій.
+- [ ] 18.4.3 Перевірити, що функції працюють у серверному та локальному редакторах, у split 2D/3D (15.7) і в preview-режимі (15.6).
+
+**Критерії завершення:** користувач розгортає редактор на весь екран однією кнопкою або `F11`, бачить стислу інформацію про будь-який об'єкт при наведенні (з можливістю вимкнути), прикріплює кінець кабельної траси до пристрою та відкріплює його; прикріплення зберігається за `pointId`, коректно переживає переміщення/видалення пристрою, синхронізацію з акаунтом і локальний режим; усе покрито юніт-, контрактними, API- та Playwright-тестами.
+
+
 ## 4. Наскрізний сценарій приймання MVP
 
 Використовуйте цей сценарій як основне визначення працюючого MVP:
@@ -502,3 +556,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 101, contracts 38, calculations 50, database 2; 256 automated tests), `node scripts/browser-check.mjs` (electrical panel current, coordinated state, demo calculation).
 - Issues/blockers: route length is the sum of circuit routes (conservative, no panel-to-load topology); fault current uses a simplified source impedance and single-phase end fault; cable ampacity uses one IEC B1 installation column.
 - Next action: panel schedules and a full single-line diagram (16.5–16.7).
+
+### 2026-10-26 — session 32: fullscreen editor (18.1)
+- Completed: browser Fullscreen API for the editor container in both server and local editors, a toolbar button and command-palette action, `F11`/`Shift+F` shortcuts scoped to the editor, `fullscreenchange` synchronisation (including browser Esc), automatic fit after entering, `aria-pressed`, localized strings, and a graceful fallback that offers preview mode when the API is unavailable. Preview + fullscreen behaves as a kiosk (no panels or toolbar). Panels stay visible in plain fullscreen.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (web 101), `node scripts/browser-check.mjs` (enter fullscreen, active state, exit, toolbar and canvas restored).
+- Issues/blockers: headless Chromium does not implement the browser-level Esc exit, so the smoke test falls back to the button there; real browsers exit on Esc.
+- Next action: hover tooltips on canvas objects (18.3) and explicit route pinning (18.2).

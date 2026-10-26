@@ -17,6 +17,8 @@ import {
   EyeOff,
   HelpCircle,
   LoaderCircle,
+  Maximize2,
+  Minimize2,
   PanelRightClose,
   PanelRightOpen,
 } from 'lucide-react';
@@ -48,6 +50,7 @@ import {
   EditorGuideOverlay,
 } from '@/features/editor/editor-guide';
 import { EditorTooltipLayer } from '@/features/editor/editor-tooltip';
+import { useEditorFullscreen } from '@/features/editor/use-editor-fullscreen';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -137,6 +140,9 @@ export function LocalEditorPage() {
   const [name, setName] = useState('');
   const loadedRef = useRef(false);
   const revisionRef = useRef<string | null>(null);
+  const fullscreen = useEditorFullscreen({
+    onEntered: () => setFitRequest(Date.now()),
+  });
 
   useEffect(() => {
     void (async () => {
@@ -526,6 +532,15 @@ export function LocalEditorPage() {
       run: openGuide,
     },
     {
+      id: 'fullscreen',
+      label: fullscreen.isFullscreen
+        ? t('editor.fullscreen.exit')
+        : t('editor.fullscreen.enter'),
+      shortcut: 'F11',
+      hint: t('editor.fullscreen.hint'),
+      run: () => void fullscreen.toggle(),
+    },
+    {
       id: 'preview',
       label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
       run: () => setPreviewMode((value) => !value),
@@ -645,18 +660,57 @@ export function LocalEditorPage() {
         </div>
       </header>
 
+      {fullscreen.fallback ? (
+        <div
+          role="alert"
+          className="fixed bottom-4 left-1/2 z-[90] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl border border-amber-400/25 bg-slate-950/95 p-3 text-slate-100 shadow-2xl shadow-black/50 backdrop-blur"
+        >
+          <p className="text-xs leading-relaxed text-amber-100">
+            {t('editor.fullscreen.unsupported')}
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                fullscreen.dismissFallback();
+                setPreviewMode(true);
+              }}
+            >
+              {t('editor.fullscreen.usePreview')}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={fullscreen.dismissFallback}
+            >
+              {t('editor.fullscreen.dismiss')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <main
+        ref={fullscreen.containerRef}
         data-editor-tooltips
         style={{ zoom: preferences.uiScale }}
-        className={
+        className={`${
+          fullscreen.isFullscreen
+            ? 'h-[100dvh] bg-slate-950 p-2'
+            : 'mx-auto max-w-7xl px-4 py-4'
+        } ${
           previewMode || preferences.sidebarCollapsed
-            ? 'mx-auto max-w-7xl px-4 py-4'
-            : 'mx-auto grid max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_18rem]'
-        }
+            ? 'relative'
+            : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]'
+        }`}
       >
         <div
           className={`relative min-h-[440px] ${
-            previewMode ? 'h-[calc(100vh-8rem)]' : 'h-[70vh]'
+            fullscreen.isFullscreen
+              ? 'h-[calc(100dvh-1rem)]'
+              : previewMode
+                ? 'h-[calc(100vh-8rem)]'
+                : 'h-[70vh]'
           }`}
         >
           <EditorCanvas
@@ -953,6 +1007,35 @@ export function LocalEditorPage() {
         </div>
 
         <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
+          <button
+            type="button"
+            title={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            aria-label={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            data-tooltip-hint={t('tooltip.fullscreen')}
+            data-testid="editor-fullscreen"
+            aria-pressed={fullscreen.isFullscreen}
+            onClick={() => void fullscreen.toggle()}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+              fullscreen.isFullscreen
+                ? 'bg-amber-400 text-slate-950'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+            )}
+          >
+            {fullscreen.isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </button>
           <button
             type="button"
             title={previewMode ? t('editor.exitPreview') : t('editor.preview')}

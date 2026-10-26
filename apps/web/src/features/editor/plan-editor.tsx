@@ -40,6 +40,8 @@ import {
   ImagePlus,
   LoaderCircle,
   Lock,
+  Maximize2,
+  Minimize2,
   PanelRightClose,
   PanelRightOpen,
   RotateCcw,
@@ -125,6 +127,7 @@ import { HotkeysOverlay } from './hotkeys-overlay';
 import { RoomNavigator } from './room-navigator';
 import { EditorGuide, EditorGuideOverlay } from './editor-guide';
 import { EditorTooltipLayer } from './editor-tooltip';
+import { useEditorFullscreen } from './use-editor-fullscreen';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -510,6 +513,9 @@ export function PlanEditor({
     busy: boolean;
     queued: ElectricalSettings | null;
   }>({ busy: false, queued: null });
+  const fullscreen = useEditorFullscreen({
+    onEntered: () => setFitRequest(Date.now()),
+  });
   const wallsRef = useRef(walls);
   const openingsRef = useRef(openings);
   const roomsRef = useRef(rooms);
@@ -2434,6 +2440,15 @@ export function PlanEditor({
       run: openGuide,
     },
     {
+      id: 'fullscreen',
+      label: fullscreen.isFullscreen
+        ? t('editor.fullscreen.exit')
+        : t('editor.fullscreen.enter'),
+      shortcut: 'F11',
+      hint: t('editor.fullscreen.hint'),
+      run: () => void fullscreen.toggle(),
+    },
+    {
       id: 'preview',
       label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
       run: () => setPreviewMode((value) => !value),
@@ -2526,20 +2541,52 @@ export function PlanEditor({
 
   return (
     <>
+      {fullscreen.fallback ? (
+        <div
+          role="alert"
+          className="fixed bottom-4 left-1/2 z-[90] w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl border border-amber-400/25 bg-slate-950/95 p-3 text-slate-100 shadow-2xl shadow-black/50 backdrop-blur"
+        >
+          <p className="text-xs leading-relaxed text-amber-100">
+            {t('editor.fullscreen.unsupported')}
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                fullscreen.dismissFallback();
+                setPreviewMode(true);
+              }}
+            >
+              {t('editor.fullscreen.usePreview')}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={fullscreen.dismissFallback}
+            >
+              {t('editor.fullscreen.dismiss')}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <div
+        ref={fullscreen.containerRef}
         data-editor-tooltips
         style={{ zoom: preferences.uiScale }}
-        className={
+        className={`${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
             : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]'
-        }
+        }`}
       >
         <div
           className={`relative min-h-[440px] ${
-            previewMode
-              ? 'h-[calc(100vh-6rem)]'
-              : 'h-[65vh] lg:h-[calc(100vh-12rem)]'
+            fullscreen.isFullscreen
+              ? 'h-[calc(100vh-1rem)]'
+              : previewMode
+                ? 'h-[calc(100vh-6rem)]'
+                : 'h-[65vh] lg:h-[calc(100vh-12rem)]'
           }`}
         >
           {viewMode === '2d' || viewMode === 'split' ? (
@@ -2687,6 +2734,35 @@ export function PlanEditor({
         </div>
 
         <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
+          <button
+            type="button"
+            title={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            aria-label={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            data-tooltip-hint={t('tooltip.fullscreen')}
+            data-testid="editor-fullscreen"
+            aria-pressed={fullscreen.isFullscreen}
+            onClick={() => void fullscreen.toggle()}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+              fullscreen.isFullscreen
+                ? 'bg-amber-400 text-slate-950'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+            )}
+          >
+            {fullscreen.isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </button>
           <button
             type="button"
             title={previewMode ? t('editor.exitPreview') : t('editor.preview')}

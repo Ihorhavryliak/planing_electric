@@ -972,6 +972,15 @@ const en: Dictionary = {
   'tooltip.fit': 'Fit the whole plan in view (0)',
   'tooltip.download': 'Download the current view as PNG',
   'tooltip.preview': 'Hide panels and lock editing for a clean view',
+  'tooltip.fullscreen': 'Expand the editor to fill the screen (F11 or Shift+F)',
+  'editor.fullscreen.enter': 'Fullscreen editor',
+  'editor.fullscreen.exit': 'Exit fullscreen',
+  'editor.fullscreen.hint': 'Expand the editor without leaving the page',
+  'editor.fullscreen.unsupported':
+    'Fullscreen is not available in this browser or embedded frame. Use preview mode for a clean canvas instead.',
+  'editor.fullscreen.usePreview': 'Use preview mode',
+  'editor.fullscreen.dismiss': 'Dismiss',
+
   'tooltip.panels': 'Show or hide the side panel',
   'tooltip.help': 'Open the six-step quick guide',
 
@@ -1001,6 +1010,7 @@ const en: Dictionary = {
   'hotkeys.undo': 'Undo',
   'hotkeys.redo': 'Redo',
   'hotkeys.palette': 'Open command palette',
+  'hotkeys.fullscreen': 'Enter or exit fullscreen',
   'hotkeys.help': 'Show this overview',
   'editor.ortho': 'Orthogonal routing',
   'editor.orthoShortcut': 'Orthogonal routing (routes only)',
@@ -2131,6 +2141,15 @@ const ua: Dictionary = {
   'tooltip.fit': 'Вписати весь план у вид (0)',
   'tooltip.download': 'Завантажити поточний вид як PNG',
   'tooltip.preview': 'Сховати панелі й заблокувати редагування для чистого вигляду',
+  'tooltip.fullscreen': 'Розгорнути редактор на весь екран (F11 або Shift+F)',
+  'editor.fullscreen.enter': 'Редактор на весь екран',
+  'editor.fullscreen.exit': 'Вийти з повноекранного режиму',
+  'editor.fullscreen.hint': 'Розгорнути редактор, не залишаючи сторінку',
+  'editor.fullscreen.unsupported':
+    'Повноекранний режим недоступний у цьому браузері або вбудованому фреймі. Скористайтеся режимом перегляду для чистого полотна.',
+  'editor.fullscreen.usePreview': 'Режим перегляду',
+  'editor.fullscreen.dismiss': 'Закрити',
+
   'tooltip.panels': 'Показати або сховати бічну панель',
   'tooltip.help': 'Відкрити посібник із шести кроків',
 
@@ -2160,6 +2179,7 @@ const ua: Dictionary = {
   'hotkeys.undo': 'Скасувати',
   'hotkeys.redo': 'Повторити',
   'hotkeys.palette': 'Відкрити палітру команд',
+  'hotkeys.fullscreen': 'Увійти або вийти з повноекранного режиму',
   'hotkeys.help': 'Показати цей огляд',
   'editor.ortho': 'Ортогональне трасування',
   'editor.orthoShortcut': 'Ортогональне трасування (лише траси)',
