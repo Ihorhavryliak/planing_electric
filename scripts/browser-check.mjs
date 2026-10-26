@@ -1003,6 +1003,21 @@ async function main() {
   if (allReportsBytes[0] !== 0x50 || allReportsBytes.length < 2000) {
     throw new Error('Combined report workbook was not generated.');
   }
+  const [ifcDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'IFC for BIM' }).first().click(),
+  ]);
+  const ifcPath = path.join(dir, 'project.ifc');
+  await ifcDownload.saveAs(ifcPath);
+  const ifcText = await readFile(ifcPath, 'utf8');
+  if (
+    !ifcText.startsWith('ISO-10303-21;') ||
+    !ifcText.includes("FILE_SCHEMA(('IFC4'))") ||
+    !ifcText.includes('IFCWALL(') ||
+    !ifcText.includes('IFCCABLESEGMENT(')
+  ) {
+    throw new Error('IFC export is missing its STEP header or plan entities.');
+  }
   // The remaining documentation checks use the synced local project.
   await page.goto(docsUrl);
   await page

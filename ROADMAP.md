@@ -302,12 +302,12 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 16.7 **Автоматична нумерація кіл, проводів і клем**: наскрізна адресація (наприклад, `Q1-1L1`, `W12`, `X1:3`) з оновленням при зміні схеми; використання нумерації в кабельному журналі, специфікаціях і SVG-схемі.
 - [ ] 16.8 **Бібліотека стандартних символів і виробів**: символи за ГОСТ/ДСТУ/IEC з прив'язкою до реальних артикулів (автомати, ПЗВ, розетки, клеми); розширення наявного каталогу підтипів (15.2) до повноцінної бібліотеки з сумісністю між символами й матеріалами.
 - [x] 16.9 **Нормоконтроль (ПУЭ/ДБН)**: набір вбудованих правил — відповідність перерізу струму захисту, обов'язкове ПЗВ на певні групи, вимоги до монтажу в вологих зонах; розширення `validatePlan` (15.5) з посиланнями на нормативні пункти.
-- [ ] 16.10 **Експорт DWG/DXF**: експорт 2D-плану (стіни, отвори, кімнати, точки, траси, розміри) для обміну з AutoCAD/Revit; мінімально — сумісність з AutoCAD R2018 DXF.
-- [ ] 16.11 **Експорт IFC для BIM**: передача стін, отворів, точок і трас як IFC-сутностей; необхідно для участі в BIM-проєктах і перевірки колізій у Navisworks/Solibri.
+- [~] 16.10 **Експорт DWG/DXF** (скасовано за рішенням користувача): експорт 2D-плану (стіни, отвори, кімнати, точки, траси, розміри) для обміну з AutoCAD/Revit; мінімально — сумісність з AutoCAD R2018 DXF.
+- [x] 16.11 **Експорт IFC для BIM**: передача стін, отворів, точок і трас як IFC-сутностей; необхідно для участі в BIM-проєктах і перевірки колізій у Navisworks/Solibri.
 - [x] 16.12 **Перевірка колізій (clash detection)**: використати наявний 3D-вид (12, 15.7, 15.10) для перевірки перетину кабельних трас з іншими інженерними мережами або несучими конструкціями; список колізій з переходом до об'єкта.
 - [x] 16.13 **Гнучкі шаблони звітів**: кабельний журнал, специфікація обладнання, відомість етажних щитів; шаблони з можливістю вибору полів і вивантаження в Excel/PDF; розширення наявного експорту кошторису (Фаза 6) та документації (15.8).
 
-**Критерії завершення:** електричний проєкт проходить перевірку навантажень, падіння напруги й узгодженість захистів; має графік щита, однолінійну схему та кабельний журнал; експортується в DWG/DXF та IFC; критичні невідповідності блокують фінальний експорт кошторису.
+**Критерії завершення:** електричний проєкт проходить перевірку навантажень, падіння напруги й узгодженість захистів; має графік щита, однолінійну схему та кабельний журнал; експортується в IFC; критичні невідповідності блокують фінальний експорт кошторису.
 
 ### Фаза 17 — Onboarding та підказки першого візиту
 
@@ -696,3 +696,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 128, contracts 40, calculations 64, database 2; 299 tests). New calculations tests cover crossings, mounting separation, shared endpoints, device clashes, distances, proximity and deduplication; web validation tests cover error/warning cases.
 - Issues/blockers: wall/structural clashes are not classified separately because walls have no load-bearing flag; proximity clearance is opt-in and expressed in drawing units.
 - Next action: IFC export (16.11), symbol library (16.8) or onboarding (Phase 17).
+
+### 2026-10-27 — session 41: IFC4 export for BIM (16.11)
+- Completed: a dependency-free IFC4 STEP exporter for the current floor. It writes the project/site/building/storey hierarchy, owner history, SI units, model context, walls as per-segment extruded solids with thickness and height, openings as `IfcOpeningElement` + `IfcRelVoidsElement`, rooms as `IfcSpace`, devices as typed products (`IfcOutlet`, `IfcSwitchingDevice`, `IfcLightFixture`, `IfcElectricDistributionBoard`, `IfcJunctionBox`, proxy), and cable routes as swept-disk `IfcCableSegment` solids at their mounting height.
+- Completed: deterministic 22-character IFC GlobalIds, STEP string escaping with UTF-16 sequences for Ukrainian/Russian names, calibrated drawing units converted to metres (1 cm fallback with an inline warning), and property sets carrying circuit, subtype, mounting, thickness, opening size and cable plan length.
+- Completed: "IFC for BIM" in the editor export panel and the local editor toolbar, downloading a `.ifc` file named after project and floor.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 138, contracts 40, calculations 64, database 2; 309 tests), `node scripts/browser-check.mjs`. Additionally validated the generated IFC with IfcOpenShell 0.9: IFC4 schema validation reports 0 errors and triangle geometry is generated for walls, openings, outlets, lights, cable segments and spaces.
+- Issues/blockers: openings are linked as voids rather than pre-cut from wall solids (viewers apply the subtraction), spaces have no relational space boundaries, and a file covers one floor. DXF export remains intentionally out of scope (16.10).
+- Next action: standard symbol library (16.8) or onboarding (Phase 17).

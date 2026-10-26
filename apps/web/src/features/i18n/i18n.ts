@@ -993,6 +993,9 @@ const en: Dictionary = {
   'tooltip.preview': 'Hide panels and lock editing for a clean view',
   'export.cableJournal': 'Cable journal CSV',
   'export.reportsExcel': 'All reports (Excel)',
+  'export.ifc': 'IFC for BIM',
+  'export.ifcUncalibrated':
+    'Plan is not calibrated: IFC will use 1 drawing unit = 1 cm.',
   'report.title': 'Report templates',
   'report.hint':
     'Pick a template and the fields you need, then export to Excel, CSV or print to PDF. Field choices are remembered.',
@@ -2318,6 +2321,9 @@ const ua: Dictionary = {
   'tooltip.preview': 'Сховати панелі й заблокувати редагування для чистого вигляду',
   'export.cableJournal': 'Кабельний журнал CSV',
   'export.reportsExcel': 'Усі звіти (Excel)',
+  'export.ifc': 'IFC для BIM',
+  'export.ifcUncalibrated':
+    'План не відкалібровано: IFC використає 1 одиницю креслення = 1 см.',
   'report.title': 'Шаблони звітів',
   'report.hint':
     'Виберіть шаблон і потрібні поля, потім вивантажте в Excel, CSV або роздрукуйте в PDF. Вибір полів запам’ятовується.',

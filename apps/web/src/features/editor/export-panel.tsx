@@ -7,6 +7,7 @@ import type {
 } from '@drawmyplace/contracts';
 import type { ElectricalPlanResult } from '@drawmyplace/calculations';
 import {
+  Box,
   Download,
   FileCode2,
   FileJson2,
@@ -34,6 +35,7 @@ import {
   REPORT_DEFINITIONS,
 } from './reports';
 import { XLSX_MIME } from './xlsx';
+import { buildIfc } from './ifc-export';
 
 interface ExportPanelProps {
   drawing: PlanDrawing | null;
@@ -154,6 +156,19 @@ export function ExportPanel({
     );
   }
 
+  function exportIfc() {
+    if (!drawing) return;
+
+    const result = buildIfc({
+      projectName: title ?? 'Project',
+      planName: subtitle ?? null,
+      drawing,
+      circuits,
+    });
+
+    downloadTextFile(result.fileName, result.text, 'application/x-step');
+  }
+
   async function exportProjectJson() {
     if (!projectId) return;
 
@@ -217,6 +232,21 @@ export function ExportPanel({
             <Download className="h-4 w-4" />
             {t('export.cableJournal')}
           </Button>
+        ) : null}
+        <Button
+          variant="outline"
+          size="sm"
+          className="justify-start"
+          disabled={!drawing}
+          onClick={exportIfc}
+        >
+          <Box className="h-4 w-4" />
+          {t('export.ifc')}
+        </Button>
+        {drawing && !drawing.calibration ? (
+          <p className="px-1 text-[10px] leading-relaxed text-amber-300/80">
+            {t('export.ifcUncalibrated')}
+          </p>
         ) : null}
         <Button
           variant="outline"

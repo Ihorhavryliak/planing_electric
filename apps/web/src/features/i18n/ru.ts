@@ -971,6 +971,9 @@ export const ru: Dictionary = {
   'tooltip.preview': 'Скрыть панели и заблокировать редактирование',
   'export.cableJournal': 'Кабельный журнал CSV',
   'export.reportsExcel': 'Все отчёты (Excel)',
+  'export.ifc': 'IFC для BIM',
+  'export.ifcUncalibrated':
+    'План не откалиброван: IFC использует 1 единицу чертежа = 1 см.',
   'docs.reports': 'Отчёты',
   'report.title': 'Шаблоны отчётов',
   'report.hint':

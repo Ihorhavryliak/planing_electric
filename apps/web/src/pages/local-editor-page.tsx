@@ -58,6 +58,7 @@ import {
   REPORT_DEFINITIONS,
 } from '@/features/editor/reports';
 import { XLSX_MIME } from '@/features/editor/xlsx';
+import { buildIfc } from '@/features/editor/ifc-export';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
@@ -595,6 +596,19 @@ export function LocalEditorPage() {
     );
   }
 
+  function exportIfc() {
+    if (!drawing || !project) return;
+
+    const result = buildIfc({
+      projectName: name || 'Local project',
+      planName: name,
+      drawing,
+      circuits: drawing.circuits,
+    });
+
+    downloadTextFile(result.fileName, result.text, 'application/x-step');
+  }
+
   function requestTool(tool: EditorTool, pointType?: ElectricalPointType) {
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
@@ -844,7 +858,7 @@ export function LocalEditorPage() {
               ? t('local.notCalibrated')
               : t('local.cable', { length: formatMeters(total) })}
           </span>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/local')}>
               {t('local.projects')}
             </Button>
@@ -866,6 +880,9 @@ export function LocalEditorPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={exportReportsExcel}>
               {t('export.reportsExcel')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportIfc}>
+              {t('export.ifc')}
             </Button>
           </div>
         </div>
