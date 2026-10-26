@@ -23,6 +23,7 @@ export const variantMaterialUsageSchema = z.object({
 
 export const variantMetricsSchema = z.object({
   totalRequiredLength: z.number().nullable(),
+  estimatedCost: z.number().nullable(),
   routeCount: z.number().int(),
   pointCount: z.number().int(),
   warningCount: z.number().int(),

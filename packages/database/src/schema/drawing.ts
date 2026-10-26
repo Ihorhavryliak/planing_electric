@@ -219,6 +219,7 @@ export const estimates = pgTable(
       .$type<CalculationSettings>()
       .notNull()
       .default({}),
+    warnings: jsonb('warnings').$type<string[]>().notNull().default([]),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

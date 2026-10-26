@@ -23,6 +23,7 @@ export const publicEstimateSchema = z.object({
   version: z.number().int(),
   status: estimateStatusSchema,
   calculationSettings: z.record(z.string(), z.unknown()).default({}),
+  warnings: z.array(z.string()).default([]),
   items: z.array(publicEstimateItemSchema),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

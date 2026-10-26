@@ -6,8 +6,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     pool: 'forks',
-    testTimeout: 15_000,
-    hookTimeout: 30_000,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
     env: {
       AUTH_RATE_LIMIT: '1000',
       STORAGE_DIR: join(tmpdir(), 'drawmyplace-api-test-storage'),

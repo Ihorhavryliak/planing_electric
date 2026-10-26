@@ -135,6 +135,7 @@ async function main() {
 
   // Draw a wall and add a door + window, so the 3D scene has real geometry.
   const planCanvas = page.locator('canvas').first();
+  await page.waitForTimeout(750);
   const canvasBox = await planCanvas.boundingBox();
   if (!canvasBox) throw new Error('Canvas is not visible');
   const canvasHash = () =>

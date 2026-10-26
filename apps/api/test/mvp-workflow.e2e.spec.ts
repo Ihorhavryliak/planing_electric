@@ -135,12 +135,23 @@ describe('MVP workflow', () => {
     ).body as PlanCalculation;
     expect(calculation.totalRequiredLength).toBeGreaterThan(0);
 
+    // A stricter circuit limit produces validation warnings on the estimate.
+    await server()
+      .patch(`${API}/plans/${plan.id}`)
+      .set('Cookie', cookie)
+      .send({
+        calculationSettings: { validation: { maxCircuitLengthMeters: 1 } },
+      })
+      .expect(200);
+
     const estimateResponse = await server()
       .post(`${API}/plans/${plan.id}/estimate`)
       .set('Cookie', cookie)
       .expect(201);
     const estimate = estimateResponse.body as PublicEstimate;
     expect(estimate.items.length).toBeGreaterThan(0);
+    expect(Array.isArray(estimate.warnings)).toBe(true);
+    expect(estimate.warnings.length).toBeGreaterThan(0);
 
     const listEstimates = (
       await server()

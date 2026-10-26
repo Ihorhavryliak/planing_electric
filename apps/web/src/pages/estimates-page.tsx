@@ -164,6 +164,19 @@ export function EstimatesPage() {
                     <p className="text-xs text-slate-500">
                       {formatDate(estimate.createdAt)}
                     </p>
+                    {estimate.warnings.length > 0 ? (
+                      <div className="mt-2 max-w-xl rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                        <p className="flex items-center gap-1.5 font-medium">
+                          <TriangleAlert className="h-3.5 w-3.5" />
+                          {t('estimates.warnings')}
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                          {estimate.warnings.map((warning) => (
+                            <li key={warning}>{warning}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button

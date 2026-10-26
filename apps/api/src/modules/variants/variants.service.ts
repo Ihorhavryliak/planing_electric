@@ -13,6 +13,7 @@ import {
   type Database,
 } from '@drawmyplace/database';
 import type {
+  PublicMaterial,
   PublicVariant,
   VariantMetrics,
 } from '@drawmyplace/contracts';
@@ -47,8 +48,7 @@ export class VariantsService {
     }
     const rows = await this.repository.listByProject(projectId);
     const catalog = await this.materials.list();
-    const names = new Map(catalog.map((item) => [item.id, item.name]));
-    return rows.map((row) => this.toPublic(row, names));
+    return rows.map((row) => this.toPublic(row, catalog));
   }
 
   async create(
@@ -67,10 +67,7 @@ export class VariantsService {
     const row = await this.repository.create({ projectId, name, data });
     if (!row) return null;
     const catalog = await this.materials.list();
-    return this.toPublic(
-      row,
-      new Map(catalog.map((item) => [item.id, item.name])),
-    );
+    return this.toPublic(row, catalog);
   }
 
   async update(
@@ -89,10 +86,7 @@ export class VariantsService {
     const updated = await this.repository.update(variantId, input);
     if (!updated) return null;
     const catalog = await this.materials.list();
-    return this.toPublic(
-      updated,
-      new Map(catalog.map((item) => [item.id, item.name])),
-    );
+    return this.toPublic(updated, catalog);
   }
 
   async duplicate(
@@ -117,10 +111,7 @@ export class VariantsService {
     });
     if (!created) return null;
     const catalog = await this.materials.list();
-    return this.toPublic(
-      created,
-      new Map(catalog.map((item) => [item.id, item.name])),
-    );
+    return this.toPublic(created, catalog);
   }
 
   private async canManage(userId: string, projectId: string): Promise<boolean> {
@@ -191,7 +182,7 @@ export class VariantsService {
 
   private toPublic(
     row: NonNullable<Awaited<ReturnType<VariantsRepository['findById']>>>,
-    materialNames: Map<string, string>,
+    catalog: PublicMaterial[],
   ): PublicVariant {
     const data = (row.data ?? {}) as Record<string, unknown>;
     return {
@@ -199,7 +190,7 @@ export class VariantsService {
       projectId: row.projectId,
       name: row.name,
       status: row.status,
-      metrics: this.metrics(data, materialNames),
+      metrics: this.metrics(data, catalog),
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -207,7 +198,7 @@ export class VariantsService {
 
   private metrics(
     data: Record<string, unknown>,
-    materialNames: Map<string, string>,
+    catalog: PublicMaterial[],
   ): VariantMetrics {
     const plans = (data.plans ?? []) as Array<{
       id: string;
@@ -252,9 +243,14 @@ export class VariantsService {
     }));
 
     const metersPerUnit = calibrationByPlan.get(plans[0]?.id ?? '') ?? null;
+    const materialById = new Map(catalog.map((item) => [item.id, item]));
+    const defaultCable =
+      catalog.find((item) => item.category === 'cable') ?? catalog[0] ?? null;
     const materialTotals = new Map<string | null, number>();
     let total = 0;
     let warnings = 0;
+    let estimatedCost = 0;
+    let hasUnpricedRoute = false;
 
     for (const route of routes) {
       const drops = resolveRouteDrops({
@@ -270,23 +266,38 @@ export class VariantsService {
       });
       warnings += result.warnings.length + (drops.length < 2 ? 1 : 0);
       if (result.status === 'ok') {
-        total += result.breakdown.requiredLength;
+        const quantity = result.breakdown.requiredLength;
+        const material =
+          (route.materialId ? materialById.get(route.materialId) : null) ??
+          defaultCable;
+        total += quantity;
         materialTotals.set(
           route.materialId,
-          (materialTotals.get(route.materialId) ?? 0) +
-            result.breakdown.requiredLength,
+          (materialTotals.get(route.materialId) ?? 0) + quantity,
         );
+
+        if (quantity > 0) {
+          if (material?.unitPrice == null) {
+            hasUnpricedRoute = true;
+          } else {
+            estimatedCost += Math.ceil(quantity) * material.unitPrice;
+          }
+        }
       }
     }
 
     return {
       totalRequiredLength: metersPerUnit === null ? null : roundTo(total),
+      estimatedCost:
+        metersPerUnit === null || routes.length === 0 || hasUnpricedRoute
+          ? null
+          : Math.round(estimatedCost * 100) / 100,
       routeCount: routes.length,
       pointCount: points.length,
       warningCount: warnings + (metersPerUnit === null ? 1 : 0),
       materials: [...materialTotals.entries()].map(([materialId, quantity]) => ({
         materialId,
-        name: materialId ? (materialNames.get(materialId) ?? null) : null,
+        name: materialId ? (materialById.get(materialId)?.name ?? null) : null,
         quantity: roundTo(quantity),
       })),
     };

@@ -130,6 +130,7 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                 <th className="py-2">{t('variants.routes')}</th>
                 <th className="py-2">{t('variants.points')}</th>
                 <th className="py-2">{t('variants.cable')}</th>
+                <th className="py-2">{t('variants.cost')}</th>
                 <th className="py-2">{t('variants.warnings')}</th>
                 <th className="py-2">{t('variants.actions')}</th>
               </tr>
@@ -151,6 +152,11 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                     {variant.metrics.totalRequiredLength === null
                       ? '—'
                       : `${variant.metrics.totalRequiredLength.toFixed(1)} m`}
+                  </td>
+                  <td className="py-2 pr-3 text-slate-300">
+                    {variant.metrics.estimatedCost === null
+                      ? '—'
+                      : variant.metrics.estimatedCost.toFixed(2)}
                   </td>
                   <td className="py-2 pr-3 text-amber-200">
                     {variant.metrics.warningCount}

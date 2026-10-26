@@ -33,11 +33,12 @@ export class EstimatesRepository {
       subtotal: number | null;
       note: string | null;
     }>,
+    warnings: string[] = [],
   ) {
     const version = await this.nextVersion(projectId);
     const [estimate] = await this.db
       .insert(estimates)
-      .values({ projectId, version, createdBy })
+      .values({ projectId, version, createdBy, warnings })
       .returning();
 
     if (!estimate) {

@@ -77,7 +77,12 @@ export class EstimatesService {
       };
     });
 
-    const created = await this.estimates.create(floor.projectId, ownerId, items);
+    const created = await this.estimates.create(
+      floor.projectId,
+      ownerId,
+      items,
+      calculation.warnings,
+    );
 
     const result = await this.getById(ownerId, created.id);
 
@@ -210,6 +215,7 @@ export class EstimatesService {
         string,
         unknown
       >,
+      warnings: estimate.warnings ?? [],
       items: items.map((item) => ({
         id: item.id,
         estimateId: item.estimateId,
@@ -307,7 +313,7 @@ export class EstimatesService {
   }
 
   private toPublic(
-    estimate: { id: string; projectId: string; version: number; status: string; calculationSettings: unknown; createdAt: Date; updatedAt: Date },
+    estimate: { id: string; projectId: string; version: number; status: string; calculationSettings: unknown; warnings?: string[]; createdAt: Date; updatedAt: Date },
     items: Array<{
       materialId: string | null;
       description: string;
@@ -328,6 +334,7 @@ export class EstimatesService {
         string,
         unknown
       >,
+      warnings: estimate.warnings ?? [],
       items: items.map((item, index) => ({
         id: `temp-${index}`,
         estimateId: estimate.id,
