@@ -5,10 +5,12 @@ import {
   FolderPlus,
   LoaderCircle,
   RefreshCw,
+  Sparkles,
   TriangleAlert,
 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ProjectCard } from '@/features/projects/project-card';
@@ -37,6 +39,7 @@ export function AppPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [tab, setTab] = useState<ProjectTab>('active');
 
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [creating, setCreating] = useState(false);
@@ -174,6 +177,7 @@ export function AppPage() {
                   {t('app.projectName')}
                 </label>
                 <Input
+                  ref={nameInputRef}
                   id="project-name"
                   name="name"
                   placeholder={t('app.namePlaceholder')}
@@ -336,6 +340,29 @@ export function AppPage() {
                   ? t('app.noActiveHint')
                   : t('app.noArchivedHint')}
               </p>
+              {tab === 'active' ? (
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                  <Button
+                    onClick={() => {
+                      nameInputRef.current?.focus();
+                      nameInputRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                      });
+                    }}
+                  >
+                    <FolderPlus className="h-4 w-4" />
+                    {t('app.emptyCta')}
+                  </Button>
+                  <Link
+                    to="/local"
+                    className={cn(buttonVariants({ variant: 'outline' }))}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {t('app.emptyDemo')}
+                  </Link>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

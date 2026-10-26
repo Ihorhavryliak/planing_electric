@@ -2685,7 +2685,7 @@ export function EditorCanvas({
       />
 
       {readOnly ? null : (
-      <div className="editor-toolbar absolute top-3 left-3 flex flex-wrap items-center gap-1 rounded-xl p-1">
+      <div data-tour="editor-toolbar" className="editor-toolbar absolute top-3 left-3 flex flex-wrap items-center gap-1 rounded-xl p-1">
         <button
           type="button"
           title={t('editor.select')}

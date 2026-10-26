@@ -311,16 +311,16 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 ### Фаза 17 — Onboarding та підказки першого візиту
 
-- [ ] 17.1 Порожні стани з CTA на `/app`, `/local`, `/app/projects/:id/documentation`.
-- [ ] 17.2 Інтеграція `driver.js` + `data-tour` контракт + Tailwind-тема.
-- [ ] 17.3 Тур редактора (5 кроків): toolbar → canvas → circuits → validation → save.
-- [ ] 17.4 Контекстні підказки: перша точка → траса, перша траса → коло, command palette, 3D, documentation.
-- [ ] 17.5 Збереження стану: `localStorage` + `users.onboarding jsonb` + endpoint `/me/onboarding`.
-- [ ] 17.6 Локалізація `tour.*` в `ua`/`en` (і `ru` за флагом).
-- [ ] 17.7 Доступність: Esc, focus trap, `prefers-reduced-motion`, скрін-рідери.
-- [ ] 17.8 Керування: `?tour=editor`, `?tour=off`, DEV-режим.
-- [ ] 17.9 Playwright: показ один раз, пропуск, збереження, серверний запис.
-- [ ] 17.10 Не ламати `scripts/browser-check.mjs` (додати `?tour=off` або `localStorage.clear()`).
+- [x] 17.1 Порожні стани з CTA на `/app`, `/local`, `/app/projects/:id/documentation`.
+- [x] 17.2 Інтеграція `driver.js` + `data-tour` контракт + Tailwind-тема.
+- [x] 17.3 Тур редактора (5 кроків): toolbar → canvas → circuits → validation → save.
+- [x] 17.4 Контекстні підказки: перша точка → траса, перша траса → коло, command palette, 3D, documentation.
+- [x] 17.5 Збереження стану: `localStorage` + `users.onboarding jsonb` + endpoint `/me/onboarding`.
+- [x] 17.6 Локалізація `tour.*` в `ua`/`en` (і `ru` за флагом).
+- [x] 17.7 Доступність: Esc, focus trap, `prefers-reduced-motion`, скрін-рідери.
+- [x] 17.8 Керування: `?tour=editor`, `?tour=off`, DEV-режим.
+- [x] 17.9 Playwright: показ один раз, пропуск, збереження, серверний запис.
+- [x] 17.10 Не ламати `scripts/browser-check.mjs` (додати `?tour=off` або `localStorage.clear()`).
 
 **Критерії завершення:** новий користувач бачить редакторський тур один раз, може пропустити, стан зберігається між сесіями та пристроями (для акаунта); порожні стани ведуть до першого проєкту без модальних вікон.
 
@@ -712,3 +712,16 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 139, contracts 44, calculations 64, database 2; 314 tests). Browser check now attaches `SDN3002171` to a placed socket and verifies the article survives into the equipment report.
 - Issues/blockers: the catalog is bundled static reference data with indicative prices and material codes; it is not yet managed from the server admin or synchronized with a supplier database.
 - Next action: Phase 17 onboarding (17.1+), or the remaining 18.4/backlog items.
+
+### 2026-10-27 — session 43: first-run onboarding and contextual hints (Phase 17)
+- Completed (17.1): empty project, local project and documentation screens now have primary CTAs (create project, load the demo, open the editor) instead of passive empty text.
+- Completed (17.2–17.3): a dependency-free guided tour replaces driver.js. It uses a stable `data-tour` contract (`editor-toolbar`, `editor-canvas`, `circuits`, `validation`, `save`), a spotlight cutout, themed Tailwind card and five steps through tools → canvas → circuits → validation → autosave. Steps fall back to a centred card when a target is hidden.
+- Completed (17.4): state-aware `NextStepHint` cards guide the first point → cable route, first uncircuited route → circuit, then the command palette, 3D view and documentation workspace. Hints are one-time and dismissible.
+- Completed (17.5): onboarding state persists in `dmp:onboarding` (localStorage) and in a new `users.onboarding` jsonb column (migration `0011_onboarding`) via `GET/PATCH /api/v1/users/me/onboarding`, merged across devices for signed-in users.
+- Completed (17.6): all `tour.*` and `hint.*` copy is localized in `en`, `ua` and the optional `ru` catalog.
+- Completed (17.7): the tour traps focus, closes on Esc as skipped, uses `aria-modal`/`aria-labelledby`/`aria-describedby`, announces hint actions with `aria-live`, and respects `prefers-reduced-motion` for scrolling and animations.
+- Completed (17.8): `?tour=editor` replays the tour, `?tour=off` disables it, and the first-run tour appears only when no completion/skip is stored.
+- Completed (17.9–17.10): the browser smoke test completes the five-step tour, verifies the server record, reloads to prove it appears once, replays it with `?tour=editor`, skips it, and continues the existing editor/documentation/3D/export flow without breakage.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 139, contracts 47, calculations 64, database 2; 318 tests), `node scripts/browser-check.mjs`.
+- Issues/blockers: the roadmap mentioned driver.js, but a small in-house tour avoids a runtime dependency while covering the same accessibility and theming requirements; tour steps block interaction with the page until skipped/finished by design.
+- Next action: remaining Phase 18 backlog (18.4) or polish items.

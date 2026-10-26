@@ -136,6 +136,51 @@ async function main() {
     throw underlayError;
   }
 
+  // First-run tour: five steps, completes once and is stored on the account.
+  const tour = page.getByTestId('editor-tour');
+  await tour.waitFor({ timeout: 15000 });
+  for (let stepIndex = 0; stepIndex < 4; stepIndex += 1) {
+    await tour.getByRole('button', { name: 'Next', exact: true }).click();
+  }
+  const onboardingSaved = page.waitForResponse(
+    (response) =>
+      response.url().includes('/users/me/onboarding') &&
+      response.request().method() === 'PATCH',
+    { timeout: 10000 },
+  );
+  await tour.getByRole('button', { name: 'Finish tour', exact: true }).click();
+  await onboardingSaved;
+  await tour.waitFor({ state: 'detached', timeout: 10000 });
+  const onboardingResponse = await page.request.get(
+    `${WEB}/api/v1/users/me/onboarding`,
+  );
+  if (!onboardingResponse.ok()) {
+    throw new Error('Onboarding state endpoint did not respond.');
+  }
+  const onboarding = await onboardingResponse.json();
+  if (onboarding.editorTour !== 'completed') {
+    throw new Error(`Tour state was not stored: ${JSON.stringify(onboarding)}`);
+  }
+  await page.reload();
+  await page.waitForURL('**/editor');
+  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  if (await page.getByTestId('editor-tour').isVisible().catch(() => false)) {
+    throw new Error('Completed tour was shown again after reload.');
+  }
+
+  // `?tour=editor` replays the tour for demos and the `?tour=off` switch is
+  // covered by the same provider; skipping keeps it dismissed for this load.
+  await page.goto(`${page.url().split('?')[0]}?tour=editor`);
+  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  const replayTour = page.getByTestId('editor-tour');
+  await replayTour.waitFor({ timeout: 10000 });
+  await replayTour.getByRole('button', { name: 'Skip tour', exact: true }).click();
+  await replayTour.waitFor({ state: 'detached', timeout: 10000 });
+  if (await page.getByTestId('editor-tour').isVisible().catch(() => false)) {
+    throw new Error('Skipped tour stayed visible.');
+  }
+  await page.evaluate(() => history.replaceState({}, '', location.pathname));
+
   // The quick guide is visible on the first editor visit, has a full-screen
   // walkthrough and can be collapsed afterwards.
   await page.getByText('Quick guide', { exact: true }).waitFor();

@@ -3,6 +3,7 @@ import { ProtectedRoute } from '@/components/protected-route';
 import { I18nProvider } from '@/features/i18n/i18n-context';
 import { ThemeProvider } from '@/features/theme/theme-context';
 import { AuthProvider } from '@/features/auth/auth-context';
+import { OnboardingProvider } from '@/features/onboarding/onboarding-context';
 import { ActivityPage } from '@/pages/activity-page';
 import { AdminPage } from '@/pages/admin-page';
 import { AllEstimatesPage } from '@/pages/all-estimates-page';
@@ -32,6 +33,7 @@ export function App() {
       <I18nProvider>
         <BrowserRouter>
           <AuthProvider>
+            <OnboardingProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -91,6 +93,7 @@ export function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+            </OnboardingProvider>
           </AuthProvider>
         </BrowserRouter>
       </I18nProvider>

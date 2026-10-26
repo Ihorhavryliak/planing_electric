@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { eq, inArray } from 'drizzle-orm';
 import {
   cableRoutes,
@@ -14,6 +14,11 @@ import {
   walls,
   type Database,
 } from '@drawmyplace/database';
+import {
+  normalizeOnboardingState,
+  type OnboardingState,
+  type UpdateOnboardingInput,
+} from '@drawmyplace/contracts';
 import { toPublicUser } from '../auth/auth.mapper';
 import { AuthRepository } from '../auth/auth.repository';
 import { DatabaseService } from '../../database/database.service';
@@ -27,6 +32,32 @@ export class UsersService {
     @Inject(AuthRepository) private readonly authRepository: AuthRepository,
   ) {
     this.db = database.db;
+  }
+
+  async getOnboarding(userId: string): Promise<OnboardingState> {
+    const user = await this.authRepository.findUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    return normalizeOnboardingState(user.onboarding);
+  }
+
+  async updateOnboarding(
+    userId: string,
+    input: UpdateOnboardingInput,
+  ): Promise<OnboardingState> {
+    const user = await this.authRepository.findUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const current = normalizeOnboardingState(user.onboarding);
+    const next: OnboardingState = {
+      editorTour:
+        input.editorTour !== undefined ? input.editorTour : current.editorTour,
+      hints: { ...current.hints, ...(input.hints ?? {}) },
+    };
+    const updated = await this.authRepository.updateUserOnboarding(userId, next);
+    if (!updated) throw new NotFoundException('User not found');
+
+    return normalizeOnboardingState(updated.onboarding);
   }
 
   async exportAccount(userId: string) {

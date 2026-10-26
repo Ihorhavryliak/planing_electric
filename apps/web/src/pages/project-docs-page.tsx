@@ -302,6 +302,26 @@ export function ProjectDocsPage() {
           />
         </div>
 
+        {!planLoading && !plan ? (
+          <div className="mt-4 app-panel flex flex-wrap items-center justify-between gap-4 p-5 print:hidden">
+            <div>
+              <h2 className="text-sm font-semibold text-white">
+                {t('docs.emptyPlanTitle')}
+              </h2>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-400">
+                {t('docs.emptyPlanHint')}
+              </p>
+            </div>
+            <Link
+              to={`/app/projects/${projectId}/editor`}
+              className={cn(buttonVariants({ size: 'sm' }))}
+            >
+              {t('docs.emptyPlanCta')}
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        ) : null}
+
         {error ? (
           <p
             role="alert"

@@ -14,11 +14,14 @@ import {
 import type { Response } from 'express';
 import type {
   DeleteAccountInput,
+  OnboardingState,
   PublicUser,
+  UpdateOnboardingInput,
   UpdateProfileInput,
 } from '@drawmyplace/contracts';
 import {
   deleteAccountSchema,
+  updateOnboardingSchema,
   updateProfileSchema,
 } from '@drawmyplace/contracts';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -41,6 +44,22 @@ export class UsersController {
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: PublicUser): PublicUser {
     return user;
+  }
+
+  @Get('me/onboarding')
+  @UseGuards(AuthGuard)
+  onboarding(@CurrentUser() user: PublicUser): Promise<OnboardingState> {
+    return this.users.getOnboarding(user.id);
+  }
+
+  @Patch('me/onboarding')
+  @UseGuards(AuthGuard)
+  updateOnboarding(
+    @CurrentUser() user: PublicUser,
+    @Body(new ZodValidationPipe(updateOnboardingSchema))
+    input: UpdateOnboardingInput,
+  ): Promise<OnboardingState> {
+    return this.users.updateOnboarding(user.id, input);
   }
 
   @Get('search')

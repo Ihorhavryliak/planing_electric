@@ -21,6 +21,13 @@ export const users = pgTable(
     passwordHash: text('password_hash').notNull(),
     name: text('name').notNull(),
     status: userStatusEnum('status').notNull().default('active'),
+    onboarding: jsonb('onboarding')
+      .$type<{
+        editorTour?: 'completed' | 'skipped' | null;
+        hints?: Record<string, boolean>;
+      }>()
+      .notNull()
+      .default({}),
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

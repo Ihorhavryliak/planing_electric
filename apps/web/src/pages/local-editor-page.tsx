@@ -62,6 +62,9 @@ import { buildIfc } from '@/features/editor/ifc-export';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import { SymbolLibraryPanel } from '@/features/editor/symbol-library-panel';
+import { EditorTour } from '@/features/onboarding/editor-tour';
+import { NextStepHint, type NextStep } from '@/features/onboarding/next-step-hint';
+import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
 import { HotkeysOverlay } from '@/features/editor/hotkeys-overlay';
 import { RoomNavigator } from '@/features/editor/room-navigator';
@@ -121,6 +124,7 @@ const id = () => crypto.randomUUID();
 
 export function LocalEditorPage() {
   const { t, formatMeters } = useI18n();
+  const { markHint } = useOnboarding();
   const { localId = '' } = useParams<{ localId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<LocalProject | null>(null);
@@ -352,6 +356,17 @@ export function LocalEditorPage() {
       }),
     [drawing, electrical, panelSchedule],
   );
+
+  useEffect(() => {
+    const points = drawing?.points ?? [];
+    const routes = drawing?.routes ?? [];
+
+    if (points.length > 0) markHint('first-point');
+    if (routes.length > 0) markHint('first-route');
+    if (routes.length > 0 && routes.every((route) => route.circuitId)) {
+      markHint('first-circuit');
+    }
+  }, [drawing, markHint]);
 
   function focusValidationTarget(target: ValidationTarget) {
     const clearSelections = () => {
@@ -631,6 +646,44 @@ export function LocalEditorPage() {
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
 
+  const nextSteps: NextStep[] = [
+    ...(drawing.points.length > 0
+      ? [
+          {
+            id: 'first-route' as const,
+            titleKey: 'hint.firstRoute.title',
+            bodyKey: 'hint.firstRoute.body',
+            actionLabelKey: 'hint.firstRoute.action',
+            onAction: () => requestTool('route'),
+          },
+        ]
+      : []),
+    ...(drawing.routes.some((route) => !route.circuitId)
+      ? [
+          {
+            id: 'first-circuit' as const,
+            titleKey: 'hint.firstCircuit.title',
+            bodyKey: 'hint.firstCircuit.body',
+            actionLabelKey: 'hint.firstCircuit.action',
+            onAction: () => {
+              const route = drawing.routes.find((item) => !item.circuitId);
+              if (route) setSelectedRouteId(route.id);
+              document
+                .querySelector('[data-tour="circuits"]')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            },
+          },
+        ]
+      : []),
+    {
+      id: 'command-palette',
+      titleKey: 'hint.palette.title',
+      bodyKey: 'hint.palette.body',
+      actionLabelKey: 'hint.palette.action',
+      onAction: () => setPaletteOpen(true),
+    },
+  ];
+
   function focusRoom(roomId: string) {
     if (!drawing) return;
     const room = drawing.rooms.find((item) => item.id === roomId);
@@ -844,6 +897,7 @@ export function LocalEditorPage() {
 
   return (
     <div className="relative min-h-screen">
+      <EditorTour />
       <header className="border-b border-white/10 bg-slate-950/70 px-6 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
           <Link to="/local" className="text-slate-400 hover:text-white">
@@ -855,7 +909,7 @@ export function LocalEditorPage() {
             className="h-9 max-w-xs"
             aria-label={t('local.projectName')}
           />
-          <span className="text-xs text-slate-500">
+          <span data-tour="save" className="text-xs text-slate-500">
             {saveState === 'saving'
               ? t('local.savingLocally')
               : saveState === 'conflict'
@@ -951,6 +1005,7 @@ export function LocalEditorPage() {
         }`}
       >
         <div
+          data-tour="editor-canvas"
           className={`editor-canvas-frame relative min-h-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100dvh-1rem)]'
@@ -1416,6 +1471,7 @@ export function LocalEditorPage() {
 
         {previewMode || preferences.sidebarCollapsed ? null : (
         <aside className="editor-sidebar space-y-4">
+          <NextStepHint steps={nextSteps} />
           <RoomNavigator
             rooms={drawing.rooms}
             selectedRoomId={selectedRoomId}

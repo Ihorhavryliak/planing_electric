@@ -158,6 +158,9 @@ import {
 import { PdfPageDialog } from './pdf-page-dialog';
 import { PointPropertiesPanel } from './point-properties-panel';
 import { SymbolLibraryPanel } from './symbol-library-panel';
+import { EditorTour } from '@/features/onboarding/editor-tour';
+import { NextStepHint, type NextStep } from '@/features/onboarding/next-step-hint';
+import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { POINT_SYMBOL_LIST, countByType } from './point-symbols';
 import {
   attachRouteEnd,
@@ -334,7 +337,7 @@ function SaveStatus({
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-      <div className="flex items-center justify-between gap-2">
+      <div data-tour="save" className="flex items-center justify-between gap-2">
         <span
           className={cn(
             'inline-flex items-center gap-2 text-xs font-medium',
@@ -433,6 +436,7 @@ export function PlanEditor({
   onPlanChange,
 }: PlanEditorProps) {
   const { t, formatNumber, formatScale, formatUnit } = useI18n();
+  const { markHint } = useOnboarding();
   const [underlay, setUnderlay] = useState<UnderlaySettings>(plan.underlay);
   const [viewport, setViewport] = useState<EditorViewport>(plan.viewport);
   const [assetNonce, setAssetNonce] = useState(0);
@@ -2240,6 +2244,14 @@ export function PlanEditor({
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
   );
+
+  useEffect(() => {
+    if (points.length > 0) markHint('first-point');
+    if (routes.length > 0) markHint('first-route');
+    if (routes.length > 0 && routes.every((route) => route.circuitId)) {
+      markHint('first-circuit');
+    }
+  }, [points.length, routes, markHint]);
   const exportDrawing = useMemo<PlanDrawing>(
     () => ({
       planId: plan.id,
@@ -2429,6 +2441,62 @@ export function PlanEditor({
   function requestTool(tool: EditorTool, pointType?: ElectricalPointType) {
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
+
+  const nextSteps: NextStep[] = [
+    ...(points.length > 0
+      ? [
+          {
+            id: 'first-route' as const,
+            titleKey: 'hint.firstRoute.title',
+            bodyKey: 'hint.firstRoute.body',
+            actionLabelKey: 'hint.firstRoute.action',
+            onAction: () => requestTool('route'),
+          },
+        ]
+      : []),
+    ...(routes.some((route) => !route.circuitId)
+      ? [
+          {
+            id: 'first-circuit' as const,
+            titleKey: 'hint.firstCircuit.title',
+            bodyKey: 'hint.firstCircuit.body',
+            actionLabelKey: 'hint.firstCircuit.action',
+            onAction: () => {
+              const route = routes.find((item) => !item.circuitId);
+              if (route) selectRoute(route.id);
+              document
+                .querySelector('[data-tour="circuits"]')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            },
+          },
+        ]
+      : []),
+    {
+      id: 'command-palette',
+      titleKey: 'hint.palette.title',
+      bodyKey: 'hint.palette.body',
+      actionLabelKey: 'hint.palette.action',
+      onAction: () => setPaletteOpen(true),
+    },
+    ...(walls.length > 0 || rooms.length > 0 || routes.length > 0
+      ? [
+          {
+            id: 'three-d-view' as const,
+            titleKey: 'hint.threeD.title',
+            bodyKey: 'hint.threeD.body',
+            actionLabelKey: 'hint.threeD.action',
+            onAction: () => setViewMode('3d'),
+          },
+        ]
+      : []),
+    {
+      id: 'documentation',
+      titleKey: 'hint.docs.title',
+      bodyKey: 'hint.docs.body',
+      actionLabelKey: 'hint.docs.action',
+      href: `/app/projects/${projectId}/documentation`,
+    },
+  ];
 
   function focusRoom(roomId: string) {
     const room = rooms.find((item) => item.id === roomId);
@@ -2692,6 +2760,7 @@ export function PlanEditor({
 
   return (
     <>
+      <EditorTour />
       {fullscreen.fallback ? (
         <div
           role="alert"
@@ -2734,6 +2803,7 @@ export function PlanEditor({
         }`}
       >
         <div
+          data-tour="editor-canvas"
           className={`editor-canvas-frame relative min-h-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100vh-1rem)]'
@@ -2993,6 +3063,7 @@ export function PlanEditor({
 
         {previewMode || preferences.sidebarCollapsed ? null : (
         <aside className="editor-sidebar space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+          <NextStepHint steps={nextSteps} />
           <RoomNavigator
             rooms={rooms}
             selectedRoomId={selectedRoomId}

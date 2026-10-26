@@ -153,6 +153,51 @@ describe('Authentication API', () => {
     });
   });
 
+  it('stores onboarding progress for the account', async () => {
+    const registered = await register(nextEmail()).expect(201);
+    const cookie = cookiePair(registered);
+
+    const initial = await server()
+      .get(`${API}/users/me/onboarding`)
+      .set('Cookie', cookie)
+      .expect(200);
+
+    expect(initial.body).toEqual({ editorTour: null, hints: {} });
+
+    const updated = await server()
+      .patch(`${API}/users/me/onboarding`)
+      .set('Cookie', cookie)
+      .send({
+        editorTour: 'completed',
+        hints: { 'first-route': true },
+      })
+      .expect(200);
+
+    expect(updated.body).toEqual({
+      editorTour: 'completed',
+      hints: { 'first-route': true },
+    });
+
+    const partial = await server()
+      .patch(`${API}/users/me/onboarding`)
+      .set('Cookie', cookie)
+      .send({ hints: { 'command-palette': true } })
+      .expect(200);
+
+    expect(partial.body).toEqual({
+      editorTour: 'completed',
+      hints: { 'first-route': true, 'command-palette': true },
+    });
+
+    const persisted = await server()
+      .get(`${API}/users/me/onboarding`)
+      .set('Cookie', cookie)
+      .expect(200);
+
+    expect(persisted.body.editorTour).toBe('completed');
+    expect(persisted.body.hints['command-palette']).toBe(true);
+  });
+
   it('rejects duplicate emails with 409', async () => {
     const email = nextEmail();
 

@@ -247,6 +247,9 @@ const en: Dictionary = {
 
   'local.import': 'Import JSON',
   'local.loading': 'Loading local projects…',
+  'local.emptyTitle': 'No local projects yet',
+  'local.emptyCta': 'Create your first local project',
+  'local.emptyDemo': 'Load the demo apartment',
   'local.empty': 'No local projects yet.',
   'local.updated':
     'Updated {date} · {points} points · {routes} routes',
@@ -430,6 +433,8 @@ const en: Dictionary = {
   'app.loading': 'Loading projects…',
   'app.noActive': 'No active projects yet',
   'app.noArchived': 'No archived projects',
+  'app.emptyCta': 'Create your first project',
+  'app.emptyDemo': 'Try the demo apartment',
   'app.noActiveHint':
     'Create your first project above to start planning a floor.',
   'app.noArchivedHint':
@@ -910,6 +915,10 @@ const en: Dictionary = {
   'docs.printButton': 'Print / Save as PDF',
   'docs.document': 'Project document',
   'docs.loadingPlan': 'Loading plan quantities…',
+  'docs.emptyPlanTitle': 'This floor has no plan yet',
+  'docs.emptyPlanHint':
+    'Open the editor to add a floor plan, calibrate it and start drawing.',
+  'docs.emptyPlanCta': 'Open the editor',
   'docs.noPlan': 'This floor has no plan yet. Create one in the editor.',
   'docs.validationIssues': 'Validation issues',
   'docs.estimatesCount': 'Estimates',
@@ -1025,6 +1034,50 @@ const en: Dictionary = {
   'report.field.totalCost': 'Total cost',
   'report.field.devices': 'Devices',
   'library.title': 'Device library',
+  'tour.progress': 'Step {current} of {total}',
+  'hint.dismiss': 'Dismiss hint',
+  'hint.firstRoute.title': 'Connect the first device',
+  'hint.firstRoute.body':
+    'Draw a cable route from the board to a socket, switch or light. Route ends snap to devices and can be pinned.',
+  'hint.firstRoute.action': 'Draw a cable route',
+  'hint.firstCircuit.title': 'Assign a circuit',
+  'hint.firstCircuit.body':
+    'Every cable route needs a circuit. Select the route and choose a circuit code so load and protection checks can run.',
+  'hint.firstCircuit.action': 'Show the route',
+  'hint.palette.title': 'Work faster with Ctrl+K',
+  'hint.palette.body':
+    'The command palette searches every tool and action, including preview, 3D and exports. Press Ctrl+K or ⌘K anytime.',
+  'hint.palette.action': 'Open command palette',
+  'hint.threeD.title': 'Inspect the installation in 3D',
+  'hint.threeD.body':
+    'Switch to the 3D view to check walls, openings, devices and cable routes from any angle.',
+  'hint.threeD.action': 'Open 3D view',
+  'hint.docs.title': 'Documents and reports',
+  'hint.docs.body':
+    'Validation, panel schedules, equipment specifications, cable journals and print-ready documentation live in the documentation workspace.',
+  'hint.docs.action': 'Open documentation',
+
+  'tour.close': 'Close tour',
+  'tour.skip': 'Skip tour',
+  'tour.back': 'Back',
+  'tour.next': 'Next',
+  'tour.finish': 'Finish tour',
+  'tour.toolbar.title': 'Drawing tools',
+  'tour.toolbar.body':
+    'Pick a tool here: select, walls, rooms, openings, cable routes and device placement. Keyboard shortcuts are shown in tooltips.',
+  'tour.canvas.title': 'The plan canvas',
+  'tour.canvas.body':
+    'Draw and edit the plan here. Pan with the middle mouse button or Space, zoom with the wheel, and press 0 to fit the whole plan.',
+  'tour.circuits.title': 'Circuits and loads',
+  'tour.circuits.body':
+    'Create circuits, assign devices and routes, and the calculator updates load, voltage drop and protection suggestions automatically.',
+  'tour.validation.title': 'Live validation',
+  'tour.validation.body':
+    'Issues appear as you draw: missing circuits, cable protection, voltage drop, wet-room RCDs and route clashes. Click an issue to jump to the object.',
+  'tour.save.title': 'Autosave',
+  'tour.save.body':
+    'Every change is saved automatically. This indicator shows saved, pending and failed states, with a retry action when needed.',
+
   'library.hint':
     'Standard symbols linked to manufacturer articles. Place a product with its symbol or attach it to the selected device.',
   'library.search': 'Search article, brand or name…',
@@ -1598,6 +1651,9 @@ const ua: Dictionary = {
 
   'local.import': 'Імпорт JSON',
   'local.loading': 'Завантаження локальних проєктів…',
+  'local.emptyTitle': 'Локальних проєктів ще немає',
+  'local.emptyCta': 'Створити перший локальний проєкт',
+  'local.emptyDemo': 'Завантажити демо-квартиру',
   'local.empty': 'Локальних проєктів ще немає.',
   'local.updated':
     'Оновлено {date} · точок: {points} · трас: {routes}',
@@ -1783,6 +1839,8 @@ const ua: Dictionary = {
   'app.loading': 'Завантаження проєктів…',
   'app.noActive': 'Активних проєктів ще немає',
   'app.noArchived': 'Архівованих проєктів немає',
+  'app.emptyCta': 'Створити перший проєкт',
+  'app.emptyDemo': 'Спробувати демо-квартиру',
   'app.noActiveHint':
     'Створіть перший проєкт вище, щоб почати планування поверху.',
   'app.noArchivedHint':
@@ -2257,6 +2315,7 @@ const ua: Dictionary = {
   'docs.noEstimates': 'Кошторисів ще не створено.',
   'docs.generateInEditor': 'Створити в редакторі',
   'docs.estimateVersion': 'Кошторис v{version}',
+  'docs.reports': 'Звіти',
   'docs.validation': 'Перевірка',
   'docs.variants': 'Варіанти',
   'docs.print': 'Друк PDF',
@@ -2266,6 +2325,10 @@ const ua: Dictionary = {
   'docs.printButton': 'Друк / Зберегти як PDF',
   'docs.document': 'Документ проєкту',
   'docs.loadingPlan': 'Завантаження кількостей плану…',
+  'docs.emptyPlanTitle': 'Для цього поверху ще немає плану',
+  'docs.emptyPlanHint':
+    'Відкрийте редактор, щоб додати план, відкалібрувати його й почати креслити.',
+  'docs.emptyPlanCta': 'Відкрити редактор',
   'docs.noPlan': 'На цьому поверсі ще немає плану. Створіть його в редакторі.',
   'docs.validationIssues': 'Проблеми перевірки',
   'docs.estimatesCount': 'Кошториси',
@@ -2381,6 +2444,50 @@ const ua: Dictionary = {
   'report.field.totalCost': 'Вартість',
   'report.field.devices': 'Пристрої',
   'library.title': 'Бібліотека пристроїв',
+  'tour.progress': 'Крок {current} з {total}',
+  'hint.dismiss': 'Закрити підказку',
+  'hint.firstRoute.title': 'З’єднайте перший пристрій',
+  'hint.firstRoute.body':
+    'Проведіть кабельну трасу від щита до розетки, вимикача або світильника. Кінці траси прив’язуються до пристроїв і можуть бути закріплені.',
+  'hint.firstRoute.action': 'Провести кабельну трасу',
+  'hint.firstCircuit.title': 'Призначте коло',
+  'hint.firstCircuit.body':
+    'Кожній кабельній трасі потрібне коло. Виберіть трасу й код кола, щоб розрахувати навантаження та перевірити захист.',
+  'hint.firstCircuit.action': 'Показати трасу',
+  'hint.palette.title': 'Швидше з Ctrl+K',
+  'hint.palette.body':
+    'Палітра команд шукає всі інструменти й дії, зокрема попередній перегляд, 3D та експорт. Натискайте Ctrl+K або ⌘K будь-коли.',
+  'hint.palette.action': 'Відкрити палітру команд',
+  'hint.threeD.title': 'Перевірте монтаж у 3D',
+  'hint.threeD.body':
+    'Перейдіть у 3D-вид, щоб оглянути стіни, отвори, пристрої та кабельні траси з будь-якого боку.',
+  'hint.threeD.action': 'Відкрити 3D-вид',
+  'hint.docs.title': 'Документи та звіти',
+  'hint.docs.body':
+    'Перевірка, відомості щитів, специфікація обладнання, кабельний журнал і документація для друку зібрані в робочому просторі документації.',
+  'hint.docs.action': 'Відкрити документацію',
+
+  'tour.close': 'Закрити тур',
+  'tour.skip': 'Пропустити тур',
+  'tour.back': 'Назад',
+  'tour.next': 'Далі',
+  'tour.finish': 'Завершити тур',
+  'tour.toolbar.title': 'Інструменти креслення',
+  'tour.toolbar.body':
+    'Виберіть інструмент тут: вибір, стіни, кімнати, отвори, кабельні траси та розміщення пристроїв. Гарячі клавіші показані в підказках.',
+  'tour.canvas.title': 'Полотно плану',
+  'tour.canvas.body':
+    'Кресліть і редагуйте план тут. Переміщайтеся середньою кнопкою миші або пробілом, масштабуйте колесом, натисніть 0, щоб умістити весь план.',
+  'tour.circuits.title': 'Кола та навантаження',
+  'tour.circuits.body':
+    'Створюйте кола, призначайте пристрої й траси — калькулятор автоматично оновить навантаження, падіння напруги та рекомендації захисту.',
+  'tour.validation.title': 'Жива перевірка',
+  'tour.validation.body':
+    'Зауваження з’являються під час креслення: відсутні кола, захист кабелю, падіння напруги, ПЗВ у вологих зонах і колізії трас. Натисніть на зауваження, щоб перейти до об’єкта.',
+  'tour.save.title': 'Автозбереження',
+  'tour.save.body':
+    'Кожна зміна зберігається автоматично. Індикатор показує стани збережено, очікує та помилка, а за потреби — кнопку повтору.',
+
   'library.hint':
     'Стандартні символи з прив’язкою до артикулів виробників. Розмістіть виріб із символом або прикріпіть його до вибраного пристрою.',
   'library.search': 'Пошук за артикулом, брендом або назвою…',

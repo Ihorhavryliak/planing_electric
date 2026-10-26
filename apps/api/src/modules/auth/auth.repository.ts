@@ -58,6 +58,21 @@ export class AuthRepository {
     return user ?? null;
   }
 
+  async updateUserOnboarding(
+    id: string,
+    onboarding: {
+      editorTour?: 'completed' | 'skipped' | null;
+      hints?: Record<string, boolean>;
+    },
+  ): Promise<UserRow | null> {
+    const [user] = await this.db
+      .update(users)
+      .set({ onboarding, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user ?? null;
+  }
+
   async findUserByEmail(email: string): Promise<UserRow | null> {
     const [user] = await this.db
       .select()

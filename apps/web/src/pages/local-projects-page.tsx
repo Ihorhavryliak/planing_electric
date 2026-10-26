@@ -52,6 +52,7 @@ export function LocalProjectsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   async function reload() {
     setProjects(await listLocalProjects());
@@ -269,6 +270,7 @@ export function LocalProjectsPage() {
 
         <form className="mt-6 flex flex-wrap gap-2" onSubmit={handleCreate}>
           <Input
+            ref={nameInputRef}
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder={t('local.namePlaceholder')}
@@ -322,8 +324,38 @@ export function LocalProjectsPage() {
             {t('local.loading')}
           </div>
         ) : projects.length === 0 ? (
-          <div className="mt-8 app-panel p-8 text-center text-sm text-slate-400">
-            {t('local.empty')}
+          <div className="mt-8 app-panel p-8 text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5">
+              <Plus className="h-5 w-5 text-amber-300" />
+            </span>
+            <h2 className="mt-4 text-base font-semibold text-white">
+              {t('local.emptyTitle')}
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
+              {t('local.empty')}
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Button
+                onClick={() => {
+                  nameInputRef.current?.focus();
+                  nameInputRef.current?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {t('local.emptyCta')}
+              </Button>
+              <Button variant="outline" onClick={() => void handleDemo()}>
+                <Sparkles className="h-4 w-4" />
+                {t('local.emptyDemo')}
+              </Button>
+              <Button variant="outline" onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4" />
+                {t('local.import')}
+              </Button>
+            </div>
           </div>
         ) : (
           <ul className="mt-8 space-y-3">
