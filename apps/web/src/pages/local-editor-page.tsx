@@ -40,8 +40,14 @@ import {
   type ValidationTarget,
 } from '@/features/editor/validation';
 import { useTakeoffSettings } from '@/features/editor/takeoff-settings';
-import { downloadSvg } from '@/features/editor/export-files';
-import { buildPlanSvg, buildSchematicSvg } from '@/features/editor/svg-export';
+import { downloadSvg, downloadTextFile } from '@/features/editor/export-files';
+import { buildPlanSvg } from '@/features/editor/svg-export';
+import { buildSchematicSvg } from '@/features/editor/schematic-export';
+import { buildCircuitNumbering } from '@/features/editor/circuit-numbering';
+import {
+  buildCableJournal,
+  buildCableJournalCsv,
+} from '@/features/editor/cable-journal';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
@@ -499,7 +505,48 @@ export function LocalEditorPage() {
       buildSchematicSvg({ planId: project.id, ...drawing }, lengths, {
         title: t('export.schematicTitle'),
         subtitle: name,
+        circuits: drawing.circuits,
+        electrical,
       }),
+    );
+  }
+
+  function exportCableJournal() {
+    if (!drawing || !project) return;
+    const cableLengths: Record<string, number> = {};
+
+    for (const route of localCable ?? []) {
+      if (!route.circuitId) continue;
+      cableLengths[route.circuitId] =
+        (cableLengths[route.circuitId] ?? 0) +
+        (route.requiredLength ?? 0);
+    }
+
+    const numbering = buildCircuitNumbering(drawing.circuits, electrical);
+    const rows = buildCableJournal({
+      circuits: drawing.circuits,
+      points: drawing.points,
+      routes: drawing.routes,
+      cableLengths,
+      electrical,
+      numbering,
+    });
+
+    downloadTextFile(
+      `${name || 'local-project'}-cable-journal.csv`,
+      buildCableJournalCsv(rows, [
+        t('journal.address'),
+        t('journal.wire'),
+        t('journal.terminal'),
+        t('journal.circuit'),
+        t('journal.name'),
+        t('journal.phase'),
+        t('journal.breaker'),
+        t('journal.rcd'),
+        t('journal.cable'),
+        t('journal.length'),
+      ]),
+      'text/csv',
     );
   }
 
@@ -768,6 +815,9 @@ export function LocalEditorPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={exportSchematicSvg}>
               {t('export.schematicShort')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportCableJournal}>
+              {t('export.cableJournal')}
             </Button>
           </div>
         </div>

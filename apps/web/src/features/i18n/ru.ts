@@ -960,6 +960,18 @@ export const ru: Dictionary = {
   'tooltip.fit': 'Вписать весь план в вид (0)',
   'tooltip.download': 'Скачать текущий вид как PNG',
   'tooltip.preview': 'Скрыть панели и заблокировать редактирование',
+  'export.cableJournal': 'Кабельный журнал CSV',
+  'journal.address': 'Адрес',
+  'journal.wire': 'Провод',
+  'journal.terminal': 'Клемма',
+  'journal.circuit': 'Цепь',
+  'journal.name': 'Название',
+  'journal.phase': 'Фаза',
+  'journal.breaker': 'Автомат',
+  'journal.rcd': 'УЗО',
+  'journal.cable': 'Кабель',
+  'journal.length': 'Длина, м',
+
   'panel.title': 'График щита',
   'panel.hint':
     'Компоновка щита, аппараты защиты и резервные модули. Экспорт в CSV или печать в PDF.',

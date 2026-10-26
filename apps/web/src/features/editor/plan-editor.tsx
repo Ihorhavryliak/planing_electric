@@ -3370,6 +3370,9 @@ export function PlanEditor({
             drawing={exportDrawing}
             calculation={calculation}
             circuits={circuits}
+            points={points}
+            routes={routes}
+            electrical={electrical}
             projectId={projectId}
             title={`${floorName} plan`}
             subtitle={floorName}

@@ -1,6 +1,8 @@
 import type { PlanDrawing } from '@drawmyplace/contracts';
 import { describe, expect, it } from 'vitest';
-import { buildPlanSvg, buildSchematicSvg } from './svg-export';
+import { calculateElectrical } from '@drawmyplace/calculations';
+import { buildPlanSvg } from './svg-export';
+import { buildSchematicSvg } from './schematic-export';
 
 const drawing = {
   planId: '00000000-0000-4000-8000-000000000001',
@@ -110,5 +112,33 @@ describe('SVG export', () => {
     expect(svg).toContain('12.5 m');
     expect(svg).toContain('Floor 1');
     expect(svg).toContain('2');
+  });
+
+  it('includes the intake, breaker tags, wire tags and cable sections', () => {
+    const electrical = calculateElectrical({
+      circuits: [{ id: 'L1', name: 'Lighting' }],
+      devices: [
+        { id: 'p1', circuitId: 'L1', type: 'light', subtype: 'light-ceiling' },
+      ],
+      lengthsByCircuit: { L1: 12.5 },
+    });
+    const svg = buildSchematicSvg(
+      drawing,
+      { L1: 12.5 },
+      {
+        title: 'Schematic',
+        circuits: [{ id: 'L1', name: 'Lighting', color: '#f59e0b' }],
+        electrical,
+      },
+    );
+
+    expect(svg).toContain('INCOMING SUPPLY');
+    expect(svg).toContain('Main board');
+    expect(svg).toContain('Q1-1L1');
+    expect(svg).toContain('QF1');
+    expect(svg).toContain('W1');
+    expect(svg).toContain('X1:1');
+    expect(svg).toContain('16 A C');
+    expect(svg).toContain('2.5 mm² copper');
   });
 });

@@ -1,6 +1,6 @@
 /* global process, Buffer, console, document, fetch, localStorage */
 import { chromium } from 'playwright';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -674,6 +674,32 @@ async function main() {
     throw new Error(
       `Unexpected schematic SVG name: ${schematicSvg.suggestedFilename()}`,
     );
+  }
+  const schematicPath = await schematicSvg.path();
+  if (!schematicPath) throw new Error('Schematic SVG file is unavailable.');
+  const schematicMarkup = await readFile(schematicPath, 'utf8');
+  for (const token of [
+    'INCOMING SUPPLY',
+    'Q1-1L1',
+    'QF1',
+    'W1',
+    'X1:1',
+    '2.5 mm² copper',
+  ]) {
+    if (!schematicMarkup.includes(token)) {
+      throw new Error(`Schematic SVG is missing "${token}".`);
+    }
+  }
+  const journalPromise = page.waitForEvent('download');
+  await exportSection.getByRole('button', { name: 'Cable journal CSV' }).click();
+  const journal = await journalPromise;
+  const journalPath = await journal.path();
+  if (!journalPath) throw new Error('Cable journal file is unavailable.');
+  const journalText = await readFile(journalPath, 'utf8');
+  for (const token of ['Q1-1L1', 'W1', 'X1:1', '16 A C']) {
+    if (!journalText.includes(token)) {
+      throw new Error(`Cable journal is missing "${token}".`);
+    }
   }
   const projectJsonPromise = page.waitForEvent('download');
   await exportSection.getByRole('button', { name: 'Project JSON' }).click();

@@ -1,4 +1,11 @@
-import type { Circuit, PlanCalculation, PlanDrawing } from '@drawmyplace/contracts';
+import type {
+  Circuit,
+  PlanCalculation,
+  PlanDrawing,
+  PublicPoint,
+  PublicRoute,
+} from '@drawmyplace/contracts';
+import type { ElectricalPlanResult } from '@drawmyplace/calculations';
 import { Download, FileCode2, FileJson2, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -10,12 +17,18 @@ import {
   loadProjectExport,
   projectExportFileName,
 } from './export-files';
-import { buildPlanSvg, buildSchematicSvg } from './svg-export';
+import { buildPlanSvg } from './svg-export';
+import { buildSchematicSvg } from './schematic-export';
+import { buildCircuitNumbering } from './circuit-numbering';
+import { buildCableJournal, buildCableJournalCsv } from './cable-journal';
 
 interface ExportPanelProps {
   drawing: PlanDrawing | null;
   calculation?: PlanCalculation | null;
   circuits?: readonly Circuit[];
+  points?: readonly PublicPoint[];
+  routes?: readonly PublicRoute[];
+  electrical?: ElectricalPlanResult | null;
   projectId?: string;
   title?: string;
   subtitle?: string;
@@ -38,6 +51,9 @@ export function ExportPanel({
   drawing,
   calculation = null,
   circuits = [],
+  points = [],
+  routes = [],
+  electrical = null,
   projectId,
   title,
   subtitle,
@@ -63,7 +79,38 @@ export function ExportPanel({
       buildSchematicSvg(drawing, cableLengthsByCircuit(calculation), {
         title: t('export.schematicTitle'),
         subtitle: subtitle ?? title ?? '',
+        circuits,
+        electrical,
       }),
+    );
+  }
+
+  function exportCableJournal() {
+    if (!drawing) return;
+    const numbering = buildCircuitNumbering(circuits, electrical);
+    const rows = buildCableJournal({
+      circuits,
+      points: points.length > 0 ? points : drawing.points,
+      routes: routes.length > 0 ? routes : drawing.routes,
+      cableLengths: cableLengthsByCircuit(calculation),
+      electrical,
+      numbering,
+    });
+    downloadTextFile(
+      `${planName}-cable-journal.csv`,
+      buildCableJournalCsv(rows, [
+        t('journal.address'),
+        t('journal.wire'),
+        t('journal.terminal'),
+        t('journal.circuit'),
+        t('journal.name'),
+        t('journal.phase'),
+        t('journal.breaker'),
+        t('journal.rcd'),
+        t('journal.cable'),
+        t('journal.length'),
+      ]),
+      'text/csv',
     );
   }
 
@@ -119,6 +166,18 @@ export function ExportPanel({
           <FileCode2 className="h-4 w-4" />
           {t('export.schematicSvg')}
         </Button>
+        {circuits.length > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="justify-start"
+            disabled={!drawing}
+            onClick={exportCableJournal}
+          >
+            <Download className="h-4 w-4" />
+            {t('export.cableJournal')}
+          </Button>
+        ) : null}
         {projectId ? (
           <Button
             variant="outline"
