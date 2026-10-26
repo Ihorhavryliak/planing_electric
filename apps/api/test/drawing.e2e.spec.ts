@@ -753,6 +753,40 @@ describe('Drawing API', () => {
     });
   });
 
+  it('reports validation warnings for cable type and circuit length', async () => {
+    const fixture = await createFixture();
+    await calibrate(fixture).expect(200);
+    await addRoute(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 1000, y: 0 },
+      ],
+    });
+
+    await server()
+      .patch(`${API}/plans/${fixture.plan.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        calculationSettings: {
+          validation: {
+            requireCableType: true,
+            maxCircuitLengthMeters: 5,
+          },
+        },
+      })
+      .expect(200);
+
+    const calculation = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/calculation`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanCalculation;
+
+    expect(calculation.warnings.join(' ')).toContain('no cable type');
+    expect(calculation.warnings.join(' ')).toContain('above the 5 m circuit limit');
+  });
+
   it('honours a per-route waste percentage and re-scales after recalibration', async () => {
     const fixture = await createFixture();
     await calibrate(fixture).expect(200);

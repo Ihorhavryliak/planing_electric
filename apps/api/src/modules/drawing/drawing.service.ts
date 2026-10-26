@@ -487,6 +487,40 @@ export class DrawingService {
       warnings.push(...route.warnings);
     }
 
+    const validation = (
+      plan.calculationSettings as {
+        validation?: {
+          maxCircuitLengthMeters?: number;
+          requireCableType?: boolean;
+        };
+      }
+    )?.validation ?? {};
+
+    if (validation.requireCableType) {
+      routeRows.forEach((route, index) => {
+        if (!route.materialId) {
+          const name = route.circuitId
+            ? `Route ${route.circuitId}`
+            : `Route ${index + 1}`;
+          warnings.push(`${name} has no cable type assigned.`);
+        }
+      });
+    }
+
+    if (validation.maxCircuitLengthMeters !== undefined) {
+      const max = validation.maxCircuitLengthMeters;
+      routes.forEach((route, index) => {
+        if (route.requiredLength !== null && route.requiredLength > max) {
+          const name = route.circuitId
+            ? `Route ${route.circuitId}`
+            : `Route ${index + 1}`;
+          warnings.push(
+            `${name} is ${route.requiredLength.toFixed(1)} m, above the ${max} m circuit limit.`,
+          );
+        }
+      });
+    }
+
     const total =
       metersPerUnit === null
         ? null

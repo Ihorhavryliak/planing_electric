@@ -423,6 +423,8 @@ export function PlanEditor({
   const [collaborators, setCollaborators] = useState(0);
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
   const [dropError, setDropError] = useState<string | null>(null);
+  const [maxCircuit, setMaxCircuit] = useState('');
+  const [requireCableType, setRequireCableType] = useState(false);
   const [walls, setWalls] = useState<PublicWall[]>([]);
   const [materials, setMaterials] = useState<PublicMaterial[]>([]);
   const [estimate, setEstimate] = useState<PublicEstimate | null>(null);
@@ -503,6 +505,13 @@ export function PlanEditor({
       junction: defaults.junction !== undefined ? String(defaults.junction) : '',
       custom: defaults.custom !== undefined ? String(defaults.custom) : '',
     });
+    const validation = plan.calculationSettings?.validation ?? {};
+    setMaxCircuit(
+      validation.maxCircuitLengthMeters !== undefined
+        ? String(validation.maxCircuitLengthMeters)
+        : '',
+    );
+    setRequireCableType(Boolean(validation.requireCableType));
   }, [plan.id, plan.calculationSettings]);
 
   useEffect(() => {
@@ -702,7 +711,38 @@ export function PlanEditor({
 
     try {
       const updated = await updatePlan(plan.id, {
-        calculationSettings: { verticalDropDefaults },
+        calculationSettings: {
+          ...plan.calculationSettings,
+          verticalDropDefaults,
+        },
+        expectedVersion: plan.version,
+      });
+      onPlanChange(updated);
+      bumpCalculation();
+    } catch (error) {
+      setDropError(getErrorMessage(error));
+    }
+  }
+
+  async function commitValidation(nextRequireCableType = requireCableType) {
+    setDropError(null);
+    const parsed =
+      maxCircuit.trim() === '' ? undefined : Number(maxCircuit);
+    if (parsed !== undefined && (!Number.isFinite(parsed) || parsed <= 0)) {
+      setDropError('Circuit limit must be a positive number of meters.');
+      return;
+    }
+    try {
+      const updated = await updatePlan(plan.id, {
+        calculationSettings: {
+          ...plan.calculationSettings,
+          validation: {
+            ...(parsed !== undefined
+              ? { maxCircuitLengthMeters: parsed }
+              : {}),
+            requireCableType: nextRequireCableType,
+          },
+        },
         expectedVersion: plan.version,
       });
       onPlanChange(updated);
@@ -2148,6 +2188,37 @@ export function PlanEditor({
                 {dropError}
               </p>
             ) : null}
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h2 className="text-sm font-semibold text-white">
+              Validation rules
+            </h2>
+            <label className="mt-3 block text-xs text-slate-400">
+              Max circuit length (m)
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                value={maxCircuit}
+                onChange={(event) => setMaxCircuit(event.target.value)}
+                onBlur={() => void commitValidation()}
+                placeholder="No limit"
+                className="mt-1 h-8"
+              />
+            </label>
+            <label className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+              <input
+                type="checkbox"
+                checked={requireCableType}
+                onChange={(event) => {
+                  const next = event.target.checked;
+                  setRequireCableType(next);
+                  void commitValidation(next);
+                }}
+              />
+              Require a cable type on every route
+            </label>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">

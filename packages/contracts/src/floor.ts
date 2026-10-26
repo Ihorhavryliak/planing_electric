@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 const dropDefault = z.number().min(0).max(100).optional();
 
+export const validationRulesSchema = z
+  .object({
+    maxCircuitLengthMeters: z.number().positive().max(100_000).optional(),
+    requireCableType: z.boolean().optional(),
+  })
+  .partial();
+
 export const calculationSettingsSchema = z.object({
   verticalDropDefaults: z
     .object({
@@ -14,6 +21,7 @@ export const calculationSettingsSchema = z.object({
     })
     .partial()
     .optional(),
+  validation: validationRulesSchema.optional(),
 });
 
 export const floorNameSchema = z
