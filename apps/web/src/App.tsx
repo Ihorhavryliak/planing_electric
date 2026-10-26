@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/protected-route';
+import { I18nProvider } from '@/features/i18n/i18n-context';
 import { ThemeProvider } from '@/features/theme/theme-context';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { ActivityPage } from '@/pages/activity-page';
@@ -25,8 +26,9 @@ import { VerifyEmailPage } from '@/pages/verify-email-page';
 export function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
+      <I18nProvider>
+        <BrowserRouter>
+          <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -79,9 +81,10 @@ export function App() {
             <Route path="/invite/:token" element={<InvitePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+          </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </I18nProvider>
     </ThemeProvider>
   );
 }

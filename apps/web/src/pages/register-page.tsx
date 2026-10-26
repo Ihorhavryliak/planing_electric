@@ -6,10 +6,12 @@ import { FullScreenLoader } from '@/components/full-screen-loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 
 export function RegisterPage() {
   const { status, register } = useAuth();
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,16 +41,16 @@ export function RegisterPage() {
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Your projects, plans, and estimates will stay tied to this account."
+      title={t('auth.register.title')}
+      subtitle={t('auth.login.subtitle')}
       footer={
         <>
-          Already have an account?{' '}
+          {t('auth.register.haveAccount')}{' '}
           <Link
             to="/login"
             className="font-medium text-amber-300 hover:text-amber-200"
           >
-            Sign in
+            {t('auth.register.signIn')}
           </Link>
         </>
       }
@@ -59,7 +61,7 @@ export function RegisterPage() {
             htmlFor="name"
             className="block text-sm font-medium text-slate-200"
           >
-            Name
+            {t('auth.name')}
           </label>
           <Input
             id="name"
@@ -79,7 +81,7 @@ export function RegisterPage() {
             htmlFor="email"
             className="block text-sm font-medium text-slate-200"
           >
-            Email
+            {t('auth.email')}
           </label>
           <Input
             id="email"
@@ -99,7 +101,7 @@ export function RegisterPage() {
             htmlFor="password"
             className="block text-sm font-medium text-slate-200"
           >
-            Password
+            {t('auth.password')}
           </label>
           <Input
             id="password"
@@ -131,10 +133,10 @@ export function RegisterPage() {
           {submitting ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" />
-              Creating account…
+              {t('auth.register.submitting')}
             </>
           ) : (
-            'Create account'
+            t('auth.register.submit')
           )}
         </Button>
       </form>

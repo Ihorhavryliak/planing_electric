@@ -1,6 +1,7 @@
 import {
   Bell,
   Building2,
+  Globe2,
   LoaderCircle,
   LogOut,
   Monitor,
@@ -15,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useLogout } from '@/features/auth/use-logout';
 import { listNotifications } from '@/features/notifications/notifications-api';
+import { useI18n } from '@/features/i18n/i18n-context';
+import { LOCALES, type Locale } from '@/features/i18n/i18n';
 import { useTheme } from '@/features/theme/theme-context';
 import { apiRequest, getErrorMessage } from '@/lib/api';
 
@@ -29,11 +32,14 @@ export function WorkspaceHeader({
 }: WorkspaceHeaderProps) {
   const { user } = useAuth();
   const { preference, resolved, toggle } = useTheme();
+  const { locale, setLocale, t } = useI18n();
   const { loggingOut, logoutError, signOut } = useLogout();
   const themeLabel =
     preference === 'system'
-      ? `Theme: system (${resolved})`
-      : `Theme: ${preference}`;
+      ? `${t('nav.themeSystem')} (${resolved})`
+      : preference === 'light'
+        ? t('nav.themeLight')
+        : t('nav.themeDark');
   const [unread, setUnread] = useState(0);
   const [verificationMessage, setVerificationMessage] = useState<
     string | null
@@ -91,6 +97,24 @@ export function WorkspaceHeader({
 
         <div className="flex items-center gap-3">
           {children}
+          <label
+            className="inline-flex items-center gap-1 text-slate-300"
+            title={t('nav.language')}
+          >
+            <Globe2 className="h-4 w-4" />
+            <select
+              aria-label={t('nav.language')}
+              value={locale}
+              onChange={(event) => setLocale(event.target.value as Locale)}
+              className="h-8 rounded-lg border border-white/10 bg-slate-900 px-2 text-xs text-slate-200"
+            >
+              {LOCALES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             onClick={toggle}
@@ -108,14 +132,14 @@ export function WorkspaceHeader({
           </button>
           <Link
             to="/app/organizations"
-            aria-label="Organizations"
+            aria-label={t('nav.organizations')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <Building2 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/materials"
-            aria-label="Materials"
+            aria-label={t('nav.materials')}
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
           >
             <Package className="h-4 w-4" />
@@ -123,7 +147,9 @@ export function WorkspaceHeader({
           <Link
             to="/app/notifications"
             aria-label={
-              unread > 0 ? `Notifications (${unread} unread)` : 'Notifications'
+              unread > 0
+                ? `${t('nav.notifications')} (${unread})`
+                : t('nav.notifications')
             }
             className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
           >
@@ -156,7 +182,7 @@ export function WorkspaceHeader({
             ) : (
               <LogOut className="h-4 w-4" />
             )}
-            {loggingOut ? 'Signing out…' : 'Sign out'}
+            {loggingOut ? t('nav.signingOut') : t('nav.signOut')}
           </Button>
         </div>
       </div>
@@ -164,7 +190,7 @@ export function WorkspaceHeader({
       {user && !user.emailVerified ? (
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 pb-3 text-xs text-amber-100">
           <span className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2">
-            Verify your email to secure your account.
+            {t('nav.verifyEmail')}
             {verificationMessage ? ` ${verificationMessage}` : ''}
           </span>
           <Button
@@ -173,7 +199,7 @@ export function WorkspaceHeader({
             onClick={() => void resendVerification()}
             disabled={resending}
           >
-            {resending ? 'Sending…' : 'Resend email'}
+            {resending ? t('nav.sending') : t('nav.resendEmail')}
           </Button>
         </div>
       ) : null}

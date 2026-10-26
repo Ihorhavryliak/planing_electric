@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { useTheme } from '@/features/theme/theme-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { apiRequest, getErrorMessage } from '@/lib/api';
@@ -11,6 +12,7 @@ import { apiRequest, getErrorMessage } from '@/lib/api';
 export function SettingsPage() {
   const { user, refresh } = useAuth();
   const { preference, setPreference } = useTheme();
+  const { t } = useI18n();
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,10 +138,10 @@ export function SettingsPage() {
           Back
         </Link>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-          Settings
+          {t('settings.title')}
         </h1>
         <p className="mt-2 text-sm text-slate-400">
-          Update your profile. Email changes are not available yet.
+          {t('settings.subtitle')}
         </p>
 
         <form
@@ -183,7 +185,7 @@ export function SettingsPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
           <h2 className="text-sm font-semibold text-white">Appearance</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Follow the system setting or choose a theme explicitly.
+            {t('settings.appearanceHint')}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {(['system', 'light', 'dark'] as const).map((option) => (
@@ -194,10 +196,10 @@ export function SettingsPage() {
                 onClick={() => setPreference(option)}
               >
                 {option === 'system'
-                  ? 'System'
+                  ? t('settings.system')
                   : option === 'light'
-                    ? 'Light'
-                    : 'Dark'}
+                    ? t('settings.light')
+                    : t('settings.dark')}
               </Button>
             ))}
           </div>

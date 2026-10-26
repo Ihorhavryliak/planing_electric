@@ -6,10 +6,12 @@ import { FullScreenLoader } from '@/components/full-screen-loader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-context';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 
 export function LoginPage() {
   const { status, login } = useAuth();
+  const { t } = useI18n();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,16 +45,16 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title="Welcome back"
-      subtitle="Sign in to continue planning electrical installations."
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
       footer={
         <>
-          New to DrawMyPlace?{' '}
+          {t('auth.newHere')}{' '}
           <Link
             to="/register"
             className="font-medium text-amber-300 hover:text-amber-200"
           >
-            Create an account
+            {t('auth.createAccount')}
           </Link>
         </>
       }
@@ -63,7 +65,7 @@ export function LoginPage() {
             htmlFor="email"
             className="block text-sm font-medium text-slate-200"
           >
-            Email
+            {t('auth.email')}
           </label>
           <Input
             id="email"
@@ -82,7 +84,7 @@ export function LoginPage() {
             htmlFor="password"
             className="block text-sm font-medium text-slate-200"
           >
-            Password
+            {t('auth.password')}
           </label>
           <Input
             id="password"
@@ -101,7 +103,7 @@ export function LoginPage() {
             to="/forgot-password"
             className="text-xs text-slate-400 hover:text-white"
           >
-            Forgot password?
+            {t('auth.forgot')}
           </Link>
         </div>
 
@@ -118,10 +120,10 @@ export function LoginPage() {
           {submitting ? (
             <>
               <LoaderCircle className="h-4 w-4 animate-spin" />
-              Signing in…
+              {t('auth.login.submitting')}
             </>
           ) : (
-            'Sign in'
+            t('auth.login.submit')
           )}
         </Button>
       </form>
