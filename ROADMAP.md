@@ -327,3 +327,10 @@ MVP готовий до початкового тестування корист
 - Запущені тести:
 - Проблеми/блокери:
 - Наступна дія:
+
+### 2026-10-26 — session 13: 3D, variants, local-first, i18n foundation
+- Completed: 3D view with ceiling/layers/selection/camera sync and GLB export; doors/windows as wall openings shared by 2D/3D; configurable validation rules; project variants with snapshot comparison; local-first anonymous projects in IndexedDB with JSON import/export and sync-to-account; i18n infrastructure (uk/en/pl) with language switcher; theme switch verified in browser; expanded Playwright smoke check to walls, openings, calibration, points, routes, rooms, dimensions, 3D, GLB, variants and local sync.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — API 62 tests, web 73 tests, all passing.
+- Issues/blockers: i18n translation is partial (shell/auth/settings); local storage limits and conflict tests remain; point rotate/duplicate/bend-drag browser paths still unverified.
+- Next action: finish Ukrainian translation and local-first edge-case tests.
+
