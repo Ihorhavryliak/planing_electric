@@ -21,7 +21,7 @@ import { getErrorMessage } from '@/lib/api';
 
 export function EstimatesPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
-  const { formatDate } = useI18n();
+  const { formatDate, t } = useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,10 +103,10 @@ export function EstimatesPage() {
   if (loading) {
     return (
       <div className="relative min-h-screen">
-        <WorkspaceHeader badge="Estimates" />
+        <WorkspaceHeader badge={t('estimates.badge')} />
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-16 text-sm text-slate-400">
           <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-          Loading estimates…
+          {t('estimates.loading')}
         </div>
       </div>
     );
@@ -114,21 +114,21 @@ export function EstimatesPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Estimates" />
+      <WorkspaceHeader badge={t('estimates.badge')} />
       <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
         <Link
           to={`/app/projects/${projectId}`}
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to project
+          {t('estimates.back')}
         </Link>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-          Estimates
+          {t('estimates.title')}
         </h1>
         <p className="mt-2 text-sm text-slate-400">
-          Material takeoff versions generated from plan calculations.
+          {t('estimates.subtitle')}
         </p>
 
         {error ? (
@@ -142,7 +142,7 @@ export function EstimatesPage() {
 
         {estimates.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
-            No estimates yet. Generate one from the plan editor.
+            {t('estimates.empty')}
           </div>
         ) : (
           <div className="mt-8 space-y-8">
@@ -154,9 +154,11 @@ export function EstimatesPage() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-white">
-                      Version {estimate.version}{' '}
+                      {t('estimates.version', {
+                        version: estimate.version,
+                      })}{' '}
                       <span className="text-sm font-normal text-slate-400">
-                        ({estimate.status})
+                        ({t(`estimates.status.${estimate.status}`)})
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500">
@@ -176,8 +178,8 @@ export function EstimatesPage() {
                       }
                     >
                       {estimate.status === 'final'
-                        ? 'Mark draft'
-                        : 'Mark final'}
+                        ? t('estimates.markDraft')
+                        : t('estimates.markFinal')}
                     </Button>
                     <Button
                       variant="outline"
@@ -202,13 +204,13 @@ export function EstimatesPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-slate-500">
-                        <th className="py-2">Description</th>
-                        <th className="py-2">Unit</th>
-                        <th className="py-2">Qty</th>
-                        <th className="py-2">Purchase</th>
-                        <th className="py-2">Price</th>
-                        <th className="py-2">Subtotal</th>
-                        <th className="py-2">Override</th>
+                        <th className="py-2">{t('estimates.description')}</th>
+                        <th className="py-2">{t('estimates.unit')}</th>
+                        <th className="py-2">{t('estimates.qty')}</th>
+                        <th className="py-2">{t('estimates.purchase')}</th>
+                        <th className="py-2">{t('estimates.price')}</th>
+                        <th className="py-2">{t('estimates.subtotal')}</th>
+                        <th className="py-2">{t('estimates.override')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -221,7 +223,7 @@ export function EstimatesPage() {
                             {item.description}
                             {item.isOverridden ? (
                               <span className="ml-2 text-xs text-amber-300">
-                                (overridden)
+                                {t('estimates.overridden')}
                               </span>
                             ) : null}
                           </td>
@@ -267,7 +269,7 @@ export function EstimatesPage() {
                                 {savingItemId === item.id ? (
                                   <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
                                 ) : (
-                                  'Save'
+                                  t('estimates.save')
                                 )}
                               </Button>
                             </form>
@@ -280,7 +282,7 @@ export function EstimatesPage() {
                 {estimate.items.some((i) => i.isOverridden) ? (
                   <p className="mt-3 text-xs text-amber-300">
                     <TriangleAlert className="mr-1 inline h-3.5 w-3.5" />
-                    Some items have manual overrides.
+                    {t('estimates.overridesNote')}
                   </p>
                 ) : null}
               </section>

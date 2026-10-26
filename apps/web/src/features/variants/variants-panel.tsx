@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { PublicVariant } from '@drawmyplace/contracts';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 import {
   createVariant,
@@ -12,6 +13,7 @@ import {
 } from './variants-api';
 
 export function VariantsPanel({ projectId }: { projectId: string }) {
+  const { t } = useI18n();
   const [variants, setVariants] = useState<PublicVariant[]>([]);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -51,7 +53,7 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
   }
 
   async function handleRename(variant: PublicVariant) {
-    const next = window.prompt('Variant name', variant.name);
+    const next = window.prompt(t('variants.namePlaceholder'), variant.name);
     if (!next || next.trim() === variant.name) return;
     try {
       const updated = await updateVariant(variant.id, { name: next.trim() });
@@ -87,22 +89,23 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
 
   return (
     <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-      <h2 className="text-sm font-semibold text-white">Variants</h2>
+      <h2 className="text-sm font-semibold text-white">
+        {t('variants.title')}
+      </h2>
       <p className="mt-1 text-xs text-slate-500">
-        Snapshot the current drawing, compare material totals, and archive
-        options you no longer need.
+        {t('variants.subtitle')}
       </p>
       <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleCreate}>
         <Input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Variant name"
+          placeholder={t('variants.namePlaceholder')}
           required
           className="min-w-56 flex-1"
         />
         <Button type="submit" disabled={busy}>
           <Plus className="h-4 w-4" />
-          Save snapshot
+          {t('variants.save')}
         </Button>
       </form>
       {error ? (
@@ -113,22 +116,22 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
       {loading ? (
         <div className="mt-4 flex items-center gap-2 text-sm text-slate-400">
           <LoaderCircle className="h-4 w-4 animate-spin text-amber-300" />
-          Loading variants…
+          {t('variants.loading')}
         </div>
       ) : variants.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">No variants yet.</p>
+        <p className="mt-4 text-sm text-slate-500">{t('variants.empty')}</p>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-slate-500">
               <tr>
-                <th className="py-2">Name</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Routes</th>
-                <th className="py-2">Points</th>
-                <th className="py-2">Cable</th>
-                <th className="py-2">Warnings</th>
-                <th className="py-2">Actions</th>
+                <th className="py-2">{t('variants.name')}</th>
+                <th className="py-2">{t('variants.status')}</th>
+                <th className="py-2">{t('variants.routes')}</th>
+                <th className="py-2">{t('variants.points')}</th>
+                <th className="py-2">{t('variants.cable')}</th>
+                <th className="py-2">{t('variants.warnings')}</th>
+                <th className="py-2">{t('variants.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +139,7 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                 <tr key={variant.id} className="border-t border-white/5">
                   <td className="py-2 pr-3 text-slate-200">{variant.name}</td>
                   <td className="py-2 pr-3 text-slate-400">
-                    {variant.status}
+                    {t(`variants.status.${variant.status}`)}
                   </td>
                   <td className="py-2 pr-3 text-slate-300">
                     {variant.metrics.routeCount}
@@ -159,7 +162,7 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                         size="sm"
                         onClick={() => void handleRename(variant)}
                       >
-                        Rename
+                        {t('variants.rename')}
                       </Button>
                       <Button
                         variant="outline"
@@ -173,7 +176,9 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
                         size="sm"
                         onClick={() => void handleStatus(variant)}
                       >
-                        {variant.status === 'active' ? 'Archive' : 'Restore'}
+                        {variant.status === 'active'
+                          ? t('variants.archive')
+                          : t('variants.restore')}
                       </Button>
                     </div>
                   </td>

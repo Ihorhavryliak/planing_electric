@@ -25,6 +25,7 @@ import {
   type LocalProject,
 } from '@/features/local/local-db';
 import { calculateRoute, resolveRouteDrops } from '@drawmyplace/calculations';
+import { useI18n } from '@/features/i18n/i18n-context';
 
 const HIDDEN_UNDERLAY: UnderlaySettings = {
   visible: false,
@@ -40,6 +41,7 @@ const now = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
 
 export function LocalEditorPage() {
+  const { t } = useI18n();
   const { localId = '' } = useParams<{ localId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<LocalProject | null>(null);
@@ -206,17 +208,21 @@ export function LocalEditorPage() {
             value={name}
             onChange={(event) => setName(event.target.value)}
             className="h-9 max-w-xs"
-            aria-label="Project name"
+            aria-label={t('local.projectName')}
           />
           <span className="text-xs text-slate-500">
-            {saveState === 'saving' ? 'Saving locally…' : 'Saved locally'}
+            {saveState === 'saving'
+              ? t('local.savingLocally')
+              : t('local.savedLocally')}
           </span>
           <span className="text-xs text-slate-400">
-            {total === null ? 'Not calibrated' : `Cable: ${total.toFixed(1)} m`}
+            {total === null
+              ? t('local.notCalibrated')
+              : t('local.cable', { length: total.toFixed(1) })}
           </span>
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate('/local')}>
-              Projects
+              {t('local.projects')}
             </Button>
             <Button variant="outline" size="sm" onClick={exportJson}>
               <Download className="h-4 w-4" />
@@ -516,21 +522,23 @@ export function LocalEditorPage() {
 
         <aside className="space-y-4">
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Local project</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {t('local.defaultName')}
+            </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Stored in this browser. Export JSON to back it up.
+              {t('local.storedHint')}
             </p>
             <dl className="mt-3 space-y-1 text-xs text-slate-400">
               <div className="flex justify-between">
-                <dt>Points</dt>
+                <dt>{t('local.points')}</dt>
                 <dd>{drawing.points.length}</dd>
               </div>
               <div className="flex justify-between">
-                <dt>Routes</dt>
+                <dt>{t('local.routes')}</dt>
                 <dd>{drawing.routes.length}</dd>
               </div>
               <div className="flex justify-between">
-                <dt>Walls</dt>
+                <dt>{t('local.walls')}</dt>
                 <dd>{drawing.walls.length}</dd>
               </div>
             </dl>
@@ -539,7 +547,7 @@ export function LocalEditorPage() {
           {selectedPoint ? (
             <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-400">
               <h2 className="text-sm font-semibold text-white">
-                Selected point
+                {t('local.selectedPoint')}
               </h2>
               <p className="mt-2 capitalize">{selectedPoint.type}</p>
               <Button
@@ -555,15 +563,17 @@ export function LocalEditorPage() {
                   }))
                 }
               >
-                Delete point
+                {t('local.deletePoint')}
               </Button>
             </section>
           ) : null}
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Openings</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {t('editor.openings')}
+            </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Select a wall, then add a door or window.
+              {t('editor.openingHint')}
             </p>
             {activeOpeningWall ? (
               <div className="mt-2 flex gap-2">
@@ -598,7 +608,7 @@ export function LocalEditorPage() {
                     }))
                   }
                 >
-                  Add door
+                  {t('editor.addDoor')}
                 </Button>
                 <Button
                   variant="outline"
@@ -631,7 +641,7 @@ export function LocalEditorPage() {
                     }))
                   }
                 >
-                  Add window
+                  {t('editor.addWindow')}
                 </Button>
               </div>
             ) : null}
@@ -649,7 +659,7 @@ export function LocalEditorPage() {
                   }))
                 }
               >
-                Delete opening
+                {t('editor.deleteOpening')}
               </Button>
             ) : null}
           </section>

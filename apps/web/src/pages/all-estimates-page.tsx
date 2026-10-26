@@ -16,7 +16,7 @@ function total(estimate: PublicEstimate): number {
 }
 
 export function AllEstimatesPage() {
-  const { formatDate } = useI18n();
+  const { formatDate, t } = useI18n();
   const [estimates, setEstimates] = useState<PublicEstimate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,26 +47,26 @@ export function AllEstimatesPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Estimates" />
+      <WorkspaceHeader badge={t('estimates.badge')} />
       <main id="main-content" className="mx-auto max-w-5xl px-6 py-10">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
-          Back
+          {t('estimates.backShort')}
         </Link>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-          All estimates
+          {t('estimates.allTitle')}
         </h1>
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
         {loading ? (
           <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
             <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-            Loading…
+            {t('estimates.loadingShort')}
           </div>
         ) : estimates.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
-            No estimates yet. Generate one from the plan editor.
+            {t('estimates.empty')}
           </div>
         ) : (
           <ul className="mt-8 space-y-3">
@@ -77,14 +77,19 @@ export function AllEstimatesPage() {
               >
                 <div>
                   <p className="font-medium text-white">
-                    Version {estimate.version}{' '}
+                    {t('estimates.version', {
+                      version: estimate.version,
+                    })}{' '}
                     <span className="text-xs font-normal text-slate-400">
-                      ({estimate.status})
+                      ({t(`estimates.status.${estimate.status}`)})
                     </span>
                   </p>
                   <p className="text-xs text-slate-500">
                     {formatDate(estimate.createdAt)} ·{' '}
-                    {estimate.items.length} lines · {total(estimate).toFixed(2)}
+                    {t('estimates.linesTotal', {
+                      lines: estimate.items.length,
+                      total: total(estimate).toFixed(2),
+                    })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -92,7 +97,7 @@ export function AllEstimatesPage() {
                     to={`/app/projects/${estimate.projectId}/estimates`}
                     className="text-sm text-amber-300 hover:text-amber-200"
                   >
-                    Project
+                    {t('estimates.project')}
                   </Link>
                   <Button
                     variant="outline"

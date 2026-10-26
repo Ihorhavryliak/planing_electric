@@ -68,7 +68,7 @@ export function RegisterPage() {
             name="name"
             type="text"
             autoComplete="name"
-            placeholder="Ihor Havryliak"
+            placeholder={t('auth.namePlaceholder')}
             required
             maxLength={100}
             value={name}
@@ -88,7 +88,7 @@ export function RegisterPage() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             required
             maxLength={254}
             value={email}
@@ -108,7 +108,7 @@ export function RegisterPage() {
             name="password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 10 characters"
+            placeholder={t('auth.passwordHintPlaceholder')}
             required
             minLength={10}
             maxLength={128}

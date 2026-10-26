@@ -13,7 +13,7 @@ import {
 import { getErrorMessage } from '@/lib/api';
 
 export function NotificationsPage() {
-  const { formatDate } = useI18n();
+  const { formatDate, t } = useI18n();
   const [items, setItems] = useState<NotificationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,34 +65,34 @@ export function NotificationsPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Notifications" />
+      <WorkspaceHeader badge={t('notifications.badge')} />
       <main id="main-content" className="mx-auto max-w-3xl px-6 py-10">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('notifications.back')}
         </Link>
         <div className="mt-4 flex items-center justify-between gap-3">
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Notifications
+            {t('notifications.title')}
           </h1>
           <Button variant="outline" onClick={handleReadAll} disabled={busy}>
             <CheckCheck className="h-4 w-4" />
-            Mark all read
+            {t('notifications.markAll')}
           </Button>
         </div>
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
         {loading ? (
           <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
             <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-            Loading…
+            {t('notifications.loading')}
           </div>
         ) : items.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
             <Bell className="mx-auto mb-3 h-6 w-6 text-slate-500" />
-            No notifications yet.
+            {t('notifications.empty')}
           </div>
         ) : (
           <ul className="mt-8 space-y-3">
@@ -119,7 +119,7 @@ export function NotificationsPage() {
                     disabled={busy}
                     onClick={() => handleRead(item.id)}
                   >
-                    Mark read
+                    {t('notifications.markRead')}
                   </Button>
                 ) : null}
               </li>

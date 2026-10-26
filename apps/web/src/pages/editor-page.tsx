@@ -21,19 +21,26 @@ import {
 import { PlanEditor } from '@/features/editor/plan-editor';
 import { PlanSetup } from '@/features/editor/plan-setup';
 import { getProject } from '@/features/projects/projects-api';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-function planLabel(plan: PublicPlan | null): string {
+function planLabel(
+  plan: PublicPlan | null,
+  t: (key: string) => string,
+): string {
   if (!plan) {
-    return 'No plan';
+    return t('editorPage.noPlan');
   }
 
-  return plan.sourceType === 'blank' ? 'Blank plan' : 'Uploaded plan';
+  return plan.sourceType === 'blank'
+    ? t('editorPage.blankPlan')
+    : t('editorPage.uploadedPlan');
 }
 
 export function EditorPage() {
+  const { t } = useI18n();
   const { projectId = '' } = useParams<{ projectId: string }>();
   const [project, setProject] = useState<PublicProject | null>(null);
   const [floors, setFloors] = useState<PublicFloor[] | null>(null);
@@ -165,7 +172,7 @@ export function EditorPage() {
   if (loadError) {
     return (
       <div className="relative min-h-screen">
-        <WorkspaceHeader badge="Editor" />
+        <WorkspaceHeader badge={t('editorPage.badge')} />
         <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
           <div
             role="alert"
@@ -173,7 +180,9 @@ export function EditorPage() {
           >
             <div className="flex items-center gap-2">
               <TriangleAlert className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Unable to open the editor</h1>
+              <h1 className="text-lg font-semibold">
+                {t('editorPage.unable')}
+              </h1>
             </div>
             <p className="mt-2 text-sm text-rose-100/80">{loadError}</p>
             <Link
@@ -181,7 +190,7 @@ export function EditorPage() {
               className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to projects
+              {t('editorPage.back')}
             </Link>
           </div>
         </main>
@@ -192,13 +201,13 @@ export function EditorPage() {
   if (!project || floors === null) {
     return (
       <div className="relative min-h-screen">
-        <WorkspaceHeader badge="Editor" />
+        <WorkspaceHeader badge={t('editorPage.badge')} />
         <div
           role="status"
           className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-16 text-sm text-slate-400"
         >
           <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-          Loading editor…
+          {t('editorPage.loading')}
         </div>
       </div>
     );
@@ -210,7 +219,7 @@ export function EditorPage() {
     <div className="relative min-h-screen overflow-hidden">
       <div className="app-grid pointer-events-none absolute inset-0 opacity-30" />
       <div className="relative">
-        <WorkspaceHeader badge="Editor" />
+        <WorkspaceHeader badge={t('editorPage.badge')} />
 
         <main className="mx-auto max-w-6xl px-6 py-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -220,14 +229,14 @@ export function EditorPage() {
                 className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Project details
+                {t('editorPage.details')}
               </Link>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                   {project.name}
                 </h1>
                 <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200">
-                  Plan editor
+                  {t('editorPage.planEditor')}
                 </span>
               </div>
             </div>
@@ -239,14 +248,13 @@ export function EditorPage() {
               disabled={archived}
             >
               <Plus className="h-4 w-4" />
-              Add floor
+              {t('editorPage.addFloor')}
             </Button>
           </div>
 
           {archived ? (
             <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-5 text-sm text-amber-100">
-              This project is archived. Restore it from the project page before
-              editing the plan.
+              {t('editorPage.archived')}
             </div>
           ) : null}
 
@@ -257,12 +265,12 @@ export function EditorPage() {
             >
               <label className="min-w-52 flex-1">
                 <span className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-                  Floor name
+                  {t('editorPage.floorName')}
                 </span>
                 <Input
                   value={floorName}
                   onChange={(event) => setFloorName(event.target.value)}
-                  placeholder="Floor 1"
+                  placeholder={t('editorPage.floorPlaceholder')}
                   maxLength={80}
                   disabled={floorBusy || archived}
                   className="mt-1.5"
@@ -274,7 +282,7 @@ export function EditorPage() {
                 ) : (
                   <FolderPlus className="h-4 w-4" />
                 )}
-                {floorBusy ? 'Creating…' : 'Create floor'}
+                {floorBusy ? t('editorPage.creating') : t('editorPage.createFloor')}
               </Button>
             </form>
           ) : null}
@@ -294,11 +302,10 @@ export function EditorPage() {
                 <Layers className="h-5 w-5 text-slate-400" />
               </span>
               <h2 className="mt-4 text-base font-semibold text-white">
-                Start with a floor
+                {t('editorPage.startFloor')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
-                A floor holds one plan. Create it above, then choose a blank
-                canvas or upload a JPG, PNG, or PDF.
+                {t('editorPage.startFloorHint')}
               </p>
             </div>
           ) : (
@@ -319,7 +326,7 @@ export function EditorPage() {
                     <span>
                       <span className="block font-medium">{floor.name}</span>
                       <span className="block text-[11px] text-slate-500">
-                        {planLabel(floor.plan)}
+                        {planLabel(floor.plan, t)}
                       </span>
                     </span>
                     {floor.id === selectedFloorId ? (

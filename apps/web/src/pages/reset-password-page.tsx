@@ -5,9 +5,11 @@ import { AuthShell } from '@/components/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { resetPassword } from '@/features/auth/password-reset-api';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 
 export function ResetPasswordPage() {
+  const { t } = useI18n();
   const { token = '' } = useParams<{ token: string }>();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -18,7 +20,7 @@ export function ResetPasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(t('auth.reset.mismatch'));
       return;
     }
     setSubmitting(true);
@@ -35,25 +37,25 @@ export function ResetPasswordPage() {
 
   return (
     <AuthShell
-      title="Choose a new password"
-      subtitle="This link works once and expires after one hour."
+      title={t('auth.reset.title')}
+      subtitle={t('auth.reset.subtitle')}
       footer={
         <Link
           to="/login"
           className="font-medium text-amber-300 hover:text-amber-200"
         >
-          Back to sign in
+          {t('auth.forgot.back')}
         </Link>
       }
     >
       {done ? (
         <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          Password updated. You can now sign in with the new password.
+          {t('auth.reset.done')}
         </p>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            New password
+            {t('auth.reset.newPassword')}
             <Input
               className="mt-1.5"
               type="password"
@@ -65,7 +67,7 @@ export function ResetPasswordPage() {
             />
           </label>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            Confirm password
+            {t('auth.reset.confirmPassword')}
             <Input
               className="mt-1.5"
               type="password"
@@ -84,7 +86,7 @@ export function ResetPasswordPage() {
             {submitting ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : null}
-            {submitting ? 'Saving…' : 'Set new password'}
+            {submitting ? t('auth.reset.saving') : t('auth.reset.submit')}
           </Button>
         </form>
       )}

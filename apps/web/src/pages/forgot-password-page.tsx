@@ -5,9 +5,11 @@ import { AuthShell } from '@/components/auth-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { requestPasswordReset } from '@/features/auth/password-reset-api';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { getErrorMessage } from '@/lib/api';
 
 export function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,28 +31,28 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      title="Reset your password"
-      subtitle="We will email you a link that expires in one hour."
+      title={t('auth.forgot.title')}
+      subtitle={t('auth.forgot.subtitle')}
       footer={
         <>
-          Remembered it?{' '}
+          {t('auth.remembered')}{' '}
           <Link
             to="/login"
             className="font-medium text-amber-300 hover:text-amber-200"
           >
-            Back to sign in
+            {t('auth.forgot.back')}
           </Link>
         </>
       }
     >
       {sent ? (
         <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-          If an account exists for that address, a reset link has been sent.
+          {t('auth.forgot.sent')}
         </p>
       ) : (
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            Email
+            {t('auth.email')}
             <Input
               className="mt-1.5"
               type="email"
@@ -69,7 +71,7 @@ export function ForgotPasswordPage() {
             {submitting ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : null}
-            {submitting ? 'Sending…' : 'Send reset link'}
+            {submitting ? t('auth.forgot.sending') : t('auth.forgot.submit')}
           </Button>
         </form>
       )}

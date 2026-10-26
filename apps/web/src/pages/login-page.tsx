@@ -72,7 +72,7 @@ export function LoginPage() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -91,7 +91,7 @@ export function LoginPage() {
             name="password"
             type="password"
             autoComplete="current-password"
-            placeholder="Your password"
+            placeholder={t('auth.passwordPlaceholder')}
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}

@@ -18,18 +18,20 @@ import {
   listProjects,
   restoreProject,
 } from '@/features/projects/projects-api';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 type ProjectTab = 'active' | 'archived';
 
-const projectTabs: Array<{ value: ProjectTab; label: string }> = [
-  { value: 'active', label: 'Active' },
-  { value: 'archived', label: 'Archived' },
+const projectTabs: Array<{ value: ProjectTab; labelKey: string }> = [
+  { value: 'active', labelKey: 'app.tabActive' },
+  { value: 'archived', labelKey: 'app.tabArchived' },
 ];
 
 export function AppPage() {
+  const { t } = useI18n();
   const [projects, setProjects] = useState<PublicProject[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -127,14 +129,13 @@ export function AppPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
-                Projects
+                {t('app.projects')}
               </p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Your electrical plans
+                {t('app.title')}
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-                Create a project for each apartment, house, or site. Plans and
-                estimates will live inside it.
+                {t('app.subtitle')}
               </p>
             </div>
 
@@ -144,17 +145,21 @@ export function AppPage() {
                 <strong className="font-semibold text-white">
                   {activeProjects.length}
                 </strong>{' '}
-                active
+                {t('app.activeWord')}
               </span>
               <span className="text-slate-600">·</span>
-              <span>{archivedProjects.length} archived</span>
+              <span>
+                {t('app.archivedCount', { count: archivedProjects.length })}
+              </span>
             </div>
           </div>
 
           <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
             <div className="flex items-center gap-2">
               <FolderPlus className="h-4 w-4 text-amber-300" />
-              <h2 className="text-sm font-semibold text-white">New project</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('app.newProject')}
+              </h2>
             </div>
 
             <form
@@ -166,12 +171,12 @@ export function AppPage() {
                   htmlFor="project-name"
                   className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
                 >
-                  Project name
+                  {t('app.projectName')}
                 </label>
                 <Input
                   id="project-name"
                   name="name"
-                  placeholder="Test apartment"
+                  placeholder={t('app.namePlaceholder')}
                   required
                   maxLength={120}
                   value={name}
@@ -185,12 +190,13 @@ export function AppPage() {
                   htmlFor="project-description"
                   className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
                 >
-                  Description <span className="normal-case">(optional)</span>
+                  {t('app.description')}{' '}
+                  <span className="normal-case">{t('app.optional')}</span>
                 </label>
                 <Textarea
                   id="project-description"
                   name="description"
-                  placeholder="Address, client, or scope of work"
+                  placeholder={t('project.descriptionPlaceholder')}
                   maxLength={2000}
                   rows={1}
                   className="min-h-10 resize-none py-2"
@@ -210,7 +216,7 @@ export function AppPage() {
                 ) : (
                   <FolderPlus className="h-4 w-4" />
                 )}
-                {creating ? 'Creating…' : 'Create project'}
+                {creating ? t('app.creating') : t('app.create')}
               </Button>
             </form>
 
@@ -228,7 +234,7 @@ export function AppPage() {
             <div
               className="inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1"
               role="tablist"
-              aria-label="Project status"
+              aria-label={t('app.statusAria')}
             >
               {projectTabs.map((item) => {
                 const count =
@@ -250,7 +256,7 @@ export function AppPage() {
                         : 'text-slate-300 hover:bg-white/10 hover:text-white',
                     )}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                     <span
                       className={cn(
                         'rounded-full px-1.5 py-0.5 text-[11px]',
@@ -273,7 +279,7 @@ export function AppPage() {
               disabled={projects === null && !listError}
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              {t('app.refresh')}
             </Button>
           </div>
 
@@ -300,7 +306,7 @@ export function AppPage() {
                 size="sm"
                 onClick={() => setReloadToken((value) => value + 1)}
               >
-                Try again
+                {t('app.tryAgain')}
               </Button>
             </div>
           ) : null}
@@ -311,7 +317,7 @@ export function AppPage() {
               className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/40 px-5 py-10 text-sm text-slate-400"
             >
               <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-              Loading projects…
+              {t('app.loading')}
             </div>
           ) : null}
 
@@ -322,13 +328,13 @@ export function AppPage() {
               </span>
               <h2 className="mt-4 text-base font-semibold text-white">
                 {tab === 'active'
-                  ? 'No active projects yet'
-                  : 'No archived projects'}
+                  ? t('app.noActive')
+                  : t('app.noArchived')}
               </h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
                 {tab === 'active'
-                  ? 'Create your first project above to start planning a floor.'
-                  : 'Projects you archive will stay here and can be restored anytime.'}
+                  ? t('app.noActiveHint')
+                  : t('app.noArchivedHint')}
               </p>
             </div>
           ) : null}

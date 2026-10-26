@@ -31,10 +31,12 @@ import {
   saveLocalProject,
   type LocalProject,
 } from '@/features/local/local-db';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 
 export function LocalProjectsPage() {
+  const { formatDate, t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [projects, setProjects] = useState<LocalProject[]>([]);
@@ -58,7 +60,7 @@ export function LocalProjectsPage() {
     setBusy(true);
     setError(null);
     try {
-      const project = createLocalProject(name.trim() || 'Local project');
+      const project = createLocalProject(name.trim() || t('local.defaultName'));
       await saveLocalProject(project);
       setName('');
       navigate(`/local/${project.id}`);
@@ -70,7 +72,8 @@ export function LocalProjectsPage() {
   }
 
   async function handleDelete(project: LocalProject) {
-    if (!window.confirm(`Delete "${project.name}" from this browser?`)) return;
+    if (!window.confirm(t('local.deleteConfirm', { name: project.name })))
+      return;
     await deleteLocalProject(project.id);
     await reload();
   }
@@ -92,7 +95,7 @@ export function LocalProjectsPage() {
     try {
       const parsed: unknown = JSON.parse(await file.text());
       if (!isLocalProject(parsed)) {
-        setError('That file is not a DrawMyPlace local project.');
+        setError(t('local.notLocalProject'));
         return;
       }
       const project: LocalProject = {
@@ -103,7 +106,7 @@ export function LocalProjectsPage() {
       await saveLocalProject(project);
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed');
+      setError(err instanceof Error ? err.message : t('local.importFailed'));
     }
   }
 
@@ -198,21 +201,20 @@ export function LocalProjectsPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Local mode" />
+      <WorkspaceHeader badge={t('local.badge')} />
       <main id="main-content" className="mx-auto max-w-4xl px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-white">
-              Local projects
+              {t('local.title')}
             </h1>
             <p className="mt-2 text-sm text-slate-400">
-              Work without an account. Projects stay in this browser until you
-              export or sync them.
+              {t('local.subtitle')}
             </p>
           </div>
           {user ? (
             <Link to="/app" className="text-sm text-amber-300">
-              Go to workspace
+              {t('local.goWorkspace')}
             </Link>
           ) : (
             <Link
@@ -220,7 +222,7 @@ export function LocalProjectsPage() {
               className="inline-flex items-center gap-1.5 text-sm text-amber-300"
             >
               <UserRound className="h-4 w-4" />
-              Sign in to sync
+              {t('local.signInSync')}
             </Link>
           )}
         </div>
@@ -229,12 +231,12 @@ export function LocalProjectsPage() {
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="New local project"
+            placeholder={t('local.namePlaceholder')}
             className="min-w-56 flex-1"
           />
           <Button type="submit" disabled={busy}>
             <Plus className="h-4 w-4" />
-            Create
+            {t('local.create')}
           </Button>
           <Button
             type="button"
@@ -242,7 +244,7 @@ export function LocalProjectsPage() {
             onClick={() => fileRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
-            Import JSON
+            {t('local.import')}
           </Button>
           <input
             ref={fileRef}
@@ -266,11 +268,11 @@ export function LocalProjectsPage() {
         {loading ? (
           <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
             <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-            Loading local projects…
+            {t('local.loading')}
           </div>
         ) : projects.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
-            No local projects yet.
+            {t('local.empty')}
           </div>
         ) : (
           <ul className="mt-8 space-y-3">
@@ -282,9 +284,11 @@ export function LocalProjectsPage() {
                 <div>
                   <p className="font-medium text-white">{project.name}</p>
                   <p className="text-xs text-slate-500">
-                    Updated {new Date(project.updatedAt).toLocaleString()} ·{' '}
-                    {project.drawing.points.length} points ·{' '}
-                    {project.drawing.routes.length} routes
+                    {t('local.updated', {
+                      date: formatDate(project.updatedAt),
+                      points: project.drawing.points.length,
+                      routes: project.drawing.routes.length,
+                    })}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -293,7 +297,7 @@ export function LocalProjectsPage() {
                     size="sm"
                     onClick={() => navigate(`/local/${project.id}`)}
                   >
-                    Open
+                    {t('local.open')}
                     <ArrowUpRight className="h-4 w-4" />
                   </Button>
                   <Button
@@ -310,7 +314,7 @@ export function LocalProjectsPage() {
                     onClick={() => void handleSync(project)}
                     disabled={busy}
                   >
-                    {user ? 'Sync to account' : 'Sign in to sync'}
+                    {user ? t('local.sync') : t('local.signInSync')}
                   </Button>
                   <Button
                     variant="outline"

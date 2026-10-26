@@ -91,7 +91,9 @@ export function WorkspaceHeader({
             <span className="block text-sm font-semibold tracking-wide text-white">
               DrawMyPlace
             </span>
-            <span className="block text-xs text-slate-400">Workspace</span>
+            <span className="block text-xs text-slate-400">
+              {t('nav.workspace')}
+            </span>
           </span>
         </Link>
 

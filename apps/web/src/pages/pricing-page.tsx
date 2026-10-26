@@ -1,69 +1,72 @@
 import { ArrowLeft, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 
 const plans = [
   {
-    name: 'Free',
+    nameKey: 'pricing.free',
     price: '0',
-    features: [
-      'Personal projects',
-      'Blank plans and underlays',
-      'Cable calculations',
-      'CSV and PDF estimates',
+    featureKeys: [
+      'pricing.feature.personal',
+      'pricing.feature.underlays',
+      'pricing.feature.calculations',
+      'pricing.feature.estimates',
     ],
   },
   {
-    name: 'Team',
-    price: 'Soon',
-    features: [
-      'Organizations and roles',
-      'Shared project access',
-      'Team material prices',
-      'Activity history',
+    nameKey: 'pricing.team',
+    price: 'soon',
+    featureKeys: [
+      'pricing.feature.orgs',
+      'pricing.feature.shared',
+      'pricing.feature.teamPrices',
+      'pricing.feature.activity',
     ],
   },
 ];
 
 export function PricingPage() {
+  const { t } = useI18n();
+
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Pricing" />
+      <WorkspaceHeader badge={t('pricing.badge')} />
       <main id="main-content" className="mx-auto max-w-5xl px-6 py-16">
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Home
+          {t('pricing.home')}
         </Link>
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-white">
-          Simple pricing
+          {t('pricing.title')}
         </h1>
-        <p className="mt-2 text-sm text-slate-400">
-          Start free. Team features are in active development.
-        </p>
+        <p className="mt-2 text-sm text-slate-400">{t('pricing.subtitle')}</p>
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           {plans.map((plan) => (
             <section
-              key={plan.name}
+              key={plan.nameKey}
               className="rounded-2xl border border-white/10 bg-slate-900/60 p-6"
             >
-              <h2 className="text-lg font-semibold text-white">{plan.name}</h2>
+              <h2 className="text-lg font-semibold text-white">
+                {t(plan.nameKey)}
+              </h2>
               <p className="mt-2 text-3xl font-semibold text-amber-300">
-                {plan.price}
-                {plan.price !== 'Soon' ? (
+                {plan.price === 'soon' ? t('pricing.soon') : plan.price}
+                {plan.price !== 'soon' ? (
                   <span className="text-sm font-normal text-slate-400">
                     {' '}
-                    / month
+                    {t('pricing.perMonth')}
                   </span>
                 ) : null}
               </p>
               <ul className="mt-5 space-y-2 text-sm text-slate-300">
-                {plan.features.map((feature) => (
+                {plan.featureKeys.map((feature) => (
                   <li key={feature} className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-300" />
-                    {feature}
+                    {t(feature)}
                   </li>
                 ))}
               </ul>

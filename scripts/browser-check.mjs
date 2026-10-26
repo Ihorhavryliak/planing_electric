@@ -86,9 +86,11 @@ async function main() {
   // Ukrainian locale persists across reload, then switch back to English.
   await page.getByLabel('Language').selectOption('uk');
   await page.getByRole('button', { name: 'Вийти' }).waitFor();
+  await page.getByRole('heading', { name: 'Ваші електроплани' }).waitFor();
   await page.reload();
   await page.waitForURL('**/app');
   await page.getByRole('button', { name: 'Вийти' }).waitFor();
+  await page.getByRole('heading', { name: 'Ваші електроплани' }).waitFor();
   await page.getByLabel('Мова').selectOption('en');
   await page.getByRole('button', { name: 'Sign out' }).waitFor();
 
@@ -101,6 +103,13 @@ async function main() {
   await page.getByRole('cell', { name: 'Base variant' }).waitFor();
 
   await page.getByRole('link', { name: /open plan editor/i }).click();
+
+  // The editor shell switches to Ukrainian and back.
+  await page.getByLabel('Language').selectOption('uk');
+  await page.getByRole('button', { name: 'Додати поверх' }).waitFor();
+  await page.getByText('Почніть із поверху').waitFor();
+  await page.getByLabel('Мова').selectOption('en');
+  await page.getByRole('button', { name: 'Add floor' }).waitFor();
 
   await page.getByRole('button', { name: 'Add floor' }).click();
   await page.getByPlaceholder('Floor 1').fill('Floor A');

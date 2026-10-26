@@ -11,13 +11,14 @@ import {
 import { Link } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { type CheckState, useSystemHealth } from '@/hooks/use-system-health';
 import { cn } from '@/lib/utils';
 
-const statusText: Record<CheckState, string> = {
-  checking: 'Checking',
-  up: 'Online',
-  down: 'Offline',
+const statusKeys: Record<CheckState, string> = {
+  checking: 'landing.status.checking',
+  up: 'landing.status.up',
+  down: 'landing.status.down',
 };
 
 function StatusIcon({ state }: { state: CheckState }) {
@@ -32,73 +33,34 @@ function StatusIcon({ state }: { state: CheckState }) {
   return <CircleX className="h-4 w-4 text-rose-400" />;
 }
 
-const foundations = [
-  {
-    title: 'Monorepo and shared tooling',
-    description:
-      'pnpm workspaces, Turborepo, a shared TypeScript baseline, ESLint, and one command for every check.',
-  },
-  {
-    title: 'API foundation',
-    description:
-      'NestJS with a versioned /api/v1 prefix, environment validation, normalized errors, security headers, and liveness/readiness endpoints.',
-  },
-  {
-    title: 'Authentication and sessions',
-    description:
-      'Registration, login, logout, and current-user endpoints with Argon2id password hashing, hashed server-side sessions, and rate limiting.',
-  },
-  {
-    title: 'Database foundation',
-    description:
-      'PostgreSQL schema defined with Drizzle ORM, tracked migrations, and fast PGlite tests for schema and auth flows.',
-  },
-  {
-    title: 'Web foundation',
-    description:
-      'React, Vite, and Tailwind CSS with login and registration pages, a protected workspace, and live API status.',
-  },
-  {
-    title: 'Shared contracts',
-    description:
-      'Zod schemas and inferred TypeScript types that both the API and the web app can consume.',
-  },
-];
-
-const nextSteps = [
-  'Project CRUD with server-side ownership checks and IDOR protection.',
-  'The editor shell: canonical coordinates, pan, zoom, and save/reload.',
-  'Cable length calculations, material lists, and estimate export.',
-];
-
 const capabilities = [
-  {
-    title: 'Read the plan',
-    description:
-      'Start from a blank canvas or calibrate an uploaded JPG, PNG, or PDF against a known distance.',
-  },
-  {
-    title: 'Draw the electrics',
-    description:
-      'Place sockets, switches, lights, and panels, then trace cable routes over the plan.',
-  },
-  {
-    title: 'Know the quantity',
-    description:
-      'Turn routes into tested cable lengths, add drops and waste, and export a material list.',
-  },
+  { titleKey: 'landing.cap.read', hintKey: 'landing.cap.readHint' },
+  { titleKey: 'landing.cap.draw', hintKey: 'landing.cap.drawHint' },
+  { titleKey: 'landing.cap.quantity', hintKey: 'landing.cap.quantityHint' },
+];
+
+const features = [
+  'landing.item.auth',
+  'landing.item.editor',
+  'landing.item.calc',
+  'landing.item.estimates',
+  'landing.item.3d',
+  'landing.item.variants',
+  'landing.item.local',
+  'landing.item.i18n',
 ];
 
 export function LandingPage() {
+  const { t } = useI18n();
   const health = useSystemHealth();
   const { status } = useAuth();
   const checkedAt = health.checkedAt
-    ? new Intl.DateTimeFormat('en', {
+    ? new Intl.DateTimeFormat(undefined, {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
       }).format(new Date(health.checkedAt))
-    : 'not checked yet';
+    : t('landing.notChecked');
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -115,23 +77,14 @@ export function LandingPage() {
               <p className="text-sm font-semibold tracking-wide text-white">
                 DrawMyPlace
               </p>
-              <p className="text-xs text-slate-400">
-                Electrical installation planning
-              </p>
+              <p className="text-xs text-slate-400">{t('landing.tagline')}</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="mr-2 hidden rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300 md:inline-flex">
-              Phase 2 · Authentication
-            </span>
-
             {status === 'authenticated' ? (
-              <Link
-                to="/app"
-                className={cn(buttonVariants({ size: 'sm' }))}
-              >
-                Open workspace
+              <Link to="/app" className={cn(buttonVariants({ size: 'sm' }))}>
+                {t('landing.openWorkspace')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
@@ -140,13 +93,13 @@ export function LandingPage() {
                   to="/login"
                   className="inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                 >
-                  Sign in
+                  {t('auth.login.submit')}
                 </Link>
                 <Link
                   to="/register"
                   className={cn(buttonVariants({ size: 'sm' }))}
                 >
-                  Create account
+                  {t('auth.register.submit')}
                 </Link>
               </>
             )}
@@ -158,29 +111,27 @@ export function LandingPage() {
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-200">
                 <Sparkles className="h-3.5 w-3.5" />
-                Accounts are live
+                {t('landing.badge')}
               </span>
 
               <h1 className="mt-6 max-w-2xl text-5xl leading-[1.05] font-semibold tracking-tight text-white sm:text-6xl">
-                Electrical plans that{' '}
-                <span className="text-amber-300">add up.</span>
+                {t('landing.title')}{' '}
+                <span className="text-amber-300">{t('landing.titleAccent')}</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-400">
-                DrawMyPlace turns a floor plan into placed points, routed cable,
-                and a material estimate you can defend. Create an account to
-                enter the workspace — projects and the drawing editor are next.
+                {t('landing.subtitle')}
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 {status === 'authenticated' ? (
                   <Link to="/app" className={cn(buttonVariants())}>
-                    Open your workspace
+                    {t('landing.openWorkspace')}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 ) : (
                   <Link to="/register" className={cn(buttonVariants())}>
-                    Create your account
+                    {t('landing.createAccount')}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 )}
@@ -188,18 +139,18 @@ export function LandingPage() {
                   to="/local"
                   className="inline-flex h-10 items-center rounded-lg border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
                 >
-                  Try without an account
+                  {t('landing.tryLocal')}
                 </Link>
                 <a
                   href="#foundation"
                   className="inline-flex h-10 items-center rounded-lg border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
                 >
-                  What works today
+                  {t('landing.whatWorks')}
                 </a>
               </div>
 
               <p className="mt-4 text-xs text-slate-500">
-                Last live check: {checkedAt}
+                {t('landing.lastCheck', { time: checkedAt })}
               </p>
             </div>
 
@@ -207,16 +158,16 @@ export function LandingPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-sm font-semibold text-white">
-                    System check
+                    {t('landing.systemCheck')}
                   </h2>
                   <p className="mt-1 text-xs text-slate-400">
-                    Results come from the running API, not static placeholders.
+                    {t('landing.systemCheckHint')}
                   </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Refresh system check"
+                  aria-label={t('landing.refresh')}
                   onClick={health.refresh}
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -237,7 +188,7 @@ export function LandingPage() {
                       health.api === 'checking' && 'text-slate-400',
                     )}
                   >
-                    {statusText[health.api]}
+                    {t(statusKeys[health.api])}
                   </span>
                 </div>
 
@@ -254,7 +205,7 @@ export function LandingPage() {
                       health.database === 'checking' && 'text-slate-400',
                     )}
                   >
-                    {statusText[health.database]}
+                    {t(statusKeys[health.database])}
                   </span>
                 </div>
               </div>
@@ -263,9 +214,9 @@ export function LandingPage() {
                 <div className="mt-4 flex gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-100">
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <p>
-                    The API is running, but PostgreSQL is not reachable. Start
-                    it with <code className="font-mono">pnpm db:up</code> and
-                    run <code className="font-mono">pnpm db:migrate</code>.
+                    {t('landing.dbDown')}{' '}
+                    <code className="font-mono">pnpm db:up</code>{' '}
+                    <code className="font-mono">pnpm db:migrate</code>
                   </p>
                 </div>
               ) : null}
@@ -274,8 +225,8 @@ export function LandingPage() {
                 <div className="mt-4 flex gap-2.5 rounded-xl border border-rose-400/20 bg-rose-400/10 p-3 text-xs leading-relaxed text-rose-100">
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
                   <p>
-                    The API is not reachable. Start the development stack with{' '}
-                    <code className="font-mono">pnpm dev</code>.
+                    {t('landing.apiDown')}{' '}
+                    <code className="font-mono">pnpm dev</code>
                   </p>
                 </div>
               ) : null}
@@ -285,17 +236,17 @@ export function LandingPage() {
           <section className="grid gap-4 pb-16 md:grid-cols-3">
             {capabilities.map((capability) => (
               <article
-                key={capability.title}
+                key={capability.titleKey}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
               >
                 <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
-                  Product direction
+                  {t('landing.direction')}
                 </p>
                 <h3 className="mt-2 text-base font-semibold text-white">
-                  {capability.title}
+                  {t(capability.titleKey)}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  {capability.description}
+                  {t(capability.hintKey)}
                 </p>
               </article>
             ))}
@@ -307,47 +258,25 @@ export function LandingPage() {
           >
             <div>
               <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
-                Verified foundation
+                {t('landing.verified')}
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-                What works today
+                {t('landing.worksTitle')}
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-slate-400">
-                Every item below is backed by code in this repository and by
-                commands that can be re-run: install, typecheck, lint, tests, and
-                a production build.
+                {t('landing.worksHint')}
               </p>
-
-              <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-                <h3 className="text-sm font-semibold text-white">Next up</h3>
-                <ul className="mt-3 space-y-2.5">
-                  {nextSteps.map((step) => (
-                    <li
-                      key={step}
-                      className="flex gap-2.5 text-sm text-slate-400"
-                    >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                      {step}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {foundations.map((item) => (
+              {features.map((key) => (
                 <article
-                  key={item.title}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                  key={key}
+                  className="flex gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-4"
                 >
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <h3 className="text-sm font-medium text-white">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                    {item.description}
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    {t(key)}
                   </p>
                 </article>
               ))}
@@ -356,8 +285,8 @@ export function LandingPage() {
         </main>
 
         <footer className="flex flex-col gap-2 border-t border-white/10 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>DrawMyPlace · Phase 2 authentication</p>
-          <p>React · NestJS · PostgreSQL · Drizzle · Zod</p>
+          <p>{t('landing.footer')}</p>
+          <p>© 2026 DrawMyPlace</p>
         </footer>
       </div>
     </div>

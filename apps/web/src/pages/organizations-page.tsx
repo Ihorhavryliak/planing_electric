@@ -9,6 +9,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   createInvitation,
@@ -27,6 +28,7 @@ import type {
 import { getErrorMessage } from '@/lib/api';
 
 export function OrganizationsPage() {
+  const { t } = useI18n();
   const [orgs, setOrgs] = useState<PublicOrganization[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [members, setMembers] = useState<PublicOrganizationMember[]>([]);
@@ -133,27 +135,27 @@ export function OrganizationsPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Organizations" />
+      <WorkspaceHeader badge={t('org.badge')} />
       <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
-          Back
+          {t('org.back')}
         </Link>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-          Organizations
+          {t('org.title')}
         </h1>
         <form className="mt-6 flex gap-3" onSubmit={handleCreate}>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Organization name"
+            placeholder={t('org.namePlaceholder')}
             required
           />
           <Button type="submit" disabled={creating}>
             <Plus className="h-4 w-4" />
-            Create
+            {t('org.create')}
           </Button>
         </form>
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
@@ -163,10 +165,10 @@ export function OrganizationsPage() {
             {loading ? (
               <div className="flex items-center gap-3 text-sm text-slate-400">
                 <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-                Loading…
+                {t('org.loading')}
               </div>
             ) : (orgs ?? []).length === 0 ? (
-              <p className="text-sm text-slate-500">No organizations yet.</p>
+              <p className="text-sm text-slate-500">{t('org.empty')}</p>
             ) : (
               (orgs ?? []).map((org) => (
                 <button
@@ -189,13 +191,13 @@ export function OrganizationsPage() {
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
             {!selected ? (
               <p className="text-sm text-slate-500">
-                Select an organization to manage members and invitations.
+                {t('org.selectHint')}
               </p>
             ) : (
               <>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
                   <Users className="h-4 w-4 text-amber-300" />
-                  Members
+                  {t('org.members')}
                 </h2>
                 <ul className="mt-3 space-y-2">
                   {members.map((member) => (
@@ -205,14 +207,14 @@ export function OrganizationsPage() {
                     >
                       <span className="text-slate-300">{member.userId}</span>
                       <span className="text-xs text-amber-300">
-                        {member.role} · {member.status}
+                        {t(`role.${member.role}`)} · {member.status}
                       </span>
                     </li>
                   ))}
                 </ul>
 
                 <h2 className="mt-6 text-sm font-semibold text-white">
-                  Invitations
+                  {t('org.invitations')}
                 </h2>
                 <form className="mt-3 flex flex-wrap gap-2" onSubmit={handleInvite}>
                   <Input
@@ -230,19 +232,19 @@ export function OrganizationsPage() {
                     }
                     className="h-10 rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-slate-200"
                   >
-                    <option value="viewer">Viewer</option>
-                    <option value="electrician">Electrician</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
+                    <option value="viewer">{t('role.viewer')}</option>
+                    <option value="electrician">{t('role.electrician')}</option>
+                    <option value="manager">{t('role.manager')}</option>
+                    <option value="admin">{t('role.admin')}</option>
                   </select>
                   <Button type="submit" disabled={inviting}>
-                    {inviting ? 'Inviting…' : 'Invite'}
+                    {inviting ? t('org.inviting') : t('org.invite')}
                   </Button>
                 </form>
 
                 {inviteToken ? (
                   <div className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
-                    Share this one-time token with the invitee:
+                    {t('org.tokenHint')}
                     <code className="mt-1 block break-all text-emerald-200">
                       {inviteToken}
                     </code>
@@ -260,12 +262,12 @@ export function OrganizationsPage() {
                           {invitation.email}
                         </span>
                         <span className="text-xs text-slate-500">
-                          {invitation.role} ·{' '}
+                          {t(`role.${invitation.role}`)} ·{' '}
                           {invitation.revokedAt
-                            ? 'revoked'
+                            ? t('org.revoked')
                             : invitation.acceptedAt
-                              ? 'accepted'
-                              : 'pending'}
+                              ? t('org.accepted')
+                              : t('org.pending')}
                         </span>
                       </span>
                       {!invitation.revokedAt && !invitation.acceptedAt ? (
@@ -275,7 +277,7 @@ export function OrganizationsPage() {
                           onClick={() => void handleRevoke(invitation.id)}
                         >
                           <Trash2 className="h-4 w-4" />
-                          Revoke
+                          {t('org.revoke')}
                         </Button>
                       ) : null}
                     </li>

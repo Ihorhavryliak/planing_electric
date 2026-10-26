@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import {
   createMaterial,
@@ -13,6 +14,7 @@ import type { PublicMaterial } from '@drawmyplace/contracts';
 import { getErrorMessage } from '@/lib/api';
 
 export function MaterialsPage() {
+  const { t } = useI18n();
   const [materials, setMaterials] = useState<PublicMaterial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,19 +98,19 @@ export function MaterialsPage() {
 
   return (
     <div className="relative min-h-screen">
-      <WorkspaceHeader badge="Materials" />
+      <WorkspaceHeader badge={t('materials.badge')} />
       <main id="main-content" className="mx-auto max-w-5xl px-6 py-10">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
         >
-          Back
+          {t('materials.back')}
         </Link>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white">
-          Material catalog
+          {t('materials.title')}
         </h1>
         <p className="mt-2 text-sm text-slate-400">
-          Cables and installation materials used by estimates.
+          {t('materials.subtitle')}
         </p>
 
         <form
@@ -118,20 +120,20 @@ export function MaterialsPage() {
           <Input
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="Code"
+            placeholder={t('materials.code')}
             required
           />
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
+            placeholder={t('materials.name')}
             required
             className="lg:col-span-2"
           />
           <Input
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            placeholder="Unit"
+            placeholder={t('materials.unit')}
             required
           />
           <select
@@ -141,10 +143,10 @@ export function MaterialsPage() {
             }
             className="h-10 rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-slate-200"
           >
-            <option value="cable">Cable</option>
-            <option value="conduit">Conduit</option>
-            <option value="accessory">Accessory</option>
-            <option value="other">Other</option>
+            <option value="cable">{t('materials.category.cable')}</option>
+            <option value="conduit">{t('materials.category.conduit')}</option>
+            <option value="accessory">{t('materials.category.accessory')}</option>
+            <option value="other">{t('materials.category.other')}</option>
           </select>
           <Input
             type="number"
@@ -152,11 +154,11 @@ export function MaterialsPage() {
             step="0.01"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="Price"
+            placeholder={t('materials.price')}
           />
           <Button type="submit" disabled={creating} className="lg:col-span-6">
             <Plus className="h-4 w-4" />
-            Add material
+            {t('materials.add')}
           </Button>
         </form>
 
@@ -169,19 +171,19 @@ export function MaterialsPage() {
         {loading ? (
           <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
             <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-            Loading…
+            {t('materials.loading')}
           </div>
         ) : (
           <div className="mt-8 overflow-x-auto rounded-2xl border border-white/10">
             <table className="w-full text-sm">
               <thead className="bg-white/5 text-left text-xs text-slate-400">
                 <tr>
-                  <th className="px-4 py-3">Code</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Unit</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Price</th>
-                  <th className="px-4 py-3">Active</th>
+                  <th className="px-4 py-3">{t('materials.code')}</th>
+                  <th className="px-4 py-3">{t('materials.name')}</th>
+                  <th className="px-4 py-3">{t('materials.unit')}</th>
+                  <th className="px-4 py-3">{t('materials.category')}</th>
+                  <th className="px-4 py-3">{t('materials.price')}</th>
+                  <th className="px-4 py-3">{t('materials.active')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,7 +193,9 @@ export function MaterialsPage() {
                     <td className="px-4 py-2 text-slate-200">{material.name}</td>
                     <td className="px-4 py-2 text-slate-400">{material.unit}</td>
                     <td className="px-4 py-2 text-slate-400">
-                      {material.category ?? '—'}
+                                            {material.category
+                        ? t(`materials.category.${material.category}`)
+                        : '—'}
                     </td>
                     <td className="px-4 py-2">
                       <Input
@@ -211,7 +215,9 @@ export function MaterialsPage() {
                         size="sm"
                         onClick={() => void handleToggle(material)}
                       >
-                        {material.active ? 'Active' : 'Inactive'}
+                        {material.active
+                          ? t('materials.active')
+                          : t('materials.inactive')}
                       </Button>
                     </td>
                   </tr>

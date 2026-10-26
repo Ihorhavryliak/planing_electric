@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 
 export function ProjectPage() {
   const { projectId = '' } = useParams<{ projectId: string }>();
-  const { formatDate } = useI18n();
+  const { formatDate, t } = useI18n();
   const [project, setProject] = useState<PublicProject | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -104,7 +104,7 @@ export function ProjectPage() {
     try {
       const user = await searchUserByEmail(newMemberEmail);
       if (!user) {
-        setMembersError('No user found with that email.');
+        setMembersError(t('project.noUser'));
         return;
       }
       const created = await addProjectMember(projectId, {
@@ -144,7 +144,7 @@ export function ProjectPage() {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
-      setSaveError('Project name is required.');
+      setSaveError(t('project.nameRequired'));
       return;
     }
 
@@ -192,7 +192,7 @@ export function ProjectPage() {
   if (loadError) {
     return (
       <div className="relative min-h-screen">
-        <WorkspaceHeader badge="Project" />
+        <WorkspaceHeader badge={t('project.badge')} />
         <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
           <div
             role="alert"
@@ -200,7 +200,9 @@ export function ProjectPage() {
           >
             <div className="flex items-center gap-2">
               <TriangleAlert className="h-5 w-5" />
-              <h1 className="text-lg font-semibold">Unable to open project</h1>
+              <h1 className="text-lg font-semibold">
+                {t('project.unableToOpen')}
+              </h1>
             </div>
             <p className="mt-2 text-sm text-rose-100/80">{loadError}</p>
             <div className="mt-5 flex flex-wrap gap-2">
@@ -208,14 +210,14 @@ export function ProjectPage() {
                 variant="outline"
                 onClick={() => setReloadToken((value) => value + 1)}
               >
-                Try again
+                {t('project.tryAgain')}
               </Button>
               <Link
                 to="/app"
                 className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to projects
+                {t('project.backToProjects')}
               </Link>
             </div>
           </div>
@@ -227,13 +229,13 @@ export function ProjectPage() {
   if (!project) {
     return (
       <div className="relative min-h-screen">
-        <WorkspaceHeader badge="Project" />
+        <WorkspaceHeader badge={t('project.badge')} />
         <div
           role="status"
           className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-16 text-sm text-slate-400"
         >
           <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-          Loading project…
+          {t('project.loading')}
         </div>
       </div>
     );
@@ -247,7 +249,7 @@ export function ProjectPage() {
       <div className="pointer-events-none absolute -top-48 left-1/2 h-[28rem] w-[48rem] -translate-x-1/2 rounded-full bg-amber-400/10 blur-3xl" />
 
       <div className="relative">
-        <WorkspaceHeader badge="Project" />
+        <WorkspaceHeader badge={t('project.badge')} />
 
         <main className="mx-auto max-w-6xl px-6 py-10">
           <Link
@@ -255,7 +257,7 @@ export function ProjectPage() {
             className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            All projects
+            {t('project.allProjects')}
           </Link>
 
           <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
@@ -272,12 +274,15 @@ export function ProjectPage() {
                       : 'border-emerald-400/20 bg-emerald-400/10 text-emerald-200',
                   )}
                 >
-                  {project.status}
+                  {t(`status.${project.status}`)}
                 </span>
               </div>
               <p className="mt-2 text-sm text-slate-400">
-                Created {formatDate(project.createdAt)} · Updated{' '}
-                {formatDate(project.updatedAt)} · Revision {project.revision}
+                {t('project.createdUpdatedRevision', {
+                  created: formatDate(project.createdAt),
+                  updated: formatDate(project.updatedAt),
+                  revision: project.revision,
+                })}
               </p>
             </div>
 
@@ -293,7 +298,7 @@ export function ProjectPage() {
               ) : (
                 <Archive className="h-4 w-4" />
               )}
-              {archived ? 'Restore project' : 'Archive project'}
+              {archived ? t('project.restore') : t('project.archive')}
             </Button>
           </div>
 
@@ -308,9 +313,11 @@ export function ProjectPage() {
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
             <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-              <h2 className="text-sm font-semibold text-white">Project details</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('project.details')}
+              </h2>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Rename the project or keep notes about the site.
+                {t('project.detailsHint')}
               </p>
 
               <form className="mt-5 space-y-4" onSubmit={handleSave}>
@@ -319,7 +326,7 @@ export function ProjectPage() {
                     htmlFor="project-name"
                     className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
                   >
-                    Name
+                    {t('project.name')}
                   </label>
                   <Input
                     id="project-name"
@@ -340,13 +347,13 @@ export function ProjectPage() {
                     htmlFor="project-description"
                     className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
                   >
-                    Description
+                    {t('project.description')}
                   </label>
                   <Textarea
                     id="project-description"
                     name="description"
                     maxLength={2000}
-                    placeholder="Address, client, or scope of work"
+                    placeholder={t('project.descriptionPlaceholder')}
                     value={description}
                     onChange={(event) => {
                       setDescription(event.target.value);
@@ -375,10 +382,10 @@ export function ProjectPage() {
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    {saving ? 'Saving…' : 'Save changes'}
+                    {saving ? t('project.saving') : t('project.saveChanges')}
                   </Button>
                   {saved && !dirty ? (
-                    <span className="text-xs text-emerald-300">Saved</span>
+                    <span className="text-xs text-emerald-300">{t('project.saved')}</span>
                   ) : null}
                 </div>
               </form>
@@ -387,9 +394,11 @@ export function ProjectPage() {
             <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-white">Floor plan</h2>
+                  <h2 className="text-sm font-semibold text-white">
+                    {t('project.floorPlan')}
+                  </h2>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    The canvas for walls, points, and cable routes.
+                    {t('project.floorPlanHint')}
                   </p>
                 </div>
                 <PencilRuler className="h-4 w-4 text-amber-300" />
@@ -405,16 +414,15 @@ export function ProjectPage() {
                     <PencilRuler className="h-6 w-6 text-amber-300" />
                   </span>
                   <h3 className="mt-4 text-base font-semibold text-white">
-                    Plan editor
+                    {t('project.planEditor')}
                   </h3>
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
-                    Create floors, start a blank plan or upload a JPG, PNG, or
-                    PDF, then place points and draw cable routes.
+                    {t('project.planEditorHint')}
                   </p>
                   {archived ? (
                     <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
                       <CircleAlert className="h-3.5 w-3.5" />
-                      Restore this project before editing.
+                      {t('project.restoreBeforeEdit')}
                     </p>
                   ) : (
                     <>
@@ -422,7 +430,7 @@ export function ProjectPage() {
                         to={`/app/projects/${project.id}/editor`}
                         className={cn(buttonVariants(), 'mt-5')}
                       >
-                        Open plan editor
+                        {t('project.openEditor')}
                         <ArrowUpRight className="h-4 w-4" />
                       </Link>
                       <div>
@@ -430,7 +438,7 @@ export function ProjectPage() {
                           to={`/app/projects/${project.id}/estimates`}
                           className="mt-3 inline-flex items-center gap-1.5 text-sm text-amber-300 hover:text-amber-200"
                         >
-                          View estimates
+                          {t('project.viewEstimates')}
                           <ArrowUpRight className="h-4 w-4" />
                         </Link>
                       </div>
@@ -442,9 +450,11 @@ export function ProjectPage() {
           </div>
 
           <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <h2 className="text-sm font-semibold text-white">Shared with</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {t('project.sharedWith')}
+            </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Add a team member by email and pick their role.
+              {t('project.sharedHint')}
             </p>
             <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleAddMember}>
               <Input
@@ -462,12 +472,12 @@ export function ProjectPage() {
                 }
                 className="h-10 rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-slate-200"
               >
-                <option value="viewer">Viewer</option>
-                <option value="electrician">Electrician</option>
-                <option value="manager">Manager</option>
+                <option value="viewer">{t('role.viewer')}</option>
+                <option value="electrician">{t('role.electrician')}</option>
+                <option value="manager">{t('role.manager')}</option>
               </select>
               <Button type="submit" disabled={addingMember}>
-                {addingMember ? 'Adding…' : 'Add member'}
+                {addingMember ? t('project.adding') : t('project.addMember')}
               </Button>
             </form>
             {membersError ? (
@@ -476,7 +486,9 @@ export function ProjectPage() {
               </p>
             ) : null}
             {members.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-500">No members yet.</p>
+              <p className="mt-4 text-sm text-slate-500">
+                {t('project.noMembers')}
+              </p>
             ) : (
               <ul className="mt-4 space-y-2">
                 {members.map((member) => (
@@ -486,14 +498,16 @@ export function ProjectPage() {
                   >
                     <span className="text-slate-300">
                       {member.userId}{' '}
-                      <span className="text-xs text-amber-300">{member.role}</span>
+                      <span className="text-xs text-amber-300">
+                        {t(`role.${member.role}`)}
+                      </span>
                     </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleRemoveMember(member.id)}
                     >
-                      Remove
+                      {t('project.remove')}
                     </Button>
                   </li>
                 ))}

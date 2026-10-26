@@ -149,7 +149,7 @@ export function SettingsPage() {
           onSubmit={handleSubmit}
         >
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            Name
+            {t('settings.name')}
             <Input
               className="mt-1.5"
               value={name}
@@ -159,7 +159,7 @@ export function SettingsPage() {
             />
           </label>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            Email
+            {t('settings.email')}
             <Input className="mt-1.5" value={user?.email ?? ''} disabled />
           </label>
           {error ? (
@@ -174,16 +174,20 @@ export function SettingsPage() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? t('settings.saving') : t('settings.save')}
             </Button>
             {saved ? (
-              <span className="text-xs text-emerald-300">Saved</span>
+              <span className="text-xs text-emerald-300">
+                {t('settings.saved')}
+              </span>
             ) : null}
           </div>
         </form>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h2 className="text-sm font-semibold text-white">Appearance</h2>
+          <h2 className="text-sm font-semibold text-white">
+            {t('settings.appearance')}
+          </h2>
           <p className="mt-1 text-xs text-slate-500">
             {t('settings.appearanceHint')}
           </p>
@@ -209,9 +213,11 @@ export function SettingsPage() {
           className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5"
           onSubmit={handlePasswordChange}
         >
-          <h2 className="text-sm font-semibold text-white">Change password</h2>
+          <h2 className="text-sm font-semibold text-white">
+            {t('settings.changePassword')}
+          </h2>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            Current password
+            {t('settings.currentPassword')}
             <Input
               className="mt-1.5"
               type="password"
@@ -222,7 +228,7 @@ export function SettingsPage() {
             />
           </label>
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
-            New password
+            {t('settings.newPassword')}
             <Input
               className="mt-1.5"
               type="password"
@@ -245,16 +251,22 @@ export function SettingsPage() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {changingPassword ? 'Saving…' : 'Update password'}
+              {changingPassword
+                ? t('settings.saving')
+                : t('settings.updatePassword')}
             </Button>
             {passwordSaved ? (
-              <span className="text-xs text-emerald-300">Password updated</span>
+              <span className="text-xs text-emerald-300">
+                {t('settings.passwordUpdated')}
+              </span>
             ) : null}
           </div>
         </form>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h2 className="text-sm font-semibold text-white">Active sessions</h2>
+          <h2 className="text-sm font-semibold text-white">
+            {t('settings.sessions')}
+          </h2>
           <ul className="mt-3 space-y-2 text-sm">
             {sessions.map((session) => (
               <li
@@ -263,11 +275,11 @@ export function SettingsPage() {
               >
                 <span className="min-w-0">
                   <span className="block truncate text-slate-200">
-                    {session.userAgent ?? 'Unknown browser'}
-                    {session.current ? ' (this session)' : ''}
+                    {session.userAgent ?? t('settings.unknownBrowser')}
+                    {session.current ? ` ${t('settings.thisSession')}` : ''}
                   </span>
                   <span className="block text-xs text-slate-500">
-                    {session.ipAddress ?? 'unknown ip'} ·{' '}
+                    {session.ipAddress ?? t('settings.unknownIp')} ·{' '}
                     {new Date(session.createdAt).toLocaleString()}
                   </span>
                 </span>
@@ -277,7 +289,7 @@ export function SettingsPage() {
                     size="sm"
                     onClick={() => void revokeSession(session.id)}
                   >
-                    Revoke
+                    {t('settings.revoke')}
                   </Button>
                 ) : null}
               </li>
@@ -286,35 +298,38 @@ export function SettingsPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <h2 className="text-sm font-semibold text-white">Your data</h2>
+          <h2 className="text-sm font-semibold text-white">
+            {t('settings.data')}
+          </h2>
           <p className="mt-1 text-xs text-slate-500">
-            Download a JSON copy of your profile, projects, drawings, and
-            estimates.
+            {t('settings.dataHint')}
           </p>
           <a
             href="/api/v1/users/me/export"
             className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm text-slate-200 hover:bg-white/10"
           >
-            Download account data
+            {t('settings.downloadData')}
           </a>
         </section>
 
         <section className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/5 p-5">
-          <h2 className="text-sm font-semibold text-rose-200">Danger zone</h2>
+          <h2 className="text-sm font-semibold text-rose-200">
+            {t('settings.danger')}
+          </h2>
           <p className="mt-1 text-xs text-rose-200/70">
-            Deleting your account removes all projects, drawings, and estimates.
+            {t('settings.dangerHint')}
           </p>
           <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleDeleteAccount}>
             <Input
               type="password"
               value={deletePassword}
               onChange={(event) => setDeletePassword(event.target.value)}
-              placeholder="Confirm with your password"
+              placeholder={t('settings.confirmPlaceholder')}
               required
               className="min-w-56 flex-1"
             />
             <Button type="submit" variant="outline" disabled={deleting}>
-              {deleting ? 'Deleting…' : 'Delete account'}
+              {deleting ? t('settings.deleting') : t('settings.deleteAccount')}
             </Button>
           </form>
           {deleteError ? (

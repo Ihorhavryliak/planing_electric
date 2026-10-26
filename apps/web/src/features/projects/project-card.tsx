@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { formatDateTime } from '@/lib/format';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { cn } from '@/lib/utils';
 
 interface ProjectCardProps {
@@ -21,6 +21,7 @@ export function ProjectCard({
   busy,
   onToggleStatus,
 }: ProjectCardProps) {
+  const { formatDate, t } = useI18n();
   const archived = project.status === 'archived';
 
   return (
@@ -42,7 +43,7 @@ export function ProjectCard({
             {project.name}
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            Updated {formatDateTime(project.updatedAt)}
+            {t('project.updated', { date: formatDate(project.updatedAt) })}
           </p>
         </div>
         <span
@@ -53,12 +54,12 @@ export function ProjectCard({
               : 'border-emerald-400/20 bg-emerald-400/10 text-emerald-200',
           )}
         >
-          {project.status}
+          {t(`status.${project.status}`)}
         </span>
       </div>
 
       <p className="mt-3 line-clamp-3 min-h-10 text-sm leading-relaxed text-slate-400">
-        {project.description || 'No description yet.'}
+        {project.description || t('project.noDescription')}
       </p>
 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-5">
@@ -66,7 +67,7 @@ export function ProjectCard({
           to={`/app/projects/${project.id}`}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-300 hover:text-amber-200"
         >
-          Open project
+          {t('project.open')}
           <ArrowUpRight className="h-4 w-4" />
         </Link>
 
@@ -83,7 +84,7 @@ export function ProjectCard({
           ) : (
             <Archive className="h-4 w-4" />
           )}
-          {archived ? 'Restore' : 'Archive'}
+          {archived ? t('project.restoreShort') : t('project.archiveShort')}
         </Button>
       </div>
     </article>
