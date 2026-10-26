@@ -29,6 +29,9 @@ export function SettingsPage() {
     lastUsedAt: string | null;
   }
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -39,6 +42,29 @@ export function SettingsPage() {
       }
     })();
   }, []);
+
+  async function handleDeleteAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !window.confirm(
+        'Delete your account and all projects? This cannot be undone.',
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await apiRequest<void>('/users/me', {
+        method: 'DELETE',
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      window.location.href = '/login';
+    } catch (err) {
+      setDeleteError(getErrorMessage(err));
+      setDeleting(false);
+    }
+  }
 
   async function revokeSession(id: string) {
     try {
@@ -230,6 +256,45 @@ export function SettingsPage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <h2 className="text-sm font-semibold text-white">Your data</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Download a JSON copy of your profile, projects, drawings, and
+            estimates.
+          </p>
+          <a
+            href="/api/v1/users/me/export"
+            className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm text-slate-200 hover:bg-white/10"
+          >
+            Download account data
+          </a>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-rose-400/20 bg-rose-400/5 p-5">
+          <h2 className="text-sm font-semibold text-rose-200">Danger zone</h2>
+          <p className="mt-1 text-xs text-rose-200/70">
+            Deleting your account removes all projects, drawings, and estimates.
+          </p>
+          <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleDeleteAccount}>
+            <Input
+              type="password"
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              placeholder="Confirm with your password"
+              required
+              className="min-w-56 flex-1"
+            />
+            <Button type="submit" variant="outline" disabled={deleting}>
+              {deleting ? 'Deleting…' : 'Delete account'}
+            </Button>
+          </form>
+          {deleteError ? (
+            <p role="alert" className="mt-2 text-sm text-rose-300">
+              {deleteError}
+            </p>
+          ) : null}
         </section>
       </main>
     </div>

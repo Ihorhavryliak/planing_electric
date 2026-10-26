@@ -111,6 +111,18 @@ export class AuthService {
     await this.repository.updateUserPassword(user.id, passwordHash);
   }
 
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await this.repository.findUserById(userId);
+    if (!user) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
+    }
+    const valid = await this.passwords.verify(user.passwordHash, password);
+    if (!valid) {
+      throw new UnauthorizedException('Password is incorrect');
+    }
+    await this.repository.deleteAccount(userId);
+  }
+
   async verifyEmail(token: string): Promise<void> {
     const tokenHash = this.sessions.hashToken(token);
     const row = await this.repository.findEmailVerificationByHash(tokenHash);

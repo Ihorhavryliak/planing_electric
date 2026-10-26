@@ -383,6 +383,47 @@ describe('Authentication API', () => {
       .expect(200);
   });
 
+  it('exports account data and deletes the account with the password', async () => {
+    const email = nextEmail();
+    const registration = await register(email).expect(201);
+    const cookie = firstSetCookie(registration);
+
+    await server()
+      .post(`${API}/projects`)
+      .set('Cookie', cookie)
+      .send({ name: 'Export project' })
+      .expect(201);
+
+    const exported = await server()
+      .get(`${API}/users/me/export`)
+      .set('Cookie', cookie)
+      .expect(200);
+    const body = exported.body as {
+      user: { email: string };
+      projects: Array<{ project: { name: string } }>;
+    };
+    expect(body.user.email).toBe(email);
+    expect(body.projects[0]?.project.name).toBe('Export project');
+
+    await server()
+      .delete(`${API}/users/me`)
+      .set('Cookie', cookie)
+      .send({ password: 'wrong-password' })
+      .expect(401);
+
+    await server()
+      .delete(`${API}/users/me`)
+      .set('Cookie', cookie)
+      .send({ password: PASSWORD })
+      .expect(204);
+
+    await server().get(`${API}/users/me`).set('Cookie', cookie).expect(401);
+    await server()
+      .post(`${API}/auth/login`)
+      .send({ email, password: PASSWORD })
+      .expect(401);
+  });
+
   it('does not reveal whether an email exists when resetting a password', async () => {
     const response = await server()
       .post(`${API}/auth/forgot-password`)

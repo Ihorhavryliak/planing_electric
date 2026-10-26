@@ -49,6 +49,12 @@ export const changePasswordSchema = z.object({
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1).max(128),
+});
+
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+
 export const verifyEmailSchema = z.object({
   token: z.string().min(10).max(256),
 });

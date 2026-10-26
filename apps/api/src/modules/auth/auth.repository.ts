@@ -2,7 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt, isNull, lt } from 'drizzle-orm';
 import {
   emailVerificationTokens,
+  organizations,
   passwordResetTokens,
+  projects,
   sessions,
   users,
   type Database,
@@ -216,6 +218,14 @@ export class AuthRepository {
       .update(emailVerificationTokens)
       .set({ usedAt: new Date() })
       .where(eq(emailVerificationTokens.id, tokenId));
+  }
+
+  async deleteAccount(userId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx.delete(organizations).where(eq(organizations.ownerId, userId));
+      await tx.delete(projects).where(eq(projects.createdBy, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async revokeAllSessions(userId: string): Promise<void> {
