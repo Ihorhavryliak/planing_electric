@@ -1,4 +1,3 @@
-import { stat } from 'node:fs/promises';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -7,7 +6,7 @@ import {
 } from '../../common/storage/storage-driver';
 
 export interface StoredFileInfo {
-  path: string;
+  data: Buffer;
   size: number;
   mimeType: string;
 }
@@ -32,16 +31,11 @@ export class PlanStorageService {
     key: string,
     mimeType: string,
   ): Promise<StoredFileInfo | null> {
-    const filePath = await this.driver.getLocalPath(key);
-    if (!filePath) {
+    const data = await this.driver.getBuffer(key);
+    if (!data) {
       return null;
     }
-    try {
-      const info = await stat(filePath);
-      return { path: filePath, size: info.size, mimeType };
-    } catch {
-      return null;
-    }
+    return { data, size: data.byteLength, mimeType };
   }
 
   remove(key: string | null): Promise<void> {

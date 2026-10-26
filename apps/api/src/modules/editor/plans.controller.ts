@@ -1,4 +1,4 @@
-import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import {
   Body,
   Controller,
@@ -108,7 +108,7 @@ export class PlansController {
       'Content-Disposition': 'inline',
     });
 
-    return new StreamableFile(createReadStream(content.path));
+    return new StreamableFile(Readable.from(content.data));
   }
 
   @Get('plans/:id/preview')
@@ -126,6 +126,6 @@ export class PlansController {
       'Content-Disposition': 'inline',
     });
 
-    return new StreamableFile(createReadStream(content.path));
+    return new StreamableFile(Readable.from(content.data));
   }
 }

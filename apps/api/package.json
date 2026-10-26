@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1156.0",
     "@drawmyplace/calculations": "workspace:*",
     "@drawmyplace/contracts": "workspace:*",
     "@drawmyplace/database": "workspace:*",

@@ -16,7 +16,14 @@ const envSchema = z.object({
     .min(1)
     .max(1440)
     .default(15),
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
   STORAGE_DIR: z.string().min(1).default('storage'),
+  S3_BUCKET: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_ENDPOINT: z.string().optional(),
+  S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).default('false'),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(20),
   PLATFORM_ADMIN_EMAILS: z.string().default(''),
   MAIL_DRIVER: z.enum(['log', 'smtp']).default('log'),

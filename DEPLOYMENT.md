@@ -21,7 +21,11 @@ Copy `.env.example` to `.env` and set:
 | `WEB_ORIGIN` | Public web origin used for CORS |
 | `SESSION_TTL_DAYS` | Session lifetime |
 | `AUTH_RATE_LIMIT` / `AUTH_RATE_WINDOW_MINUTES` | Login/register rate limiting |
-| `STORAGE_DIR` | Directory for uploaded files and previews |
+| `STORAGE_DRIVER` | `local` or `s3` |
+| `STORAGE_DIR` | Directory for uploaded files and previews (local driver) |
+| `S3_BUCKET` / `S3_REGION` / `S3_ENDPOINT` | Object storage target |
+| `S3_FORCE_PATH_STYLE` | `true` for MinIO and some S3-compatible providers |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | Object storage credentials |
 | `MAX_UPLOAD_MB` | Max plan upload size |
 | `PLATFORM_ADMIN_EMAILS` | Comma-separated platform administrator emails |
 | `MAIL_DRIVER` | `log` (development) or `smtp` |
