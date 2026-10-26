@@ -37,6 +37,8 @@ import {
   ImagePlus,
   LoaderCircle,
   Lock,
+  PanelRightClose,
+  PanelRightOpen,
   RotateCcw,
   Ruler,
   Save,
@@ -106,7 +108,19 @@ import {
   updatePlan,
   uploadPlanPreview,
 } from './editor-api';
-import { EditorCanvas, type PlacementRequest } from './editor-canvas';
+import {
+  EditorCanvas,
+  type EditorTool,
+  type PlacementRequest,
+  type ToolRequest,
+} from './editor-canvas';
+import { CommandPalette, type CommandPaletteItem } from './command-palette';
+import { HotkeysOverlay } from './hotkeys-overlay';
+import { RoomNavigator } from './room-navigator';
+import {
+  UI_SCALES,
+  useEditorPreferences,
+} from './editor-preferences';
 
 const ThreeView = lazy(() =>
   import('./three-view').then((module) => ({ default: module.ThreeView })),
@@ -442,7 +456,13 @@ export function PlanEditor({
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
+  const [toolRequest, setToolRequest] = useState<ToolRequest | null>(null);
+  const [fitRequest, setFitRequest] = useState(0);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
+  const { preferences, setUiScale, toggleSidebar } = useEditorPreferences();
   const {
     settings: takeoffSettings,
     setWallHeight,
@@ -2147,6 +2167,169 @@ export function PlanEditor({
     void saveCircuits(circuits.filter((circuit) => circuit.id !== id));
   }
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+
+      if (typing) return;
+
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.key.toLowerCase() === 'k'
+      ) {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+        return;
+      }
+
+      if (event.key === '?') {
+        event.preventDefault();
+        setHotkeysOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  function requestTool(tool: EditorTool, pointType?: ElectricalPointType) {
+    setToolRequest({ tool, pointType, nonce: Date.now() });
+  }
+
+  function focusRoom(roomId: string) {
+    const room = rooms.find((item) => item.id === roomId);
+
+    if (!room) return;
+
+    selectRoom(roomId);
+    const xs = room.boundary.map((point) => point.x);
+    const ys = room.boundary.map((point) => point.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const width = Math.max(maxX - minX, 1);
+    const height = Math.max(maxY - minY, 1);
+    const zoom = Math.min(4, Math.max(0.2, 600 / Math.max(width, height)));
+
+    setViewport((current) => ({
+      ...current,
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2,
+      zoom,
+    }));
+  }
+
+  const paletteCommands: CommandPaletteItem[] = [
+    {
+      id: 'tool-select',
+      label: t('hotkeys.select'),
+      shortcut: 'V',
+      run: () => requestTool('select'),
+    },
+    {
+      id: 'tool-pan',
+      label: t('hotkeys.pan'),
+      shortcut: 'H',
+      run: () => requestTool('pan'),
+    },
+    {
+      id: 'tool-route',
+      label: t('hotkeys.route'),
+      shortcut: 'R',
+      run: () => requestTool('route'),
+    },
+    {
+      id: 'tool-wall',
+      label: t('hotkeys.wall'),
+      shortcut: 'Q',
+      run: () => requestTool('wall'),
+    },
+    {
+      id: 'tool-room',
+      label: t('hotkeys.room'),
+      shortcut: 'O',
+      run: () => requestTool('room'),
+    },
+    {
+      id: 'tool-dimension',
+      label: t('hotkeys.dimension'),
+      shortcut: 'D',
+      run: () => requestTool('dimension'),
+    },
+    {
+      id: 'tool-calibrate',
+      label: t('hotkeys.calibrate'),
+      shortcut: 'C',
+      run: () => requestTool('calibrate'),
+    },
+    ...(
+      [
+        ['socket', 'S'],
+        ['switch', 'W'],
+        ['light', 'L'],
+        ['panel', 'B'],
+        ['junction', 'J'],
+      ] as const
+    ).map(([type, shortcut]) => ({
+      id: `place-${type}`,
+      label: t('editor.placeTool', {
+        symbol: t(`editor.point.${type}`).toLowerCase(),
+      }),
+      shortcut,
+      run: () => requestTool('place', type),
+    })),
+    {
+      id: 'fit',
+      label: t('editor.fit'),
+      shortcut: '0',
+      run: () => setFitRequest(Date.now()),
+    },
+    {
+      id: 'undo',
+      label: t('editor.undo'),
+      shortcut: 'Ctrl+Z',
+      run: () => void applyHistory('undo'),
+    },
+    {
+      id: 'redo',
+      label: t('editor.redo'),
+      shortcut: 'Ctrl+Shift+Z',
+      run: () => void applyHistory('redo'),
+    },
+    {
+      id: 'view-3d',
+      label: viewMode === '2d' ? t('editor.view3d') : t('editor.view2d'),
+      hint: t('editor.viewMode'),
+      run: () => setViewMode((mode) => (mode === '2d' ? '3d' : '2d')),
+    },
+    {
+      id: 'preview',
+      label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
+      run: () => setPreviewMode((value) => !value),
+    },
+    {
+      id: 'panels',
+      label: preferences.sidebarCollapsed
+        ? t('editor.showPanels')
+        : t('editor.hidePanels'),
+      run: toggleSidebar,
+    },
+    {
+      id: 'hotkeys',
+      label: t('hotkeys.title'),
+      shortcut: '?',
+      run: () => setHotkeysOpen(true),
+    },
+  ];
+
   function focusValidationTarget(target: ValidationTarget) {
     switch (target.kind) {
       case 'point':
@@ -2184,12 +2367,28 @@ export function PlanEditor({
 
   return (
     <>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="relative h-[65vh] min-h-[440px] lg:h-[calc(100vh-12rem)]">
+      <div
+        style={{ zoom: preferences.uiScale }}
+        className={
+          previewMode || preferences.sidebarCollapsed
+            ? 'relative'
+            : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]'
+        }
+      >
+        <div
+          className={`relative min-h-[440px] ${
+            previewMode
+              ? 'h-[calc(100vh-6rem)]'
+              : 'h-[65vh] lg:h-[calc(100vh-12rem)]'
+          }`}
+        >
           {viewMode === '2d' ? (
           <EditorCanvas
             image={image}
             placementRequest={placementRequest}
+            toolRequest={toolRequest}
+            fitRequest={fitRequest}
+            readOnly={previewMode}
             underlay={underlay}
             viewport={viewport}
             autoFit={plan.version === 1}
@@ -2335,7 +2534,60 @@ export function PlanEditor({
           ) : null}
         </div>
 
+        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
+          <button
+            type="button"
+            title={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            aria-label={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            aria-pressed={previewMode}
+            onClick={() => setPreviewMode((value) => !value)}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+              previewMode
+                ? 'bg-amber-400 text-slate-950'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+            )}
+          >
+            {previewMode ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+          {previewMode ? null : (
+            <button
+              type="button"
+              title={
+                preferences.sidebarCollapsed
+                  ? t('editor.showPanels')
+                  : t('editor.hidePanels')
+              }
+              aria-label={
+                preferences.sidebarCollapsed
+                  ? t('editor.showPanels')
+                  : t('editor.hidePanels')
+              }
+              aria-pressed={preferences.sidebarCollapsed}
+              onClick={toggleSidebar}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              {preferences.sidebarCollapsed ? (
+                <PanelRightOpen className="h-4 w-4" />
+              ) : (
+                <PanelRightClose className="h-4 w-4" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {previewMode || preferences.sidebarCollapsed ? null : (
         <aside className="space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+          <RoomNavigator
+            rooms={rooms}
+            selectedRoomId={selectedRoomId}
+            onSelect={focusRoom}
+          />
+
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.dropDefaults')}
@@ -2897,6 +3149,57 @@ export function PlanEditor({
           ) : null}
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h2 className="text-sm font-semibold text-white">
+              {t('editor.view')}
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              {t('editor.uiScale')}
+            </p>
+            <div className="mt-2 grid grid-cols-4 gap-1">
+              {UI_SCALES.map((scale) => (
+                <button
+                  key={scale}
+                  type="button"
+                  aria-pressed={preferences.uiScale === scale}
+                  onClick={() => setUiScale(scale)}
+                  className={cn(
+                    'rounded-lg border px-1 py-1 text-[11px] tabular-nums transition',
+                    preferences.uiScale === scale
+                      ? 'border-amber-400/40 bg-amber-400/15 text-amber-100'
+                      : 'border-white/10 text-slate-400 hover:bg-white/5 hover:text-slate-200',
+                  )}
+                >
+                  {Math.round(scale * 100)}%
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => setPreviewMode(true)}
+              >
+                <Eye className="h-4 w-4" />
+                {t('editor.preview')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setHotkeysOpen(true)}
+              >
+                {t('hotkeys.title')}
+              </Button>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              {t('editor.paletteHint')}{' '}
+              <kbd className="rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[10px] text-slate-400">
+                Ctrl K
+              </kbd>
+            </p>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.underlay')}
@@ -3190,6 +3493,7 @@ export function PlanEditor({
             ) : null}
           </section>
         </aside>
+        )}
       </div>
 
       {pendingCalibration ? (
@@ -3216,6 +3520,16 @@ export function PlanEditor({
           onConfirm={(page) => void performReplace(pendingPdf.file, page)}
         />
       ) : null}
+
+      <CommandPalette
+        open={paletteOpen}
+        commands={paletteCommands}
+        onClose={() => setPaletteOpen(false)}
+      />
+      <HotkeysOverlay
+        open={hotkeysOpen}
+        onClose={() => setHotkeysOpen(false)}
+      />
     </>
   );
 }

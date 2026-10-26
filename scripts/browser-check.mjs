@@ -408,6 +408,51 @@ async function main() {
   await page.getByRole('button', { name: 'Use this page' }).click();
   await page.getByText(/Loading underlay|Rendering PDF page/).waitFor({ state: 'hidden', timeout: 30000 });
 
+  // Command palette, shortcut overview, preview and panel controls.
+  await page.keyboard.press('Control+k');
+  const palette = page.getByRole('dialog', { name: 'Command palette' });
+  await palette.waitFor();
+  await page.getByLabel('Search commands').fill('preview');
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Exit preview' }).waitFor();
+  await page.getByRole('button', { name: 'Exit preview' }).click();
+  await circuitsSection.getByText('L1', { exact: true }).waitFor();
+
+  await page.keyboard.press('?');
+  const hotkeys = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  await hotkeys.waitFor();
+  await hotkeys.getByRole('button', { name: 'Close shortcuts' }).click();
+
+  await page.getByRole('button', { name: 'Hide panels' }).click();
+  await page.getByRole('button', { name: 'Show panels' }).click();
+  await circuitsSection.getByText('L1', { exact: true }).waitFor();
+
+  await page.getByRole('button', { name: '110%', exact: true }).click();
+  if ((await page.locator('[style*="zoom: 1.1"]').count()) === 0) {
+    throw new Error('Interface scale was not applied.');
+  }
+  await page.getByRole('button', { name: '100%', exact: true }).click();
+
+  const roomNav = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Room navigation', exact: true }),
+  });
+  await roomNav.getByRole('button').first().click();
+  if (
+    (await roomNav.getByRole('button').first().getAttribute('aria-pressed')) !==
+    'true'
+  ) {
+    throw new Error('Room navigation did not select the room.');
+  }
+
+  const orthoToggle = page.getByRole('button', {
+    name: 'Orthogonal routing',
+  });
+  await orthoToggle.click();
+  if ((await orthoToggle.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('Orthogonal routing toggle did not activate.');
+  }
+  await orthoToggle.click();
+
   // Validation aggregates plan issues and jumps to the affected device.
   const validationSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Validation', exact: true }),
@@ -454,6 +499,22 @@ async function main() {
   await page.waitForURL('**/local/*');
   await page.locator('canvas').waitFor();
   await page.getByText('Plan scale is not calibrated.').waitFor();
+
+  await page.keyboard.press('Control+k');
+  const localPalette = page.getByRole('dialog', { name: 'Command palette' });
+  await localPalette.waitFor();
+  await page.getByLabel('Search commands').fill('preview');
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Exit preview' }).waitFor();
+  await page.getByRole('button', { name: 'Exit preview' }).click();
+
+  await page.keyboard.press('?');
+  const localHotkeys = page.getByRole('dialog', {
+    name: 'Keyboard shortcuts',
+  });
+  await localHotkeys.waitFor();
+  await localHotkeys.getByRole('button', { name: 'Close shortcuts' }).click();
+
   const localCanvas = await page.locator('canvas').boundingBox();
   if (!localCanvas) throw new Error('Local canvas is not visible');
   await page.getByRole('button', { name: 'Draw wall tool' }).click();

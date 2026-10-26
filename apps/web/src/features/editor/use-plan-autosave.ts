@@ -43,6 +43,10 @@ export function usePlanAutosave({
   );
   const latestRef = useRef({ underlay, viewport });
   latestRef.current = { underlay, viewport };
+  // Circuit edits and other plan patches also bump the version; always send the
+  // newest one so an autosave started before them cannot conflict.
+  const planVersionRef = useRef(plan.version);
+  planVersionRef.current = plan.version;
 
   const onPlanChangeRef = useRef(onPlanChange);
   onPlanChangeRef.current = onPlanChange;
@@ -73,7 +77,7 @@ export function usePlanAutosave({
         const updated = await updatePlan(plan.id, {
           underlay: state.underlay,
           viewport: state.viewport,
-          expectedVersion: plan.version,
+          expectedVersion: planVersionRef.current,
         });
 
         if (!mountedRef.current) {
@@ -81,6 +85,10 @@ export function usePlanAutosave({
         }
 
         lastSavedRef.current = serialized;
+        planVersionRef.current = Math.max(
+          planVersionRef.current,
+          updated.version,
+        );
         onPlanChangeRef.current(updated);
 
         if (saveGenerationRef.current === generation) {

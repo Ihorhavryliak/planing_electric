@@ -17,7 +17,9 @@ import {
   Box,
   BrickWall,
   Cable,
+  CornerDownRight,
   Download,
+  Grid3x3,
   Hand,
   Lightbulb,
   Magnet,
@@ -92,7 +94,7 @@ import {
   symbolForShortcut,
 } from './point-symbols';
 
-type EditorTool =
+export type EditorTool =
   | 'select'
   | 'pan'
   | 'calibrate'
@@ -192,9 +194,19 @@ export interface PlacementRequest {
   nonce: number;
 }
 
+export interface ToolRequest {
+  tool: EditorTool;
+  pointType?: ElectricalPointType;
+  /** Changes on every request so repeated selections retrigger the tool. */
+  nonce: number;
+}
+
 interface EditorCanvasProps {
   image: HTMLImageElement | null;
   placementRequest?: PlacementRequest | null;
+  toolRequest?: ToolRequest | null;
+  fitRequest?: number;
+  readOnly?: boolean;
   underlay: UnderlaySettings;
   viewport: EditorViewport;
   autoFit: boolean;
@@ -371,6 +383,9 @@ function drawUnderlay(
 export function EditorCanvas({
   image,
   placementRequest,
+  toolRequest,
+  fitRequest,
+  readOnly = false,
   underlay,
   viewport,
   autoFit,
@@ -436,6 +451,8 @@ export function EditorCanvas({
   const [placeType, setPlaceType] = useState<ElectricalPointType>('socket');
   const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(false);
+  const [gridEnabled, setGridEnabled] = useState(true);
+  const [orthoEnabled, setOrthoEnabled] = useState(false);
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
   const [pointDrag, setPointDrag] = useState<{ id: string; at: Vec2 } | null>(
@@ -487,6 +504,9 @@ export function EditorCanvas({
   const layersRef = useRef(layers);
   layersRef.current = layers;
   const snapRef = useRef(snapEnabled);
+  const orthoRef = useRef(orthoEnabled);
+  const readOnlyRef = useRef(readOnly);
+  const lastFitRequestRef = useRef(0);
   const onSelectPointRef = useRef(onSelectPoint);
   const onCreatePointRef = useRef(onCreatePoint);
   const onMovePointRef = useRef(onMovePoint);
@@ -540,6 +560,8 @@ export function EditorCanvas({
   placeTypeRef.current = placeType;
   placeSubtypeRef.current = placeSubtype;
   snapRef.current = snapEnabled;
+  orthoRef.current = orthoEnabled;
+  readOnlyRef.current = readOnly;
   onSelectPointRef.current = onSelectPoint;
   onCreatePointRef.current = onCreatePoint;
   onMovePointRef.current = onMovePoint;
@@ -829,7 +851,9 @@ export function EditorCanvas({
     context.fillStyle = '#020617';
     context.fillRect(0, 0, size.width, size.height);
 
-    drawGrid(context, size.width, size.height, viewport);
+    if (gridEnabled) {
+      drawGrid(context, size.width, size.height, viewport);
+    }
     drawUnderlay(
       context,
       size.width,
@@ -845,9 +869,9 @@ export function EditorCanvas({
       layers?.walls === false ? [] : renderWalls,
       layers?.rooms === false ? [] : renderRooms,
       layers?.dimensions === false ? [] : renderDimensions,
-      selectedWallId,
-      selectedRoomId,
-      selectedDimensionId,
+      readOnly ? null : selectedWallId,
+      readOnly ? null : selectedRoomId,
+      readOnly ? null : selectedDimensionId,
       structureDraft,
       hoverWorld,
       metersPerUnit,
@@ -873,7 +897,7 @@ export function EditorCanvas({
       size,
       viewport,
       layers?.routes === false ? [] : renderRoutes,
-      selectedRouteId,
+      readOnly ? null : selectedRouteId,
       routeDraft,
       tool === 'route' ? hoverWorld : null,
       selectedVertex?.routeId === selectedRouteId
@@ -893,8 +917,8 @@ export function EditorCanvas({
       size,
       viewport,
       layers?.points === false ? [] : renderPoints,
-      selectedPointId,
-      tool === 'place' && hoverWorld && layers?.points !== false
+      readOnly ? null : selectedPointId,
+      !readOnly && tool === 'place' && hoverWorld && layers?.points !== false
         ? { type: placeType, at: hoverWorld }
         : null,
       layers?.labels !== false,
@@ -916,6 +940,7 @@ export function EditorCanvas({
     circuits,
     layers,
     penetrationMarkers,
+    readOnly,
     selectedOpeningId,
     selectedPointId,
     selectedRouteId,
@@ -929,6 +954,7 @@ export function EditorCanvas({
     placeType,
     hoverWorld,
     metersPerUnit,
+    gridEnabled,
   ]);
 
   useEffect(() => {
@@ -977,6 +1003,34 @@ export function EditorCanvas({
     setPlaceSubtype(placementRequest.subtype);
     setTool('place');
   }, [placementRequest]);
+
+  useEffect(() => {
+    if (!toolRequest) {
+      return;
+    }
+
+    if (toolRequest.pointType) {
+      setPlaceType(toolRequest.pointType);
+      setPlaceSubtype(null);
+    }
+
+    setTool(toolRequest.tool);
+  }, [toolRequest]);
+
+  useEffect(() => {
+    if (!fitRequest || fitRequest === lastFitRequestRef.current) {
+      return;
+    }
+
+    lastFitRequestRef.current = fitRequest;
+    fitToPlan();
+  }, [fitRequest]);
+
+  useEffect(() => {
+    if (readOnly) {
+      setTool('pan');
+    }
+  }, [readOnly]);
 
   useEffect(() => {
     setSelectedVertex(null);
@@ -1129,14 +1183,27 @@ export function EditorCanvas({
 
   /** Route bends snap to an electrical point first, then to the grid. */
   function routeSnap(screen: Vec2): Vec2 {
-    return (
-      snapToPoint(
-        pointsRef.current,
-        screen,
-        viewportRef.current,
-        sizeRef.current,
-      ) ?? snapped(toWorld(screen))
+    const point = snapToPoint(
+      pointsRef.current,
+      screen,
+      viewportRef.current,
+      sizeRef.current,
     );
+
+    if (point) return point;
+
+    const world = snapped(toWorld(screen));
+
+    if (!orthoRef.current) return world;
+
+    const draft = routeDraftRef.current;
+    const last = draft[draft.length - 1];
+
+    if (!last) return world;
+
+    return Math.abs(world.x - last.x) >= Math.abs(world.y - last.y)
+      ? { x: world.x, y: last.y }
+      : { x: last.x, y: world.y };
   }
 
   /** Position of a dragged route vertex; only route ends snap to points. */
@@ -2103,6 +2170,20 @@ export function EditorCanvas({
         return;
       }
 
+      if (readOnlyRef.current) {
+        if (event.key === '0') {
+          event.preventDefault();
+          fitToPlan();
+        } else if (event.key === '+' || event.key === '=') {
+          event.preventDefault();
+          zoomAt(sizeRef.current.width / 2, sizeRef.current.height / 2, 1.25);
+        } else if (event.key === '-') {
+          event.preventDefault();
+          zoomAt(sizeRef.current.width / 2, sizeRef.current.height / 2, 0.8);
+        }
+        return;
+      }
+
       const modifier = event.ctrlKey || event.metaKey;
 
       if (modifier && !event.altKey) {
@@ -2336,6 +2417,7 @@ export function EditorCanvas({
         onContextMenu={(event) => event.preventDefault()}
       />
 
+      {readOnly ? null : (
       <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
         <button
           type="button"
@@ -2496,6 +2578,38 @@ export function EditorCanvas({
           <Magnet className="h-4 w-4" />
         </button>
 
+        <button
+          type="button"
+          title={t('editor.orthoShortcut')}
+          aria-label={t('editor.ortho')}
+          aria-pressed={orthoEnabled}
+          onClick={() => setOrthoEnabled((value) => !value)}
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            orthoEnabled
+              ? 'bg-amber-400 text-slate-950'
+              : 'text-slate-300 hover:bg-white/10 hover:text-white',
+          )}
+        >
+          <CornerDownRight className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          title={t('editor.gridShortcut')}
+          aria-label={t('editor.grid')}
+          aria-pressed={gridEnabled}
+          onClick={() => setGridEnabled((value) => !value)}
+          className={cn(
+            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            gridEnabled
+              ? 'bg-amber-400 text-slate-950'
+              : 'text-slate-300 hover:bg-white/10 hover:text-white',
+          )}
+        >
+          <Grid3x3 className="h-4 w-4" />
+        </button>
+
         <span className="mx-1 h-5 w-px bg-white/10" />
 
         <button
@@ -2585,6 +2699,7 @@ export function EditorCanvas({
           <Download className="h-4 w-4" />
         </button>
       </div>
+      )}
 
       <div className="pointer-events-none absolute right-3 bottom-3 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
         {tool === 'calibrate'

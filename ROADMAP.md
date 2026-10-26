@@ -280,7 +280,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.3 **Монтажні елементи**: спосіб монтажу траси (стеля/підлога/стіна/штроба) з шириною й глибиною штроби, автоматичний підрахунок проходів крізь стіни з маркерами на плані, підписи кіл на трасах, панель шарів із збереженням видимості, приховування шарів вимикає й hit-testing.
 - [x] 15.4 **Live takeoff у редакторі**: стіни (довжина, вузли, сегменти, площа брутто/нетто, об'єм), кімнати (площа, периметр), пристрої за типами й підтипами, кабель за колами та вартість кабелю за матеріалами; редаговані висота стін і товщина за замовчуванням із збереженням; працює в серверному й локальному редакторах.
 - [x] 15.5 **Панель Validation**: 14 правил для кіл, кабелю, пристроїв, отворів і калібрування; агреговані рядки з кількістю, фільтри за severity, перехід до проблемної точки/траси/стіни/отвору/кола або секції масштабу; працює в серверному й локальному редакторах.
-- [ ] 15.6 **UX редактора**: preview-режим, command palette, оверлей гарячих клавіш, zoom інтерфейсу, колапс панелей, навігація по кімнатах, grid/snap/ortho.
+- [x] 15.6 **UX редактора**: preview-режим без панелей і тулбара, command palette (Ctrl+K) з пошуком, оверлей гарячих клавіш (?), масштаб інтерфейсу 90–120% із збереженням, колапс бічної панелі, навігація кімнатами з фокусом viewport, керування сіткою/прив’язкою/ортогональним трасуванням; усе доступно і в локальному редакторі.
 - [ ] 15.7 **Split 2D/3D**: одночасний перегляд і редагування 2D зліва й 3D справа; синхронізація камери/виділення.
 - [ ] 15.8 **Documentation workspace**: вкладки Materials / Cost estimate / Validation / Variants / Print PDF в одному місці.
 - [ ] 15.9 **Експорт**: SVG 2D-плану, SVG електричної схеми, повний project JSON для серверних проєктів.
@@ -399,3 +399,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 92, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice.
 - Issues/blockers: issues are recalculated client-side from loaded drawing data, not persisted; calibration target scrolls to the scale section instead of starting the calibration tool.
 - Next action: editor UX polish (15.6).
+
+### 2026-10-26 — session 22: editor UX and navigation
+- Completed: command palette with search and keyboard navigation (Ctrl/Cmd+K), shortcut overview (?), preview mode that hides panels/toolbar and disables editing while keeping pan/zoom, interface scale 90–120% persisted locally, collapsible panels, room navigator that centres and fits the selected room, and toolbar toggles for grid, grid snapping and orthogonal cable routing; canvas gained `toolRequest`/`fitRequest`/`readOnly` control props. Also fixed a real autosave race: `usePlanAutosave` now sends the latest plan version (circuit edits bumped it), eliminating 409 conflicts during rapid viewport/panel changes.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` (twice after the autosave fix).
+- Issues/blockers: orthogonal mode applies to cable routes only; preview still shows the underlay and drawing, but panels are hidden and edits are blocked.
+- Next action: split 2D/3D view (15.7).
