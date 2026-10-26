@@ -1998,6 +1998,10 @@ export function PlanEditor({
     walls.find((wall) => wall.id === selectedWallId) ?? null;
   const selectedOpening =
     openings.find((opening) => opening.id === selectedOpeningId) ?? null;
+  const openingWall =
+    selectedOpening &&
+    walls.find((wall) => wall.id === selectedOpening.wallId);
+  const activeOpeningWall = selectedWall ?? openingWall ?? null;
   const selectedRoom =
     rooms.find((room) => room.id === selectedRoomId) ?? null;
   const selectedDimension =
@@ -2454,19 +2458,23 @@ export function PlanEditor({
             <p className="mt-1 text-xs text-slate-500">
               Select a wall, then add a door or window.
             </p>
-            {selectedWall ? (
+            {activeOpeningWall ? (
               <div className="mt-2 flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleAddOpening(selectedWall, 'door')}
+                  onClick={() =>
+                    void handleAddOpening(activeOpeningWall, 'door')
+                  }
                 >
                   Add door
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void handleAddOpening(selectedWall, 'window')}
+                  onClick={() =>
+                    void handleAddOpening(activeOpeningWall, 'window')
+                  }
                 >
                   Add window
                 </Button>

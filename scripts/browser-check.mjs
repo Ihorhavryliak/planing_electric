@@ -86,6 +86,11 @@ async function main() {
   await page.getByPlaceholder('Test apartment').fill('Browser Check Project');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('link', { name: /open project/i }).first().click();
+
+  await page.getByPlaceholder('Variant name').fill('Base variant');
+  await page.getByRole('button', { name: 'Save snapshot' }).click();
+  await page.getByRole('cell', { name: 'Base variant' }).waitFor();
+
   await page.getByRole('link', { name: /open plan editor/i }).click();
 
   await page.getByRole('button', { name: 'Add floor' }).click();
