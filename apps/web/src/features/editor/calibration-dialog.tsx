@@ -3,6 +3,7 @@ import { LoaderCircle, Ruler, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/features/i18n/i18n-context';
 import {
   distanceBetween,
   formatScale,
@@ -32,6 +33,7 @@ export function CalibrationDialog({
   onCancel,
   onConfirm,
 }: CalibrationDialogProps) {
+  const { t } = useI18n();
   const [distance, setDistance] = useState('');
   const [unit, setUnit] = useState<LengthUnitInput>(existing?.unit ?? 'm');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,17 +92,18 @@ export function CalibrationDialog({
                 id="calibration-title"
                 className="text-base font-semibold text-white"
               >
-                Set the plan scale
+                {t('editor.calibrationTitle')}
               </h2>
               <p className="mt-1 text-xs text-slate-400">
-                The two points are {drawingDistance.toFixed(1)} drawing units
-                apart. How far apart are they in reality?
+                {t('editor.calibrationIntro', {
+                  distance: drawingDistance.toFixed(1),
+                })}
               </p>
             </div>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('editor.close')}
             onClick={onCancel}
             disabled={busy}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white disabled:opacity-50"
@@ -115,7 +118,7 @@ export function CalibrationDialog({
               htmlFor="calibration-distance"
               className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
             >
-              Real distance
+              {t('editor.realDistance')}
             </label>
             <div className="flex gap-2">
               <Input
@@ -131,10 +134,10 @@ export function CalibrationDialog({
                 value={distance}
                 onChange={(event) => setDistance(event.target.value)}
                 disabled={busy}
-                placeholder="e.g. 3.5"
+                placeholder={t('editor.distanceExample')}
               />
               <select
-                aria-label="Unit"
+                aria-label={t('editor.unit')}
                 value={unit}
                 onChange={(event) =>
                   setUnit(event.target.value as LengthUnitInput)
@@ -151,18 +154,19 @@ export function CalibrationDialog({
             </div>
             <p className="text-xs text-slate-500" aria-live="polite">
               {distance.trim() !== '' && !valid
-                ? `Enter a number greater than 0 and at most ${MAX_DISTANCE.toLocaleString()}.`
+                ? t('editor.distanceInvalid', {
+                    max: MAX_DISTANCE.toLocaleString(),
+                  })
                 : scale !== null
-                  ? `Resulting scale: ${formatScale(scale)}`
-                  : 'Use a dimension you know, such as a wall or a door.'}
+                  ? t('editor.resultingScale', { scale: formatScale(scale) })
+                  : t('editor.scaleHint')}
             </p>
           </div>
 
           {existing ? (
             <p className="flex gap-2 rounded-lg border border-amber-400/20 bg-amber-400/10 p-2.5 text-xs leading-relaxed text-amber-100">
               <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Recalibrating changes every calculated cable length on this
-              plan.
+              {t('editor.recalibrateWarning')}
             </p>
           ) : null}
 
@@ -179,7 +183,7 @@ export function CalibrationDialog({
               disabled={busy}
               type="button"
             >
-              Cancel
+              {t('editor.cancel')}
             </Button>
             <Button type="submit" disabled={busy || !valid || scale === null}>
               {busy ? (
@@ -187,7 +191,7 @@ export function CalibrationDialog({
               ) : (
                 <Ruler className="h-4 w-4" />
               )}
-              {busy ? 'Saving…' : 'Set scale'}
+              {busy ? t('editor.saving') : t('editor.setScale')}
             </Button>
           </div>
         </form>

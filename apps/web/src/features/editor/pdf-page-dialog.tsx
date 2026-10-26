@@ -2,6 +2,7 @@ import { FileText, LoaderCircle, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/features/i18n/i18n-context';
 
 interface PdfPageDialogProps {
   fileName: string;
@@ -20,6 +21,7 @@ export function PdfPageDialog({
   onCancel,
   onConfirm,
 }: PdfPageDialogProps) {
+  const { t } = useI18n();
   const [page, setPage] = useState(
     String(Math.min(Math.max(1, initialPage), pageCount)),
   );
@@ -75,17 +77,22 @@ export function PdfPageDialog({
                 id="pdf-page-title"
                 className="text-base font-semibold text-white"
               >
-                Choose a PDF page
+                {t('editor.choosePdfPage')}
               </h2>
               <p className="mt-1 max-w-xs truncate text-xs text-slate-400">
-                {fileName} · {pageCount}{' '}
-                {pageCount === 1 ? 'page' : 'pages'}
+                {fileName} ·{' '}
+                {t(
+                  pageCount === 1
+                    ? 'editor.pageCountOne'
+                    : 'editor.pageCountMany',
+                  { count: pageCount },
+                )}
               </p>
             </div>
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('editor.close')}
             onClick={onCancel}
             disabled={busy}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white disabled:opacity-50"
@@ -100,7 +107,7 @@ export function PdfPageDialog({
               htmlFor="pdf-page"
               className="block text-xs font-medium tracking-wide text-slate-400 uppercase"
             >
-              Page number
+              {t('editor.pageNumber')}
             </label>
             <Input
               ref={inputRef}
@@ -116,8 +123,7 @@ export function PdfPageDialog({
               disabled={busy}
             />
             <p className="text-xs text-slate-500">
-              The selected page is rendered into the plan underlay. You can
-              change it later in the editor sidebar.
+              {t('editor.pdfPageNote')}
             </p>
           </div>
 
@@ -128,7 +134,7 @@ export function PdfPageDialog({
               disabled={busy}
               type="button"
             >
-              Cancel
+              {t('editor.cancel')}
             </Button>
             <Button type="submit" disabled={busy}>
               {busy ? (
@@ -136,7 +142,7 @@ export function PdfPageDialog({
               ) : (
                 <FileText className="h-4 w-4" />
               )}
-              {busy ? 'Uploading…' : 'Use this page'}
+              {busy ? t('editor.uploading') : t('editor.useThisPage')}
             </Button>
           </div>
         </form>

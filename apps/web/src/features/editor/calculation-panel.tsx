@@ -1,6 +1,7 @@
 import type { PlanCalculation, PublicRoute } from '@drawmyplace/contracts';
 import { LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { formatMeters } from './editor-geometry';
 
 interface CalculationPanelProps {
@@ -22,6 +23,7 @@ export function CalculationPanel({
   selectedRouteId,
   onSelectRoute,
 }: CalculationPanelProps) {
+  const { t } = useI18n();
   const results = new Map(
     (calculation?.routes ?? []).map((item) => [item.routeId, item]),
   );
@@ -29,7 +31,9 @@ export function CalculationPanel({
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-white">Cable routes</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t('editor.cableRoutes')}
+        </h2>
         <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
           {loading ? <LoaderCircle className="h-3 w-3 animate-spin" /> : null}
           {routes.length}
@@ -38,8 +42,7 @@ export function CalculationPanel({
 
       {routes.length === 0 ? (
         <p className="mt-3 text-xs leading-relaxed text-slate-400">
-          Press R, click to add bends, double-click or Enter to finish. Route
-          ends snap to electrical points.
+          {t('editor.routesEmpty')}
         </p>
       ) : (
         <ul className="mt-3 space-y-1">
@@ -58,7 +61,10 @@ export function CalculationPanel({
                       : 'text-slate-300 hover:bg-white/5',
                   )}
                 >
-                  <span>{route.circuitId ?? `Route ${index + 1}`}</span>
+                  <span>
+                    {route.circuitId ??
+                      t('editor.routeN', { index: index + 1 })}
+                  </span>
                   <span className="tabular-nums">
                     {result?.requiredLength != null
                       ? formatMeters(result.requiredLength)
@@ -73,7 +79,7 @@ export function CalculationPanel({
 
       {calculation && routes.length > 0 ? (
         <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
-          <span className="text-slate-400">Total cable required</span>
+          <span className="text-slate-400">{t('editor.totalCable')}</span>
           <span className="font-semibold text-white tabular-nums">
             {calculation.totalRequiredLength != null
               ? formatMeters(calculation.totalRequiredLength)
@@ -90,7 +96,7 @@ export function CalculationPanel({
 
       {error ? (
         <p role="alert" className="mt-3 text-xs text-rose-300">
-          Could not calculate: {error}
+          {t('editor.calcFailed', { error })}
         </p>
       ) : null}
       {actionError ? (

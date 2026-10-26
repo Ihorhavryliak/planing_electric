@@ -5,6 +5,7 @@ import type {
 } from '@drawmyplace/contracts';
 import { Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
 import { POINT_SYMBOL_LIST, POINT_SYMBOLS } from './point-symbols';
@@ -22,6 +23,7 @@ export function PointPropertiesPanel({
   onDuplicate,
   onDelete,
 }: PointPropertiesPanelProps) {
+  const { t } = useI18n();
   const symbol = POINT_SYMBOLS[point.type];
 
   function commitNumber(
@@ -48,7 +50,7 @@ export function PointPropertiesPanel({
 
   function commitCoordinate(raw: string, axis: 'x' | 'y'): string | null {
     const parsed = parseOptionalNumber(raw, {
-      label: `Coordinate ${axis.toUpperCase()}`,
+      label: t('editor.coordinate', { axis: axis.toUpperCase() }),
       min: -10_000_000,
       max: 10_000_000,
     });
@@ -58,7 +60,7 @@ export function PointPropertiesPanel({
     }
 
     if (parsed.value === null) {
-      return 'Coordinate is required.';
+      return t('editor.coordinateRequired');
     }
 
     onChange(axis === 'x' ? { x: parsed.value } : { y: parsed.value });
@@ -74,12 +76,14 @@ export function PointPropertiesPanel({
           className="h-3 w-3 rounded-full"
           style={{ backgroundColor: symbol.color }}
         />
-        <h2 className="text-sm font-semibold text-white">{symbol.label}</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t(`editor.point.${point.type}`)}
+        </h2>
       </div>
 
       <div className="mt-3 space-y-3">
         <label className="block">
-          <span className="text-xs text-slate-400">Type</span>
+          <span className="text-xs text-slate-400">{t('editor.type')}</span>
           <select
             className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:outline-none"
             value={point.type}
@@ -89,7 +93,7 @@ export function PointPropertiesPanel({
           >
             {POINT_SYMBOL_LIST.map((item) => (
               <option key={item.type} value={item.type}>
-                {item.label}
+                {t(`editor.point.${item.type}`)}
               </option>
             ))}
           </select>
@@ -97,9 +101,9 @@ export function PointPropertiesPanel({
 
         <CommitField
           key={`${point.id}-label-${point.label ?? ''}`}
-          label="Label"
+          label={t('editor.label')}
           initial={point.label ?? ''}
-          placeholder="e.g. S1"
+          placeholder={t('editor.labelPlaceholder')}
           maxLength={60}
           onCommit={(raw) => {
             onChange({ label: raw.trim() === '' ? null : raw.trim() });
@@ -110,26 +114,26 @@ export function PointPropertiesPanel({
         <div className="grid grid-cols-2 gap-3">
           <CommitField
             key={`${point.id}-height-${point.mountingHeight ?? ''}`}
-            label="Mounting height"
+            label={t('editor.mountingHeight')}
             hint="m"
             inputMode="decimal"
             initial={formatFieldNumber(point.mountingHeight)}
-            placeholder="not set"
+            placeholder={t('editor.notSet')}
             onCommit={(raw) =>
-              commitNumber(raw, 'Mounting height', 0, 100, (value) => ({
+              commitNumber(raw, t('editor.mountingHeight'), 0, 100, (value) => ({
                 mountingHeight: value,
               }))
             }
           />
           <CommitField
             key={`${point.id}-drop-${point.properties.verticalDropMeters ?? ''}`}
-            label="Vertical drop"
+            label={t('editor.verticalDrop')}
             hint="m"
             inputMode="decimal"
             initial={formatFieldNumber(point.properties.verticalDropMeters)}
-            placeholder="type default"
+            placeholder={t('editor.typeDefault')}
             onCommit={(raw) =>
-              commitNumber(raw, 'Vertical drop', 0, 100, (value) => {
+              commitNumber(raw, t('editor.verticalDrop'), 0, 100, (value) => {
                 const { verticalDropMeters: _previous, ...rest } =
                   point.properties;
 
@@ -144,12 +148,12 @@ export function PointPropertiesPanel({
 
         <CommitField
           key={`${point.id}-rotation-${point.rotation}`}
-          label="Rotation"
-          hint="degrees"
+          label={t('editor.rotation')}
+          hint={t('editor.degrees')}
           inputMode="decimal"
           initial={formatFieldNumber(point.rotation)}
           onCommit={(raw) =>
-            commitNumber(raw, 'Rotation', -360, 360, (value) => ({
+            commitNumber(raw, t('editor.rotation'), -360, 360, (value) => ({
               rotation: value ?? 0,
             }))
           }
@@ -158,16 +162,16 @@ export function PointPropertiesPanel({
         <div className="grid grid-cols-2 gap-3">
           <CommitField
             key={`${point.id}-x-${point.x}`}
-            label="X"
-            hint="plan units"
+            label={t('editor.x')}
+            hint={t('editor.planUnits')}
             inputMode="decimal"
             initial={formatFieldNumber(point.x)}
             onCommit={(raw) => commitCoordinate(raw, 'x')}
           />
           <CommitField
             key={`${point.id}-y-${point.y}`}
-            label="Y"
-            hint="plan units"
+            label={t('editor.y')}
+            hint={t('editor.planUnits')}
             inputMode="decimal"
             initial={formatFieldNumber(point.y)}
             onCommit={(raw) => commitCoordinate(raw, 'y')}
@@ -176,18 +180,17 @@ export function PointPropertiesPanel({
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-        The vertical drop is added to a cable route only when the route end
-        sits exactly on this point. Leave it empty to use the type default.
+        {t('editor.dropNote')}
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="outline" size="sm" onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
-          Duplicate
+          {t('editor.duplicate')}
         </Button>
         <Button variant="outline" size="sm" onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
-          Delete
+          {t('editor.delete')}
         </Button>
       </div>
     </section>

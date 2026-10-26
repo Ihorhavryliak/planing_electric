@@ -8,6 +8,7 @@ import type {
 } from '@drawmyplace/contracts';
 import { Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
 import { formatMeters } from './editor-geometry';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
@@ -31,15 +32,23 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function realLength(length: number, metersPerUnit: number | null): string {
+function realLength(
+  length: number,
+  metersPerUnit: number | null,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
   return metersPerUnit === null
-    ? `${length.toFixed(1)} units`
+    ? t('editor.units', { value: length.toFixed(1) })
     : formatMeters(length * metersPerUnit);
 }
 
-function realArea(area: number, metersPerUnit: number | null): string {
+function realArea(
+  area: number,
+  metersPerUnit: number | null,
+  t: (key: string, params?: Record<string, string | number>) => string,
+): string {
   if (metersPerUnit === null) {
-    return `${area.toFixed(0)} units²`;
+    return t('editor.unitsSquared', { value: area.toFixed(0) });
   }
 
   const squareMeters = area * metersPerUnit * metersPerUnit;
@@ -63,21 +72,24 @@ export function WallPropertiesPanel({
   onDuplicate,
   onDelete,
 }: WallPanelProps) {
+  const { t } = useI18n();
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-white">Wall</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t('editor.wallHeading')}
+        </h2>
         <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
-          {wall.geometry.length} points
+          {t('editor.pointsCount', { count: wall.geometry.length })}
         </span>
       </div>
 
       <div className="mt-3 space-y-3">
         <CommitField
           key={`${wall.id}-label-${wall.label ?? ''}`}
-          label="Label"
+          label={t('editor.label')}
           initial={wall.label ?? ''}
-          placeholder="e.g. North wall"
+          placeholder={t('editor.northWallExample')}
           maxLength={80}
           onCommit={(raw) => {
             onChange({ label: raw.trim() === '' ? null : raw.trim() });
@@ -86,14 +98,14 @@ export function WallPropertiesPanel({
         />
         <CommitField
           key={`${wall.id}-thickness-${wall.thickness ?? ''}`}
-          label="Thickness"
-          hint="plan units"
+          label={t('editor.thickness')}
+          hint={t('editor.planUnits')}
           inputMode="decimal"
           initial={formatFieldNumber(wall.thickness)}
-          placeholder="not set"
+          placeholder={t('editor.notSet')}
           onCommit={(raw) => {
             const parsed = parseOptionalNumber(raw, {
-              label: 'Thickness',
+              label: t('editor.thickness'),
               min: 0,
               max: 100_000,
             });
@@ -110,31 +122,33 @@ export function WallPropertiesPanel({
 
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
-          label="Total length"
-          value={realLength(polylineLength(wall.geometry), metersPerUnit)}
+          label={t('editor.totalLength')}
+          value={realLength(polylineLength(wall.geometry), metersPerUnit, t)}
         />
-        <Row label="Segments" value={String(wall.geometry.length - 1)} />
+        <Row
+          label={t('editor.segments')}
+          value={String(wall.geometry.length - 1)}
+        />
         {wall.thickness !== null && metersPerUnit !== null ? (
           <Row
-            label="Thickness"
+            label={t('editor.thickness')}
             value={formatMeters(wall.thickness * metersPerUnit)}
           />
         ) : null}
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-        Drag a square handle to move a corner, or drag the wall body to move the
-        whole wall. Thickness is drawn in plan units.
+        {t('editor.wallNote')}
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="outline" size="sm" onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
-          Duplicate
+          {t('editor.duplicate')}
         </Button>
         <Button variant="outline" size="sm" onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
-          Delete
+          {t('editor.delete')}
         </Button>
       </div>
     </section>
@@ -155,26 +169,29 @@ export function RoomPropertiesPanel({
   onDuplicate,
   onDelete,
 }: RoomPanelProps) {
+  const { t } = useI18n();
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-white">Room</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t('editor.roomHeading')}
+        </h2>
         <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
-          {room.boundary.length} points
+          {t('editor.pointsCount', { count: room.boundary.length })}
         </span>
       </div>
 
       <div className="mt-3">
         <CommitField
           key={`${room.id}-name-${room.name}`}
-          label="Name"
+          label={t('editor.name')}
           initial={room.name}
           maxLength={80}
           onCommit={(raw) => {
             const name = raw.trim();
 
             if (name === '') {
-              return 'Room name is required.';
+              return t('editor.roomNameRequired');
             }
 
             onChange({ name });
@@ -185,29 +202,31 @@ export function RoomPropertiesPanel({
 
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
-          label="Area"
-          value={realArea(polygonArea(room.boundary), metersPerUnit)}
+          label={t('editor.area')}
+          value={realArea(polygonArea(room.boundary), metersPerUnit, t)}
         />
         <Row
-          label="Perimeter"
-          value={realLength(polygonPerimeter(room.boundary), metersPerUnit)}
+          label={t('editor.perimeter')}
+          value={realLength(polygonPerimeter(room.boundary), metersPerUnit, t)}
         />
-        <Row label="Corners" value={String(room.boundary.length)} />
+        <Row
+          label={t('editor.corners')}
+          value={String(room.boundary.length)}
+        />
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-        Drag a square handle to move a corner, or drag the room body to move the
-        whole room. Area is computed from the boundary.
+        {t('editor.roomNote')}
       </p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <Button variant="outline" size="sm" onClick={onDuplicate}>
           <Copy className="h-4 w-4" />
-          Duplicate
+          {t('editor.duplicate')}
         </Button>
         <Button variant="outline" size="sm" onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
-          Delete
+          {t('editor.delete')}
         </Button>
       </div>
     </section>
@@ -226,6 +245,7 @@ export function DimensionPropertiesPanel({
   onChange,
   onDelete,
 }: DimensionPanelProps) {
+  const { t } = useI18n();
   const line = dimensionLine(
     dimension.pointA,
     dimension.pointB,
@@ -235,18 +255,20 @@ export function DimensionPropertiesPanel({
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-white">Dimension</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t('editor.dimensionHeading')}
+        </h2>
         <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
-          measured
+          {t('editor.measured')}
         </span>
       </div>
 
       <div className="mt-3 space-y-3">
         <CommitField
           key={`${dimension.id}-label-${dimension.label ?? ''}`}
-          label="Label"
+          label={t('editor.label')}
           initial={dimension.label ?? ''}
-          placeholder="e.g. Window width"
+          placeholder={t('editor.windowWidthExample')}
           maxLength={80}
           onCommit={(raw) => {
             onChange({ label: raw.trim() === '' ? null : raw.trim() });
@@ -255,13 +277,13 @@ export function DimensionPropertiesPanel({
         />
         <CommitField
           key={`${dimension.id}-offset-${dimension.offset}`}
-          label="Offset"
-          hint="plan units"
+          label={t('editor.offset')}
+          hint={t('editor.planUnits')}
           inputMode="decimal"
           initial={formatFieldNumber(dimension.offset)}
           onCommit={(raw) => {
             const parsed = parseOptionalNumber(raw, {
-              label: 'Offset',
+              label: t('editor.offset'),
               min: -1_000_000,
               max: 1_000_000,
             });
@@ -278,15 +300,17 @@ export function DimensionPropertiesPanel({
 
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
         <Row
-          label="Measured"
-          value={realLength(line.length, metersPerUnit)}
+          label={t('editor.measured')}
+          value={realLength(line.length, metersPerUnit, t)}
         />
-        <Row label="Offset" value={dimension.offset.toFixed(2)} />
+        <Row
+          label={t('editor.offset')}
+          value={dimension.offset.toFixed(2)}
+        />
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-        Drag the dimension line to change its offset. The measured distance
-        always follows the two anchor points.
+        {t('editor.dimensionNote')}
       </p>
 
       <Button
@@ -296,7 +320,7 @@ export function DimensionPropertiesPanel({
         onClick={onDelete}
       >
         <Trash2 className="h-4 w-4" />
-        Delete dimension
+        {t('editor.deleteDimension')}
       </Button>
     </section>
   );

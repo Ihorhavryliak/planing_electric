@@ -42,6 +42,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { drawCalibrationOverlay } from './calibration-overlay';
 import {
   distanceBetween,
@@ -83,7 +84,6 @@ import {
   type ClickRecord,
 } from './route-geometry';
 import {
-  POINT_SYMBOLS,
   POINT_SYMBOL_LIST,
   symbolForShortcut,
 } from './point-symbols';
@@ -404,6 +404,7 @@ export function EditorCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const autoFitPendingRef = useRef(autoFit);
+  const { t } = useI18n();
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [tool, setTool] = useState<EditorTool>('select');
   const [spaceDown, setSpaceDown] = useState(false);
@@ -2227,7 +2228,7 @@ export function EditorCanvas({
         ref={canvasRef}
         className="absolute inset-0 h-full w-full touch-none select-none"
         style={{ cursor }}
-        aria-label="Floor plan canvas"
+        aria-label={t('editor.floorPlanCanvas')}
         role="application"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -2245,8 +2246,8 @@ export function EditorCanvas({
       <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
         <button
           type="button"
-          title="Select and move (V)"
-          aria-label="Select tool"
+          title={t('editor.select')}
+          aria-label={t('editor.selectTool')}
           aria-pressed={tool === 'select'}
           onClick={() => setTool('select')}
           className={cn(
@@ -2260,8 +2261,8 @@ export function EditorCanvas({
         </button>
         <button
           type="button"
-          title="Pan (H)"
-          aria-label="Pan tool"
+          title={t('editor.pan')}
+          aria-label={t('editor.panTool')}
           aria-pressed={tool === 'pan'}
           onClick={() => setTool('pan')}
           className={cn(
@@ -2275,8 +2276,8 @@ export function EditorCanvas({
         </button>
         <button
           type="button"
-          title="Calibrate scale (C)"
-          aria-label="Calibrate scale tool"
+          title={t('editor.calibrate')}
+          aria-label={t('editor.calibrateTool')}
           aria-pressed={tool === 'calibrate'}
           onClick={() => setTool('calibrate')}
           className={cn(
@@ -2294,15 +2295,16 @@ export function EditorCanvas({
         {POINT_SYMBOL_LIST.map((symbol) => {
           const Icon = POINT_ICONS[symbol.type];
           const active = tool === 'place' && placeType === symbol.type;
+          const name = t(`editor.point.${symbol.type}`).toLowerCase();
 
           return (
             <button
               key={symbol.type}
               type="button"
-              title={`Place ${symbol.label.toLowerCase()}${
+              title={`${t('editor.placeTool', { symbol: name })}${
                 symbol.shortcut ? ` (${symbol.shortcut})` : ''
               }`}
-              aria-label={`Place ${symbol.label.toLowerCase()}`}
+              aria-label={t('editor.placeTool', { symbol: name })}
               aria-pressed={active}
               onClick={() => {
                 setPlaceType(symbol.type);
@@ -2322,8 +2324,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Draw cable route (R)"
-          aria-label="Draw cable route tool"
+          title={t('editor.route')}
+          aria-label={t('editor.routeTool')}
           aria-pressed={tool === 'route'}
           onClick={() => setTool('route')}
           className={cn(
@@ -2338,8 +2340,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Draw wall (Q)"
-          aria-label="Draw wall tool"
+          title={t('editor.wall')}
+          aria-label={t('editor.wallTool')}
           aria-pressed={tool === 'wall'}
           onClick={() => setTool('wall')}
           className={cn(
@@ -2354,8 +2356,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Draw room outline (O)"
-          aria-label="Draw room outline tool"
+          title={t('editor.room')}
+          aria-label={t('editor.roomTool')}
           aria-pressed={tool === 'room'}
           onClick={() => setTool('room')}
           className={cn(
@@ -2370,8 +2372,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Add dimension (D)"
-          aria-label="Add dimension tool"
+          title={t('editor.dimension')}
+          aria-label={t('editor.dimensionTool')}
           aria-pressed={tool === 'dimension'}
           onClick={() => setTool('dimension')}
           className={cn(
@@ -2386,8 +2388,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Snap to grid (G)"
-          aria-label="Snap to grid"
+          title={t('editor.snapShortcut')}
+          aria-label={t('editor.snap')}
           aria-pressed={snapEnabled}
           onClick={() => setSnapEnabled((value) => !value)}
           className={cn(
@@ -2404,8 +2406,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Undo (Ctrl+Z)"
-          aria-label="Undo"
+          title={t('editor.undoShortcut')}
+          aria-label={t('editor.undo')}
           onClick={onUndo}
           disabled={!canUndo || historyBusy}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
@@ -2414,8 +2416,8 @@ export function EditorCanvas({
         </button>
         <button
           type="button"
-          title="Redo (Ctrl+Shift+Z)"
-          aria-label="Redo"
+          title={t('editor.redoShortcut')}
+          aria-label={t('editor.redo')}
           onClick={onRedo}
           disabled={!canRedo || historyBusy}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
@@ -2427,8 +2429,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Zoom out (−)"
-          aria-label="Zoom out"
+          title={t('editor.zoomOutShortcut')}
+          aria-label={t('editor.zoomOut')}
           onClick={() =>
             zoomAt(size.width / 2, size.height / 2, 0.8)
           }
@@ -2438,7 +2440,7 @@ export function EditorCanvas({
         </button>
         <button
           type="button"
-          title="Reset to 100% (1)"
+          title={t('editor.resetZoom')}
           onClick={() =>
             zoomAt(size.width / 2, size.height / 2, 1 / viewport.zoom)
           }
@@ -2448,8 +2450,8 @@ export function EditorCanvas({
         </button>
         <button
           type="button"
-          title="Zoom in (+)"
-          aria-label="Zoom in"
+          title={t('editor.zoomInShortcut')}
+          aria-label={t('editor.zoomIn')}
           onClick={() =>
             zoomAt(size.width / 2, size.height / 2, 1.25)
           }
@@ -2462,8 +2464,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Fit plan (0)"
-          aria-label="Fit plan to view"
+          title={t('editor.fitShortcut')}
+          aria-label={t('editor.fit')}
           onClick={fitToPlan}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         >
@@ -2474,8 +2476,8 @@ export function EditorCanvas({
 
         <button
           type="button"
-          title="Download drawing as PNG"
-          aria-label="Download drawing as PNG"
+          title={t('editor.downloadPng')}
+          aria-label={t('editor.downloadPng')}
           onClick={() => {
             const canvas = canvasRef.current;
             if (!canvas) return;
@@ -2493,47 +2495,53 @@ export function EditorCanvas({
       <div className="pointer-events-none absolute right-3 bottom-3 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
         {tool === 'calibrate'
           ? calibrationDraft.length === 0
-            ? 'Click the first end of a known distance · Esc to cancel'
-            : 'Click the second end · Esc to restart'
+            ? t('editor.hint.calibrateFirst')
+            : t('editor.hint.calibrateSecond')
           : tool === 'route'
             ? routeDraft.length === 0
-              ? 'Click to start a route (ends snap to points) · Esc to exit'
-              : 'Click to add bends · Double-click or Enter to finish · Backspace removes the last'
+              ? t('editor.hint.routeStart')
+              : t('editor.hint.routeBends')
             : tool === 'wall'
               ? wallDraft.length === 0
-                ? 'Click to start a wall · Esc to exit'
-                : 'Click to add corners · Double-click or Enter to finish · Backspace removes the last'
+                ? t('editor.hint.wallStart')
+                : t('editor.hint.wallCorners')
               : tool === 'room'
                 ? roomDraft.length === 0
-                  ? 'Click to start a room outline · Esc to exit'
-                  : 'Click to add corners · Double-click or Enter to close the room · Backspace removes the last'
+                  ? t('editor.hint.roomStart')
+                  : t('editor.hint.roomCorners')
                 : tool === 'dimension'
                   ? dimensionDraft.length === 0
-                    ? 'Click the first measured point · Esc to exit'
-                    : 'Click the second measured point · Esc to cancel'
+                    ? t('editor.hint.dimensionFirst')
+                    : t('editor.hint.dimensionSecond')
                   : tool === 'place'
-                    ? `Click to place: ${POINT_SYMBOLS[placeType].label.toLowerCase()} · Esc to finish`
+                    ? t('editor.hint.place', {
+                        symbol: t(
+                          `editor.point.${placeType}`,
+                        ).toLowerCase(),
+                      })
                     : selectedPointId
-                      ? 'Drag to move · Delete to remove · Esc to deselect'
+                      ? t('editor.hint.selectedPoint')
                       : selectedRouteId
                         ? selectedVertex
-                          ? 'Selected bend · Delete removes it · Esc deselects'
-                          : 'Drag a square to move a bend · Click a circle to add one · Click a square then Delete to remove it'
+                          ? t('editor.hint.selectedBend')
+                          : t('editor.hint.selectedRoute')
                         : selectedWallId
-                          ? 'Drag a square to move a corner · Drag the wall to move it · Delete removes the wall'
+                          ? t('editor.hint.selectedWall')
                           : selectedRoomId
-                            ? 'Drag a square to move a corner · Drag the room to move it · Delete removes the room'
+                            ? t('editor.hint.selectedRoom')
                             : selectedDimensionId
-                              ? 'Drag the dimension line to change its offset · Delete removes it'
-                              : 'Drag to pan · Scroll to zoom · Space to pan'}
+                              ? t('editor.hint.selectedDimension')
+                              : t('editor.hint.idle')}
       </div>
 
       {!image ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-center backdrop-blur">
-            <p className="text-sm font-medium text-slate-200">Blank plan</p>
+            <p className="text-sm font-medium text-slate-200">
+              {t('editor.blankPlan')}
+            </p>
             <p className="mt-1 text-xs text-slate-500">
-              Grid units are independent of zoom and pan.
+              {t('editor.blankPlanHint')}
             </p>
           </div>
         </div>

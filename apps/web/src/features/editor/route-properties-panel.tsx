@@ -6,6 +6,7 @@ import type {
 } from '@drawmyplace/contracts';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
 import { formatMeters } from './editor-geometry';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
@@ -34,21 +35,24 @@ export function RoutePropertiesPanel({
   onChange,
   onDelete,
 }: RoutePropertiesPanelProps) {
+  const { t } = useI18n();
   const cableMaterials = materials.filter(
     (material) => material.category === 'cable' || material.category === null,
   );
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-white">Cable route</h2>
+        <h2 className="text-sm font-semibold text-white">
+          {t('editor.cableRoute')}
+        </h2>
         <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
-          {route.geometry.length} bends
+          {t('editor.bends', { count: route.geometry.length })}
         </span>
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
         <label className="block text-xs">
-          <span className="text-slate-400">Cable type</span>
+          <span className="text-slate-400">{t('editor.cableType')}</span>
           <select
             value={route.materialId ?? ''}
             onChange={(event) =>
@@ -58,7 +62,7 @@ export function RoutePropertiesPanel({
             }
             className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
           >
-            <option value="">Default cable</option>
+            <option value="">{t('editor.defaultCable')}</option>
             {cableMaterials.map((material) => (
               <option key={material.id} value={material.id}>
                 {material.name}
@@ -69,9 +73,9 @@ export function RoutePropertiesPanel({
         </label>
         <CommitField
           key={`${route.id}-circuit-${route.circuitId ?? ''}`}
-          label="Circuit"
+          label={t('editor.circuit')}
           initial={route.circuitId ?? ''}
-          placeholder="e.g. L1"
+          placeholder={t('editor.circuitPlaceholder')}
           maxLength={40}
           onCommit={(raw) => {
             onChange({ circuitId: raw.trim() === '' ? null : raw.trim() });
@@ -80,14 +84,14 @@ export function RoutePropertiesPanel({
         />
         <CommitField
           key={`${route.id}-waste-${route.settings.wastePercent ?? ''}`}
-          label="Waste"
+          label={t('editor.waste')}
           hint="%"
           inputMode="decimal"
           initial={formatFieldNumber(route.settings.wastePercent)}
-          placeholder="default 10"
+          placeholder={t('editor.wastePlaceholder')}
           onCommit={(raw) => {
             const parsed = parseOptionalNumber(raw, {
-              label: 'Waste',
+              label: t('editor.waste'),
               min: 0,
               max: 100,
             });
@@ -114,39 +118,39 @@ export function RoutePropertiesPanel({
         {calculation?.status === 'ok' ? (
           <>
             <Row
-              label="Along the plan"
+              label={t('editor.alongPlan')}
               value={formatMeters(calculation.planLength ?? 0)}
             />
             {calculation.drops.map((drop) => (
               <Row
                 key={drop.pointId}
-                label={`Drop: ${drop.label}`}
+                label={t('editor.dropLabel', { label: drop.label })}
                 value={formatMeters(drop.meters)}
               />
             ))}
             <Row
-              label={`Waste ${calculation.wastePercent ?? 0}%`}
+              label={t('editor.wastePercent', {
+                percent: calculation.wastePercent ?? 0,
+              })}
               value={formatMeters(calculation.wasteLength ?? 0)}
             />
             <div className="border-t border-white/10 pt-1.5">
               <Row
-                label="Cable required"
+                label={t('editor.cableRequired')}
                 value={formatMeters(calculation.requiredLength ?? 0)}
               />
             </div>
             {calculation.drops.length === 0 ? (
               <p className="pt-1 text-[11px] leading-relaxed text-slate-500">
-                No vertical drops: a drop is added only where a route end
-                sits on an electrical point. Draw route ends on points to
-                snap to them.
+                {t('editor.noDrops')}
               </p>
             ) : null}
           </>
         ) : (
           <p className="text-xs leading-relaxed text-slate-400">
             {calculation
-              ? 'Real length is unavailable until the plan scale is set.'
-              : 'Calculating…'}
+              ? t('editor.realLengthUnavailable')
+              : t('editor.calculating')}
           </p>
         )}
       </div>
@@ -158,14 +162,12 @@ export function RoutePropertiesPanel({
       ))}
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-        Drag a square handle to move a bend. Click a hollow circle on a segment
-        to add a bend; click a square and press Delete to remove it. Route ends
-        attached to an electrical point move with that point.
+        {t('editor.routeNote')}
       </p>
 
       <Button variant="outline" size="sm" className="mt-3 w-full" onClick={onDelete}>
         <Trash2 className="h-4 w-4" />
-        Delete route
+        {t('editor.deleteRoute')}
       </Button>
     </section>
   );

@@ -133,6 +133,7 @@ import {
   type AutosaveStatus,
 } from './use-plan-autosave';
 import { getErrorMessage } from '@/lib/api';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { cn } from '@/lib/utils';
 
 interface PlanEditorProps {
@@ -259,11 +260,11 @@ function calibrationInput(
   };
 }
 
-const saveLabels: Record<AutosaveStatus, string> = {
-  saved: 'All changes saved',
-  pending: 'Unsaved changes',
-  saving: 'Saving…',
-  error: 'Save failed',
+const saveLabelKeys: Record<AutosaveStatus, string> = {
+  saved: 'editor.allSaved',
+  pending: 'editor.unsavedChanges',
+  saving: 'editor.saving',
+  error: 'editor.saveFailed',
 };
 
 function SaveStatus({
@@ -275,6 +276,8 @@ function SaveStatus({
   error: string | null;
   onRetry: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -298,13 +301,13 @@ function SaveStatus({
           ) : (
             <TriangleAlert className="h-3.5 w-3.5" />
           )}
-          {saveLabels[status]}
+          {t(saveLabelKeys[status])}
         </span>
 
         {status === 'error' ? (
           <Button variant="ghost" size="sm" onClick={onRetry}>
             <RotateCcw className="h-3.5 w-3.5" />
-            Retry
+            {t('editor.retry')}
           </Button>
         ) : (
           <Save className="h-3.5 w-3.5 text-slate-600" />
@@ -374,6 +377,7 @@ export function PlanEditor({
   floorName,
   onPlanChange,
 }: PlanEditorProps) {
+  const { t } = useI18n();
   const [underlay, setUnderlay] = useState<UnderlaySettings>(plan.underlay);
   const [viewport, setViewport] = useState<EditorViewport>(plan.viewport);
   const [assetNonce, setAssetNonce] = useState(0);
@@ -892,7 +896,7 @@ export function PlanEditor({
       let activeId = created.id;
 
       pushHistory({
-        label: 'Draw route',
+        label: t('editor.history.drawRoute'),
         undo: async () => {
           await deleteRoute(activeId);
         },
@@ -932,7 +936,7 @@ export function PlanEditor({
         );
         bumpCalculation();
         pushHistory({
-          label: 'Edit route',
+          label: t('editor.history.editRoute'),
           undo: async () => {
             await updateRoute(id, updateRouteInput(previous));
           },
@@ -1011,7 +1015,7 @@ export function PlanEditor({
         let activeId: string | null = null;
 
         pushHistory({
-          label: 'Delete route',
+          label: t('editor.history.deleteRoute'),
           undo: async () => {
             const next = await createRoute(plan.id, input);
             activeId = next.id;
@@ -1048,7 +1052,7 @@ export function PlanEditor({
       let activeId = created.id;
 
       pushHistory({
-        label: 'Draw wall',
+        label: t('editor.history.drawWall'),
         undo: async () => {
           await deleteWall(activeId);
         },
@@ -1084,7 +1088,10 @@ export function PlanEditor({
           current.map((wall) => (wall.id === id ? saved : wall)),
         );
         pushHistory({
-          label: patch.geometry !== undefined ? 'Move wall' : 'Edit wall',
+          label:
+          patch.geometry !== undefined
+            ? t('editor.history.moveWall')
+            : t('editor.history.editWall'),
           undo: async () => {
             await updateWall(id, updateWallInput(previous));
           },
@@ -1130,7 +1137,7 @@ export function PlanEditor({
         let activeId: string | null = null;
 
         pushHistory({
-          label: 'Delete wall',
+          label: t('editor.history.deleteWall'),
           undo: async () => {
             const next = await createWall(plan.id, input);
             activeId = next.id;
@@ -1168,7 +1175,10 @@ export function PlanEditor({
       const input = createOpeningInput(created);
       let activeId = created.id;
       pushHistory({
-        label: type === 'door' ? 'Add door' : 'Add window',
+        label:
+          type === 'door'
+            ? t('editor.history.addDoor')
+            : t('editor.history.addWindow'),
         undo: async () => {
           await deleteOpening(activeId);
         },
@@ -1202,7 +1212,7 @@ export function PlanEditor({
           current.map((opening) => (opening.id === id ? saved : opening)),
         );
         pushHistory({
-          label: 'Edit opening',
+          label: t('editor.history.editOpening'),
           undo: async () => {
             await updateOpening(id, updateOpeningInput(previous));
           },
@@ -1236,7 +1246,7 @@ export function PlanEditor({
         const input = createOpeningInput(deleted);
         let activeId: string | null = null;
         pushHistory({
-          label: 'Delete opening',
+          label: t('editor.history.deleteOpening'),
           undo: async () => {
             const next = await createOpening(plan.id, input);
             activeId = next.id;
@@ -1279,7 +1289,7 @@ export function PlanEditor({
       let activeId = created.id;
 
       pushHistory({
-        label: 'Draw room',
+        label: t('editor.history.drawRoom'),
         undo: async () => {
           await deleteRoom(activeId);
         },
@@ -1315,7 +1325,10 @@ export function PlanEditor({
           current.map((room) => (room.id === id ? saved : room)),
         );
         pushHistory({
-          label: patch.boundary !== undefined ? 'Move room' : 'Edit room',
+          label:
+          patch.boundary !== undefined
+            ? t('editor.history.moveRoom')
+            : t('editor.history.editRoom'),
           undo: async () => {
             await updateRoom(id, updateRoomInput(previous));
           },
@@ -1351,7 +1364,7 @@ export function PlanEditor({
         let activeId: string | null = null;
 
         pushHistory({
-          label: 'Delete room',
+          label: t('editor.history.deleteRoom'),
           undo: async () => {
             const next = await createRoom(plan.id, input);
             activeId = next.id;
@@ -1410,7 +1423,7 @@ export function PlanEditor({
       let activeId = created.id;
 
       pushHistory({
-        label: 'Add dimension',
+        label: t('editor.history.addDimension'),
         undo: async () => {
           await deleteDimension(activeId);
         },
@@ -1455,7 +1468,7 @@ export function PlanEditor({
           ),
         );
         pushHistory({
-          label: 'Edit dimension',
+          label: t('editor.history.editDimension'),
           undo: async () => {
             await updateDimension(id, updateDimensionInput(previous));
           },
@@ -1497,7 +1510,7 @@ export function PlanEditor({
         let activeId: string | null = null;
 
         pushHistory({
-          label: 'Delete dimension',
+          label: t('editor.history.deleteDimension'),
           undo: async () => {
             const next = await createDimension(plan.id, input);
             activeId = next.id;
@@ -1542,7 +1555,7 @@ export function PlanEditor({
       bumpCalculation();
 
       pushHistory({
-        label: 'Set scale',
+        label: t('editor.history.setScale'),
         undo: async () => {
           if (previousCalibration) {
             await saveCalibration(plan.id, previousCalibration);
@@ -1587,7 +1600,7 @@ export function PlanEditor({
       let activeId = created.id;
 
       pushHistory({
-        label: 'Place point',
+        label: t('editor.history.placePoint'),
         undo: async () => {
           await deletePoint(activeId);
         },
@@ -1672,8 +1685,8 @@ export function PlanEditor({
         pushHistory({
           label:
             patch.x !== undefined || patch.y !== undefined
-              ? 'Move point'
-              : 'Edit point',
+              ? t('editor.history.movePoint')
+              : t('editor.history.editPoint'),
           undo: async () => {
             await updatePoint(id, updatePointInput(previous));
           },
@@ -1733,7 +1746,7 @@ export function PlanEditor({
         let activeId: string | null = null;
 
         pushHistory({
-          label: 'Delete point',
+          label: t('editor.history.deletePoint'),
           undo: async () => {
             const next = await createPoint(plan.id, input);
             activeId = next.id;
@@ -1789,7 +1802,7 @@ export function PlanEditor({
 
       if (previousCalibration) {
         pushHistory({
-          label: 'Remove scale',
+          label: t('editor.history.removeScale'),
           undo: async () => {
             await saveCalibration(plan.id, previousCalibration);
           },
@@ -2080,7 +2093,7 @@ export function PlanEditor({
               fallback={
                 <div className="flex h-full min-h-[440px] items-center justify-center rounded-2xl border border-white/10 bg-slate-950 text-sm text-slate-400">
                   <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-amber-300" />
-                  Loading 3D view…
+                  {t('editor.loading3d')}
                 </div>
               }
             >
@@ -2104,10 +2117,12 @@ export function PlanEditor({
             <OverlayCard>
               <LoaderCircle className="mx-auto h-6 w-6 animate-spin text-amber-300" />
               <p className="mt-3 text-sm font-medium text-white">
-                {previewBusy ? 'Rendering PDF page…' : 'Loading underlay…'}
+                {previewBusy
+                  ? t('editor.renderingPdf')
+                  : t('editor.loadingUnderlay')}
               </p>
               <p className="mt-1 text-xs text-slate-400">
-                This can take a moment for large drawings.
+                {t('editor.largeDrawing')}
               </p>
             </OverlayCard>
           ) : null}
@@ -2116,7 +2131,7 @@ export function PlanEditor({
             <OverlayCard>
               <TriangleAlert className="mx-auto h-6 w-6 text-rose-300" />
               <p className="mt-3 text-sm font-medium text-white">
-                Underlay unavailable
+                {t('editor.underlayUnavailable')}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-slate-400">
                 {overlayError}
@@ -2128,7 +2143,7 @@ export function PlanEditor({
                 onClick={needsPreview ? retryPreview : retryImage}
               >
                 <RotateCcw className="h-4 w-4" />
-                Try again
+                {t('editor.tryAgain')}
               </Button>
             </OverlayCard>
           ) : null}
@@ -2137,10 +2152,10 @@ export function PlanEditor({
             <OverlayCard>
               <FileText className="mx-auto h-6 w-6 text-amber-300" />
               <p className="mt-3 text-sm font-medium text-white">
-                PDF preview is not ready
+                {t('editor.pdfNotReady')}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-slate-400">
-                Render page {plan.page ?? 1} to use it as the plan underlay.
+                {t('editor.renderPageToUse', { page: plan.page ?? 1 })}
               </p>
               <Button
                 variant="outline"
@@ -2149,7 +2164,7 @@ export function PlanEditor({
                 onClick={retryPreview}
               >
                 <FileText className="h-4 w-4" />
-                Render preview
+                {t('editor.renderPreview')}
               </Button>
             </OverlayCard>
           ) : null}
@@ -2158,16 +2173,16 @@ export function PlanEditor({
         <aside className="space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <h2 className="text-sm font-semibold text-white">
-              Vertical drop defaults
+              {t('editor.dropDefaults')}
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Meters per point type. Per-point overrides win.
+              {t('editor.dropHint')}
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {(['socket', 'switch', 'light', 'panel', 'junction', 'custom'] as const).map(
                 (type) => (
                   <label key={type} className="text-xs text-slate-400">
-                    {type}
+                    {t(`editor.point.${type}`)}
                     <Input
                       type="number"
                       min="0"
@@ -2196,10 +2211,10 @@ export function PlanEditor({
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <h2 className="text-sm font-semibold text-white">
-              Validation rules
+              {t('editor.validationRules')}
             </h2>
             <label className="mt-3 block text-xs text-slate-400">
-              Max circuit length (m)
+              {t('editor.maxCircuit')}
               <Input
                 type="number"
                 min="1"
@@ -2207,7 +2222,7 @@ export function PlanEditor({
                 value={maxCircuit}
                 onChange={(event) => setMaxCircuit(event.target.value)}
                 onBlur={() => void commitValidation()}
-                placeholder="No limit"
+                placeholder={t('editor.noLimit')}
                 className="mt-1 h-8"
               />
             </label>
@@ -2221,16 +2236,21 @@ export function PlanEditor({
                   void commitValidation(next);
                 }}
               />
-              Require a cable type on every route
+              {t('editor.requireCableType')}
             </label>
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Save state</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {t('editor.saveState')}
+            </h2>
             <p className="mt-1 text-xs text-slate-500">
-              {floorName} · revision {plan.version}
+              {t('editor.floorRevision', {
+                floor: floorName,
+                version: plan.version,
+              })}
               {collaborators > 0
-                ? ` · ${collaborators} online`
+                ? ` · ${t('editor.onlineCount', { count: collaborators })}`
                 : ''}
             </p>
             <div className="mt-3">
@@ -2243,20 +2263,20 @@ export function PlanEditor({
                 size="sm"
                 onClick={() => setViewMode('2d')}
               >
-                2D edit
+                {t('editor.view2d')}
               </Button>
               <Button
                 variant={viewMode === '3d' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('3d')}
               >
-                3D view
+                {t('editor.view3d')}
               </Button>
             </div>
 
             {remoteUpdate ? (
               <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
-                <p>Another collaborator changed this plan.</p>
+                <p>{t('editor.collaboratorChanged')}</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -2266,7 +2286,7 @@ export function PlanEditor({
                     void reloadDrawing();
                   }}
                 >
-                  Reload drawing
+                  {t('editor.reloadDrawing')}
                 </Button>
               </div>
             ) : null}
@@ -2282,16 +2302,22 @@ export function PlanEditor({
 
             {undoCommand || redoCommand ? (
               <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                {undoCommand ? `Undo: ${undoCommand.label}` : null}
+                {undoCommand
+                  ? t('editor.undoLabel', { label: undoCommand.label })
+                  : null}
                 {undoCommand && redoCommand ? ' · ' : null}
-                {redoCommand ? `Redo: ${redoCommand.label}` : null}
+                {redoCommand
+                  ? t('editor.redoLabel', { label: redoCommand.label })
+                  : null}
               </p>
             ) : null}
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">Scale</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.scale')}
+              </h2>
               <span
                 className={cn(
                   'rounded-full border px-2 py-0.5 text-[11px]',
@@ -2300,7 +2326,7 @@ export function PlanEditor({
                     : 'border-amber-400/30 bg-amber-400/10 text-amber-200',
                 )}
               >
-                {calibration ? 'Calibrated' : 'Not calibrated'}
+                {calibration ? t('editor.calibrated') : t('editor.notCalibrated')}
               </span>
             </div>
 
@@ -2308,21 +2334,22 @@ export function PlanEditor({
               <p className="mt-3 text-xs leading-relaxed text-slate-300">
                 {formatScale(calibration.metersPerUnit)}
                 <span className="block text-slate-500">
-                  Known distance: {calibration.realDistance} {calibration.unit}
+                  {t('editor.knownDistance', {
+                    distance: calibration.realDistance,
+                    unit: calibration.unit,
+                  })}
                 </span>
               </p>
             ) : (
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Real cable lengths are unavailable until the scale is set. Use
-                the ruler tool (C) and click two ends of a known distance.
+                {t('editor.scaleMissing')}
               </p>
             )}
 
             {calibration ? (
               <>
                 <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-                  The scale belongs to plan coordinates. If you resize or
-                  rotate the underlay afterwards, calibrate again.
+                  {t('editor.scaleNote')}
                 </p>
                 <Button
                   variant="outline"
@@ -2332,7 +2359,7 @@ export function PlanEditor({
                   onClick={handleRemoveCalibration}
                 >
                   <Ruler className="h-4 w-4" />
-                  Remove scale
+                  {t('editor.removeScale')}
                 </Button>
               </>
             ) : null}
@@ -2344,14 +2371,16 @@ export function PlanEditor({
             ) : null}
             {drawingError ? (
               <p className="mt-2 text-xs text-rose-300" role="alert">
-                Could not load the scale: {drawingError}
+                {t('editor.scaleLoadFailed', { error: drawingError })}
               </p>
             ) : null}
           </section>
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">Points</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.points')}
+              </h2>
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400 tabular-nums">
                 {points.length}
               </span>
@@ -2359,8 +2388,7 @@ export function PlanEditor({
 
             {points.length === 0 ? (
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Pick a symbol in the toolbar (S socket, W switch, L light, B
-                board, J junction) and click the plan to place it.
+                {t('editor.pointsEmpty')}
               </p>
             ) : (
               <ul className="mt-3 space-y-1 text-xs text-slate-300">
@@ -2377,7 +2405,7 @@ export function PlanEditor({
                         className="h-2 w-2 rounded-full"
                         style={{ backgroundColor: symbol.color }}
                       />
-                      {symbol.label}
+                      {t(`editor.point.${symbol.type}`)}
                     </span>
                     <span className="tabular-nums">
                       {pointCounts[symbol.type]}
@@ -2399,7 +2427,9 @@ export function PlanEditor({
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">Layout</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.layout')}
+              </h2>
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400 tabular-nums">
                 {walls.length + rooms.length + dimensions.length}
               </span>
@@ -2407,21 +2437,20 @@ export function PlanEditor({
 
             {walls.length + rooms.length + dimensions.length === 0 ? (
               <p className="mt-3 text-xs leading-relaxed text-slate-400">
-                Draw walls (Q), closed room outlines (O), and measured
-                dimensions (D) to describe the floor plan.
+                {t('editor.layoutEmpty')}
               </p>
             ) : (
               <ul className="mt-3 space-y-1 text-xs text-slate-300">
                 <li className="flex items-center justify-between gap-2">
-                  <span>Walls</span>
+                  <span>{t('editor.walls')}</span>
                   <span className="tabular-nums">{walls.length}</span>
                 </li>
                 <li className="flex items-center justify-between gap-2">
-                  <span>Rooms</span>
+                  <span>{t('editor.rooms')}</span>
                   <span className="tabular-nums">{rooms.length}</span>
                 </li>
                 <li className="flex items-center justify-between gap-2">
-                  <span>Dimensions</span>
+                  <span>{t('editor.dimensions')}</span>
                   <span className="tabular-nums">{dimensions.length}</span>
                 </li>
               </ul>
@@ -2451,12 +2480,12 @@ export function PlanEditor({
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
-                Openings
+                {t('editor.openings')}
               </h2>
               <span className="text-xs text-slate-500">{openings.length}</span>
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              Select a wall, then add a door or window.
+              {t('editor.openingHint')}
             </p>
             {activeOpeningWall ? (
               <div className="mt-2 flex gap-2">
@@ -2467,7 +2496,7 @@ export function PlanEditor({
                     void handleAddOpening(activeOpeningWall, 'door')
                   }
                 >
-                  Add door
+                  {t('editor.addDoor')}
                 </Button>
                 <Button
                   variant="outline"
@@ -2476,7 +2505,7 @@ export function PlanEditor({
                     void handleAddOpening(activeOpeningWall, 'window')
                   }
                 >
-                  Add window
+                  {t('editor.addWindow')}
                 </Button>
               </div>
             ) : null}
@@ -2494,7 +2523,9 @@ export function PlanEditor({
                           : 'text-slate-300 hover:bg-white/5'
                       }`}
                     >
-                      <span className="capitalize">{opening.type}</span>
+                      <span className="capitalize">
+                        {t(`editor.opening.${opening.type}`)}
+                      </span>
                       <span className="text-slate-500">
                         {opening.width.toFixed(0)}
                       </span>
@@ -2508,7 +2539,7 @@ export function PlanEditor({
               <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                 <div className="grid grid-cols-2 gap-2">
                   <label className="text-xs text-slate-400">
-                    Offset
+                    {t('editor.offset')}
                     <Input
                       type="number"
                       min="0"
@@ -2523,7 +2554,7 @@ export function PlanEditor({
                     />
                   </label>
                   <label className="text-xs text-slate-400">
-                    Width
+                    {t('editor.width')}
                     <Input
                       type="number"
                       min="1"
@@ -2538,7 +2569,7 @@ export function PlanEditor({
                     />
                   </label>
                   <label className="text-xs text-slate-400">
-                    Height
+                    {t('editor.height')}
                     <Input
                       type="number"
                       min="1"
@@ -2553,7 +2584,7 @@ export function PlanEditor({
                     />
                   </label>
                   <label className="text-xs text-slate-400">
-                    Sill
+                    {t('editor.sill')}
                     <Input
                       type="number"
                       min="0"
@@ -2581,14 +2612,14 @@ export function PlanEditor({
                       })
                     }
                   />
-                  Flip door swing
+                  {t('editor.flipDoor')}
                 </label>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => void handleDeleteOpening(selectedOpening.id)}
                 >
-                  Delete opening
+                  {t('editor.deleteOpening')}
                 </Button>
               </div>
             ) : null}
@@ -2652,12 +2683,14 @@ export function PlanEditor({
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-white">Underlay</h2>
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.underlay')}
+              </h2>
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-400">
                 {plan.sourceType === 'blank'
-                  ? 'Blank'
+                  ? t('editor.blank')
                   : isPdf
-                    ? `PDF · page ${plan.page ?? 1}`
+                    ? t('editor.pdfPageBadge', { page: plan.page ?? 1 })
                     : plan.mimeType === 'image/png'
                       ? 'PNG'
                       : 'JPG'}
@@ -2666,8 +2699,7 @@ export function PlanEditor({
 
             {plan.sourceType === 'blank' ? (
               <div className="mt-3 rounded-xl border border-dashed border-white/15 bg-white/[0.03] p-3 text-xs leading-relaxed text-slate-400">
-                This is a blank plan. Add a JPG, PNG, or PDF page as an
-                optional underlay at any time.
+                {t('editor.underlayBlank')}
               </div>
             ) : (
               <>
@@ -2684,7 +2716,9 @@ export function PlanEditor({
                     ) : (
                       <EyeOff className="h-4 w-4" />
                     )}
-                    {underlay.visible ? 'Visible' : 'Hidden'}
+                    {underlay.visible
+                      ? t('editor.visible')
+                      : t('editor.hidden')}
                   </Button>
                   <Button
                     variant="outline"
@@ -2698,13 +2732,15 @@ export function PlanEditor({
                     ) : (
                       <Unlock className="h-4 w-4" />
                     )}
-                    {underlay.locked ? 'Locked' : 'Unlocked'}
+                    {underlay.locked
+                      ? t('editor.locked')
+                      : t('editor.unlocked')}
                   </Button>
                 </div>
 
                 <div className="mt-4 space-y-4">
                   <RangeControl
-                    label="Opacity"
+                    label={t('editor.opacity')}
                     min={0.05}
                     max={1}
                     step={0.05}
@@ -2713,7 +2749,7 @@ export function PlanEditor({
                     onChange={(opacity) => updateUnderlay({ opacity })}
                   />
                   <RangeControl
-                    label="Scale"
+                    label={t('editor.scale')}
                     min={0.1}
                     max={10}
                     step={0.05}
@@ -2722,7 +2758,7 @@ export function PlanEditor({
                     onChange={(scale) => updateUnderlay({ scale })}
                   />
                   <RangeControl
-                    label="Rotation"
+                    label={t('editor.rotation')}
                     min={-180}
                     max={180}
                     step={1}
@@ -2739,7 +2775,7 @@ export function PlanEditor({
                   onClick={resetUnderlayTransform}
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Reset position, scale, rotation
+                  {t('editor.resetTransform')}
                 </Button>
               </>
             )}
@@ -2767,8 +2803,8 @@ export function PlanEditor({
                 <Upload className="h-4 w-4" />
               )}
               {plan.sourceType === 'blank'
-                ? 'Add underlay'
-                : 'Replace plan file'}
+                ? t('editor.addUnderlay')
+                : t('editor.replacePlanFile')}
             </Button>
 
             {fileError ? (
@@ -2786,17 +2822,18 @@ export function PlanEditor({
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-amber-300" />
                 <h2 className="text-sm font-semibold text-white">
-                  PDF page
+                  {t('editor.pdfPage')}
                 </h2>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Changing the page re-renders the underlay. Unsaved page changes
-                are discarded.
+                {t('editor.pdfPageHint')}
               </p>
 
               <div className="mt-3 flex items-end gap-2">
                 <label className="flex-1">
-                  <span className="block text-xs text-slate-400">Page</span>
+                  <span className="block text-xs text-slate-400">
+                    {t('editor.page')}
+                  </span>
                   <input
                     type="number"
                     min={1}
@@ -2823,7 +2860,7 @@ export function PlanEditor({
                   ) : (
                     <FileImage className="h-4 w-4" />
                   )}
-                  Apply
+                  {t('editor.apply')}
                 </Button>
               </div>
 
@@ -2847,7 +2884,7 @@ export function PlanEditor({
                     disabled={previewBusy}
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    Retry render
+                    {t('editor.retryRender')}
                   </Button>
                 </div>
               ) : null}
@@ -2860,16 +2897,18 @@ export function PlanEditor({
                   onClick={() => void retryPreview()}
                 >
                   <FileText className="h-4 w-4" />
-                  Render page {plan.page ?? 1}
+                  {t('editor.renderPage', { page: plan.page ?? 1 })}
                 </Button>
               ) : null}
             </section>
           ) : null}
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-            <h2 className="text-sm font-semibold text-white">Estimate</h2>
+            <h2 className="text-sm font-semibold text-white">
+              {t('editor.estimate')}
+            </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Generate a material takeoff from the current routes and export it.
+              {t('editor.estimateHint')}
             </p>
             <Button
               className="mt-3 w-full"
@@ -2882,13 +2921,17 @@ export function PlanEditor({
                   .then((result) => setEstimate(result))
                   .catch((error: unknown) =>
                     setEstimateError(
-                      error instanceof Error ? error.message : 'Failed to generate estimate',
+                      error instanceof Error
+                        ? error.message
+                        : t('editor.estimateFailed'),
                     ),
                   )
                   .finally(() => setEstimateBusy(false));
               }}
             >
-              {estimateBusy ? 'Generating…' : 'Generate estimate'}
+              {estimateBusy
+                ? t('editor.generating')
+                : t('editor.generateEstimate')}
             </Button>
             {estimateError ? (
               <p className="mt-2 text-xs text-rose-200">{estimateError}</p>
@@ -2896,20 +2939,23 @@ export function PlanEditor({
             {estimate ? (
               <div className="mt-3 space-y-2">
                 <p className="text-xs text-slate-300">
-                  Version {estimate.version} · {estimate.items.length} lines
+                  {t('editor.versionLines', {
+                    version: estimate.version,
+                    count: estimate.items.length,
+                  })}
                 </p>
                 <div className="flex gap-2">
                   <a
                     href={`/api/v1/estimates/${estimate.id}/csv`}
                     className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-medium text-slate-100 hover:bg-white/10"
                   >
-                    Download CSV
+                    {t('editor.downloadCsv')}
                   </a>
                   <a
                     href={`/api/v1/estimates/${estimate.id}/pdf`}
                     className="inline-flex flex-1 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-medium text-slate-100 hover:bg-white/10"
                   >
-                    Download PDF
+                    {t('editor.downloadPdf')}
                   </a>
                 </div>
                 <ul className="space-y-1 text-[11px] text-slate-400">

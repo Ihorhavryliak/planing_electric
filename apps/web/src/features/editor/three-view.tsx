@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { useI18n } from '@/features/i18n/i18n-context';
 import { computeWallBoxes } from './three-geometry';
 
 interface ThreeViewProps {
@@ -59,6 +60,7 @@ export function ThreeView({
   selectedPointId,
   selectedRouteId,
 }: ThreeViewProps) {
+  const { t } = useI18n();
   const [showPoints, setShowPoints] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
   const [showCeiling, setShowCeiling] = useState(false);
@@ -332,7 +334,9 @@ export function ThreeView({
       URL.revokeObjectURL(url);
     } catch (exportError) {
       setError(
-        exportError instanceof Error ? exportError.message : 'Export failed',
+        exportError instanceof Error
+          ? exportError.message
+          : t('editor.exportFailed'),
       );
     } finally {
       setExporting(false);
@@ -344,7 +348,7 @@ export function ThreeView({
       <div ref={containerRef} className="absolute inset-0" />
       <div className="absolute top-3 left-3 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
         <Box className="h-4 w-4 text-amber-300" />
-        3D view · drag to orbit, scroll to zoom
+        {t('editor.threeViewHint')}
       </div>
       <div className="absolute top-16 left-3 flex flex-col gap-1 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
         <label className="flex items-center gap-2">
@@ -353,7 +357,7 @@ export function ThreeView({
             checked={showPoints}
             onChange={(event) => setShowPoints(event.target.checked)}
           />
-          Points
+          {t('editor.points')}
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -361,7 +365,7 @@ export function ThreeView({
             checked={showRoutes}
             onChange={(event) => setShowRoutes(event.target.checked)}
           />
-          Routes
+          {t('editor.routes')}
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -369,7 +373,7 @@ export function ThreeView({
             checked={showCeiling}
             onChange={(event) => setShowCeiling(event.target.checked)}
           />
-          Ceiling
+          {t('editor.ceiling')}
         </label>
       </div>
       <button
