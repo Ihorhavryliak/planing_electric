@@ -352,22 +352,22 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 18.3 Підказки при наведенні на полотно
 
-- [ ] 18.3.1 Хук `useCanvasHover`: слухає `pointermove` на полотні, дебаунс ~40–60 мс, викликає наявний hit-test (Фаза 4) лише якщо курсор зсунувся > 4 px; повертає `{ target, screenPos }` або `null`.
-- [ ] 18.3.2 Вміст tooltip за типом об'єкта:
+- [x] 18.3.1 Хук `useCanvasHover`: слухає `pointermove` на полотні, дебаунс ~40–60 мс, викликає наявний hit-test (Фаза 4) лише якщо курсор зсунувся > 4 px; повертає `{ target, screenPos }` або `null`.
+- [x] 18.3.2 Вміст tooltip за типом об'єкта:
   - **Точка:** тип + підтип (15.2), коло, підпис, висота, прикріплені траси (кількість).
   - **Траса:** тип кабелю, коло, довжина з розбивкою (геометрія + спуски + відходи = підсумок), спосіб монтажу (15.3), кількість проходів крізь стіни, чи прикріплені кінці.
   - **Стіна:** довжина, товщина, висота, площа брутто/нетто, кількість отворів.
   - **Кімната:** назва, площа, периметр.
   - **Отвір:** тип, ширина × висота, чи в межах стіни.
   - **Розмір:** значення в поточних одиницях.
-- [ ] 18.3.3 Позиціювання: біля курсора зі зсувом 12 px; автоматичне перевертання біля країв viewport; `position: fixed` + портал, щоб не обрізалося панелями.
-- [ ] 18.3.4 Затримка появи 350 мс і зникнення 80 мс, щоб не блимало під час панорамування; під час `pan`/`zoom`/`draw` — приховувати.
-- [ ] 18.3.5 Перемикач «Підказки при наведенні» в налаштуваннях редактора (15.6) і command palette; збереження в `localStorage` (`dmp:editor:hoverHints`), типово `true` на десктопі, `false` на touch.
-- [ ] 18.3.6 Touch: long-press (500 мс) показує той самий tooltip; тап поза об'єктом закриває.
-- [ ] 18.3.7 Доступність: `prefers-reduced-motion` вимикає анімацію появи; tooltip не перехоплює фокус; для скрін-рідерів — `aria-live="polite"` лише при long-press/focus, не при простому hover (щоб не спамити).
-- [ ] 18.3.8 Продуктивність: hit-test на hover не запускає React-рендер усього полотна; tooltip рендериться окремим порталом; перевірити на плані з 500+ точок і 200+ трас (використати наявне viewport culling, Фаза 8).
-- [ ] 18.3.9 Локалізація `ua`/`en` (`canvas.hover.point`, `.route`, `.wall`, `.room`, `.opening`, `.dimension` та поля).
-- [ ] 18.3.10 Playwright: навести на точку/трасу/стіну/кімнату — перевірити появу tooltip і ключові поля; вимкнути в налаштуваннях — перевірити, що не з'являється; long-press на touch-емуляції.
+- [x] 18.3.3 Позиціювання: біля курсора зі зсувом 12 px; автоматичне перевертання біля країв viewport; `position: fixed` + портал, щоб не обрізалося панелями.
+- [x] 18.3.4 Затримка появи 350 мс і зникнення 80 мс, щоб не блимало під час панорамування; під час `pan`/`zoom`/`draw` — приховувати.
+- [x] 18.3.5 Перемикач «Підказки при наведенні» в налаштуваннях редактора (15.6) і command palette; збереження в `localStorage` (`dmp:editor:hoverHints`), типово `true` на десктопі, `false` на touch.
+- [x] 18.3.6 Touch: long-press (500 мс) показує той самий tooltip; тап поза об'єктом закриває.
+- [x] 18.3.7 Доступність: `prefers-reduced-motion` вимикає анімацію появи; tooltip не перехоплює фокус; для скрін-рідерів — `aria-live="polite"` лише при long-press/focus, не при простому hover (щоб не спамити).
+- [x] 18.3.8 Продуктивність: hit-test на hover не запускає React-рендер усього полотна; tooltip рендериться окремим порталом; перевірити на плані з 500+ точок і 200+ трас (використати наявне viewport culling, Фаза 8).
+- [x] 18.3.9 Локалізація `ua`/`en` (`canvas.hover.point`, `.route`, `.wall`, `.room`, `.opening`, `.dimension` та поля).
+- [x] 18.3.10 Playwright: навести на точку/трасу/стіну/кімнату — перевірити появу tooltip і ключові поля; вимкнути в налаштуваннях — перевірити, що не з'являється; long-press на touch-емуляції.
 
 #### 18.4 Спільне
 
@@ -570,3 +570,10 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 105, contracts 39, calculations 50, database 2; 261 tests), `node scripts/browser-check.mjs` (pin persists across reload, device move keeps the route attached).
 - Issues/blockers: the delete confirmation uses the browser `confirm` dialog (no bespoke modal); there is no bulk-delete UI yet to warn against; the cable journal (16.13) will consume the pins later.
 - Next action: hover tooltips on canvas objects (18.3).
+
+### 2026-10-26 — session 34: canvas hover hints (18.3)
+- Completed: pointer hover over the 2D canvas now resolves points, cable routes, walls, rooms, openings and dimensions with viewport culling and a 4 px movement threshold. A 350 ms delay and 80 ms hide timer avoid flicker; hints disappear during pan, zoom, drag and drawing tools. The tooltip is a fixed portal that flips near viewport edges, shows object-specific fields (circuit, mounting, cable length breakdown, wall gross/net area, room area/perimeter, opening size/wall fit, dimension value), and never captures focus.
+- Completed: touch long-press (500 ms) shows the same hint with `aria-live="polite"`; plain hover uses `role="tooltip"` without live-region spam. Added an on/off preference stored in `dmp:editor:hoverHints` with a desktop/touch default, a View-section toggle and a command-palette action; both server and local editors share the behaviour.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 105, contracts 39, calculations 50, database 2; 261 tests), `node scripts/browser-check.mjs` (point/route/wall/room hover content, disable/enable persistence, touch long-press).
+- Issues/blockers: dimension/opening hover uses the same 8 px hit tolerance as selection; hover hints are desktop-first and intentionally hidden on touch until long-press.
+- Next action: Phase 19 or the next roadmap backlog.

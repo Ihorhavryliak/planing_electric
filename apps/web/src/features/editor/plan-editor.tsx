@@ -128,6 +128,7 @@ import { RoomNavigator } from './room-navigator';
 import { EditorGuide, EditorGuideOverlay } from './editor-guide';
 import { EditorTooltipLayer } from './editor-tooltip';
 import { useEditorFullscreen } from './use-editor-fullscreen';
+import { useHoverHints } from './use-hover-hints';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -522,6 +523,7 @@ export function PlanEditor({
   const fullscreen = useEditorFullscreen({
     onEntered: () => setFitRequest(Date.now()),
   });
+  const { hoverHints, toggleHoverHints } = useHoverHints();
   const wallsRef = useRef(walls);
   const openingsRef = useRef(openings);
   const roomsRef = useRef(rooms);
@@ -2550,6 +2552,13 @@ export function PlanEditor({
       run: () => void fullscreen.toggle(),
     },
     {
+      id: 'hover-hints',
+      label: hoverHints
+        ? t('editor.hoverHints.disable')
+        : t('editor.hoverHints.enable'),
+      run: toggleHoverHints,
+    },
+    {
       id: 'preview',
       label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
       run: () => setPreviewMode((value) => !value),
@@ -2725,6 +2734,23 @@ export function PlanEditor({
             dimensions={dimensions}
             selectedDimensionId={selectedDimensionId}
             metersPerUnit={metersPerUnit}
+            hoverHints={hoverHints}
+            routeDetails={Object.fromEntries(
+              (calculation?.routes ?? []).map((route) => [
+                route.routeId,
+                {
+                  requiredLength: route.requiredLength,
+                  planLength: route.planLength,
+                  verticalLength: route.verticalLength,
+                  wasteLength: route.wasteLength,
+                  drops: route.drops.length,
+                },
+              ]),
+            )}
+            materialNames={Object.fromEntries(
+              materials.map((material) => [material.id, material.name]),
+            )}
+            wallHeightMeters={takeoffSettings.wallHeightMeters}
             onCalibrationPoints={(pointA, pointB) => {
               setCalibrationError(null);
               setPendingCalibration({ pointA, pointB });
@@ -3568,6 +3594,17 @@ export function PlanEditor({
                 </button>
               ))}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full"
+              aria-pressed={hoverHints}
+              onClick={toggleHoverHints}
+            >
+              {hoverHints
+                ? t('editor.hoverHints.disable')
+                : t('editor.hoverHints.enable')}
+            </Button>
             <div className="mt-3 flex gap-2">
               <Button
                 variant="outline"

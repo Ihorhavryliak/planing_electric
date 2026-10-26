@@ -57,6 +57,7 @@ import {
   type RouteEnd,
 } from '@/features/editor/route-geometry';
 import { useEditorFullscreen } from '@/features/editor/use-editor-fullscreen';
+import { useHoverHints } from '@/features/editor/use-hover-hints';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -149,6 +150,7 @@ export function LocalEditorPage() {
   const fullscreen = useEditorFullscreen({
     onEntered: () => setFitRequest(Date.now()),
   });
+  const { hoverHints, toggleHoverHints } = useHoverHints();
 
   useEffect(() => {
     void (async () => {
@@ -632,6 +634,13 @@ export function LocalEditorPage() {
       run: () => void fullscreen.toggle(),
     },
     {
+      id: 'hover-hints',
+      label: hoverHints
+        ? t('editor.hoverHints.disable')
+        : t('editor.hoverHints.enable'),
+      run: toggleHoverHints,
+    },
+    {
       id: 'preview',
       label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
       run: () => setPreviewMode((value) => !value),
@@ -829,6 +838,16 @@ export function LocalEditorPage() {
             circuits={drawing.circuits}
             layers={layers}
             metersPerUnit={metersPerUnit}
+            hoverHints={hoverHints}
+            routeDetails={Object.fromEntries(
+              (localCable ?? []).flatMap((route, index) => {
+                const id = drawing?.routes[index]?.id;
+                return id
+                  ? [[id, { requiredLength: route.requiredLength }]]
+                  : [];
+              }),
+            )}
+            wallHeightMeters={takeoffSettings.wallHeightMeters}
             onCalibrationPoints={(pointA, pointB) =>
               setPendingCalibration({ pointA, pointB })
             }
@@ -1283,6 +1302,17 @@ export function LocalEditorPage() {
                 </button>
               ))}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full"
+              aria-pressed={hoverHints}
+              onClick={toggleHoverHints}
+            >
+              {hoverHints
+                ? t('editor.hoverHints.disable')
+                : t('editor.hoverHints.enable')}
+            </Button>
             <div className="mt-3 flex gap-2">
               <Button
                 variant="outline"

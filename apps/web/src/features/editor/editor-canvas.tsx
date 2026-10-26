@@ -62,7 +62,11 @@ import {
   visibleWorldBounds,
   type Vec2,
 } from './editor-geometry';
-import { drawOpeningsOverlay, type OpeningRenderItem } from './opening-overlay';
+import {
+  drawOpeningsOverlay,
+  findOpeningAt,
+  type OpeningRenderItem,
+} from './opening-overlay';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
 import { drawRoutesOverlay, type RouteRenderItem } from './route-overlay';
 import type { EditorLayers } from './editor-layers';
@@ -93,6 +97,11 @@ import {
   POINT_SYMBOL_LIST,
   symbolForShortcut,
 } from './point-symbols';
+import {
+  CanvasHoverTooltip,
+  type CanvasHoverTarget,
+  type RouteHoverDetails,
+} from './canvas-hover-tooltip';
 
 export type EditorTool =
   | 'select'
@@ -253,6 +262,11 @@ interface EditorCanvasProps {
   onMoveDimensionOffset: (id: string, offset: number) => void;
   onDeleteDimension: (id: string) => void;
   metersPerUnit: number | null;
+  /** Hover hints can be switched off in editor preferences. */
+  hoverHints?: boolean;
+  routeDetails?: Readonly<Record<string, RouteHoverDetails>>;
+  materialNames?: Readonly<Record<string, string>>;
+  wallHeightMeters?: number;
   onUnderlayChange: (underlay: UnderlaySettings) => void;
   onViewportChange: (viewport: EditorViewport) => void;
   canUndo: boolean;
@@ -428,6 +442,10 @@ export function EditorCanvas({
   onMoveDimensionOffset,
   onDeleteDimension,
   metersPerUnit,
+  hoverHints = true,
+  routeDetails = {},
+  materialNames = {},
+  wallHeightMeters = 2.7,
   onUnderlayChange,
   onViewportChange,
   canUndo,
@@ -455,6 +473,12 @@ export function EditorCanvas({
   const [orthoEnabled, setOrthoEnabled] = useState(false);
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
+  const [hoverTooltip, setHoverTooltip] = useState<{
+    target: CanvasHoverTarget;
+    x: number;
+    y: number;
+    longPress: boolean;
+  } | null>(null);
   const [pointDrag, setPointDrag] = useState<{ id: string; at: Vec2 } | null>(
     null,
   );
@@ -484,6 +508,11 @@ export function EditorCanvas({
     offset: number;
   } | null>(null);
   const lastClickRef = useRef<ClickRecord | null>(null);
+  const hoverTargetRef = useRef<CanvasHoverTarget | null>(null);
+  const hoverPointerRef = useRef<Vec2 | null>(null);
+  const hoverShowTimerRef = useRef<number | null>(null);
+  const hoverHideTimerRef = useRef<number | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
 
   const imageRef = useRef(image);
   const underlayRef = useRef(underlay);
@@ -503,6 +532,167 @@ export function EditorCanvas({
   const placeSubtypeRef = useRef(placeSubtype);
   const layersRef = useRef(layers);
   layersRef.current = layers;
+
+  const clearHoverTimers = useCallback(() => {
+    if (hoverShowTimerRef.current !== null) {
+      window.clearTimeout(hoverShowTimerRef.current);
+      hoverShowTimerRef.current = null;
+    }
+    if (hoverHideTimerRef.current !== null) {
+      window.clearTimeout(hoverHideTimerRef.current);
+      hoverHideTimerRef.current = null;
+    }
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const hideHoverTooltip = useCallback(
+    (immediate = false) => {
+      if (hoverShowTimerRef.current !== null) {
+        window.clearTimeout(hoverShowTimerRef.current);
+        hoverShowTimerRef.current = null;
+      }
+      if (longPressTimerRef.current !== null) {
+        window.clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+      if (hoverHideTimerRef.current !== null) {
+        window.clearTimeout(hoverHideTimerRef.current);
+        hoverHideTimerRef.current = null;
+      }
+      hoverTargetRef.current = null;
+
+      if (immediate) {
+        setHoverTooltip(null);
+        return;
+      }
+
+      hoverHideTimerRef.current = window.setTimeout(() => {
+        setHoverTooltip(null);
+      }, 80);
+    },
+    [],
+  );
+
+  const showHoverTooltip = useCallback(
+    (
+      target: CanvasHoverTarget,
+      screen: Vec2,
+      longPress = false,
+    ) => {
+      if (hoverHideTimerRef.current !== null) {
+        window.clearTimeout(hoverHideTimerRef.current);
+        hoverHideTimerRef.current = null;
+      }
+      hoverTargetRef.current = target;
+
+      if (longPress) {
+        if (hoverShowTimerRef.current !== null) {
+          window.clearTimeout(hoverShowTimerRef.current);
+          hoverShowTimerRef.current = null;
+        }
+        setHoverTooltip({
+          target,
+          x: screen.x,
+          y: screen.y,
+          longPress: true,
+        });
+        return;
+      }
+
+      if (
+        hoverTooltip?.target.kind === target.kind &&
+        hoverTooltip.target.id === target.id
+      ) {
+        setHoverTooltip((previous) =>
+          previous ? { ...previous, x: screen.x, y: screen.y } : previous,
+        );
+        return;
+      }
+
+      setHoverTooltip(null);
+      if (hoverShowTimerRef.current !== null) {
+        window.clearTimeout(hoverShowTimerRef.current);
+      }
+      hoverShowTimerRef.current = window.setTimeout(() => {
+        hoverShowTimerRef.current = null;
+        if (
+          hoverTargetRef.current === target ||
+          (hoverTargetRef.current?.kind === target.kind &&
+            hoverTargetRef.current.id === target.id)
+        ) {
+          setHoverTooltip({
+            target,
+            x: screen.x,
+            y: screen.y,
+            longPress: false,
+          });
+        }
+      }, 350);
+    },
+    [hoverTooltip],
+  );
+
+  const findHoverTarget = useCallback(
+    (screen: Vec2): CanvasHoverTarget | null => {
+      const currentLayers = layersRef.current;
+      const viewportNow = viewportRef.current;
+      const sizeNow = sizeRef.current;
+      const bounds = visibleWorldBounds(viewportNow, sizeNow);
+
+      if (currentLayers?.points !== false) {
+        const pointId = findPointAt(
+          pointsRef.current.filter((point) => pointInBounds(point, bounds)),
+          screen,
+          viewportNow,
+          sizeNow,
+        );
+        if (pointId) return { kind: 'point', id: pointId };
+      }
+      if (currentLayers?.routes !== false) {
+        const routeId = findRouteAt(
+          routesRef.current.filter((route) =>
+            geometryIntersectsBounds(route.geometry, bounds),
+          ),
+          screen,
+          viewportNow,
+          sizeNow,
+        );
+        if (routeId) return { kind: 'route', id: routeId };
+      }
+      if (currentLayers?.openings !== false) {
+        const openingId = findOpeningAt(
+          openings,
+          walls,
+          screen,
+          viewportNow,
+          sizeNow,
+        );
+        if (openingId) return { kind: 'opening', id: openingId };
+      }
+      if (currentLayers?.walls !== false) {
+        const wallId = findPolylineAt(walls, screen, viewportNow, sizeNow);
+        if (wallId) return { kind: 'wall', id: wallId };
+      }
+      if (currentLayers?.rooms !== false) {
+        const roomId = findRoomAt(rooms, screen, viewportNow, sizeNow);
+        if (roomId) return { kind: 'room', id: roomId };
+      }
+      if (currentLayers?.dimensions !== false) {
+        const dimensionId = findDimensionAt(
+          dimensions,
+          screen,
+          viewportNow,
+          sizeNow,
+        );
+        if (dimensionId) return { kind: 'dimension', id: dimensionId };
+      }
+      return null;
+    },
+    [dimensions, openings, rooms, walls],
+  );
   const snapRef = useRef(snapEnabled);
   const orthoRef = useRef(orthoEnabled);
   const readOnlyRef = useRef(readOnly);
@@ -1070,6 +1260,7 @@ export function EditorCanvas({
 
   const zoomAt = useCallback(
     (screenX: number, screenY: number, factor: number) => {
+      hideHoverTooltip(true);
       const current = viewportRef.current;
       const currentSize = sizeRef.current;
       const nextZoom = clamp(current.zoom * factor, MIN_ZOOM, MAX_ZOOM);
@@ -1376,6 +1567,20 @@ export function EditorCanvas({
     event.preventDefault();
 
     const point = localPoint(event);
+    hideHoverTooltip(true);
+
+    if (
+      event.pointerType === 'touch' &&
+      toolRef.current === 'select' &&
+      !spaceRef.current
+    ) {
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTimerRef.current = null;
+        const target = findHoverTarget(point);
+        if (target) showHoverTooltip(target, point, true);
+      }, 500);
+    }
+
     const plainLeft = event.button === 0 && !spaceRef.current;
     let mode: DragMode = 'pan';
     let pointId: string | null = null;
@@ -1694,7 +1899,11 @@ export function EditorCanvas({
     };
 
     setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic pointers (tests, some assistive tech) have no capture target.
+    }
   }
 
   function handlePointerMove(
@@ -1702,6 +1911,11 @@ export function EditorCanvas({
   ) {
     const point = localPoint(event);
     const drag = dragRef.current;
+
+    if (drag) {
+      clearHoverTimers();
+      hideHoverTooltip(true);
+    }
 
     if (
       toolRef.current === 'calibrate' &&
@@ -1776,6 +1990,25 @@ export function EditorCanvas({
 
         if (hoveringPoint) {
           setHoveringPoint(false);
+        }
+      }
+
+      if (
+        !hoverHints ||
+        toolRef.current !== 'select' ||
+        spaceRef.current
+      ) {
+        hideHoverTooltip(true);
+      } else {
+        const previous = hoverPointerRef.current;
+        hoverPointerRef.current = point;
+        if (
+          !previous ||
+          Math.hypot(point.x - previous.x, point.y - previous.y) > 4
+        ) {
+          const target = findHoverTarget(point);
+          if (target) showHoverTooltip(target, point);
+          else hideHoverTooltip();
         }
       }
 
@@ -2009,6 +2242,8 @@ export function EditorCanvas({
   }
 
   function finishDragging(event: ReactPointerEvent<HTMLCanvasElement>) {
+    clearHoverTimers();
+    hideHoverTooltip(true);
     const drag = dragRef.current;
 
     if (drag?.pointerId === event.pointerId) {
@@ -2432,6 +2667,8 @@ export function EditorCanvas({
           setHoveringUnderlay(false);
           setHoveringPoint(false);
           setHoverWorld(null);
+          hoverPointerRef.current = null;
+          hideHoverTooltip(true);
         }}
         onAuxClick={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
@@ -2791,6 +3028,26 @@ export function EditorCanvas({
             </p>
           </div>
         </div>
+      ) : null}
+
+      {hoverTooltip ? (
+        <CanvasHoverTooltip
+          target={hoverTooltip.target}
+          x={hoverTooltip.x}
+          y={hoverTooltip.y}
+          longPress={hoverTooltip.longPress}
+          points={points}
+          routes={routes}
+          walls={walls}
+          openings={openings}
+          rooms={rooms}
+          dimensions={dimensions}
+          circuits={circuits}
+          materialNames={materialNames}
+          routeDetails={routeDetails}
+          metersPerUnit={metersPerUnit}
+          wallHeightMeters={wallHeightMeters}
+        />
       ) : null}
     </div>
   );

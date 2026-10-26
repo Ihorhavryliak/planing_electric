@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document, fetch */
+/* global process, Buffer, console, document, fetch, localStorage */
 import { chromium } from 'playwright';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -278,6 +278,80 @@ async function main() {
     .locator('..')
     .getByText('1', { exact: true })
     .waitFor({ timeout: 10000 });
+
+  // Hover hints describe plan objects and can be switched off.
+  await page.getByRole('button', { name: 'Select tool' }).click();
+  await syncCanvas();
+  await page.mouse.move(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  const hoverTooltip = page.getByTestId('canvas-hover-tooltip');
+  await hoverTooltip.waitFor({ timeout: 3000 });
+  if (!(await hoverTooltip.innerText()).includes('Circuit')) {
+    throw new Error('Point hover tooltip did not show its circuit.');
+  }
+  await page.mouse.move(at(0.5, 0.57).x, at(0.5, 0.57).y);
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="canvas-hover-tooltip"]')
+        ?.textContent?.includes('Installation') === true,
+    null,
+    { timeout: 3000 },
+  );
+  await page.mouse.move(at(0.32, 0.5).x, at(0.32, 0.5).y);
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="canvas-hover-tooltip"]')
+        ?.textContent?.includes('Thickness') === true,
+    null,
+    { timeout: 3000 },
+  );
+  await page.mouse.move(at(0.4, 0.72).x, at(0.4, 0.72).y);
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="canvas-hover-tooltip"]')
+        ?.textContent?.includes('Area') === true,
+    null,
+    { timeout: 3000 },
+  );
+
+  const hoverToggle = page.getByRole('button', { name: 'Disable hover hints' });
+  await hoverToggle.click();
+  if ((await page.evaluate(() => localStorage.getItem('dmp:editor:hoverHints'))) !== 'false') {
+    throw new Error('Hover hints preference was not stored.');
+  }
+  await page.mouse.move(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.waitForTimeout(600);
+  if (await hoverTooltip.isVisible().catch(() => false)) {
+    throw new Error('Hover tooltip stayed visible after disabling hints.');
+  }
+  await page.getByRole('button', { name: 'Enable hover hints' }).click();
+  if ((await page.evaluate(() => localStorage.getItem('dmp:editor:hoverHints'))) !== 'true') {
+    throw new Error('Hover hints preference was not restored.');
+  }
+
+  // Touch long-press shows the same tooltip after 500 ms.
+  await page.dispatchEvent('canvas', 'pointerdown', {
+    pointerType: 'touch',
+    pointerId: 51,
+    isPrimary: true,
+    button: 0,
+    clientX: at(0.35, 0.6).x,
+    clientY: at(0.35, 0.6).y,
+  });
+  await page.waitForTimeout(650);
+  if (!(await hoverTooltip.isVisible().catch(() => false))) {
+    throw new Error('Touch long-press did not show a hover tooltip.');
+  }
+  await page.dispatchEvent('canvas', 'pointerup', {
+    pointerType: 'touch',
+    pointerId: 51,
+    isPrimary: true,
+    button: 0,
+    clientX: at(0.35, 0.6).x,
+    clientY: at(0.35, 0.6).y,
+  });
 
   // Select the socket, rotate it, and duplicate it.
   await page.getByRole('button', { name: 'Select tool' }).click();

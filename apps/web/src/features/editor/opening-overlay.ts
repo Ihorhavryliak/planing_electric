@@ -1,5 +1,6 @@
 import type { EditorViewport } from '@drawmyplace/contracts';
 import { worldToScreen, type CanvasSize, type Vec2 } from './editor-geometry';
+import { distanceToSegment } from './route-geometry';
 
 export interface OpeningRenderItem {
   id: string;
@@ -50,6 +51,42 @@ function pointAtDistance(
     remaining -= length;
   }
   return null;
+}
+
+/** Id of the opening whose gap is under a screen position, or null. */
+export function findOpeningAt(
+  openings: readonly OpeningRenderItem[],
+  walls: readonly WallLike[],
+  screen: Vec2,
+  viewport: EditorViewport,
+  size: CanvasSize,
+  radiusPx = 7,
+): string | null {
+  const wallById = new Map(walls.map((wall) => [wall.id, wall]));
+  let bestId: string | null = null;
+  let best = radiusPx;
+
+  for (const opening of openings) {
+    const wall = wallById.get(opening.wallId);
+    if (!wall) continue;
+    const start = pointAtDistance(wall.geometry, opening.offset);
+    const end = pointAtDistance(
+      wall.geometry,
+      opening.offset + opening.width,
+    );
+    if (!start || !end) continue;
+
+    const a = worldToScreen(start.point, viewport, size);
+    const b = worldToScreen(end.point, viewport, size);
+    const gap = distanceToSegment(screen, a, b);
+
+    if (gap <= best) {
+      best = gap;
+      bestId = opening.id;
+    }
+  }
+
+  return bestId;
 }
 
 export function drawOpeningsOverlay(
