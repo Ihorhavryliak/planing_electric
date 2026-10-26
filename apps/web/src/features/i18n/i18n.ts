@@ -500,6 +500,8 @@ const en: Dictionary = {
   'editor.loading3d': 'Loading 3D view…',
   'editor.view2d': '2D edit',
   'editor.view3d': '3D view',
+  'editor.splitView': 'Split 2D/3D',
+  'editor.viewMode': 'View mode',
   'editor.unsavedChanges': 'Unsaved changes',
 
   'editor.floorPlanCanvas': 'Floor plan canvas',
@@ -1442,6 +1444,8 @@ const ua: Dictionary = {
   'editor.loading3d': 'Завантаження 3D-вигляду…',
   'editor.view2d': '2D-редагування',
   'editor.view3d': '3D-вигляд',
+  'editor.splitView': 'Розділений 2D/3D',
+  'editor.viewMode': 'Режим перегляду',
   'editor.unsavedChanges': 'Незбережені зміни',
 
   'editor.floorPlanCanvas': 'Полотно плану поверху',

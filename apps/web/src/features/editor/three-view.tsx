@@ -25,6 +25,10 @@ interface ThreeViewProps {
   selectedRoomId: string | null;
   selectedPointId: string | null;
   selectedRouteId: string | null;
+  onSelect?: (target: {
+    kind: 'wall' | 'room' | 'point' | 'route';
+    id: string;
+  }) => void;
 }
 
 const WALL_COLOR = 0xe2e8f0;
@@ -59,6 +63,7 @@ export function ThreeView({
   selectedRoomId,
   selectedPointId,
   selectedRouteId,
+  onSelect,
 }: ThreeViewProps) {
   const { t } = useI18n();
   const [showPoints, setShowPoints] = useState(true);
@@ -72,6 +77,10 @@ export function ThreeView({
   const controlsRef = useRef<OrbitControls | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const fitSignatureRef = useRef<string | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -108,6 +117,41 @@ export function ThreeView({
     scene.add(fill);
     scene.add(contentRef.current);
 
+    const pick = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      const hits = raycaster.intersectObjects(contentRef.current.children, true);
+      const hit = hits.find((entry) => entry.object.userData?.id);
+
+      if (!hit) return;
+
+      const { kind, id } = hit.object.userData as {
+        kind?: 'wall' | 'room' | 'point' | 'route';
+        id?: string;
+      };
+
+      if (kind && id) onSelectRef.current?.({ kind, id });
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      pointerStartRef.current = { x: event.clientX, y: event.clientY };
+    };
+    const handlePointerUp = (event: PointerEvent) => {
+      const start = pointerStartRef.current;
+      pointerStartRef.current = null;
+
+      if (
+        start &&
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) < 5
+      ) {
+        pick(event);
+      }
+    };
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
+
     const resize = () => {
       const width = container.clientWidth;
       const height = container.clientHeight;
@@ -131,6 +175,8 @@ export function ThreeView({
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       controls.dispose();
       disposeGroup(contentRef.current);
       renderer.dispose();
@@ -171,6 +217,7 @@ export function ThreeView({
       );
       const floorGeometry = new THREE.ShapeGeometry(shape);
       const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial.clone());
+      floorMesh.userData = { kind: 'room', id: room.id };
       floorMesh.rotation.x = -Math.PI / 2;
       floorMesh.position.y = 0.5;
       if (room.id === selectedRoomId) {
@@ -223,6 +270,7 @@ export function ThreeView({
               })
             : wallMaterial;
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData = { kind: 'wall', id: wall.id };
         mesh.position.set(
           (box.a.x + box.b.x) / 2,
           (box.z0 + box.z1) / 2,
@@ -248,6 +296,7 @@ export function ThreeView({
           emissiveIntensity: 0.3,
         });
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData = { kind: 'point', id: point.id };
         mesh.position.set(point.x, 10, point.y);
         group.add(mesh);
       }
@@ -263,7 +312,9 @@ export function ThreeView({
         const material = new THREE.LineBasicMaterial({
           color: route.id === selectedRouteId ? 0xf472b6 : ROUTE_COLOR,
         });
-        group.add(new THREE.Line(geometry, material));
+        const line = new THREE.Line(geometry, material);
+        line.userData = { kind: 'route', id: route.id };
+        group.add(line);
       }
     }
 
@@ -274,22 +325,29 @@ export function ThreeView({
       }
     }
     if (!bounds.isEmpty()) {
-      const center = new THREE.Vector3();
-      const size = new THREE.Vector3();
-      bounds.getCenter(center);
-      bounds.getSize(size);
-      const distance = Math.max(size.x, size.z, 100) * 1.4;
-      if (cameraRef.current) {
-        cameraRef.current.position.set(
-          center.x + distance * 0.8,
-          distance * 0.9,
-          center.z + distance * 0.8,
-        );
-        cameraRef.current.lookAt(center);
-      }
-      if (controlsRef.current) {
-        controlsRef.current.target.copy(center);
-        controlsRef.current.update();
+      const signature = `${bounds.min.x.toFixed(2)}:${bounds.min.z.toFixed(2)}:${bounds.max.x.toFixed(2)}:${bounds.max.z.toFixed(2)}`;
+
+      // Refit only when the plan geometry changes, not when selection changes,
+      // so clicking in the split view does not move the camera.
+      if (fitSignatureRef.current !== signature) {
+        fitSignatureRef.current = signature;
+        const center = new THREE.Vector3();
+        const size = new THREE.Vector3();
+        bounds.getCenter(center);
+        bounds.getSize(size);
+        const distance = Math.max(size.x, size.z, 100) * 1.4;
+        if (cameraRef.current) {
+          cameraRef.current.position.set(
+            center.x + distance * 0.8,
+            distance * 0.9,
+            center.z + distance * 0.8,
+          );
+          cameraRef.current.lookAt(center);
+        }
+        if (controlsRef.current) {
+          controlsRef.current.target.copy(center);
+          controlsRef.current.update();
+        }
       }
     }
   }, [

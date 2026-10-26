@@ -392,6 +392,14 @@ async function main() {
   if (!download.suggestedFilename().endsWith('.glb')) {
     throw new Error(`Unexpected GLB filename: ${download.suggestedFilename()}`);
   }
+
+  // Split view shows the 2D canvas and 3D scene side by side.
+  await page.getByRole('button', { name: 'Split 2D/3D' }).click();
+  await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
+  if ((await page.locator('canvas').count()) < 2) {
+    throw new Error('Split view did not render both canvases.');
+  }
+
   await page.getByRole('button', { name: '2D edit' }).click();
 
   // Select the whole route and delete it, then undo the deletion.

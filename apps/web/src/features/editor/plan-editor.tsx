@@ -453,7 +453,7 @@ export function PlanEditor({
   const routesRef = useRef(routes);
   const routeRequestRef = useRef(new Map<string, number>());
 
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [viewMode, setViewMode] = useState<'2d' | '3d' | 'split'>('2d');
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
   const [toolRequest, setToolRequest] = useState<ToolRequest | null>(null);
@@ -2311,6 +2311,12 @@ export function PlanEditor({
       run: () => setViewMode((mode) => (mode === '2d' ? '3d' : '2d')),
     },
     {
+      id: 'view-split',
+      label: t('editor.splitView'),
+      hint: t('editor.viewMode'),
+      run: () => setViewMode('split'),
+    },
+    {
       id: 'preview',
       label: previewMode ? t('editor.exitPreview') : t('editor.preview'),
       run: () => setPreviewMode((value) => !value),
@@ -2365,6 +2371,42 @@ export function PlanEditor({
     }
   }
 
+  function handleThreeSelect(target: {
+    kind: 'wall' | 'room' | 'point' | 'route';
+    id: string;
+  }) {
+    if (target.kind === 'point') selectPoint(target.id);
+    else if (target.kind === 'route') selectRoute(target.id);
+    else if (target.kind === 'wall') selectWall(target.id);
+    else selectRoom(target.id);
+  }
+
+  const threeViewNode = (
+    <Suspense
+      fallback={
+        <div className="flex h-full min-h-[420px] items-center justify-center rounded-2xl border border-white/10 bg-slate-950 text-sm text-slate-400">
+          <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-amber-300" />
+          {t('editor.loading3d')}
+        </div>
+      }
+    >
+      <ThreeView
+        walls={walls}
+        openings={openings}
+        rooms={rooms}
+        points={points}
+        routes={routes}
+        metersPerUnit={metersPerUnit}
+        viewport={viewport}
+        selectedWallId={selectedWallId}
+        selectedRoomId={selectedRoomId}
+        selectedPointId={selectedPointId}
+        selectedRouteId={selectedRouteId}
+        onSelect={handleThreeSelect}
+      />
+    </Suspense>
+  );
+
   return (
     <>
       <div
@@ -2382,7 +2424,14 @@ export function PlanEditor({
               : 'h-[65vh] lg:h-[calc(100vh-12rem)]'
           }`}
         >
-          {viewMode === '2d' ? (
+          {viewMode === '2d' || viewMode === 'split' ? (
+            <div
+              className={
+                viewMode === 'split'
+                  ? 'absolute inset-y-0 left-0 right-1/2 pr-1'
+                  : 'h-full'
+              }
+            >
           <EditorCanvas
             image={image}
             placementRequest={placementRequest}
@@ -2452,30 +2501,15 @@ export function PlanEditor({
             onUndo={() => void applyHistory('undo')}
             onRedo={() => void applyHistory('redo')}
           />
-          ) : (
-            <Suspense
-              fallback={
-                <div className="flex h-full min-h-[440px] items-center justify-center rounded-2xl border border-white/10 bg-slate-950 text-sm text-slate-400">
-                  <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-amber-300" />
-                  {t('editor.loading3d')}
-                </div>
-              }
-            >
-              <ThreeView
-                walls={walls}
-                openings={openings}
-                rooms={rooms}
-                points={points}
-                routes={routes}
-                metersPerUnit={metersPerUnit}
-                viewport={viewport}
-                selectedWallId={selectedWallId}
-                selectedRoomId={selectedRoomId}
-                selectedPointId={selectedPointId}
-                selectedRouteId={selectedRouteId}
-              />
-            </Suspense>
-          )}
+            </div>
+          ) : null}
+
+          {viewMode === '3d' ? threeViewNode : null}
+          {viewMode === 'split' ? (
+            <div className="absolute inset-y-0 right-0 left-1/2 pl-1">
+              {threeViewNode}
+            </div>
+          ) : null}
 
           {overlayBusy ? (
             <OverlayCard>
@@ -2688,6 +2722,13 @@ export function PlanEditor({
                 onClick={() => setViewMode('3d')}
               >
                 {t('editor.view3d')}
+              </Button>
+              <Button
+                variant={viewMode === 'split' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('split')}
+              >
+                {t('editor.splitView')}
               </Button>
             </div>
 

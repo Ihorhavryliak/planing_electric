@@ -281,7 +281,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.4 **Live takeoff у редакторі**: стіни (довжина, вузли, сегменти, площа брутто/нетто, об'єм), кімнати (площа, периметр), пристрої за типами й підтипами, кабель за колами та вартість кабелю за матеріалами; редаговані висота стін і товщина за замовчуванням із збереженням; працює в серверному й локальному редакторах.
 - [x] 15.5 **Панель Validation**: 14 правил для кіл, кабелю, пристроїв, отворів і калібрування; агреговані рядки з кількістю, фільтри за severity, перехід до проблемної точки/траси/стіни/отвору/кола або секції масштабу; працює в серверному й локальному редакторах.
 - [x] 15.6 **UX редактора**: preview-режим без панелей і тулбара, command palette (Ctrl+K) з пошуком, оверлей гарячих клавіш (?), масштаб інтерфейсу 90–120% із збереженням, колапс бічної панелі, навігація кімнатами з фокусом viewport, керування сіткою/прив’язкою/ортогональним трасуванням; усе доступно і в локальному редакторі.
-- [ ] 15.7 **Split 2D/3D**: одночасний перегляд і редагування 2D зліва й 3D справа; синхронізація камери/виділення.
+- [x] 15.7 **Split 2D/3D**: режим split показує 2D-полотно ліворуч і 3D-сцену праворуч, панорамування 2D рухає ціль 3D-камери, клік по стіні/кімнаті/пристрою/трасі в 3D вибирає об’єкт у 2D; камера більше не скидається при зміні виділення; команда в палітрі та кнопка в панелі збереження.
 - [ ] 15.8 **Documentation workspace**: вкладки Materials / Cost estimate / Validation / Variants / Print PDF в одному місці.
 - [ ] 15.9 **Експорт**: SVG 2D-плану, SVG електричної схеми, повний project JSON для серверних проєктів.
 - [ ] 15.10 **3D-режими**: Walk, Third person, X-ray, перерізи, daylight/sun, ізоляція шарів.
@@ -405,3 +405,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` (twice after the autosave fix).
 - Issues/blockers: orthogonal mode applies to cable routes only; preview still shows the underlay and drawing, but panels are hidden and edits are blocked.
 - Next action: split 2D/3D view (15.7).
+
+### 2026-10-26 — session 23: split 2D/3D
+- Completed: a third view mode (`split`) that renders the editable 2D canvas and the lazy 3D scene side by side; 3D raycasting selects walls, rooms, points and routes and syncs the selection into the 2D editor; the 2D viewport drives the 3D orbit target; 3D camera fitting now runs only when plan geometry changes, so selection no longer resets the camera; split is available from the sidebar and command palette.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (split renders two canvases and the 3D hint).
+- Issues/blockers: 3D orbit direction does not drive the 2D viewport (only the target follows 2D pan); split is not available in the local editor because it has no 3D scene yet.
+- Next action: documentation workspace (15.8).

@@ -483,6 +483,8 @@ export const ru: Dictionary = {
   'editor.loading3d': 'Загрузка 3D-вида…',
   'editor.view2d': '2D-редактирование',
   'editor.view3d': '3D-вид',
+  'editor.splitView': 'Разделённый 2D/3D',
+  'editor.viewMode': 'Режим просмотра',
   'editor.unsavedChanges': 'Несохранённые изменения',
 
   'editor.floorPlanCanvas': 'Полотно плана этажа',
