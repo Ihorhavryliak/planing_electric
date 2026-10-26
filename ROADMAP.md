@@ -289,6 +289,41 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** електричний проєкт можна вести не лише як набір точок і трас, а як структуровані кола з пристроями, монтажними елементами, живим кошторисом і валідацією; редактор має split 2D/3D, зручну навігацію та експорт плану/схеми.
 
+### Фаза 16 — Інженерні розрахунки та документування (після MVP)
+
+Порівняння з EPLAN, WSCAD, AutoCAD Electrical і CADMATIC показує, що поточна система закриває рівень «план + траси + кошторис», але не замикає цикл «план → розрахунок → схема → щит → нормоконтроль». Порядок нижче — пріоритетний.
+
+- [ ] 16.1 **Розрахунок навантажень (load calculation)**: автоматичний розрахунок установленої та розрахункової потужності за колами й на вводі; коефіцієнти попиту/використання за типами споживачів; збереження результатів у `plan.calculationSettings`; відображення в live takeoff (15.4) та кошторисі.
+- [ ] 16.2 **Розрахунок падіння напруги (voltage drop)**: перевірка кожної лінії від щита до найдальшого споживача; врахування довжини траси, перерізу, матеріалу жили та струму; попередження при перевищенні допустимого ΔU (наприклад, 5% для силових, 3% для освітлення).
+- [ ] 16.3 **Розрахунок струмів короткого замикання (short-circuit current)**: оцінка струму КЗ на кожній лінії для перевірки відключаючої здатності автоматів і селективності; мінімальний набір — однофазне КЗ у кінці лінії.
+- [ ] 16.4 **Автоматична перевірка перерізів і захистів**: модуль, що зіставляє розрахунковий струм, номінал автомата/ПЗВ і переріз кабелю; інтеграція з панеллю Validation (15.5) як нові правила; блокування генерації кошторису при критичних невідповідностях.
+- [ ] 16.5 **Редактор графіків щитів (panel schedules)**: окремий модуль для компонування щитів, призначення автоматів/ПЗВ/дифавтоматів на конкретні лінії, розрахунок заповнення щита; автогенерація графіка щита для експорту (PDF/CSV).
+- [ ] 16.6 **Поглиблена однолінійна схема**: розширити наявний експорт 15.9 до повноцінної однолінійної схеми з вводом, щитами, групами, номіналами захисних апаратів і перерізами; зв'язок «план → схема» (зміна на плані відображається на схемі).
+- [ ] 16.7 **Автоматична нумерація кіл, проводів і клем**: наскрізна адресація (наприклад, `Q1-1L1`, `W12`, `X1:3`) з оновленням при зміні схеми; використання нумерації в кабельному журналі, специфікаціях і SVG-схемі.
+- [ ] 16.8 **Бібліотека стандартних символів і виробів**: символи за ГОСТ/ДСТУ/IEC з прив'язкою до реальних артикулів (автомати, ПЗВ, розетки, клеми); розширення наявного каталогу підтипів (15.2) до повноцінної бібліотеки з сумісністю між символами й матеріалами.
+- [ ] 16.9 **Нормоконтроль (ПУЭ/ДБН)**: набір вбудованих правил — відповідність перерізу струму захисту, обов'язкове ПЗВ на певні групи, вимоги до монтажу в вологих зонах; розширення `validatePlan` (15.5) з посиланнями на нормативні пункти.
+- [ ] 16.10 **Експорт DWG/DXF**: експорт 2D-плану (стіни, отвори, кімнати, точки, траси, розміри) для обміну з AutoCAD/Revit; мінімально — сумісність з AutoCAD R2018 DXF.
+- [ ] 16.11 **Експорт IFC для BIM**: передача стін, отворів, точок і трас як IFC-сутностей; необхідно для участі в BIM-проєктах і перевірки колізій у Navisworks/Solibri.
+- [ ] 16.12 **Перевірка колізій (clash detection)**: використати наявний 3D-вид (12, 15.7, 15.10) для перевірки перетину кабельних трас з іншими інженерними мережами або несучими конструкціями; список колізій з переходом до об'єкта.
+- [ ] 16.13 **Гнучкі шаблони звітів**: кабельний журнал, специфікація обладнання, відомість етажних щитів; шаблони з можливістю вибору полів і вивантаження в Excel/PDF; розширення наявного експорту кошторису (Фаза 6) та документації (15.8).
+
+**Критерії завершення:** електричний проєкт проходить перевірку навантажень, падіння напруги й узгодженість захистів; має графік щита, однолінійну схему та кабельний журнал; експортується в DWG/DXF та IFC; критичні невідповідності блокують фінальний експорт кошторису.
+
+### Фаза 17 — Onboarding та підказки першого візиту
+
+- [ ] 17.1 Порожні стани з CTA на `/app`, `/local`, `/app/projects/:id/documentation`.
+- [ ] 17.2 Інтеграція `driver.js` + `data-tour` контракт + Tailwind-тема.
+- [ ] 17.3 Тур редактора (5 кроків): toolbar → canvas → circuits → validation → save.
+- [ ] 17.4 Контекстні підказки: перша точка → траса, перша траса → коло, command palette, 3D, documentation.
+- [ ] 17.5 Збереження стану: `localStorage` + `users.onboarding jsonb` + endpoint `/me/onboarding`.
+- [ ] 17.6 Локалізація `tour.*` в `ua`/`en` (і `ru` за флагом).
+- [ ] 17.7 Доступність: Esc, focus trap, `prefers-reduced-motion`, скрін-рідери.
+- [ ] 17.8 Керування: `?tour=editor`, `?tour=off`, DEV-режим.
+- [ ] 17.9 Playwright: показ один раз, пропуск, збереження, серверний запис.
+- [ ] 17.10 Не ламати `scripts/browser-check.mjs` (додати `?tour=off` або `localStorage.clear()`).
+
+**Критерії завершення:** новий користувач бачить редакторський тур один раз, може пропустити, стан зберігається між сесіями та пристроями (для акаунта); порожні стани ведуть до першого проєкту без модальних вікон.
+
 ## 4. Наскрізний сценарій приймання MVP
 
 Використовуйте цей сценарій як основне визначення працюючого MVP:
@@ -334,6 +369,12 @@ MVP готовий до початкового тестування корист
 1. **Реліз-підготовка:** оновити README до поточного стану (фази 0–14), перевірити Docker/ENV і додати чекліст розгортання.
 2. **QA-прогін:** пройти повний сценарій із розділу 4 на чистій PostgreSQL та в трьох локалях, включно з експортом CSV/PDF і запрошеннями.
 3. **Полірування:** додати скріншоти/демо-дані, переглянути продуктивність великих планів і налаштувати зовнішній Sentry-проєкт для staging.
+
+## 6.1 Наступні 3 дії
+
+1. **Інженерні розрахунки (16.1–16.4):** реалізувати розрахунок навантажень, падіння напруги, струмів КЗ і автоматичну перевірку перерізів/захистів у пакеті `calculations` з покриттям юніт-тестами та інтеграцією в панель Validation.
+2. **Щити та однолінійна схема (16.5–16.7):** додати редактор графіків щитів, поглибити експорт 15.9 до повноцінної однолінійної схеми з номіналами й перерізами, впровадити автоматичну нумерацію кіл/проводів/клем.
+3. **Обмін з інженерними САПР (16.10–16.11):** додати експорт DWG/DXF для 2D-плану та IFC для BIM-сумісності; після цього — нормоконтроль (16.9) і шаблони звітів (16.13).
 
 ## 7. Журнал сесій
 
@@ -441,3 +482,15 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2; 239 automated tests), `node scripts/browser-check.mjs` on a clean database.
 - Issues/blockers: the demo is local-first (no server template endpoint yet); walk mode has no collision detection; the 3D section is a horizontal plane; schematic export is a single-line diagram; Russian UI stays behind `VITE_ENABLE_RU`.
 - Next action: post-MVP backlog — server-side templates, arbitrary clipping boxes, wiring diagrams, additional languages and deployment hardening.
+
+### 2026-10-26 — session 29: quick guide and usage hints
+- Completed: a six-step Quick guide in both server and local editors (scale → walls/openings → rooms/dimensions → devices → routes → validation/export) with shortcut badges, a keyboard-shortcuts button, persisted collapsed state and a floating help button; a command-palette entry; an empty-state hint on the local projects page explaining the demo and blank-project paths. All strings translated to `ua`/`en`/`ru`.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` (guide visible, collapse persisted, demo hint present).
+- Issues/blockers: the guide is procedural text rather than an interactive coach-mark tour.
+- Next action: optional interactive onboarding/tooltips per tool.
+
+### 2026-10-26 — session 30: full-screen guide and tooltips
+- Completed: full-screen six-step walkthrough opened from the sidebar guide card, the floating help button and the command palette; step cards with shortcut badges, Esc/backdrop close, keyboard-shortcuts and “Start drawing” actions. Added a styled tooltip layer for editor icon buttons: it reads `aria-label`/`title`, supports an optional `data-tooltip-hint` explanation, suppresses the native title, positions above/below the trigger and hides on scroll/click. Usage hints added for select, pan, calibration, placement, routes, walls, rooms, dimensions, grid/snap/ortho, undo/redo, zoom, fit, PNG, preview, panels and help.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (full-screen guide opens/closes, wall-tool tooltip shows its hint).
+- Issues/blockers: tooltips are hover/focus based and not pinned onboarding coach-marks.
+- Next action: optional interactive coach-mark tour.

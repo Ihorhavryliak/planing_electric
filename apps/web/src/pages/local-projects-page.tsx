@@ -29,6 +29,7 @@ import {
 } from '@/features/editor/editor-api';
 import { createProject } from '@/features/projects/projects-api';
 import { createDemoLocalProject } from '@/features/local/demo-project';
+import { DemoHint } from '@/features/editor/editor-guide';
 import {
   createLocalProject,
   deleteLocalProject,
@@ -306,6 +307,8 @@ export function LocalProjectsPage() {
             }}
           />
         </form>
+
+        {!loading && projects.length === 0 ? <DemoHint /> : null}
 
         {error ? (
           <p role="alert" className="mt-4 text-sm text-rose-300">

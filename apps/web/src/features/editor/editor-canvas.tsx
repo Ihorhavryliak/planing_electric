@@ -2423,6 +2423,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.select')}
           aria-label={t('editor.selectTool')}
+          data-tooltip-hint={t('tooltip.select')}
           aria-pressed={tool === 'select'}
           onClick={() => setTool('select')}
           className={cn(
@@ -2438,6 +2439,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.pan')}
           aria-label={t('editor.panTool')}
+          data-tooltip-hint={t('tooltip.pan')}
           aria-pressed={tool === 'pan'}
           onClick={() => setTool('pan')}
           className={cn(
@@ -2453,6 +2455,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.calibrate')}
           aria-label={t('editor.calibrateTool')}
+          data-tooltip-hint={t('tooltip.calibrate')}
           aria-pressed={tool === 'calibrate'}
           onClick={() => setTool('calibrate')}
           className={cn(
@@ -2480,6 +2483,7 @@ export function EditorCanvas({
                 symbol.shortcut ? ` (${symbol.shortcut})` : ''
               }`}
               aria-label={t('editor.placeTool', { symbol: name })}
+              data-tooltip-hint={t('tooltip.place')}
               aria-pressed={active}
               onClick={() => {
                 setPlaceType(symbol.type);
@@ -2502,6 +2506,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.route')}
           aria-label={t('editor.routeTool')}
+          data-tooltip-hint={t('tooltip.route')}
           aria-pressed={tool === 'route'}
           onClick={() => setTool('route')}
           className={cn(
@@ -2518,6 +2523,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.wall')}
           aria-label={t('editor.wallTool')}
+          data-tooltip-hint={t('tooltip.wall')}
           aria-pressed={tool === 'wall'}
           onClick={() => setTool('wall')}
           className={cn(
@@ -2534,6 +2540,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.room')}
           aria-label={t('editor.roomTool')}
+          data-tooltip-hint={t('tooltip.room')}
           aria-pressed={tool === 'room'}
           onClick={() => setTool('room')}
           className={cn(
@@ -2550,6 +2557,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.dimension')}
           aria-label={t('editor.dimensionTool')}
+          data-tooltip-hint={t('tooltip.dimension')}
           aria-pressed={tool === 'dimension'}
           onClick={() => setTool('dimension')}
           className={cn(
@@ -2566,6 +2574,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.snapShortcut')}
           aria-label={t('editor.snap')}
+          data-tooltip-hint={t('tooltip.snap')}
           aria-pressed={snapEnabled}
           onClick={() => setSnapEnabled((value) => !value)}
           className={cn(
@@ -2582,6 +2591,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.orthoShortcut')}
           aria-label={t('editor.ortho')}
+          data-tooltip-hint={t('tooltip.ortho')}
           aria-pressed={orthoEnabled}
           onClick={() => setOrthoEnabled((value) => !value)}
           className={cn(
@@ -2598,6 +2608,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.gridShortcut')}
           aria-label={t('editor.grid')}
+          data-tooltip-hint={t('tooltip.grid')}
           aria-pressed={gridEnabled}
           onClick={() => setGridEnabled((value) => !value)}
           className={cn(
@@ -2616,6 +2627,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.undoShortcut')}
           aria-label={t('editor.undo')}
+          data-tooltip-hint={t('tooltip.undo')}
           onClick={onUndo}
           disabled={!canUndo || historyBusy}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
@@ -2626,6 +2638,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.redoShortcut')}
           aria-label={t('editor.redo')}
+          data-tooltip-hint={t('tooltip.redo')}
           onClick={onRedo}
           disabled={!canRedo || historyBusy}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
@@ -2639,6 +2652,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.zoomOutShortcut')}
           aria-label={t('editor.zoomOut')}
+          data-tooltip-hint={t('tooltip.zoomOut')}
           onClick={() =>
             zoomAt(size.width / 2, size.height / 2, 0.8)
           }
@@ -2660,6 +2674,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.zoomInShortcut')}
           aria-label={t('editor.zoomIn')}
+          data-tooltip-hint={t('tooltip.zoomIn')}
           onClick={() =>
             zoomAt(size.width / 2, size.height / 2, 1.25)
           }
@@ -2674,6 +2689,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.fitShortcut')}
           aria-label={t('editor.fit')}
+          data-tooltip-hint={t('tooltip.fit')}
           onClick={fitToPlan}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         >
@@ -2686,6 +2702,7 @@ export function EditorCanvas({
           type="button"
           title={t('editor.downloadPng')}
           aria-label={t('editor.downloadPng')}
+          data-tooltip-hint={t('tooltip.download')}
           onClick={() => {
             const canvas = canvasRef.current;
             if (!canvas) return;

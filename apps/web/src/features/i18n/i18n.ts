@@ -834,6 +834,61 @@ const en: Dictionary = {
   'palette.search': 'Search commands',
   'palette.empty': 'No commands match your search.',
   'hotkeys.title': 'Keyboard shortcuts',
+  'guide.title': 'Quick guide',
+  'guide.subtitle': 'Six steps from a blank plan to a checked electrical project.',
+  'guide.scale': 'Set the scale',
+  'guide.scaleHint':
+    'Press C, then click two points with a known distance. Real lengths and costs require scale.',
+  'guide.walls': 'Draw walls and openings',
+  'guide.wallsHint':
+    'Press Q to trace walls. Add doors and windows from the walls panel.',
+  'guide.rooms': 'Add rooms and dimensions',
+  'guide.roomsHint': 'Press O for room outlines and D for measurements.',
+  'guide.devices': 'Place devices',
+  'guide.devicesHint':
+    'Choose a subtype in the device palette, then click the plan. Set its circuit and mounting height in properties.',
+  'guide.routes': 'Draw cable routes',
+  'guide.routesHint':
+    'Press R, click bends and finish with Enter. Select a route to set its circuit, cable and chase mounting.',
+  'guide.check': 'Check and export',
+  'guide.checkHint':
+    'Review Validation and Live takeoff, then export SVG/PDF or generate an estimate.',
+  'guide.openShortcuts': 'Keyboard shortcuts',
+  'guide.show': 'Show quick guide',
+  'guide.hide': 'Hide quick guide',
+  'guide.demoHint':
+    'New here? Click “Load demo” to open a ready apartment plan, or create a blank project and follow the quick guide in the editor.',
+  'guide.fullTitle': 'How to use the editor',
+  'guide.fullSubtitle':
+    'A short walkthrough: from a plan and scale to a validated electrical drawing, estimate and export.',
+  'guide.close': 'Close guide',
+  'guide.start': 'Start drawing',
+  'guide.openFull': 'Open full guide',
+  'guide.footerHint':
+    'Tip: press ? for all shortcuts, Ctrl+K for the command palette, and load the demo apartment if you want to explore a finished plan.',
+  'tooltip.select': 'Select and edit objects',
+  'tooltip.pan': 'Drag the plan to move the view',
+  'tooltip.calibrate': 'Click two points with a known real distance',
+  'tooltip.place': 'Click the plan to place this device',
+  'tooltip.route': 'Click to add bends · Enter to finish',
+  'tooltip.wall': 'Click to trace a wall · Enter to finish',
+  'tooltip.room': 'Click to outline a room · Enter to finish',
+  'tooltip.dimension': 'Click two points to measure the distance',
+  'tooltip.snap': 'Snap new geometry to the grid (G)',
+  'tooltip.ortho': 'Keep route segments horizontal or vertical',
+  'tooltip.grid': 'Show or hide the drawing grid',
+  'tooltip.undo': 'Undo the last change (Ctrl+Z)',
+  'tooltip.redo': 'Redo the last undone change',
+  'tooltip.zoomIn': 'Zoom in (+)',
+  'tooltip.zoomOut': 'Zoom out (−)',
+  'tooltip.fit': 'Fit the whole plan in view (0)',
+  'tooltip.download': 'Download the current view as PNG',
+  'tooltip.preview': 'Hide panels and lock editing for a clean view',
+  'tooltip.panels': 'Show or hide the side panel',
+  'tooltip.help': 'Open the six-step quick guide',
+
+
+
   'hotkeys.hint': 'Press ? anytime to reopen this overview.',
   'hotkeys.close': 'Close shortcuts',
   'hotkeys.tools': 'Tools',
@@ -1850,6 +1905,61 @@ const ua: Dictionary = {
   'palette.search': 'Пошук команд',
   'palette.empty': 'Немає команд за цим запитом.',
   'hotkeys.title': 'Гарячі клавіші',
+  'guide.title': 'Швидкий посібник',
+  'guide.subtitle': 'Шість кроків від чистого плану до перевіреного електропроєкту.',
+  'guide.scale': 'Задайте масштаб',
+  'guide.scaleHint':
+    'Натисніть C і клацніть дві точки з відомою відстанню. Реальні довжини й вартість потребують масштабу.',
+  'guide.walls': 'Намалюйте стіни та отвори',
+  'guide.wallsHint':
+    'Натисніть Q, щоб прокласти стіни. Додайте двері й вікна в панелі стін.',
+  'guide.rooms': 'Додайте кімнати та розміри',
+  'guide.roomsHint': 'Натисніть O для контурів кімнат і D для вимірювань.',
+  'guide.devices': 'Розмістіть пристрої',
+  'guide.devicesHint':
+    'Виберіть підтип у палітрі пристроїв і клацніть план. Призначте коло й висоту монтажу у властивостях.',
+  'guide.routes': 'Прокладіть кабельні траси',
+  'guide.routesHint':
+    'Натисніть R, додайте згини й завершіть Enter. Виберіть трасу, щоб задати коло, кабель і штробу.',
+  'guide.check': 'Перевірте та експортуйте',
+  'guide.checkHint':
+    'Перегляньте Validation і Live takeoff, потім експортуйте SVG/PDF або створіть кошторис.',
+  'guide.openShortcuts': 'Гарячі клавіші',
+  'guide.show': 'Показати посібник',
+  'guide.hide': 'Сховати посібник',
+  'guide.demoHint':
+    'Вперше тут? Натисніть «Завантажити демо», щоб відкрити готову квартиру, або створіть порожній проєкт і дотримуйтесь посібника в редакторі.',
+  'guide.fullTitle': 'Як користуватися редактором',
+  'guide.fullSubtitle':
+    'Короткий огляд: від плану й масштабу до перевіреного електрокреслення, кошторису та експорту.',
+  'guide.close': 'Закрити посібник',
+  'guide.start': 'Почати креслити',
+  'guide.openFull': 'Відкрити повний посібник',
+  'guide.footerHint':
+    'Порада: натисніть ?, щоб побачити всі гарячі клавіші, Ctrl+K — палітра команд, а демо-квартира допоможе оглянути готовий приклад.',
+  'tooltip.select': 'Вибір і редагування об’єктів',
+  'tooltip.pan': 'Тягніть план, щоб перемістити вид',
+  'tooltip.calibrate': 'Клацніть дві точки з відомою реальною відстанню',
+  'tooltip.place': 'Клацніть план, щоб розмістити пристрій',
+  'tooltip.route': 'Клацайте, щоб додати згини · Enter — завершити',
+  'tooltip.wall': 'Клацайте, щоб прокласти стіну · Enter — завершити',
+  'tooltip.room': 'Клацайте, щоб окреслити кімнату · Enter — завершити',
+  'tooltip.dimension': 'Клацніть дві точки, щоб виміряти відстань',
+  'tooltip.snap': 'Прив’язувати нові елементи до сітки (G)',
+  'tooltip.ortho': 'Тримати сегменти трас горизонтально або вертикально',
+  'tooltip.grid': 'Показати або сховати сітку',
+  'tooltip.undo': 'Скасувати останню зміну (Ctrl+Z)',
+  'tooltip.redo': 'Повторити скасовану зміну',
+  'tooltip.zoomIn': 'Збільшити (+)',
+  'tooltip.zoomOut': 'Зменшити (−)',
+  'tooltip.fit': 'Вписати весь план у вид (0)',
+  'tooltip.download': 'Завантажити поточний вид як PNG',
+  'tooltip.preview': 'Сховати панелі й заблокувати редагування для чистого вигляду',
+  'tooltip.panels': 'Показати або сховати бічну панель',
+  'tooltip.help': 'Відкрити посібник із шести кроків',
+
+
+
   'hotkeys.hint': 'Натисніть ?, щоб знову відкрити цей огляд.',
   'hotkeys.close': 'Закрити гарячі клавіші',
   'hotkeys.tools': 'Інструменти',

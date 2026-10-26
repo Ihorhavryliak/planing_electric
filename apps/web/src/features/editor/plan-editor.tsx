@@ -35,6 +35,7 @@ import {
   EyeOff,
   FileImage,
   FileText,
+  HelpCircle,
   ImagePlus,
   LoaderCircle,
   Lock,
@@ -119,6 +120,8 @@ import {
 import { CommandPalette, type CommandPaletteItem } from './command-palette';
 import { HotkeysOverlay } from './hotkeys-overlay';
 import { RoomNavigator } from './room-navigator';
+import { EditorGuide, EditorGuideOverlay } from './editor-guide';
+import { EditorTooltipLayer } from './editor-tooltip';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -465,8 +468,13 @@ export function PlanEditor({
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
-  const { preferences, setUiScale, toggleSidebar } = useEditorPreferences();
+  const {
+    preferences,
+    setUiScale,
+    toggleSidebar,
+  } = useEditorPreferences();
   const {
     settings: takeoffSettings,
     setWallHeight,
@@ -2244,6 +2252,10 @@ export function PlanEditor({
     }));
   }
 
+  function openGuide() {
+    setGuideOpen(true);
+  }
+
   const paletteCommands: CommandPaletteItem[] = [
     {
       id: 'tool-select',
@@ -2332,6 +2344,12 @@ export function PlanEditor({
       label: t('editor.splitView'),
       hint: t('editor.viewMode'),
       run: () => setViewMode('split'),
+    },
+    {
+      id: 'guide',
+      label: t('guide.title'),
+      hint: t('guide.subtitle'),
+      run: openGuide,
     },
     {
       id: 'preview',
@@ -2427,6 +2445,7 @@ export function PlanEditor({
   return (
     <>
       <div
+        data-editor-tooltips
         style={{ zoom: preferences.uiScale }}
         className={
           previewMode || preferences.sidebarCollapsed
@@ -2590,6 +2609,7 @@ export function PlanEditor({
             type="button"
             title={previewMode ? t('editor.exitPreview') : t('editor.preview')}
             aria-label={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            data-tooltip-hint={t('tooltip.preview')}
             aria-pressed={previewMode}
             onClick={() => setPreviewMode((value) => !value)}
             className={cn(
@@ -2619,6 +2639,7 @@ export function PlanEditor({
                   : t('editor.hidePanels')
               }
               aria-pressed={preferences.sidebarCollapsed}
+              data-tooltip-hint={t('tooltip.panels')}
               onClick={toggleSidebar}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
             >
@@ -2629,6 +2650,16 @@ export function PlanEditor({
               )}
             </button>
           )}
+          <button
+            type="button"
+            title={t('guide.title')}
+            aria-label={t('guide.title')}
+            data-tooltip-hint={t('tooltip.help')}
+            onClick={openGuide}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
@@ -2637,6 +2668,11 @@ export function PlanEditor({
             rooms={rooms}
             selectedRoomId={selectedRoomId}
             onSelect={focusRoom}
+          />
+
+          <EditorGuide
+            onOpenShortcuts={() => setHotkeysOpen(true)}
+            onOpenGuide={openGuide}
           />
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -3596,6 +3632,15 @@ export function PlanEditor({
       <HotkeysOverlay
         open={hotkeysOpen}
         onClose={() => setHotkeysOpen(false)}
+      />
+      <EditorTooltipLayer />
+      <EditorGuideOverlay
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        onOpenShortcuts={() => {
+          setGuideOpen(false);
+          setHotkeysOpen(true);
+        }}
       />
     </>
   );

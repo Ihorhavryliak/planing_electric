@@ -127,6 +127,23 @@ async function main() {
   await fileInput.setInputFiles(pngPath);
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
+  // The quick guide is visible on the first editor visit, has a full-screen
+  // walkthrough and can be collapsed afterwards.
+  await page.getByText('Quick guide', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Open full guide' }).click();
+  const fullGuide = page.getByRole('dialog', { name: 'How to use the editor' });
+  await fullGuide.waitFor();
+  await fullGuide.getByRole('button', { name: 'Start drawing' }).click();
+  await page.getByRole('button', { name: 'Hide quick guide' }).click();
+
+  // Icon controls show a styled tooltip with a usage hint.
+  await page.getByRole('button', { name: 'Draw wall tool' }).hover();
+  const tooltip = page.getByRole('tooltip');
+  await tooltip.waitFor({ timeout: 5000 });
+  if (!(await tooltip.innerText()).includes('trace a wall')) {
+    throw new Error('Toolbar tooltip did not show its usage hint.');
+  }
+
   const circuitsSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Circuits', exact: true }),
   });
@@ -553,6 +570,7 @@ async function main() {
 
   // Local-first demo project loads with rooms, circuits and routes.
   await page.goto(`${WEB}/local`);
+  await page.getByText(/New here\?/).waitFor();
   await page.getByRole('button', { name: 'Load demo' }).click();
   await page.waitForURL('**/local/*');
   await page.locator('canvas').waitFor();

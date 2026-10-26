@@ -15,6 +15,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  HelpCircle,
   LoaderCircle,
   PanelRightClose,
   PanelRightOpen,
@@ -40,6 +41,11 @@ import { DevicePalette } from '@/features/editor/device-palette';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
 import { HotkeysOverlay } from '@/features/editor/hotkeys-overlay';
 import { RoomNavigator } from '@/features/editor/room-navigator';
+import {
+  EditorGuide,
+  EditorGuideOverlay,
+} from '@/features/editor/editor-guide';
+import { EditorTooltipLayer } from '@/features/editor/editor-tooltip';
 import {
   UI_SCALES,
   useEditorPreferences,
@@ -98,7 +104,12 @@ export function LocalEditorPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
-  const { preferences, setUiScale, toggleSidebar } = useEditorPreferences();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const {
+    preferences,
+    setUiScale,
+    toggleSidebar,
+  } = useEditorPreferences();
   const {
     settings: takeoffSettings,
     setWallHeight,
@@ -413,6 +424,10 @@ export function LocalEditorPage() {
     }));
   }
 
+  function openGuide() {
+    setGuideOpen(true);
+  }
+
   const paletteCommands: CommandPaletteItem[] = [
     {
       id: 'tool-select',
@@ -477,6 +492,12 @@ export function LocalEditorPage() {
       label: t('editor.fit'),
       shortcut: '0',
       run: () => setFitRequest(Date.now()),
+    },
+    {
+      id: 'guide',
+      label: t('guide.title'),
+      hint: t('guide.subtitle'),
+      run: openGuide,
     },
     {
       id: 'preview',
@@ -599,6 +620,7 @@ export function LocalEditorPage() {
       </header>
 
       <main
+        data-editor-tooltips
         style={{ zoom: preferences.uiScale }}
         className={
           previewMode || preferences.sidebarCollapsed
@@ -909,6 +931,7 @@ export function LocalEditorPage() {
             type="button"
             title={previewMode ? t('editor.exitPreview') : t('editor.preview')}
             aria-label={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            data-tooltip-hint={t('tooltip.preview')}
             aria-pressed={previewMode}
             onClick={() => setPreviewMode((value) => !value)}
             className={cn(
@@ -937,6 +960,7 @@ export function LocalEditorPage() {
                   ? t('editor.showPanels')
                   : t('editor.hidePanels')
               }
+              data-tooltip-hint={t('tooltip.panels')}
               onClick={toggleSidebar}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
             >
@@ -947,6 +971,16 @@ export function LocalEditorPage() {
               )}
             </button>
           )}
+          <button
+            type="button"
+            title={t('guide.title')}
+            aria-label={t('guide.title')}
+            data-tooltip-hint={t('tooltip.help')}
+            onClick={openGuide}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
@@ -955,6 +989,11 @@ export function LocalEditorPage() {
             rooms={drawing.rooms}
             selectedRoomId={selectedRoomId}
             onSelect={focusRoom}
+          />
+
+          <EditorGuide
+            onOpenShortcuts={() => setHotkeysOpen(true)}
+            onOpenGuide={openGuide}
           />
 
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
@@ -1510,6 +1549,15 @@ export function LocalEditorPage() {
       <HotkeysOverlay
         open={hotkeysOpen}
         onClose={() => setHotkeysOpen(false)}
+      />
+      <EditorTooltipLayer />
+      <EditorGuideOverlay
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        onOpenShortcuts={() => {
+          setGuideOpen(false);
+          setHotkeysOpen(true);
+        }}
       />
     </div>
   );
