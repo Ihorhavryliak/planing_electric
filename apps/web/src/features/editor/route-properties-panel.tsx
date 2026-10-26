@@ -1,12 +1,13 @@
 import type {
   Circuit,
   PublicMaterial,
+  PublicPoint,
   PublicRoute,
   RouteCalculation,
   RouteMounting,
   UpdateRouteInput,
 } from '@drawmyplace/contracts';
-import { Trash2 } from 'lucide-react';
+import { Magnet, Trash2, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
@@ -17,9 +18,12 @@ interface RoutePropertiesPanelProps {
   calculation: RouteCalculation | undefined;
   materials: PublicMaterial[];
   circuits?: readonly Circuit[];
+  points?: readonly PublicPoint[];
   penetrationCount?: number;
   onChange: (patch: UpdateRouteInput) => void;
   onDelete: () => void;
+  onAttachEnd?: (end: 'start' | 'end') => void;
+  onDetachEnd?: (end: 'start' | 'end') => void;
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -36,9 +40,12 @@ export function RoutePropertiesPanel({
   calculation,
   materials,
   circuits = [],
+  points = [],
   penetrationCount = 0,
   onChange,
   onDelete,
+  onAttachEnd,
+  onDetachEnd,
 }: RoutePropertiesPanelProps) {
   const { t, formatMeters } = useI18n();
   const cableMaterials = materials.filter(
@@ -221,6 +228,101 @@ export function RoutePropertiesPanel({
             />
           </>
         ) : null}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {t('routePins.title')}
+        </h3>
+        <div className="mt-2 space-y-1.5">
+          {(['start', 'end'] as const).map((end) => {
+            const pointId =
+              end === 'start' ? route.startPointId : route.endPointId;
+            const point = points.find((item) => item.id === pointId);
+            const pinned = Boolean(pointId);
+            const at =
+              end === 'start'
+                ? route.geometry[0]
+                : route.geometry[route.geometry.length - 1];
+            const mismatch =
+              Boolean(point && at) &&
+              (Math.abs((at?.x ?? 0) - (point?.x ?? 0)) > 1e-6 ||
+                Math.abs((at?.y ?? 0) - (point?.y ?? 0)) > 1e-6);
+            const sync = () => {
+              if (!point) return;
+              onChange({
+                geometry: route.geometry.map((vertex, index) =>
+                  (end === 'start' && index === 0) ||
+                  (end === 'end' && index === route.geometry.length - 1)
+                    ? { x: point.x, y: point.y }
+                    : vertex,
+                ),
+              });
+            };
+
+            return (
+              <div
+                key={end}
+                data-testid={`route-pin-${end}`}
+                className="flex items-center justify-between gap-2 rounded-lg border border-white/5 bg-slate-950/40 px-2 py-1.5"
+              >
+                <span className="flex min-w-0 items-center gap-1.5 text-[11px]">
+                  <Magnet
+                    className={`h-3.5 w-3.5 shrink-0 ${
+                      pinned ? 'text-amber-300' : 'text-slate-600'
+                    }`}
+                  />
+                  <span className="shrink-0 text-slate-500">
+                    {t(`routePins.${end}`)}
+                  </span>
+                  <span
+                    data-testid={`route-pin-status-${end}`}
+                    className="truncate text-slate-200"
+                  >
+                    {pinned
+                      ? point?.label?.trim() ||
+                        t(`editor.point.${point?.type ?? 'custom'}`)
+                      : t('routePins.free')}
+                  </span>
+                </span>
+                {pinned ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    {mismatch ? (
+                      <button
+                        type="button"
+                        onClick={sync}
+                        className="rounded-md px-1.5 py-0.5 text-[10px] text-amber-200 transition hover:bg-amber-400/10"
+                      >
+                        {t('routePins.sync')}
+                      </button>
+                    ) : null}
+                  <button
+                    type="button"
+                    data-testid={`route-detach-${end}`}
+                    onClick={() => onDetachEnd?.(end)}
+                    aria-label={t('routePins.detachEnd', {
+                      end: t(`routePins.${end}`),
+                    })}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-slate-400 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <Unlink className="h-3 w-3" />
+                    {t('routePins.detach')}
+                  </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    data-testid={`route-attach-${end}`}
+                    onClick={() => onAttachEnd?.(end)}
+                    className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-amber-200 transition hover:bg-amber-400/10"
+                  >
+                    {t('routePins.attachNearest')}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">

@@ -186,4 +186,19 @@ describe('plan validation', () => {
     expect(issue?.targets).toEqual([{ kind: 'circuit', id: 'C1' }]);
     expect(issue?.params?.current).toBeGreaterThan(16);
   });
+
+  it('checks explicit route pins against points', () => {
+    const input = baseInput();
+    input.routes[0]!.startPointId = 'p1';
+    expect(codes(input)).not.toContain('pinnedEndMismatch');
+
+    input.routes[0]!.geometry = [
+      { x: 10, y: 10 },
+      { x: 100, y: 0 },
+    ];
+    expect(codes(input)).toContain('pinnedEndMismatch');
+
+    input.routes[0]!.startPointId = '99999999-9999-4999-8999-999999999999';
+    expect(codes(input)).toContain('pinnedPointMissing');
+  });
 });

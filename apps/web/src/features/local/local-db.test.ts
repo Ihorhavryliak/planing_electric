@@ -56,6 +56,7 @@ describe('local projects', () => {
         circuits: [{ id: 'L1', name: 'Lighting', color: '#facc15' }],
         walls: [],
         points: [{ id: 'p1' }],
+        routes: [{ id: 'r1' }],
       },
       viewport: { x: 1, y: 2, zoom: 0 },
     });
@@ -63,7 +64,9 @@ describe('local projects', () => {
     expect(normalized).not.toBeNull();
     expect(normalized?.drawing.calibration).toBeNull();
     expect(normalized?.drawing.rooms).toEqual([]);
-    expect(normalized?.drawing.routes).toEqual([]);
+    expect(normalized?.drawing.routes).toEqual([
+      { id: 'r1', startPointId: null, endPointId: null },
+    ]);
     expect(normalized?.drawing.points).toHaveLength(1);
     expect(normalized?.drawing.circuits).toHaveLength(1);
     expect(normalized?.viewport).toEqual({ x: 0, y: 0, zoom: 1 });

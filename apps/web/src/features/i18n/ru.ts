@@ -755,6 +755,9 @@ export const ru: Dictionary = {
   'validation.openingMissingWall':
     'Проёмы ссылаются на отсутствующие стены: {count}',
   'validation.unusedCircuit': 'Неиспользуемые цепи: {count}',
+  'validation.pinnedPointMissing': 'Трассы ссылаются на удалённую точку: {count}',
+  'validation.pinnedEndMismatch':
+    'Прикреплённые концы кабеля не совпадают с координатами точек: {count}',
   'validation.electricalUncalibrated':
     'Откалибруйте план, чтобы проверить падение напряжения и ток КЗ.',
   'validation.circuitNoDevices': 'Цепь {circuit} не имеет устройств.',
@@ -951,6 +954,23 @@ export const ru: Dictionary = {
   'tooltip.fit': 'Вписать весь план в вид (0)',
   'tooltip.download': 'Скачать текущий вид как PNG',
   'tooltip.preview': 'Скрыть панели и заблокировать редактирование',
+  'routePins.title': 'Крепление кабеля',
+  'routePins.start': 'Начало',
+  'routePins.end': 'Конец',
+  'routePins.free': 'Свободный конец',
+  'routePins.detach': 'Открепить',
+  'routePins.detachEnd': 'Открепить {end}',
+  'routePins.attachNearest': 'Прикрепить ближайший',
+  'routePins.sync': 'Синхронизировать',
+  'routePins.attachStart': 'Прикрепить начало трассы к ближайшей точке',
+  'routePins.attachEnd': 'Прикрепить конец трассы к ближайшей точке',
+  'routePins.detachStart': 'Открепить начало трассы',
+  'routePins.detachEndShort': 'Открепить конец трассы',
+  'routePins.noPointNearby':
+    'Нет электрической точки, к которой можно прикрепить этот конец кабеля.',
+  'routePins.deletePointWarning':
+    'К этой точке прикреплено {count} кабельных трасс. После удаления кабель отсоединится, а трасса останется. Продолжить?',
+
   'editor.fullscreen.enter': 'Редактор на весь экран',
   'editor.fullscreen.exit': 'Выйти из полноэкранного режима',
   'editor.fullscreen.hint': 'Развернуть редактор, не покидая страницу',

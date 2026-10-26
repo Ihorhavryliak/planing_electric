@@ -4,9 +4,12 @@ import {
   distanceToSegment,
   findRouteAt,
   findRouteSegmentHandleAt,
+  attachRouteEnd,
+  detachRouteEnd,
   insertVertexAt,
   isDoubleClick,
   moveAttachedRouteEnds,
+  moveRouteEndsForPoint,
   removeVertexAt,
   snapToPoint,
 } from './route-geometry';
@@ -181,5 +184,74 @@ describe('findRouteSegmentHandleAt', () => {
     expect(
       findRouteSegmentHandleAt(route, { x: 0, y: 0 }, { ...viewport, zoom: 0.1 }, size),
     ).toBeNull();
+  });
+});
+
+describe('route pins', () => {
+  const route = {
+    id: 'r',
+    startPointId: 'a',
+    endPointId: null,
+    geometry: [
+      { x: 10, y: 20 },
+      { x: 50, y: 50 },
+      { x: 100, y: 20 },
+    ],
+  };
+
+  it('attaches an end by snapping it to exact point coordinates', () => {
+    expect(attachRouteEnd(route, 'end', { id: 'b', x: 90, y: 10 })).toEqual({
+      geometry: [
+        { x: 10, y: 20 },
+        { x: 50, y: 50 },
+        { x: 90, y: 10 },
+      ],
+      endPointId: 'b',
+    });
+  });
+
+  it('detaches an end without moving it', () => {
+    expect(detachRouteEnd(route, 'start')).toEqual({
+      geometry: route.geometry,
+      startPointId: null,
+    });
+  });
+
+  it('moves only explicitly pinned ends for the moved point', () => {
+    expect(
+      moveRouteEndsForPoint(
+        [
+          route,
+          {
+            id: 'legacy',
+            geometry: [{ x: 10, y: 20 }, { x: 2, y: 2 }],
+          },
+          {
+            id: 'other-pin',
+            startPointId: 'c',
+            geometry: [{ x: 10, y: 20 }, { x: 2, y: 2 }],
+          },
+        ],
+        'a',
+        { x: 10, y: 20 },
+        { x: 11, y: 21 },
+      ),
+    ).toEqual([
+      {
+        id: 'r',
+        geometry: [
+          { x: 11, y: 21 },
+          { x: 50, y: 50 },
+          { x: 100, y: 20 },
+        ],
+      },
+      {
+        id: 'legacy',
+        geometry: [
+          { x: 11, y: 21 },
+          { x: 2, y: 2 },
+        ],
+      },
+    ]);
   });
 });

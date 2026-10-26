@@ -140,6 +140,10 @@ export const createRouteSchema = z.object({
   geometry: routeGeometrySchema,
   circuitId: circuitIdSchema.nullable().optional(),
   materialId: z.string().uuid().nullable().optional(),
+  /** Explicit attachment of the first vertex to an electrical point. */
+  startPointId: z.string().uuid().nullable().optional(),
+  /** Explicit attachment of the last vertex to an electrical point. */
+  endPointId: z.string().uuid().nullable().optional(),
   settings: routeSettingsSchema.default({}),
 });
 
@@ -148,6 +152,8 @@ export const updateRouteSchema = z
     geometry: routeGeometrySchema.optional(),
     circuitId: circuitIdSchema.nullable().optional(),
     materialId: z.string().uuid().nullable().optional(),
+    startPointId: z.string().uuid().nullable().optional(),
+    endPointId: z.string().uuid().nullable().optional(),
     settings: routeSettingsSchema.optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
@@ -159,6 +165,8 @@ export const publicRouteSchema = z.object({
   floorId: z.string().uuid(),
   circuitId: z.string().nullable(),
   materialId: z.string().uuid().nullable(),
+  startPointId: z.string().uuid().nullable().optional(),
+  endPointId: z.string().uuid().nullable().optional(),
   geometry: routeGeometrySchema,
   settings: routeSettingsSchema,
   updatedAt: z.string().datetime(),

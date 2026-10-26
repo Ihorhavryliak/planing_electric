@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document */
+/* global process, Buffer, console, document, fetch */
 import { chromium } from 'playwright';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -307,6 +307,31 @@ async function main() {
   await circuitsSection
     .getByText('1 devices · 1 routes', { exact: true })
     .waitFor();
+  // The route end snapped to the socket is explicitly pinned; detaching and
+  // reattaching must keep the endpoint in place and only change the link.
+  const pinStart = page.getByTestId('route-pin-status-start');
+  await pinStart.waitFor();
+  if ((await pinStart.innerText()).trim() === 'Free end') {
+    throw new Error('Route start was not pinned to the socket automatically.');
+  }
+  const pinEnd = page.getByTestId('route-pin-status-end');
+  if ((await pinEnd.innerText()).trim() !== 'Free end') {
+    throw new Error('A route end drawn away from points should stay free.');
+  }
+  await page.getByTestId('route-detach-start').click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="route-pin-status-start"]')
+        ?.textContent?.includes('Free end') === true,
+  );
+  await page.getByTestId('route-attach-start').click();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[data-testid="route-pin-status-start"]')
+        ?.textContent?.includes('Free end') === false,
+  );
 
   // Live takeoff reflects calibrated walls, rooms, devices and cable.
   const takeoffSection = page.locator('section').filter({
@@ -602,6 +627,63 @@ async function main() {
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
+
+  const reloadedRouteSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Cable routes', exact: true }),
+  });
+  await reloadedRouteSection.getByRole('button').first().click();
+  const persistedPin = page.getByTestId('route-pin-status-start');
+  await persistedPin.waitFor();
+  if ((await persistedPin.innerText()).trim() === 'Free end') {
+    throw new Error('Route pin did not persist across reload.');
+  }
+
+  // Move the pinned device on the canvas; the cable end must follow it.
+  const planId = await page.locator('[data-plan-id]').getAttribute('data-plan-id');
+  const viewportData = JSON.parse(
+    (await page.locator('[data-viewport]').getAttribute('data-viewport')) ??
+      '{"x":0,"y":0,"zoom":1}',
+  );
+  const moveBox = await page.locator('canvas').first().boundingBox();
+  const drawingBefore = await page.evaluate(
+    async (id) => (await fetch(`/api/v1/plans/${id}/drawing`)).json(),
+    planId,
+  );
+  const pinnedRoute = drawingBefore.routes.find((route) => route.startPointId);
+  const pinnedPoint = drawingBefore.points.find(
+    (point) => point.id === pinnedRoute?.startPointId,
+  );
+  if (!moveBox || !pinnedRoute || !pinnedPoint) {
+    throw new Error('Pinned route or point is missing after reload.');
+  }
+  const toScreen = (x, y) => ({
+    x: moveBox.x + moveBox.width / 2 + (x - viewportData.x) * viewportData.zoom,
+    y: moveBox.y + moveBox.height / 2 + (y - viewportData.y) * viewportData.zoom,
+  });
+  const from = toScreen(pinnedPoint.x, pinnedPoint.y);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(from.x + 18, from.y + 12, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForFunction(
+    async ({ id, routeId, pointId }) => {
+      const data = await (await fetch(`/api/v1/plans/${id}/drawing`)).json();
+      const route = data.routes.find((item) => item.id === routeId);
+      const point = data.points.find((item) => item.id === pointId);
+      if (!route || !point) return false;
+      return (
+        Math.abs(route.geometry[0].x - point.x) < 1e-6 &&
+        Math.abs(route.geometry[0].y - point.y) < 1e-6
+      );
+    },
+    {
+      id: planId,
+      routeId: pinnedRoute.id,
+      pointId: pinnedPoint.id,
+    },
+    { timeout: 15000 },
+  );
+
   const reloadedDevicesToggle = page
     .locator('section')
     .filter({

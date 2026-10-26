@@ -106,7 +106,11 @@ function normalizeDrawing(drawing: Partial<LocalDrawing>): LocalDrawing {
     openings: array(drawing.openings),
     dimensions: array(drawing.dimensions),
     points: array(drawing.points),
-    routes: array(drawing.routes),
+    routes: array(drawing.routes).map((route) => ({
+      ...route,
+      startPointId: route.startPointId ?? null,
+      endPointId: route.endPointId ?? null,
+    })),
   };
 }
 

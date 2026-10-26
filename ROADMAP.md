@@ -339,16 +339,16 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 Замінює coordinate-based attachment (Фаза 4, `moveAttachedRouteEnds`) на явний зв'язок за `pointId`, з можливістю прикріпити та відкріпити вручну.
 
-- [ ] 18.2.1 Розширити модель траси в контрактах: `route.pinned = { start?: { pointId: string; vertexIndex?: number }; end?: { pointId: string; vertexIndex?: number } }` (або окремі поля `startPointId` / `endPointId`, якщо простіше для міграції). Оновити Zod-схему в `packages/contracts` та Drizzle `routes` (nullable колонки `start_point_id`, `end_point_id` з `onDelete: 'set null'`).
-- [ ] 18.2.2 Міграція `0011_route_pins`: додати колонки, перенести наявні зв'язки, де кінець траси збігається з точкою (у межах допуску), у `pinned`; решта лишається «вільними» кінцями.
-- [ ] 18.2.3 UI прикріплення: коли кінець траси перетягують поблизу пристрою — показувати іконку магніту; відпускання в радіусі прив'язки створює `pinned.end` (або `.start`). Явна дія «Прикріпити до найближчого пристрою» в контекстному меню та property panel.
-- [ ] 18.2.4 UI відкріплення: іконка магніту/замка біля прикріпленого кінця; клік — «Відкріпити»; також кнопка в property panel і команда в command palette. Після відкріплення кінець лишається в поточних координатах (не стрибає).
-- [ ] 18.2.5 Поведінка при переміщенні пристрою: прикріплений кінець траси слідує за точкою (замінює coordinate-based логіку); якщо прикріплено обидва кінці й пристрій переміщено — траса перераховує геометрію, довжина оновлюється.
-- [ ] 18.2.6 Видалення пристрою з прикріпленим кабелем: діалог «Відкріпити кабель / Скасувати»; ніколи не видаляти трасу без підтвердження. У bulk-delete — попередження зі списком.
-- [ ] 18.2.7 Валідація (`validatePlan`, 15.5): нові правила — «траса прикріплена до видаленої точки» (не має траплятися, але захист), «прикріплений кінець не збігається з координатами точки після ручного редагування вигину» (попередження + кнопка «Синхронізувати»).
-- [ ] 18.2.8 Візуалізація: маркер прикріплення (магніт) на кінці траси в 2D та 3D; різні кольори для `start`/`end`; відображення в SVG-експорті (15.9) та в кабельному журналі (16.13).
-- [ ] 18.2.9 Локальний режим: `pinned` зберігається в drawing payload, нормалізація старих знімків (де лише координати) — під час імпорту намагатися відновити `pinned` за допуском.
-- [ ] 18.2.10 Тести: юніт для `attachRouteEnd` / `detachRouteEnd` / `movePinnedRouteEnds`; контрактні для Zod; API e2e для CRUD траси з `pinned`; локальне сховище; Playwright — прикріпити, перемістити пристрій, відкріпити, перевірити збереження.
+- [x] 18.2.1 Розширити модель траси в контрактах: `route.pinned = { start?: { pointId: string; vertexIndex?: number }; end?: { pointId: string; vertexIndex?: number } }` (або окремі поля `startPointId` / `endPointId`, якщо простіше для міграції). Оновити Zod-схему в `packages/contracts` та Drizzle `routes` (nullable колонки `start_point_id`, `end_point_id` з `onDelete: 'set null'`).
+- [x] 18.2.2 Міграція `0011_route_pins`: додати колонки, перенести наявні зв'язки, де кінець траси збігається з точкою (у межах допуску), у `pinned`; решта лишається «вільними» кінцями.
+- [x] 18.2.3 UI прикріплення: коли кінець траси перетягують поблизу пристрою — показувати іконку магніту; відпускання в радіусі прив'язки створює `pinned.end` (або `.start`). Явна дія «Прикріпити до найближчого пристрою» в контекстному меню та property panel.
+- [x] 18.2.4 UI відкріплення: іконка магніту/замка біля прикріпленого кінця; клік — «Відкріпити»; також кнопка в property panel і команда в command palette. Після відкріплення кінець лишається в поточних координатах (не стрибає).
+- [x] 18.2.5 Поведінка при переміщенні пристрою: прикріплений кінець траси слідує за точкою (замінює coordinate-based логіку); якщо прикріплено обидва кінці й пристрій переміщено — траса перераховує геометрію, довжина оновлюється.
+- [x] 18.2.6 Видалення пристрою з прикріпленим кабелем: діалог «Відкріпити кабель / Скасувати»; ніколи не видаляти трасу без підтвердження. У bulk-delete — попередження зі списком.
+- [x] 18.2.7 Валідація (`validatePlan`, 15.5): нові правила — «траса прикріплена до видаленої точки» (не має траплятися, але захист), «прикріплений кінець не збігається з координатами точки після ручного редагування вигину» (попередження + кнопка «Синхронізувати»).
+- [x] 18.2.8 Візуалізація: маркер прикріплення (магніт) на кінці траси в 2D та 3D; різні кольори для `start`/`end`; відображення в SVG-експорті (15.9) та в кабельному журналі (16.13).
+- [x] 18.2.9 Локальний режим: `pinned` зберігається в drawing payload, нормалізація старих знімків (де лише координати) — під час імпорту намагатися відновити `pinned` за допуском.
+- [x] 18.2.10 Тести: юніт для `attachRouteEnd` / `detachRouteEnd` / `movePinnedRouteEnds`; контрактні для Zod; API e2e для CRUD траси з `pinned`; локальне сховище; Playwright — прикріпити, перемістити пристрій, відкріпити, перевірити збереження.
 
 #### 18.3 Підказки при наведенні на полотно
 
@@ -562,3 +562,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (web 101), `node scripts/browser-check.mjs` (enter fullscreen, active state, exit, toolbar and canvas restored).
 - Issues/blockers: headless Chromium does not implement the browser-level Esc exit, so the smoke test falls back to the button there; real browsers exit on Esc.
 - Next action: hover tooltips on canvas objects (18.3) and explicit route pinning (18.2).
+
+### 2026-10-26 — session 33: pinned cable ends (18.2)
+- Completed: explicit `startPointId` / `endPointId` links on cable routes in contracts and the `cable_routes` table, with a `0010_route_pins` migration that adds nullable FKs (`ON DELETE SET NULL`) and backfills ends that coincide with existing points. API validates that both pins belong to the same floor. New routes auto-pin ends dropped on points; dragging an end off a point clears the pin; dragging it back re-pins. Point moves update pinned ends first and legacy coordinate-attached ends as a fallback, so cable length recalculates.
+- Completed: pin/unpin controls in the route property panel (start/end status, nearest-point attach, detach, sync after a manual bend edit), command-palette actions, a delete-point confirmation that detaches the cable but keeps the route, and local-first parity with normalisation of old snapshots. Validation now reports missing pinned points and pinned-end coordinate mismatches.
+- Completed: start/end pin markers in 2D (blue/green), 3D (coloured spheres), and SVG export; a magnetic snap cue while dragging a route end; tests for pin attach/detach/move, Zod contracts, API route creation, local storage normalisation, and a Playwright flow that pins, detaches, reattaches, reloads and moves the device.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 105, contracts 39, calculations 50, database 2; 261 tests), `node scripts/browser-check.mjs` (pin persists across reload, device move keeps the route attached).
+- Issues/blockers: the delete confirmation uses the browser `confirm` dialog (no bespoke modal); there is no bulk-delete UI yet to warn against; the cable journal (16.13) will consume the pins later.
+- Next action: hover tooltips on canvas objects (18.3).

@@ -123,9 +123,13 @@ describe('MVP workflow', () => {
         ],
         materialId: cable?.id ?? null,
         circuitId: 'L1',
+        startPointId: startPoint.id,
+        endPointId: endPoint.id,
       })
       .expect(201);
     const route = routeResponse.body as PublicRoute;
+    expect(route.startPointId).toBe(startPoint.id);
+    expect(route.endPointId).toBe(endPoint.id);
 
     const calculation = (
       await server()

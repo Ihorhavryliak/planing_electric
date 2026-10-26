@@ -23,6 +23,8 @@ export type ValidationCode =
   | 'openingOutsideWall'
   | 'openingMissingWall'
   | 'unusedCircuit'
+  | 'pinnedPointMissing'
+  | 'pinnedEndMismatch'
   | ElectricalIssueCode;
 
 export type ValidationTarget =
@@ -67,6 +69,8 @@ export interface ValidationRoute {
   id: string;
   circuitId: string | null;
   materialId?: string | null;
+  startPointId?: string | null;
+  endPointId?: string | null;
   geometry: readonly Point2D[];
   settings: { mounting?: string };
 }
@@ -185,7 +189,10 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
   const zeroLengthRoutes: ValidationTarget[] = [];
   const crossingRoutes: ValidationTarget[] = [];
   const looseEndRoutes: ValidationTarget[] = [];
+  const missingPinRoutes: ValidationTarget[] = [];
+  const mismatchedPinRoutes: ValidationTarget[] = [];
   const connectedPointIds = new Set<string>();
+  const pointById = new Map(input.points.map((point) => [point.id, point]));
 
   for (const route of input.routes) {
     const circuitId = route.circuitId?.trim() ?? '';
@@ -203,6 +210,34 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
       !materialIds.has(route.materialId)
     ) {
       routesWithUnknownMaterial.push({ kind: 'route', id: route.id });
+    }
+
+    for (const [end, pointId] of [
+      ['start', route.startPointId],
+      ['end', route.endPointId],
+    ] as const) {
+      if (!pointId) continue;
+      const point = pointById.get(pointId);
+
+      if (!point) {
+        if (
+          !missingPinRoutes.some(
+            (target) => target.kind === 'route' && target.id === route.id,
+          )
+        ) {
+          missingPinRoutes.push({ kind: 'route', id: route.id });
+        }
+        continue;
+      }
+
+      const at =
+        end === 'start'
+          ? route.geometry[0]
+          : route.geometry[route.geometry.length - 1];
+
+      if (at && !near(at, point, tolerance)) {
+        mismatchedPinRoutes.push({ kind: 'route', id: route.id });
+      }
     }
 
     if (route.geometry.length >= 2) {
@@ -271,6 +306,14 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
 
   if (crossingRoutes.length > 0) {
     issues.push(issue('routeCrossesWall', 'info', crossingRoutes));
+  }
+
+  if (missingPinRoutes.length > 0) {
+    issues.push(issue('pinnedPointMissing', 'warning', missingPinRoutes));
+  }
+
+  if (mismatchedPinRoutes.length > 0) {
+    issues.push(issue('pinnedEndMismatch', 'warning', mismatchedPinRoutes));
   }
 
   const isolatedPoints: ValidationTarget[] = input.points

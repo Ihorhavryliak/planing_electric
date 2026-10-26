@@ -106,6 +106,8 @@ export function toPublicRoute(row: RouteRow): PublicRoute {
     floorId: row.floorId,
     circuitId: row.circuitId,
     materialId: row.materialId,
+    startPointId: row.startPointId,
+    endPointId: row.endPointId,
     geometry: routeGeometrySchema.parse(row.geometry),
     settings: routeSettingsSchema.parse(row.settings),
     updatedAt: row.updatedAt.toISOString(),

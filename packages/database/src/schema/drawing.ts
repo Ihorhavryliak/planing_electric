@@ -185,6 +185,14 @@ export const cableRoutes = pgTable(
       onDelete: 'set null',
     }),
     circuitId: text('circuit_id'),
+    startPointId: uuid('start_point_id').references(
+      () => electricalPoints.id,
+      { onDelete: 'set null' },
+    ),
+    endPointId: uuid('end_point_id').references(
+      () => electricalPoints.id,
+      { onDelete: 'set null' },
+    ),
     geometry: jsonb('geometry').$type<Point2D[]>().notNull(),
     settings: jsonb('settings')
       .$type<CalculationSettings>()

@@ -516,6 +516,30 @@ export function ThreeView({
         const line = new THREE.Line(geometry, material);
         line.userData = { kind: 'route', id: route.id };
         group.add(line);
+
+        for (const [end, pinned] of [
+          ['start', route.startPointId],
+          ['end', route.endPointId],
+        ] as const) {
+          if (!pinned) continue;
+          const at =
+            end === 'start'
+              ? route.geometry[0]
+              : route.geometry[route.geometry.length - 1];
+          if (!at) continue;
+
+          const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(10, 12, 8),
+            new THREE.MeshStandardMaterial({
+              color: end === 'start' ? 0x38bdf8 : 0x34d399,
+              emissive: end === 'start' ? 0x38bdf8 : 0x34d399,
+              emissiveIntensity: 0.45,
+            }),
+          );
+          marker.userData = { kind: 'route', id: route.id };
+          marker.position.set(at.x, 4, at.y);
+          group.add(marker);
+        }
       }
     }
 

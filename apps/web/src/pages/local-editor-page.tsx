@@ -50,6 +50,12 @@ import {
   EditorGuideOverlay,
 } from '@/features/editor/editor-guide';
 import { EditorTooltipLayer } from '@/features/editor/editor-tooltip';
+import {
+  attachRouteEnd,
+  detachRouteEnd,
+  moveRouteEndsForPoint,
+  type RouteEnd,
+} from '@/features/editor/route-geometry';
 import { useEditorFullscreen } from '@/features/editor/use-editor-fullscreen';
 import {
   UI_SCALES,
@@ -371,6 +377,67 @@ export function LocalEditorPage() {
     setDrawing((current) => (current ? mutator(current) : current));
   }
 
+  function pointIdAt(at: { x: number; y: number } | undefined): string | null {
+    if (!drawing || !at) return null;
+    const point = drawing.points.find(
+      (item) =>
+        Math.abs(item.x - at.x) <= 1e-6 &&
+        Math.abs(item.y - at.y) <= 1e-6,
+    );
+
+    return point?.id ?? null;
+  }
+
+  function attachLocalRouteEnd(routeId: string, end: RouteEnd) {
+    if (!drawing) return;
+    const route = drawing.routes.find((item) => item.id === routeId);
+    if (!route) return;
+
+    const at =
+      end === 'start'
+        ? route.geometry[0]
+        : route.geometry[route.geometry.length - 1];
+    if (!at) return;
+
+    const nearest = [...drawing.points].sort(
+      (a, b) =>
+        Math.hypot(a.x - at.x, a.y - at.y) -
+        Math.hypot(b.x - at.x, b.y - at.y),
+    )[0];
+    if (!nearest) {
+      setError(t('routePins.noPointNearby'));
+      return;
+    }
+
+    const patch = attachRouteEnd(route, end, nearest);
+    if (!patch) return;
+
+    update((current) => ({
+      ...current,
+      routes: current.routes.map((item) =>
+        item.id === routeId
+          ? { ...item, ...patch, updatedAt: now() }
+          : item,
+      ),
+    }));
+  }
+
+  function detachLocalRouteEnd(routeId: string, end: RouteEnd) {
+    if (!drawing) return;
+    const route = drawing.routes.find((item) => item.id === routeId);
+    if (!route) return;
+    const patch = detachRouteEnd(route, end);
+
+    update((current) => ({
+      ...current,
+      routes: current.routes.map((item) =>
+        item.id === routeId
+          ? { ...item, ...patch, updatedAt: now() }
+          : item,
+      ),
+    }));
+  }
+
   if (error && !drawing) {
     return (
       <div className="mx-auto max-w-xl px-6 py-16">
@@ -531,6 +598,30 @@ export function LocalEditorPage() {
       hint: t('guide.subtitle'),
       run: openGuide,
     },
+    ...(selectedRouteId
+      ? [
+          {
+            id: 'pin-start',
+            label: t('routePins.attachStart'),
+            run: () => attachLocalRouteEnd(selectedRouteId, 'start'),
+          },
+          {
+            id: 'pin-end',
+            label: t('routePins.attachEnd'),
+            run: () => attachLocalRouteEnd(selectedRouteId, 'end'),
+          },
+          {
+            id: 'unpin-start',
+            label: t('routePins.detachStart'),
+            run: () => detachLocalRouteEnd(selectedRouteId, 'start'),
+          },
+          {
+            id: 'unpin-end',
+            label: t('routePins.detachEndShort'),
+            run: () => detachLocalRouteEnd(selectedRouteId, 'end'),
+          },
+        ]
+      : []),
     {
       id: 'fullscreen',
       label: fullscreen.isFullscreen
@@ -775,22 +866,76 @@ export function LocalEditorPage() {
                 ],
               }))
             }
-            onMovePoint={(pointId, at) =>
-              update((current) => ({
-                ...current,
-                points: current.points.map((point) =>
-                  point.id === pointId
-                    ? { ...point, x: at.x, y: at.y, updatedAt: now() }
-                    : point,
-                ),
-              }))
-            }
-            onDeletePoint={(pointId) =>
+            onMovePoint={(pointId, at) => {
+              update((current) => {
+                const previous = current.points.find(
+                  (point) => point.id === pointId,
+                );
+
+                if (!previous) return current;
+
+                const updates = moveRouteEndsForPoint(
+                  current.routes,
+                  pointId,
+                  { x: previous.x, y: previous.y },
+                  at,
+                );
+                const geometryById = new Map(
+                  updates.map((updateItem) => [
+                    updateItem.id,
+                    updateItem.geometry,
+                  ]),
+                );
+
+                return {
+                  ...current,
+                  points: current.points.map((point) =>
+                    point.id === pointId
+                      ? { ...point, x: at.x, y: at.y, updatedAt: now() }
+                      : point,
+                  ),
+                  routes: current.routes.map((route) =>
+                    geometryById.has(route.id)
+                      ? {
+                          ...route,
+                          geometry: geometryById.get(route.id) ?? route.geometry,
+                          updatedAt: now(),
+                        }
+                      : route,
+                  ),
+                };
+              });
+            }}
+            onDeletePoint={(pointId) => {
+              const attached = drawing.routes.filter(
+                (route) =>
+                  route.startPointId === pointId ||
+                  route.endPointId === pointId,
+              );
+
+              if (
+                attached.length > 0 &&
+                !window.confirm(
+                  t('routePins.deletePointWarning', {
+                    count: attached.length,
+                  }),
+                )
+              ) {
+                return;
+              }
+
               update((current) => ({
                 ...current,
                 points: current.points.filter((point) => point.id !== pointId),
-              }))
-            }
+                routes: current.routes.map((route) => ({
+                  ...route,
+                  startPointId:
+                    route.startPointId === pointId ? null : route.startPointId,
+                  endPointId:
+                    route.endPointId === pointId ? null : route.endPointId,
+                })),
+              }));
+            }}
             onSelectRoute={(next) => {
               setSelectedRouteId(next);
               if (next) {
@@ -811,6 +956,8 @@ export function LocalEditorPage() {
                     floorId: project.id,
                     circuitId: null,
                     materialId: null,
+                    startPointId: pointIdAt(geometry[0]),
+                    endPointId: pointIdAt(geometry[geometry.length - 1]),
                     geometry,
                     settings: {},
                     updatedAt: now(),
@@ -821,17 +968,23 @@ export function LocalEditorPage() {
             onMoveRouteVertex={(routeId, index, at) =>
               update((current) => ({
                 ...current,
-                routes: current.routes.map((route) =>
-                  route.id === routeId
-                    ? {
-                        ...route,
-                        geometry: route.geometry.map((vertex, i) =>
-                          i === index ? at : vertex,
-                        ),
-                        updatedAt: now(),
-                      }
-                    : route,
-                ),
+                routes: current.routes.map((route) => {
+                  if (route.id !== routeId) return route;
+                  const lastIndex = route.geometry.length - 1;
+                  const pointId = pointIdAt(at);
+
+                  return {
+                    ...route,
+                    geometry: route.geometry.map((vertex, i) =>
+                      i === index ? at : vertex,
+                    ),
+                    ...(index === 0 ? { startPointId: pointId } : {}),
+                    ...(index === lastIndex && lastIndex !== 0
+                      ? { endPointId: pointId }
+                      : {}),
+                    updatedAt: now(),
+                  };
+                }),
               }))
             }
             onInsertRouteVertex={(routeId, index, at) =>
@@ -1486,6 +1639,112 @@ export function LocalEditorPage() {
                   </label>
                 </div>
               ) : null}
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  {t('routePins.title')}
+                </h3>
+                <div className="mt-2 space-y-1.5">
+                  {(['start', 'end'] as const).map((end) => {
+                    const pointId =
+                      end === 'start'
+                        ? selectedRoute.startPointId
+                        : selectedRoute.endPointId;
+                    const point = drawing.points.find(
+                      (item) => item.id === pointId,
+                    );
+                    const pinned = Boolean(pointId);
+                    const at =
+                      end === 'start'
+                        ? selectedRoute.geometry[0]
+                        : selectedRoute.geometry[
+                            selectedRoute.geometry.length - 1
+                          ];
+                    const mismatch =
+                      Boolean(point && at) &&
+                      (Math.abs((at?.x ?? 0) - (point?.x ?? 0)) > 1e-6 ||
+                        Math.abs((at?.y ?? 0) - (point?.y ?? 0)) > 1e-6);
+
+                    return (
+                      <div
+                        key={end}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-white/5 bg-slate-950/40 px-2 py-1.5"
+                      >
+                        <span className="flex min-w-0 items-center gap-1.5 text-[11px]">
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${
+                              pinned ? 'bg-amber-300' : 'bg-slate-600'
+                            }`}
+                          />
+                          <span className="shrink-0 text-slate-500">
+                            {t(`routePins.${end}`)}
+                          </span>
+                          <span className="truncate text-slate-200">
+                            {pinned
+                              ? point?.label?.trim() ||
+                                t(`editor.point.${point?.type ?? 'custom'}`)
+                              : t('routePins.free')}
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          {mismatch && point ? (
+                            <button
+                              type="button"
+                              className="rounded-md px-1.5 py-0.5 text-[10px] text-amber-200 hover:bg-amber-400/10"
+                              onClick={() =>
+                                update((current) => ({
+                                  ...current,
+                                  routes: current.routes.map((route) =>
+                                    route.id === selectedRoute.id
+                                      ? {
+                                          ...route,
+                                          geometry: route.geometry.map(
+                                            (vertex, index) =>
+                                              (end === 'start' &&
+                                                index === 0) ||
+                                              (end === 'end' &&
+                                                index ===
+                                                  route.geometry.length - 1)
+                                                ? { x: point.x, y: point.y }
+                                                : vertex,
+                                          ),
+                                          updatedAt: now(),
+                                        }
+                                      : route,
+                                  ),
+                                }))
+                              }
+                            >
+                              {t('routePins.sync')}
+                            </button>
+                          ) : null}
+                          {pinned ? (
+                            <button
+                              type="button"
+                              className="rounded-md px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white"
+                              onClick={() =>
+                                detachLocalRouteEnd(selectedRoute.id, end)
+                              }
+                            >
+                              {t('routePins.detach')}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="rounded-md px-1.5 py-0.5 text-[10px] text-amber-200 hover:bg-amber-400/10"
+                              onClick={() =>
+                                attachLocalRouteEnd(selectedRoute.id, end)
+                              }
+                            >
+                              {t('routePins.attachNearest')}
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <p className="mt-2 text-[11px] text-slate-500">
                 {t('editor.penetrations')}:{' '}
                 <span className="font-medium text-slate-200">

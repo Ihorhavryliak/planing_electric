@@ -85,7 +85,7 @@ import {
   findRouteAt,
   findRouteSegmentHandleAt,
   isDoubleClick,
-  moveAttachedRouteEnds,
+  moveRouteEndsForPoint,
   snapToPoint,
   type ClickRecord,
 } from './route-geometry';
@@ -611,8 +611,9 @@ export function EditorCanvas({
     const attached = new Map(
       (
         draggedPoint && pointDrag
-          ? moveAttachedRouteEnds(
+          ? moveRouteEndsForPoint(
               routes,
+              pointDrag.id,
               { x: draggedPoint.x, y: draggedPoint.y },
               pointDrag.at,
             )
@@ -626,6 +627,8 @@ export function EditorCanvas({
         id: route.id,
         circuitId: route.circuitId,
         mounting: route.settings.mounting ?? null,
+        startPinned: Boolean(route.startPointId),
+        endPinned: Boolean(route.endPointId),
         geometry:
           attached.get(route.id) ??
           (vertexDrag?.routeId === route.id
@@ -635,6 +638,21 @@ export function EditorCanvas({
             : route.geometry),
       }));
   }, [routes, vertexDrag, pointDrag, points, worldBounds]);
+
+  const routeAttachHint = useMemo(() => {
+    if (!vertexDrag) return null;
+    const route = routes.find((item) => item.id === vertexDrag.routeId);
+    if (!route) return null;
+    const lastIndex = route.geometry.length - 1;
+    if (vertexDrag.index !== 0 && vertexDrag.index !== lastIndex) return null;
+    const point = points.find(
+      (item) =>
+        Math.abs(item.x - vertexDrag.at.x) <= 1e-6 &&
+        Math.abs(item.y - vertexDrag.at.y) <= 1e-6,
+    );
+
+    return point ? { x: point.x, y: point.y } : null;
+  }, [vertexDrag, routes, points]);
 
   const penetrationMarkers = useMemo(
     () =>
@@ -910,6 +928,7 @@ export function EditorCanvas({
           layers?.routes === false || layers?.penetrations === false
             ? []
             : penetrationMarkers,
+        attachHint: routeAttachHint,
       },
     );
     drawPointsOverlay(
@@ -940,6 +959,7 @@ export function EditorCanvas({
     circuits,
     layers,
     penetrationMarkers,
+    routeAttachHint,
     readOnly,
     selectedOpeningId,
     selectedPointId,

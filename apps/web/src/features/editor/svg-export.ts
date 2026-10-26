@@ -262,9 +262,21 @@ export function buildPlanSvg(
         : '#ea580c';
       const chase = route.settings.mounting === 'chase';
       const base = `<path d="${pathData(route.geometry)}" fill="none" stroke="${color}" stroke-width="${num(fontSize * (chase ? 0.32 : 0.22))}" ${chase ? `stroke-dasharray="${num(fontSize * 0.7)} ${num(fontSize * 0.45)}"` : ''} stroke-linecap="round" stroke-linejoin="round" />`;
-      if (!route.circuitId) return base;
+      const start = route.geometry[0];
+      const end = route.geometry[route.geometry.length - 1];
+      const pins = [
+        route.startPointId && start
+          ? `<circle cx="${num(start.x)}" cy="${num(start.y)}" r="${num(fontSize * 0.34)}" fill="#020617" stroke="#38bdf8" stroke-width="${num(fontSize * 0.1)}" />`
+          : '',
+        route.endPointId && end
+          ? `<circle cx="${num(end.x)}" cy="${num(end.y)}" r="${num(fontSize * 0.34)}" fill="#020617" stroke="#34d399" stroke-width="${num(fontSize * 0.1)}" />`
+          : '',
+      ].join('');
+      if (!route.circuitId) return base + pins;
       const mid = midpoint(route.geometry);
-      return mid ? base + circuitLabel(route.circuitId, color, mid, fontSize) : base;
+      return mid
+        ? base + pins + circuitLabel(route.circuitId, color, mid, fontSize)
+        : base + pins;
     })
     .join('');
 

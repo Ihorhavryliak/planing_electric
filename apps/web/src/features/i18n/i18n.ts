@@ -775,6 +775,9 @@ const en: Dictionary = {
   'validation.openingMissingWall':
     'Openings reference missing walls: {count}',
   'validation.unusedCircuit': 'Unused circuits: {count}',
+  'validation.pinnedPointMissing': 'Routes reference a deleted point: {count}',
+  'validation.pinnedEndMismatch':
+    'Pinned cable ends do not match their point coordinates: {count}',
   'validation.electricalUncalibrated':
     'Calibrate the plan to check voltage drop and fault current.',
   'validation.circuitNoDevices': 'Circuit {circuit} has no devices.',
@@ -972,6 +975,23 @@ const en: Dictionary = {
   'tooltip.fit': 'Fit the whole plan in view (0)',
   'tooltip.download': 'Download the current view as PNG',
   'tooltip.preview': 'Hide panels and lock editing for a clean view',
+  'routePins.title': 'Cable attachment',
+  'routePins.start': 'Start',
+  'routePins.end': 'End',
+  'routePins.free': 'Free end',
+  'routePins.detach': 'Detach',
+  'routePins.detachEnd': 'Detach {end} end',
+  'routePins.attachNearest': 'Attach nearest',
+  'routePins.sync': 'Sync',
+  'routePins.attachStart': 'Attach route start to nearest point',
+  'routePins.attachEnd': 'Attach route end to nearest point',
+  'routePins.detachStart': 'Detach route start',
+  'routePins.detachEndShort': 'Detach route end',
+  'routePins.noPointNearby':
+    'There is no electrical point to attach this cable end to.',
+  'routePins.deletePointWarning':
+    'This point has {count} attached cable route(s). Deleting it will detach the cable and keep the route. Continue?',
+
   'tooltip.fullscreen': 'Expand the editor to fill the screen (F11 or Shift+F)',
   'editor.fullscreen.enter': 'Fullscreen editor',
   'editor.fullscreen.exit': 'Exit fullscreen',
@@ -1944,6 +1964,9 @@ const ua: Dictionary = {
   'validation.openingMissingWall':
     'Отвори посилаються на відсутні стіни: {count}',
   'validation.unusedCircuit': 'Невикористані кола: {count}',
+  'validation.pinnedPointMissing': 'Траси посилаються на видалену точку: {count}',
+  'validation.pinnedEndMismatch':
+    'Прикріплені кінці кабелю не збігаються з координатами точок: {count}',
   'validation.electricalUncalibrated':
     'Відкалібруйте план, щоб перевірити падіння напруги та струм КЗ.',
   'validation.circuitNoDevices': 'Коло {circuit} не має пристроїв.',
@@ -2141,6 +2164,23 @@ const ua: Dictionary = {
   'tooltip.fit': 'Вписати весь план у вид (0)',
   'tooltip.download': 'Завантажити поточний вид як PNG',
   'tooltip.preview': 'Сховати панелі й заблокувати редагування для чистого вигляду',
+  'routePins.title': 'Прикріплення кабелю',
+  'routePins.start': 'Початок',
+  'routePins.end': 'Кінець',
+  'routePins.free': 'Вільний кінець',
+  'routePins.detach': 'Відкріпити',
+  'routePins.detachEnd': 'Відкріпити {end}',
+  'routePins.attachNearest': 'Прикріпити найближчий',
+  'routePins.sync': 'Синхронізувати',
+  'routePins.attachStart': 'Прикріпити початок траси до найближчої точки',
+  'routePins.attachEnd': 'Прикріпити кінець траси до найближчої точки',
+  'routePins.detachStart': 'Відкріпити початок траси',
+  'routePins.detachEndShort': 'Відкріпити кінець траси',
+  'routePins.noPointNearby':
+    'Немає електричної точки, до якої можна прикріпити цей кінець кабелю.',
+  'routePins.deletePointWarning':
+    'До цієї точки прикріплено {count} кабельних трас. Після видалення кабель від’єднається, а траса залишиться. Продовжити?',
+
   'tooltip.fullscreen': 'Розгорнути редактор на весь екран (F11 або Shift+F)',
   'editor.fullscreen.enter': 'Редактор на весь екран',
   'editor.fullscreen.exit': 'Вийти з повноекранного режиму',

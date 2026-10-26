@@ -599,6 +599,8 @@ export class DrawingRepository {
         geometry: input.geometry,
         circuitId: input.circuitId ?? null,
         materialId: input.materialId ?? null,
+        startPointId: input.startPointId ?? null,
+        endPointId: input.endPointId ?? null,
         settings: input.settings,
       })
       .returning();
@@ -624,6 +626,12 @@ export class DrawingRepository {
           : {}),
         ...(input.materialId !== undefined
           ? { materialId: input.materialId }
+          : {}),
+        ...(input.startPointId !== undefined
+          ? { startPointId: input.startPointId }
+          : {}),
+        ...(input.endPointId !== undefined
+          ? { endPointId: input.endPointId }
           : {}),
         ...(input.settings !== undefined ? { settings: input.settings } : {}),
       })

@@ -92,6 +92,25 @@ describe('route contracts', () => {
     expect(updateRouteSchema.parse({ circuitId: 'L1' })).toEqual({ circuitId: 'L1' });
   });
 
+  it('accepts explicit point pins on route ends', () => {
+    const startPointId = '11111111-1111-4111-8111-111111111111';
+    const endPointId = '22222222-2222-4222-8222-222222222222';
+
+    expect(
+      createRouteSchema.parse({
+        geometry: line,
+        startPointId,
+        endPointId,
+      }),
+    ).toMatchObject({ startPointId, endPointId });
+    expect(
+      updateRouteSchema.parse({ endPointId: null }),
+    ).toEqual({ endPointId: null });
+    expect(() =>
+      createRouteSchema.parse({ geometry: line, startPointId: 'not-a-uuid' }),
+    ).toThrow();
+  });
+
   it('accepts circuit assignments on points', () => {
     expect(pointPropertiesSchema.parse({ circuitId: 'L1' })).toEqual({
       circuitId: 'L1',

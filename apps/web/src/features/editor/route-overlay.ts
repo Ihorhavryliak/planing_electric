@@ -12,6 +12,8 @@ export interface RouteRenderItem {
   geometry: readonly Vec2[];
   circuitId?: string | null;
   mounting?: RouteMounting | null;
+  startPinned?: boolean;
+  endPinned?: boolean;
 }
 
 export interface RouteCircuitBadge {
@@ -25,6 +27,8 @@ export interface RouteOverlayOptions {
   showLabels?: boolean;
   /** Wall crossing markers (world coordinates). */
   penetrations?: readonly Vec2[];
+  /** Point under a route end being dragged; draws a magnetic snap cue. */
+  attachHint?: Vec2 | null;
 }
 
 const ROUTE_COLOR = '#fb923c';
@@ -227,6 +231,48 @@ export function drawRoutesOverlay(
         context.stroke();
       }
     }
+  }
+
+  for (const route of routes) {
+    if (!route.startPinned && !route.endPinned) continue;
+    if (route.geometry.length < 2) continue;
+    const path = route.geometry.map((v) => worldToScreen(v, viewport, size));
+
+    for (const [end, pinned] of [
+      ['start', route.startPinned],
+      ['end', route.endPinned],
+    ] as const) {
+      if (!pinned) continue;
+      const at = end === 'start' ? path[0] : path[path.length - 1];
+      if (!at) continue;
+
+      context.beginPath();
+      context.arc(at.x, at.y, 5.5, 0, Math.PI * 2);
+      context.fillStyle = '#020617';
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = end === 'start' ? '#38bdf8' : '#34d399';
+      context.stroke();
+
+      context.beginPath();
+      context.arc(at.x, at.y, 2, 0, Math.PI * 2);
+      context.fillStyle = end === 'start' ? '#38bdf8' : '#34d399';
+      context.fill();
+    }
+  }
+
+  if (options.attachHint) {
+    const at = worldToScreen(options.attachHint, viewport, size);
+
+    context.beginPath();
+    context.arc(at.x, at.y, 9, 0, Math.PI * 2);
+    context.lineWidth = 2;
+    context.strokeStyle = 'rgba(251, 191, 36, 0.9)';
+    context.stroke();
+    context.beginPath();
+    context.arc(at.x, at.y, 4, 0, Math.PI * 2);
+    context.fillStyle = 'rgba(251, 191, 36, 0.25)';
+    context.fill();
   }
 
   for (const penetration of options.penetrations ?? []) {

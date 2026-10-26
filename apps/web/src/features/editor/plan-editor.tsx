@@ -155,9 +155,12 @@ import { PdfPageDialog } from './pdf-page-dialog';
 import { PointPropertiesPanel } from './point-properties-panel';
 import { POINT_SYMBOL_LIST, countByType } from './point-symbols';
 import {
+  attachRouteEnd,
+  detachRouteEnd,
   insertVertexAt,
-  moveAttachedRouteEnds,
+  moveRouteEndsForPoint,
   removeVertexAt,
+  type RouteEnd,
 } from './route-geometry';
 import { RoutePropertiesPanel } from './route-properties-panel';
 import { listMaterials, generateEstimate } from './materials-api';
@@ -215,6 +218,9 @@ function createRouteInput(route: PublicRoute): CreateRouteInput {
   return {
     geometry: route.geometry,
     circuitId: route.circuitId,
+    materialId: route.materialId,
+    startPointId: route.startPointId ?? null,
+    endPointId: route.endPointId ?? null,
     settings: route.settings,
   };
 }
@@ -949,12 +955,25 @@ export function PlanEditor({
     }
   }
 
+  function pointIdAt(at: Vec2 | undefined): string | null {
+    if (!at) return null;
+    const point = pointsRef.current.find(
+      (item) =>
+        Math.abs(item.x - at.x) <= 1e-6 &&
+        Math.abs(item.y - at.y) <= 1e-6,
+    );
+
+    return point?.id ?? null;
+  }
+
   async function handleCreateRoute(geometry: Vec2[]) {
     setRoutesError(null);
 
     try {
       const created = await createRoute(plan.id, {
         geometry,
+        startPointId: pointIdAt(geometry[0]),
+        endPointId: pointIdAt(geometry[geometry.length - 1]),
         settings: {},
       });
 
@@ -1033,11 +1052,50 @@ export function PlanEditor({
       return;
     }
 
+    const lastIndex = route.geometry.length - 1;
+    const pointId = pointIdAt(at);
+
     void handlePatchRoute(id, {
       geometry: route.geometry.map((vertex, i) =>
         i === index ? { x: at.x, y: at.y } : vertex,
       ),
+      ...(index === 0 ? { startPointId: pointId } : {}),
+      ...(index === lastIndex && lastIndex !== 0
+        ? { endPointId: pointId }
+        : {}),
     });
+  }
+
+  function handleAttachRouteEnd(id: string, end: RouteEnd) {
+    const route = routesRef.current.find((item) => item.id === id);
+
+    if (!route) return;
+
+    const at = end === 'start' ? route.geometry[0] : route.geometry[route.geometry.length - 1];
+    const nearest = at
+      ? pointsRef.current
+          .map((point) => ({
+            point,
+            distance: Math.hypot(point.x - at.x, point.y - at.y),
+          }))
+          .sort((a, b) => a.distance - b.distance)[0]
+      : undefined;
+    const target = nearest?.point;
+
+    if (!target) {
+      setRoutesError(t('routePins.noPointNearby'));
+      return;
+    }
+
+    const patch = attachRouteEnd(route, end, target);
+
+    if (patch) void handlePatchRoute(id, patch);
+  }
+
+  function handleDetachRouteEnd(id: string, end: RouteEnd) {
+    const route = routesRef.current.find((item) => item.id === id);
+
+    if (route) void handlePatchRoute(id, detachRouteEnd(route, end));
   }
 
   /** Inserts a bend at a segment midpoint handle of the selected route. */
@@ -1704,8 +1762,9 @@ export function PlanEditor({
     const routeUpdates =
       patch.x === undefined && patch.y === undefined
         ? []
-        : moveAttachedRouteEnds(
+        : moveRouteEndsForPoint(
             routesRef.current,
+            id,
             { x: previous.x, y: previous.y },
             next,
           );
@@ -1803,11 +1862,30 @@ export function PlanEditor({
     setPointsError(null);
 
     const deleted = pointsRef.current.find((point) => point.id === id);
+    const attachedRoutes = routesRef.current.filter(
+      (route) => route.startPointId === id || route.endPointId === id,
+    );
+
+    if (
+      attachedRoutes.length > 0 &&
+      !window.confirm(
+        t('routePins.deletePointWarning', { count: attachedRoutes.length }),
+      )
+    ) {
+      return;
+    }
 
     try {
       await deletePoint(id);
       pointRequestRef.current.delete(id);
       setPoints((current) => current.filter((point) => point.id !== id));
+      setRoutes((current) =>
+        current.map((route) => ({
+          ...route,
+          startPointId: route.startPointId === id ? null : route.startPointId,
+          endPointId: route.endPointId === id ? null : route.endPointId,
+        })),
+      );
       setSelectedPointId((current) => (current === id ? null : current));
       bumpCalculation();
 
@@ -2266,7 +2344,6 @@ export function PlanEditor({
               ...base.calculationSettings,
               electrical: settings,
             },
-            expectedVersion: base.version,
           });
           base = updated;
           onPlanChange(updated);
@@ -2439,6 +2516,30 @@ export function PlanEditor({
       hint: t('guide.subtitle'),
       run: openGuide,
     },
+    ...(selectedRouteId
+      ? [
+          {
+            id: 'pin-start',
+            label: t('routePins.attachStart'),
+            run: () => handleAttachRouteEnd(selectedRouteId, 'start'),
+          },
+          {
+            id: 'pin-end',
+            label: t('routePins.attachEnd'),
+            run: () => handleAttachRouteEnd(selectedRouteId, 'end'),
+          },
+          {
+            id: 'unpin-start',
+            label: t('routePins.detachStart'),
+            run: () => handleDetachRouteEnd(selectedRouteId, 'start'),
+          },
+          {
+            id: 'unpin-end',
+            label: t('routePins.detachEndShort'),
+            run: () => handleDetachRouteEnd(selectedRouteId, 'end'),
+          },
+        ]
+      : []),
     {
       id: 'fullscreen',
       label: fullscreen.isFullscreen
@@ -2573,6 +2674,8 @@ export function PlanEditor({
       <div
         ref={fullscreen.containerRef}
         data-editor-tooltips
+        data-plan-id={plan.id}
+        data-viewport={JSON.stringify(viewport)}
         style={{ zoom: preferences.uiScale }}
         className={`${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
@@ -3424,12 +3527,19 @@ export function PlanEditor({
               route={selectedRoute}
               materials={materials}
               circuits={circuits}
+              points={points}
               calculation={calculation?.routes.find(
                 (item) => item.routeId === selectedRoute.id,
               )}
               penetrationCount={penetrationCounts.get(selectedRoute.id) ?? 0}
               onChange={(patch) => void handlePatchRoute(selectedRoute.id, patch)}
               onDelete={() => void handleDeleteRoute(selectedRoute.id)}
+              onAttachEnd={(end) =>
+                handleAttachRouteEnd(selectedRoute.id, end)
+              }
+              onDetachEnd={(end) =>
+                handleDetachRouteEnd(selectedRoute.id, end)
+              }
             />
           ) : null}
 

@@ -29,6 +29,10 @@ export function distanceToSegment(p: Vec2, a: Vec2, b: Vec2): number {
 export interface RouteTarget {
   id: string;
   geometry: readonly Vec2[];
+  /** Explicit attachment of the first vertex to an electrical point. */
+  startPointId?: string | null;
+  /** Explicit attachment of the last vertex to an electrical point. */
+  endPointId?: string | null;
 }
 
 export interface RouteEndsUpdate {
@@ -66,12 +70,17 @@ export function moveAttachedRouteEnds(
     const last = geometry[geometry.length - 1] as Vec2;
     let changed = false;
 
-    if (distanceBetween(first, from) <= tolerance) {
+    // An explicitly pinned end follows its point through movePinnedRouteEnds;
+    // the coordinate fallback only handles legacy/unpinned routes.
+    if (
+      !route.startPointId &&
+      distanceBetween(first, from) <= tolerance
+    ) {
       geometry[0] = { x: to.x, y: to.y };
       changed = true;
     }
 
-    if (distanceBetween(last, from) <= tolerance) {
+    if (!route.endPointId && distanceBetween(last, from) <= tolerance) {
       geometry[geometry.length - 1] = { x: to.x, y: to.y };
       changed = true;
     }
@@ -82,6 +91,119 @@ export function moveAttachedRouteEnds(
   }
 
   return updates;
+}
+
+/**
+ * Moves every route end attached to a point: explicit pins win, legacy ends
+ * are matched by coordinates. Both ends are checked independently.
+ */
+export function moveRouteEndsForPoint(
+  routes: readonly RouteTarget[],
+  pointId: string,
+  from: Vec2,
+  to: Vec2,
+  tolerance = CONNECT_TOLERANCE,
+): RouteEndsUpdate[] {
+  if (from.x === to.x && from.y === to.y) return [];
+
+  const updates: RouteEndsUpdate[] = [];
+
+  for (const route of routes) {
+    if (route.geometry.length < 2) continue;
+
+    const geometry = route.geometry.map((vertex) => ({ ...vertex }));
+    const first = geometry[0] as Vec2;
+    const last = geometry[geometry.length - 1] as Vec2;
+    let changed = false;
+
+    if (
+      route.startPointId === pointId ||
+      (!route.startPointId && distanceBetween(first, from) <= tolerance)
+    ) {
+      geometry[0] = { x: to.x, y: to.y };
+      changed = true;
+    }
+
+    if (
+      route.endPointId === pointId ||
+      (!route.endPointId && distanceBetween(last, from) <= tolerance)
+    ) {
+      geometry[geometry.length - 1] = { x: to.x, y: to.y };
+      changed = true;
+    }
+
+    if (changed) updates.push({ id: route.id, geometry });
+  }
+
+  return updates;
+}
+
+/** Moves route ends explicitly pinned to `pointId` (start and/or end). */
+export function movePinnedRouteEnds(
+  routes: readonly RouteTarget[],
+  pointId: string,
+  to: Vec2,
+): RouteEndsUpdate[] {
+  const updates: RouteEndsUpdate[] = [];
+
+  for (const route of routes) {
+    if (route.geometry.length < 2) continue;
+
+    const startPinned = route.startPointId === pointId;
+    const endPinned = route.endPointId === pointId;
+
+    if (!startPinned && !endPinned) continue;
+
+    const geometry = route.geometry.map((vertex) => ({ ...vertex }));
+
+    if (startPinned) geometry[0] = { x: to.x, y: to.y };
+    if (endPinned) geometry[geometry.length - 1] = { x: to.x, y: to.y };
+
+    updates.push({ id: route.id, geometry });
+  }
+
+  return updates;
+}
+
+export type RouteEnd = 'start' | 'end';
+
+export interface RoutePinPatch {
+  geometry: Vec2[];
+  startPointId?: string | null;
+  endPointId?: string | null;
+}
+
+/**
+ * Attaches one route end to an electrical point: the endpoint is snapped to
+ * exact point coordinates and the explicit `pointId` link is added.
+ */
+export function attachRouteEnd(
+  route: RouteTarget,
+  end: RouteEnd,
+  point: Vec2 & { id: string },
+): RoutePinPatch | null {
+  if (route.geometry.length < 2) return null;
+
+  const geometry = route.geometry.map((vertex) => ({ ...vertex }));
+  const at = { x: point.x, y: point.y };
+
+  if (end === 'start') {
+    geometry[0] = at;
+    return { geometry, startPointId: point.id };
+  }
+
+  geometry[geometry.length - 1] = at;
+  return { geometry, endPointId: point.id };
+}
+
+/** Detaches one route end without moving it from its current coordinates. */
+export function detachRouteEnd(
+  route: RouteTarget,
+  end: RouteEnd,
+): RoutePinPatch {
+  return end === 'start'
+    ? { geometry: route.geometry.map((vertex) => ({ ...vertex })), startPointId: null }
+    : { geometry: route.geometry.map((vertex) => ({ ...vertex })), endPointId: null };
 }
 
 /**

@@ -8,7 +8,7 @@ import {
   BREAKER_RATINGS_A,
 } from '@drawmyplace/calculations';
 import { AlertTriangle, CircleAlert, Info, Zap } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useI18n } from '@/features/i18n/i18n-context';
 
 interface ElectricalPanelProps {
@@ -49,11 +49,6 @@ export function ElectricalPanel({
     result.settings,
   );
   const settingsRef = useRef<ResolvedElectricalSettings>(result.settings);
-
-  useEffect(() => {
-    settingsRef.current = result.settings;
-    setSettings(result.settings);
-  }, [result.settings]);
 
   const errorCount = result.issues.filter(
     (issue) => issue.severity === 'error',

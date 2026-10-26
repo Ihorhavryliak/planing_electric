@@ -403,6 +403,25 @@ export class DrawingService {
 
   // ----------------------------------------------------------------- routes
 
+  private async assertRoutePins(
+    floorId: string,
+    input: Pick<CreateRouteInput, 'startPointId' | 'endPointId'>,
+  ): Promise<void> {
+    for (const [end, pointId] of [
+      ['start', input.startPointId],
+      ['end', input.endPointId],
+    ] as const) {
+      if (!pointId) continue;
+      const point = await this.drawing.findPoint(pointId);
+
+      if (!point || point.floorId !== floorId) {
+        throw new BadRequestException(
+          `The ${end} route pin must reference a point on the same floor.`,
+        );
+      }
+    }
+  }
+
   async createRoute(
     ownerId: string,
     planId: string,
@@ -416,6 +435,7 @@ export class DrawingService {
       );
     }
 
+    await this.assertRoutePins(plan.floorId, input);
     const created = await this.drawing.createRoute(plan.floorId, input);
     await this.emitFloor(plan.floorId, 'route.created');
     return toPublicRoute(created);
@@ -428,6 +448,7 @@ export class DrawingService {
   ): Promise<PublicRoute> {
     const route = await this.requireOwnedRoute(ownerId, routeId);
 
+    await this.assertRoutePins(route.floorId, input);
     const updated = await this.drawing.updateRoute(route.id, input);
     await this.emitFloor(route.floorId, 'route.updated');
     return toPublicRoute(updated);
