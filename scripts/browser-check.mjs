@@ -137,6 +137,17 @@ async function main() {
   const planCanvas = page.locator('canvas').first();
   const canvasBox = await planCanvas.boundingBox();
   if (!canvasBox) throw new Error('Canvas is not visible');
+  const canvasHash = () =>
+    planCanvas.evaluate((canvas) => {
+      const context = canvas.getContext('2d');
+      if (!context) return 0;
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let hash = 0;
+      for (let index = 0; index < data.length; index += 997) {
+        hash = (hash * 31 + data[index]) >>> 0;
+      }
+      return hash;
+    });
   await page.getByRole('button', { name: 'Draw wall tool' }).click();
   await page.mouse.click(
     canvasBox.x + canvasBox.width * 0.3,
@@ -168,8 +179,13 @@ async function main() {
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
   await page.getByRole('button', { name: 'Draw cable route tool' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.mouse.click(at(0.5, 0.57).x, at(0.5, 0.57).y);
   await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
   await page.keyboard.press('Enter');
+  const routeSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Cable routes', exact: true }),
+  });
+  await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
 
   // Room outline and a dimension.
   await page.getByRole('button', { name: 'Draw room outline tool' }).click();
@@ -192,6 +208,58 @@ async function main() {
     has: page.getByRole('heading', { name: 'Points', exact: true }),
   });
   await pointsSection.getByText('2', { exact: true }).first().waitFor({ timeout: 10000 });
+
+  // Select the cable route from the panel, then drag its end bend.
+  await routeSection.getByRole('button', { name: /Route 1/ }).click();
+  await page.getByRole('heading', { name: 'Cable route', exact: true }).waitFor();
+  await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
+  const beforeBend = await canvasHash();
+  await page.mouse.move(at(0.65, 0.6).x, at(0.65, 0.6).y);
+  await page.mouse.down();
+  await page.mouse.move(at(0.62, 0.68).x, at(0.62, 0.68).y, {
+    steps: 6,
+  });
+  await page.mouse.up();
+  await page.waitForFunction(
+    (previous) => {
+      const canvas = document.querySelector('canvas');
+      const context = canvas?.getContext('2d');
+      if (!context || !canvas) return false;
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let hash = 0;
+      for (let index = 0; index < data.length; index += 997) {
+        hash = (hash * 31 + data[index]) >>> 0;
+      }
+      return hash !== previous;
+    },
+    beforeBend,
+    { timeout: 10000 },
+  );
+
+  // Pan the canvas and confirm the rendered viewport changed.
+  await page.getByRole('button', { name: 'Pan tool' }).click();
+  const beforePan = await canvasHash();
+  await page.mouse.move(at(0.5, 0.5).x, at(0.5, 0.5).y);
+  await page.mouse.down();
+  await page.mouse.move(at(0.62, 0.58).x, at(0.62, 0.58).y, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForFunction(
+    (previous) => {
+      const canvas = document.querySelector('canvas');
+      const context = canvas?.getContext('2d');
+      if (!context || !canvas) return false;
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let hash = 0;
+      for (let index = 0; index < data.length; index += 997) {
+        hash = (hash * 31 + data[index]) >>> 0;
+      }
+      return hash !== previous;
+    },
+    beforePan,
+    { timeout: 10000 },
+  );
+  await page.getByRole('button', { name: 'Fit plan to view' }).click();
+  await page.getByRole('button', { name: 'Select tool' }).click();
 
   // Zoom controls and a viewport resize.
   const zoomLabel = page.locator('button[title^="Reset to 100%"]');
@@ -218,6 +286,15 @@ async function main() {
     throw new Error(`Unexpected GLB filename: ${download.suggestedFilename()}`);
   }
   await page.getByRole('button', { name: '2D edit' }).click();
+
+  // Select the whole route and delete it, then undo the deletion.
+  await page.getByRole('button', { name: 'Select tool' }).click();
+  await routeSection.getByRole('button', { name: /Route 1/ }).click();
+  await routeSection.getByText('1', { exact: true }).first().waitFor();
+  await page.keyboard.press('Delete');
+  await routeSection.getByText('0', { exact: true }).first().waitFor();
+  await page.keyboard.press('Control+z');
+  await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
 
   // Replace the raster plan with a PDF and render its page.
   await page.locator('input[type=file]').setInputFiles(pdfPath);
