@@ -782,6 +782,17 @@ export const ru: Dictionary = {
   'export.schematicTitle': 'Электрическая схема',
   'export.planSvgShort': 'SVG',
   'export.schematicShort': 'Схема',
+  'editor.viewOrbit': 'Орбита',
+  'editor.viewWalk': 'Прогулка',
+  'editor.viewThird': 'Третье лицо',
+  'editor.xray': 'Рентген',
+  'editor.daylight': 'Дневной свет',
+  'editor.isolate': 'Изолировать',
+  'editor.isolateHint': 'Показать только выбранный объект',
+  'editor.section': 'Сечение',
+  'editor.sectionHeight': 'Срез на',
+  'editor.walkHint': 'WASD — движение · тяните, чтобы осмотреться',
+
 
 
   'rooms.navigate': 'Навигация по комнатам',

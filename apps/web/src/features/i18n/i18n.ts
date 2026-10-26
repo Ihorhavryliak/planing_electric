@@ -796,6 +796,17 @@ const en: Dictionary = {
   'export.schematicTitle': 'Electrical schematic',
   'export.planSvgShort': 'SVG',
   'export.schematicShort': 'Schematic',
+  'editor.viewOrbit': 'Orbit',
+  'editor.viewWalk': 'Walk',
+  'editor.viewThird': 'Third person',
+  'editor.xray': 'X-ray',
+  'editor.daylight': 'Daylight',
+  'editor.isolate': 'Isolate',
+  'editor.isolateHint': 'Show only the selected object',
+  'editor.section': 'Section',
+  'editor.sectionHeight': 'Cut at',
+  'editor.walkHint': 'WASD to move · drag to look around',
+
 
 
   'rooms.navigate': 'Room navigation',
@@ -1789,6 +1800,17 @@ const ua: Dictionary = {
   'export.schematicTitle': 'Електрична схема',
   'export.planSvgShort': 'SVG',
   'export.schematicShort': 'Схема',
+  'editor.viewOrbit': 'Орбіта',
+  'editor.viewWalk': 'Прогулянка',
+  'editor.viewThird': 'Третя особа',
+  'editor.xray': 'Рентген',
+  'editor.daylight': 'Денне світло',
+  'editor.isolate': 'Ізолювати',
+  'editor.isolateHint': 'Показати лише вибраний об’єкт',
+  'editor.section': 'Переріз',
+  'editor.sectionHeight': 'Зріз на',
+  'editor.walkHint': 'WASD — рух · тягніть, щоб оглянутися',
+
 
 
   'rooms.navigate': 'Навігація кімнатами',

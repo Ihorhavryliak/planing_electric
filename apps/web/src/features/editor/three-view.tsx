@@ -68,13 +68,36 @@ export function ThreeView({
   const { t } = useI18n();
   const [showPoints, setShowPoints] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
+  const [showWalls, setShowWalls] = useState(true);
+  const [showRooms, setShowRooms] = useState(true);
   const [showCeiling, setShowCeiling] = useState(false);
+  const [isolate, setIsolate] = useState(false);
+  const [mode, setMode] = useState<'orbit' | 'walk' | 'third'>('orbit');
+  const [xray, setXray] = useState(false);
+  const [daylight, setDaylight] = useState(false);
+  const [sectionEnabled, setSectionEnabled] = useState(false);
+  const [sectionHeight, setSectionHeight] = useState(1.6);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef(new THREE.Group());
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const metersPerUnitRef = useRef(metersPerUnit);
+  metersPerUnitRef.current = metersPerUnit;
+  const walkRef = useRef({
+    yaw: 0,
+    pitch: 0,
+    dragging: false,
+    lastX: 0,
+    lastY: 0,
+    keys: new Set<string>(),
+  });
+  const ambientRef = useRef<THREE.AmbientLight | null>(null);
+  const sunRef = useRef<THREE.DirectionalLight | null>(null);
+  const fillRef = useRef<THREE.DirectionalLight | null>(null);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const onSelectRef = useRef(onSelect);
@@ -108,12 +131,16 @@ export function ThreeView({
     controls.target.set(400, 0, 300);
     controlsRef.current = controls;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+    const ambient = new THREE.AmbientLight(0xffffff, 1.4);
+    ambientRef.current = ambient;
+    scene.add(ambient);
     const sun = new THREE.DirectionalLight(0xffffff, 2);
     sun.position.set(600, 1200, 400);
+    sunRef.current = sun;
     scene.add(sun);
     const fill = new THREE.DirectionalLight(0x93c5fd, 0.7);
     fill.position.set(-800, 600, -600);
+    fillRef.current = fill;
     scene.add(fill);
     scene.add(contentRef.current);
 
@@ -165,9 +192,37 @@ export function ThreeView({
     observer.observe(container);
 
     let frame = 0;
+    const clock = new THREE.Clock();
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      controls.update();
+      const delta = Math.min(clock.getDelta(), 0.1);
+
+      if (modeRef.current === 'walk') {
+        const walk = walkRef.current;
+        camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
+        const scale = metersPerUnitRef.current;
+        const speed = scale ? 2.4 / scale : 240;
+        const forward = Number(walk.keys.has('w')) - Number(walk.keys.has('s'));
+        const strafe = Number(walk.keys.has('d')) - Number(walk.keys.has('a'));
+
+        if (forward !== 0 || strafe !== 0) {
+          const length = Math.hypot(forward, strafe) || 1;
+          const yaw = walk.yaw;
+          camera.position.x +=
+            ((-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) / length) *
+            speed *
+            delta;
+          camera.position.z +=
+            ((-Math.cos(yaw) * forward - Math.sin(yaw) * strafe) / length) *
+            speed *
+            delta;
+        }
+
+        if (scale) camera.position.y = 1.6 / scale;
+      } else {
+        controls.update();
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -185,6 +240,128 @@ export function ThreeView({
       sceneRef.current = null;
       cameraRef.current = null;
       controlsRef.current = null;
+      ambientRef.current = null;
+      sunRef.current = null;
+      fillRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    scene.background = new THREE.Color(daylight ? 0xf1f5f9 : 0x020617);
+    if (ambientRef.current) ambientRef.current.intensity = daylight ? 2.2 : 1.4;
+    if (sunRef.current) sunRef.current.intensity = daylight ? 3.2 : 2;
+    if (fillRef.current) fillRef.current.intensity = daylight ? 1.1 : 0.7;
+  }, [daylight]);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    if (!renderer) return;
+
+    renderer.localClippingEnabled = true;
+    const heightUnits = metersPerUnit
+      ? sectionHeight / metersPerUnit
+      : sectionHeight * 60;
+    renderer.clippingPlanes = sectionEnabled
+      ? [new THREE.Plane(new THREE.Vector3(0, -1, 0), heightUnits)]
+      : [];
+  }, [sectionEnabled, sectionHeight, metersPerUnit]);
+
+  useEffect(() => {
+    const controls = controlsRef.current;
+    const camera = cameraRef.current;
+    if (!controls || !camera) return;
+
+    if (mode === 'walk') {
+      controls.enabled = false;
+      camera.rotation.order = 'YXZ';
+      const eye = metersPerUnit ? 1.6 / metersPerUnit : 160;
+      const target = controls.target;
+      camera.position.set(target.x, eye, target.z);
+      walkRef.current.yaw = Math.PI;
+      walkRef.current.pitch = -0.05;
+      return;
+    }
+
+    controls.enabled = true;
+
+    if (mode === 'third') {
+      const distance = metersPerUnit ? 8 / metersPerUnit : 800;
+      const target = controls.target;
+      camera.position.set(
+        target.x + distance * 0.28,
+        distance * 0.35,
+        target.z + distance * 0.4,
+      );
+      camera.lookAt(target);
+      controls.update();
+    }
+  }, [mode, metersPerUnit]);
+
+  useEffect(() => {
+    const canvas = rendererRef.current?.domElement;
+    if (!canvas) return;
+
+    const walk = walkRef.current;
+    const handleDown = (event: PointerEvent) => {
+      if (modeRef.current !== 'walk') return;
+      walk.dragging = true;
+      walk.lastX = event.clientX;
+      walk.lastY = event.clientY;
+    };
+    const handleMove = (event: PointerEvent) => {
+      if (modeRef.current !== 'walk' || !walk.dragging) return;
+      walk.yaw -= (event.clientX - walk.lastX) * 0.005;
+      walk.pitch = Math.max(
+        -1.2,
+        Math.min(1.2, walk.pitch - (event.clientY - walk.lastY) * 0.005),
+      );
+      walk.lastX = event.clientX;
+      walk.lastY = event.clientY;
+    };
+    const handleUp = () => {
+      walk.dragging = false;
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (modeRef.current !== 'walk') return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (['w', 'a', 's', 'd'].includes(key)) {
+        event.preventDefault();
+        walk.keys.add(key);
+      }
+    };
+    const handleKeyUp = (event: KeyboardEvent) => {
+      walk.keys.delete(event.key.toLowerCase());
+    };
+    const handleBlur = () => walk.keys.clear();
+
+    canvas.addEventListener('pointerdown', handleDown);
+    canvas.addEventListener('pointermove', handleMove);
+    canvas.addEventListener('pointerup', handleUp);
+    canvas.addEventListener('pointerleave', handleUp);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      canvas.removeEventListener('pointerdown', handleDown);
+      canvas.removeEventListener('pointermove', handleMove);
+      canvas.removeEventListener('pointerup', handleUp);
+      canvas.removeEventListener('pointerleave', handleUp);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
   }, []);
 
@@ -202,14 +379,34 @@ export function ThreeView({
     const wallMaterial = new THREE.MeshStandardMaterial({
       color: WALL_COLOR,
       roughness: 0.85,
+      transparent: xray,
+      opacity: xray ? 0.22 : 1,
     });
     const floorMaterial = new THREE.MeshStandardMaterial({
       color: FLOOR_COLOR,
       roughness: 0.95,
       side: THREE.DoubleSide,
+      transparent: xray,
+      opacity: xray ? 0.35 : 1,
     });
+    const visibleRooms =
+      isolate && selectedRoomId
+        ? rooms.filter((room) => room.id === selectedRoomId)
+        : rooms;
+    const visibleWalls =
+      isolate && selectedWallId
+        ? walls.filter((wall) => wall.id === selectedWallId)
+        : walls;
+    const visiblePoints =
+      isolate && selectedPointId
+        ? points.filter((point) => point.id === selectedPointId)
+        : points;
+    const visibleRoutes =
+      isolate && selectedRouteId
+        ? routes.filter((route) => route.id === selectedRouteId)
+        : routes;
 
-    for (const room of rooms) {
+    if (showRooms) for (const room of visibleRooms) {
       const shape = new THREE.Shape(
         room.boundary.map(
           (point) => new THREE.Vector2(point.x, -point.y),
@@ -242,7 +439,7 @@ export function ThreeView({
       }
     }
 
-    for (const wall of walls) {
+    if (showWalls) for (const wall of visibleWalls) {
       const boxes = computeWallBoxes(
         wall.geometry,
         openings
@@ -267,6 +464,8 @@ export function ThreeView({
             ? new THREE.MeshStandardMaterial({
                 color: 0xfbbf24,
                 roughness: 0.7,
+                transparent: xray,
+                opacity: xray ? 0.35 : 1,
               })
             : wallMaterial;
         const mesh = new THREE.Mesh(geometry, material);
@@ -282,7 +481,7 @@ export function ThreeView({
     }
 
     if (showPoints) {
-      for (const point of points) {
+      for (const point of visiblePoints) {
         const selected = point.id === selectedPointId;
         const geometry = new THREE.CylinderGeometry(
           selected ? 16 : 10,
@@ -303,7 +502,7 @@ export function ThreeView({
     }
 
     if (showRoutes) {
-      for (const route of routes) {
+      for (const route of visibleRoutes) {
         const geometry = new THREE.BufferGeometry().setFromPoints(
           route.geometry.map(
             (point) => new THREE.Vector3(point.x, 4, point.y),
@@ -359,7 +558,11 @@ export function ThreeView({
     metersPerUnit,
     showPoints,
     showRoutes,
+    showWalls,
+    showRooms,
     showCeiling,
+    isolate,
+    xray,
     selectedWallId,
     selectedRoomId,
     selectedPointId,
@@ -401,6 +604,10 @@ export function ThreeView({
     }
   }
 
+  const hasSelection = Boolean(
+    selectedWallId || selectedRoomId || selectedPointId || selectedRouteId,
+  );
+
   return (
     <div className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
       <div ref={containerRef} className="absolute inset-0" />
@@ -409,6 +616,22 @@ export function ThreeView({
         {t('editor.threeViewHint')}
       </div>
       <div className="absolute top-16 left-3 flex flex-col gap-1 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showWalls}
+            onChange={(event) => setShowWalls(event.target.checked)}
+          />
+          {t('editor.walls')}
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showRooms}
+            onChange={(event) => setShowRooms(event.target.checked)}
+          />
+          {t('editor.rooms')}
+        </label>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -447,8 +670,96 @@ export function ThreeView({
         )}
         GLB
       </button>
+      <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1.5 text-[11px] text-slate-300 backdrop-blur">
+        {(
+          [
+            ['orbit', t('editor.viewOrbit')],
+            ['walk', t('editor.viewWalk')],
+            ['third', t('editor.viewThird')],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={mode === value}
+            onClick={() => setMode(value)}
+            className={`rounded-lg px-2 py-1 transition ${
+              mode === value
+                ? 'bg-amber-400 text-slate-950'
+                : 'hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+        <span className="mx-1 h-4 w-px bg-white/10" />
+        <button
+          type="button"
+          aria-pressed={xray}
+          onClick={() => setXray((value) => !value)}
+          className={`rounded-lg px-2 py-1 transition ${
+            xray ? 'bg-sky-400/20 text-sky-200' : 'hover:bg-white/10'
+          }`}
+        >
+          {t('editor.xray')}
+        </button>
+        <button
+          type="button"
+          aria-pressed={daylight}
+          onClick={() => setDaylight((value) => !value)}
+          className={`rounded-lg px-2 py-1 transition ${
+            daylight ? 'bg-amber-300 text-slate-950' : 'hover:bg-white/10'
+          }`}
+        >
+          {t('editor.daylight')}
+        </button>
+        <button
+          type="button"
+          aria-pressed={isolate}
+          disabled={!hasSelection}
+          onClick={() => setIsolate((value) => !value)}
+          className={`rounded-lg px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            isolate ? 'bg-emerald-400/20 text-emerald-200' : 'hover:bg-white/10'
+          }`}
+          title={t('editor.isolateHint')}
+        >
+          {t('editor.isolate')}
+        </button>
+        <label className="flex items-center gap-1.5 rounded-lg px-1.5 py-1">
+          <input
+            type="checkbox"
+            checked={sectionEnabled}
+            onChange={(event) => setSectionEnabled(event.target.checked)}
+          />
+          {t('editor.section')}
+        </label>
+        {sectionEnabled ? (
+          <label className="flex items-center gap-1.5">
+            <span className="text-slate-500">{t('editor.sectionHeight')}</span>
+            <input
+              type="range"
+              min={0.3}
+              max={3}
+              step={0.1}
+              value={sectionHeight}
+              onChange={(event) => setSectionHeight(Number(event.target.value))}
+              className="w-20 accent-amber-400"
+            />
+            <span className="w-9 tabular-nums text-slate-400">
+              {sectionHeight.toFixed(1)}m
+            </span>
+          </label>
+        ) : null}
+      </div>
+
+      {mode === 'walk' ? (
+        <p className="pointer-events-none absolute right-3 bottom-20 rounded-lg border border-white/10 bg-slate-950/90 px-2.5 py-1 text-[11px] text-slate-300 backdrop-blur">
+          {t('editor.walkHint')}
+        </p>
+      ) : null}
+
       {error ? (
-        <p className="absolute bottom-3 left-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100">
+        <p className="absolute bottom-3 right-3 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-xs text-rose-100">
           {error}
         </p>
       ) : null}

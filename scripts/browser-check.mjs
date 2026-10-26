@@ -393,6 +393,30 @@ async function main() {
     throw new Error(`Unexpected GLB filename: ${download.suggestedFilename()}`);
   }
 
+  // Advanced 3D modes: walk, x-ray, daylight, section and isolation.
+  await page.getByRole('button', { name: 'Walk', exact: true }).click();
+  await page.getByText(/WASD to move/).waitFor();
+  await page.getByRole('button', { name: 'Orbit', exact: true }).click();
+  const xrayButton = page.getByRole('button', { name: 'X-ray', exact: true });
+  await xrayButton.click();
+  if ((await xrayButton.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('X-ray mode did not activate.');
+  }
+  await page.getByRole('button', { name: 'Daylight', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Section' }).check();
+  await page.getByRole('slider', { name: /Cut at/ }).waitFor();
+  const isolateButton = page.getByRole('button', {
+    name: 'Isolate',
+    exact: true,
+  });
+  await isolateButton.click();
+  if ((await isolateButton.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('3D isolation did not activate.');
+  }
+  await isolateButton.click();
+  await page.getByRole('checkbox', { name: 'Section' }).uncheck();
+  await xrayButton.click();
+
   // Split view shows the 2D canvas and 3D scene side by side.
   await page.getByRole('button', { name: 'Split 2D/3D' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });

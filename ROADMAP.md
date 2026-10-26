@@ -284,7 +284,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.7 **Split 2D/3D**: режим split показує 2D-полотно ліворуч і 3D-сцену праворуч, панорамування 2D рухає ціль 3D-камери, клік по стіні/кімнаті/пристрою/трасі в 3D вибирає об’єкт у 2D; камера більше не скидається при зміні виділення; команда в палітрі та кнопка в панелі збереження.
 - [x] 15.8 **Documentation workspace**: сторінка `/app/projects/:projectId/documentation` з вкладками Materials (каталог, ціни, використання трасами), Cost estimate (створені кошториси, PDF), Validation (усі правила плану), Variants (існуюча панель) і Print PDF (друкований підсумок із живими кількостями, кнопка друку та PDF кошторису); вибір поверху, посилання з проєкту.
 - [x] 15.9 **Експорт**: SVG 2D-плану (стіни, отвори, кімнати, розміри, траси, точки, кола), SVG однолінійної електричної схеми за колами з довжинами кабелю, повний JSON проєкту (проєкт, поверхи, плани, креслення, матеріали); експорт у редакторі, документації та локальному редакторі.
-- [ ] 15.10 **3D-режими**: Walk, Third person, X-ray, перерізи, daylight/sun, ізоляція шарів.
+- [x] 15.10 **3D-режими**: Orbit / Walk (WASD + огляд мишею) / Third person, X-ray з прозорими стінами й підлогою, горизонтальний переріз із повзунком висоти, денне світло, ізоляція вибраного об’єкта та чекбокси стін/кімнат/пристроїв/трас/стелі.
 - [ ] 15.11 **Demo-проєкт і локалізації**: стартовий демо-план, повернення російської локалі або додавання нових мов за потреби.
 
 **Критерії завершення:** електричний проєкт можна вести не лише як набір точок і трас, а як структуровані кола з пристроями, монтажними елементами, живим кошторисом і валідацією; редактор має split 2D/3D, зручну навігацію та експорт плану/схеми.
@@ -423,3 +423,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 97, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (SVG plan, schematic, project JSON downloads).
 - Issues/blockers: plan SVG omits the raster/PDF underlay by design; the schematic is a single-line diagram, not a terminal-and-conductor wiring diagram.
 - Next action: advanced 3D modes (15.10).
+
+### 2026-10-26 — session 26: advanced 3D modes
+- Completed: orbit/walk/third-person camera modes; walk mode uses WASD movement at 1.6 m eye height with pointer-drag look and ignores form fields; X-ray transparent walls/floors; a horizontal section plane with a 0.3–3 m height slider; daylight lighting preset; isolation of the selected wall/room/point/route; visibility checkboxes extended with walls and rooms. The 3D camera still refits only when geometry changes.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 97, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (walk hint, x-ray, daylight, section slider, isolation).
+- Issues/blockers: walk mode has no collision detection and stays at a constant eye height; section is a single horizontal plane, not an arbitrary clipping box.
+- Next action: demo project and localization pass (15.11).
