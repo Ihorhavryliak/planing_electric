@@ -123,6 +123,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@drawmyplace/calculations':
+        specifier: workspace:^
+        version: link:../../packages/calculations
       '@drawmyplace/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

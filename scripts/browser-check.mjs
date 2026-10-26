@@ -184,6 +184,29 @@ async function main() {
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
+  // Local-first: create an anonymous project, draw a wall, and reload it.
+  await page.goto(`${WEB}/local`);
+  await page.getByPlaceholder('New local project').fill('Local check');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.waitForURL('**/local/*');
+  await page.locator('canvas').waitFor();
+  const localCanvas = await page.locator('canvas').boundingBox();
+  if (!localCanvas) throw new Error('Local canvas is not visible');
+  await page.getByRole('button', { name: 'Draw wall tool' }).click();
+  await page.mouse.click(
+    localCanvas.x + localCanvas.width * 0.3,
+    localCanvas.y + localCanvas.height * 0.5,
+  );
+  await page.mouse.click(
+    localCanvas.x + localCanvas.width * 0.7,
+    localCanvas.y + localCanvas.height * 0.5,
+  );
+  await page.keyboard.press('Enter');
+  await page.getByText('Saved locally').waitFor({ timeout: 10000 });
+  await page.reload();
+  await page.waitForURL('**/local/*');
+  await page.locator('canvas').waitFor();
+
   console.log(JSON.stringify({ ok: true, errors }, null, 2));
   await browser.close();
 }

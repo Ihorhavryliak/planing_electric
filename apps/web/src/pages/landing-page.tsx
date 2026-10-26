@@ -184,6 +184,12 @@ export function LandingPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 )}
+                <Link
+                  to="/local"
+                  className="inline-flex h-10 items-center rounded-lg border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
+                >
+                  Try without an account
+                </Link>
                 <a
                   href="#foundation"
                   className="inline-flex h-10 items-center rounded-lg border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"

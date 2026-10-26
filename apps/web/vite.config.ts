@@ -35,6 +35,9 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    optimizeDeps: {
+      include: ['@drawmyplace/calculations'],
+    },
     server: {
       port: webPort,
       strictPort: true,

@@ -15,6 +15,8 @@ import { NotificationsPage } from '@/pages/notifications-page';
 import { PricingPage } from '@/pages/pricing-page';
 import { OrganizationsPage } from '@/pages/organizations-page';
 import { LandingPage } from '@/pages/landing-page';
+import { LocalEditorPage } from '@/pages/local-editor-page';
+import { LocalProjectsPage } from '@/pages/local-projects-page';
 import { MaterialsPage } from '@/pages/materials-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
@@ -45,6 +47,8 @@ export function App() {
             element={<VerifyEmailPage />}
           />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/local" element={<LocalProjectsPage />} />
+          <Route path="/local/:localId" element={<LocalEditorPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/app" element={<AppPage />} />
