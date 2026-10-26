@@ -670,3 +670,12 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 113, contracts 40, calculations 55, database 2; 275 tests), `node scripts/browser-check.mjs`.
 - Issues/blockers: wet-room classification is name-based because rooms have no explicit climate/zone field yet; a future room-type field would make it deterministic.
 - Next action: report templates (16.13), IFC/clash detection (16.11–16.12) or onboarding (Phase 17).
+
+### 2026-10-27 — session 38: design refresh
+- Completed: shared surface tokens (`--panel-border`, `--panel-bg-top/bottom`, `--panel-highlight`, `--panel-shadow`, subpanel tokens) with matching light-theme values. New `.editor-panel` / `.app-panel` gradient surfaces, `.editor-subpanel`, `.editor-toolbar`, `.editor-canvas-frame`, `.editor-shell`, `.editor-sidebar` (stable scrollbar + staged panel entrance).
+- Completed: amber/sky ambient background, custom scrollbars, refined `Button` (gradient primary, pressed state, softer outline) and `Input` (rounded-xl, hover border), global select chevron and focus/hover styling for inputs/selects/textarea inside the editor shell.
+- Completed: sticky glass workspace header, editor canvas frames with layered shadows, floating canvas toolbars moved onto the shared `.editor-toolbar` surface, 1rem wider editor sidebar.
+- Completed: replaced ad-hoc `rounded-2xl border border-white/10 bg-slate-900/60` surfaces with `editor-panel`/`app-panel` in 35 places across editor, projects, variants, auth and workspace pages.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 113, contracts 40, calculations 55, database 2; 275 tests).
+- Issues/blockers: light theme keeps the drawing canvas dark on purpose; visual verification is manual because there is no screenshot-diff test.
+- Next action: report templates (16.13).

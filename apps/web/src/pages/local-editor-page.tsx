@@ -858,7 +858,7 @@ export function LocalEditorPage() {
         ref={fullscreen.containerRef}
         data-editor-tooltips
         style={{ zoom: preferences.uiScale }}
-        className={`${
+        className={`editor-shell ${
           fullscreen.isFullscreen
             ? 'h-[100dvh] bg-slate-950 p-2'
             : 'mx-auto max-w-7xl px-4 py-4'
@@ -869,7 +869,7 @@ export function LocalEditorPage() {
         }`}
       >
         <div
-          className={`relative min-h-[440px] ${
+          className={`editor-canvas-frame relative min-h-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100dvh-1rem)]'
               : previewMode
@@ -1242,7 +1242,7 @@ export function LocalEditorPage() {
           />
         </div>
 
-        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
+        <div className="editor-toolbar absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl p-1">
           <button
             type="button"
             title={
@@ -1329,7 +1329,7 @@ export function LocalEditorPage() {
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside className="space-y-4">
+        <aside className="editor-sidebar space-y-4">
           <RoomNavigator
             rooms={drawing.rooms}
             selectedRoomId={selectedRoomId}
@@ -1341,7 +1341,7 @@ export function LocalEditorPage() {
             onOpenGuide={openGuide}
           />
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.view')}
             </h2>
@@ -1403,7 +1403,7 @@ export function LocalEditorPage() {
             </p>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('local.defaultName')}
             </h2>
@@ -1547,7 +1547,7 @@ export function LocalEditorPage() {
           />
 
           {selectedPoint ? (
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-400">
+            <section className="editor-panel p-4 text-xs text-slate-400">
               <h2 className="text-sm font-semibold text-white">
                 {t('local.selectedPoint')}
               </h2>
@@ -1644,7 +1644,7 @@ export function LocalEditorPage() {
           ) : null}
 
           {selectedRoute ? (
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-400">
+            <section className="editor-panel p-4 text-xs text-slate-400">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.cableRoute')}
               </h2>
@@ -1759,7 +1759,7 @@ export function LocalEditorPage() {
                   </label>
                 </div>
               ) : null}
-              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <div className="mt-3 editor-subpanel p-3">
                 <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {t('routePins.title')}
                 </h3>
@@ -1918,7 +1918,7 @@ export function LocalEditorPage() {
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.openings')}
             </h2>

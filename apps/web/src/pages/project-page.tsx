@@ -312,7 +312,7 @@ export function ProjectPage() {
           ) : null}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <section className="app-panel p-5">
               <h2 className="text-sm font-semibold text-white">
                 {t('project.details')}
               </h2>
@@ -391,7 +391,7 @@ export function ProjectPage() {
               </form>
             </section>
 
-            <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60">
+            <section className="overflow-hidden app-panel">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
                 <div>
                   <h2 className="text-sm font-semibold text-white">
@@ -457,7 +457,7 @@ export function ProjectPage() {
             </section>
           </div>
 
-          <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <section className="mt-6 app-panel p-5">
             <h2 className="text-sm font-semibold text-white">
               {t('project.sharedWith')}
             </h2>

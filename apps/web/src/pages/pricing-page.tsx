@@ -48,7 +48,7 @@ export function PricingPage() {
           {plans.map((plan) => (
             <section
               key={plan.nameKey}
-              className="rounded-2xl border border-white/10 bg-slate-900/60 p-6"
+              className="app-panel p-6"
             >
               <h2 className="text-lg font-semibold text-white">
                 {t(plan.nameKey)}

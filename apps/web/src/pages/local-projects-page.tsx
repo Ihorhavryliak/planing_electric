@@ -322,7 +322,7 @@ export function LocalProjectsPage() {
             {t('local.loading')}
           </div>
         ) : projects.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
+          <div className="mt-8 app-panel p-8 text-center text-sm text-slate-400">
             {t('local.empty')}
           </div>
         ) : (

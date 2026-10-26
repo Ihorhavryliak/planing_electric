@@ -33,7 +33,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
           </span>
         </Link>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/70 p-7 shadow-2xl shadow-black/40 backdrop-blur">
+        <div className="mt-8 app-panel p-7 shadow-2xl shadow-black/40 backdrop-blur">
           <h1 className="text-2xl font-semibold tracking-tight text-white">
             {title}
           </h1>

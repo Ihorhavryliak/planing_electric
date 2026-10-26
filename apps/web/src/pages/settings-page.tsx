@@ -145,7 +145,7 @@ export function SettingsPage() {
         </p>
 
         <form
-          className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5"
+          className="mt-6 space-y-4 app-panel p-5"
           onSubmit={handleSubmit}
         >
           <label className="block text-xs font-medium tracking-wide text-slate-400 uppercase">
@@ -184,7 +184,7 @@ export function SettingsPage() {
           </div>
         </form>
 
-        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <section className="mt-6 app-panel p-5">
           <h2 className="text-sm font-semibold text-white">
             {t('settings.appearance')}
           </h2>
@@ -210,7 +210,7 @@ export function SettingsPage() {
         </section>
 
         <form
-          className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5"
+          className="mt-6 space-y-4 app-panel p-5"
           onSubmit={handlePasswordChange}
         >
           <h2 className="text-sm font-semibold text-white">
@@ -263,7 +263,7 @@ export function SettingsPage() {
           </div>
         </form>
 
-        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <section className="mt-6 app-panel p-5">
           <h2 className="text-sm font-semibold text-white">
             {t('settings.sessions')}
           </h2>
@@ -297,7 +297,7 @@ export function SettingsPage() {
           </ul>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+        <section className="mt-6 app-panel p-5">
           <h2 className="text-sm font-semibold text-white">
             {t('settings.data')}
           </h2>

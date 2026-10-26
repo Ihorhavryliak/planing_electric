@@ -188,7 +188,7 @@ export function OrganizationsPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+          <section className="app-panel p-5">
             {!selected ? (
               <p className="text-sm text-slate-500">
                 {t('org.selectHint')}

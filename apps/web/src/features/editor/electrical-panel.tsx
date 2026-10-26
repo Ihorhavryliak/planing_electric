@@ -70,7 +70,7 @@ export function ElectricalPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-white">
           <Zap className="h-4 w-4 text-amber-300" />

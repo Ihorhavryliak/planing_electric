@@ -55,7 +55,7 @@ export function RoutePropertiesPanel({
   const isChase = mounting === 'chase';
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">
           {t('editor.cableRoute')}
@@ -230,7 +230,7 @@ export function RoutePropertiesPanel({
         ) : null}
       </div>
 
-      <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mt-4 editor-subpanel p-3">
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
           {t('routePins.title')}
         </h3>
@@ -325,7 +325,7 @@ export function RoutePropertiesPanel({
         </div>
       </div>
 
-      <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mt-4 space-y-1.5 editor-subpanel p-3">
         {calculation?.status === 'ok' ? (
           <>
             <Row

@@ -67,7 +67,7 @@ export function AdminPage() {
           <p className="mt-8 text-sm text-rose-300">{error}</p>
         ) : (
           <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <section className="app-panel p-5">
               <h2 className="text-sm font-semibold text-white">
                 {t('admin.users', { count: users.length })}
               </h2>
@@ -90,7 +90,7 @@ export function AdminPage() {
                 ))}
               </ul>
             </section>
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+            <section className="app-panel p-5">
               <h2 className="text-sm font-semibold text-white">
                 {t('admin.organizations', { count: organizations.length })}
               </h2>

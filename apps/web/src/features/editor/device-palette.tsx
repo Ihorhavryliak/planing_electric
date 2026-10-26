@@ -20,7 +20,7 @@ export function DevicePalette({ onSelect }: DevicePaletteProps) {
   const { t } = useI18n();
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <h2 className="text-sm font-semibold text-white">
         {t('devices.palette')}
       </h2>

@@ -134,7 +134,7 @@ export function ExportPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 print:hidden">
+    <section className="editor-panel p-4 print:hidden">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">
           {t('export.title')}

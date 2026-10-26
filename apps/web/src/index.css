@@ -88,3 +88,169 @@ body {
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
+
+/* ---------------------------------------------------------------- design system */
+:root {
+  --panel-border: rgb(255 255 255 / 0.09);
+  --panel-bg-top: rgb(15 23 42 / 0.92);
+  --panel-bg-bottom: rgb(2 6 23 / 0.72);
+  --panel-highlight: rgb(255 255 255 / 0.06);
+  --panel-shadow: 0 18px 48px -28px rgb(0 0 0 / 0.9);
+  --subpanel-bg: rgb(255 255 255 / 0.025);
+  --subpanel-border: rgb(255 255 255 / 0.07);
+}
+
+[data-theme='light'] {
+  --panel-border: rgb(15 23 42 / 0.08);
+  --panel-bg-top: rgb(255 255 255 / 0.98);
+  --panel-bg-bottom: rgb(248 250 252 / 0.96);
+  --panel-highlight: rgb(255 255 255 / 0.8);
+  --panel-shadow: 0 18px 40px -30px rgb(15 23 42 / 0.35);
+  --subpanel-bg: rgb(15 23 42 / 0.025);
+  --subpanel-border: rgb(15 23 42 / 0.07);
+}
+
+body {
+  background-image:
+    radial-gradient(60rem 38rem at 50% -12%, rgb(251 191 36 / 0.07), transparent 70%),
+    radial-gradient(42rem 32rem at 100% 100%, rgb(56 189 248 / 0.05), transparent 70%);
+  background-attachment: fixed;
+}
+
+[data-theme='light'] body {
+  background-image:
+    radial-gradient(60rem 38rem at 50% -12%, rgb(245 158 11 / 0.12), transparent 70%),
+    radial-gradient(42rem 32rem at 100% 100%, rgb(14 165 233 / 0.08), transparent 70%);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 4px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  background-color: rgb(148 163 184 / 0.28);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(251 191 36 / 0.5);
+}
+
+.editor-shell {
+  position: relative;
+}
+
+.editor-panel,
+.app-panel {
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, var(--panel-highlight), transparent 22%),
+    linear-gradient(180deg, var(--panel-bg-top), var(--panel-bg-bottom));
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.editor-panel:hover,
+.app-panel:hover {
+  border-color: rgb(251 191 36 / 0.22);
+  box-shadow: 0 20px 52px -28px rgb(0 0 0 / 0.95);
+}
+
+[data-theme='light'] .editor-panel:hover,
+[data-theme='light'] .app-panel:hover {
+  border-color: rgb(217 119 6 / 0.26);
+  box-shadow: 0 20px 44px -30px rgb(15 23 42 / 0.4);
+}
+
+.editor-subpanel {
+  border: 1px solid var(--subpanel-border);
+  border-radius: 0.75rem;
+  background: var(--subpanel-bg);
+}
+
+.editor-shell select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 0.55rem center;
+  background-repeat: no-repeat;
+  padding-right: 1.7rem;
+}
+
+.editor-shell input,
+.editor-shell select,
+.editor-shell textarea {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease;
+}
+
+.editor-shell input:hover,
+.editor-shell select:hover,
+.editor-shell textarea:hover {
+  border-color: rgb(251 191 36 / 0.28);
+}
+
+.editor-shell input:focus,
+.editor-shell select:focus,
+.editor-shell textarea:focus {
+  border-color: rgb(251 191 36 / 0.55);
+  box-shadow: 0 0 0 3px rgb(251 191 36 / 0.12);
+  outline: none;
+}
+
+.editor-canvas-frame {
+  box-shadow:
+    0 30px 70px -38px rgb(0 0 0 / 0.95),
+    inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+[data-theme='light'] .editor-canvas-frame {
+  box-shadow:
+    0 30px 60px -38px rgb(15 23 42 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.editor-toolbar {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: linear-gradient(180deg, rgb(15 23 42 / 0.96), rgb(2 6 23 / 0.92));
+  box-shadow:
+    0 16px 36px -20px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  backdrop-filter: blur(18px);
+}
+
+[data-theme='light'] .editor-toolbar {
+  border-color: rgb(15 23 42 / 0.1);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(241 245 249 / 0.96));
+}
+
+.editor-sidebar {
+  scrollbar-gutter: stable;
+}
+
+.editor-sidebar > * {
+  animation: editor-panel-in 220ms ease both;
+}
+
+@keyframes editor-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

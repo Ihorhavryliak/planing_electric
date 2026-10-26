@@ -88,7 +88,7 @@ export function VariantsPanel({ projectId }: { projectId: string }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
+    <section className="mt-6 app-panel p-5">
       <h2 className="text-sm font-semibold text-white">
         {t('variants.title')}
       </h2>

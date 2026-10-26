@@ -38,7 +38,7 @@ export function PlanSetup({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
+    <section className="app-panel p-5 sm:p-6">
       <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
         {t('setup.kicker')}
       </p>

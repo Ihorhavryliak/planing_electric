@@ -142,7 +142,7 @@ export function EstimatesPage() {
         ) : null}
 
         {estimates.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
+          <div className="mt-8 app-panel p-8 text-center text-sm text-slate-400">
             {t('estimates.empty')}
           </div>
         ) : (
@@ -150,7 +150,7 @@ export function EstimatesPage() {
             {estimates.map((estimate) => (
               <section
                 key={estimate.id}
-                className="rounded-2xl border border-white/10 bg-slate-900/60 p-5"
+                className="app-panel p-5"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>

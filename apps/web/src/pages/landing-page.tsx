@@ -154,7 +154,7 @@ export function LandingPage() {
               </p>
             </div>
 
-            <aside className="rounded-2xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl shadow-black/40 backdrop-blur">
+            <aside className="app-panel p-6 shadow-2xl shadow-black/40 backdrop-blur">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-sm font-semibold text-white">

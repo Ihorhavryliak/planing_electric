@@ -35,7 +35,7 @@ export function InvitePage() {
     <div className="relative min-h-screen">
       <WorkspaceHeader badge={t('invite.badge')} />
       <main id="main-content" className="mx-auto max-w-xl px-6 py-16">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-6">
+        <div className="app-panel p-6">
           <MailCheck className="h-8 w-8 text-amber-300" />
           <h1 className="mt-4 text-2xl font-semibold text-white">
             {t('invite.title')}

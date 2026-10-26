@@ -90,7 +90,7 @@ export function NotificationsPage() {
             {t('notifications.loading')}
           </div>
         ) : items.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
+          <div className="mt-8 app-panel p-8 text-center text-sm text-slate-400">
             <Bell className="mx-auto mb-3 h-6 w-6 text-slate-500" />
             {t('notifications.empty')}
           </div>

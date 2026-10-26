@@ -78,7 +78,7 @@ export function WallPropertiesPanel({
 }: WallPanelProps) {
   const { t, formatMeters } = useI18n();
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">
           {t('editor.wallHeading')}
@@ -124,7 +124,7 @@ export function WallPropertiesPanel({
         />
       </div>
 
-      <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mt-4 space-y-1.5 editor-subpanel p-3">
         <Row
           label={t('editor.totalLength')}
           value={realLength(
@@ -180,7 +180,7 @@ export function RoomPropertiesPanel({
 }: RoomPanelProps) {
   const { t, formatMeters, formatNumber, formatUnit } = useI18n();
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">
           {t('editor.roomHeading')}
@@ -209,7 +209,7 @@ export function RoomPropertiesPanel({
         />
       </div>
 
-      <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mt-4 space-y-1.5 editor-subpanel p-3">
         <Row
           label={t('editor.area')}
           value={realArea(
@@ -273,7 +273,7 @@ export function DimensionPropertiesPanel({
   );
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+    <section className="editor-panel p-4">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-white">
           {t('editor.dimensionHeading')}
@@ -318,7 +318,7 @@ export function DimensionPropertiesPanel({
         />
       </div>
 
-      <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mt-4 space-y-1.5 editor-subpanel p-3">
         <Row
           label={t('editor.measured')}
           value={realLength(line.length, metersPerUnit, t, formatMeters)}

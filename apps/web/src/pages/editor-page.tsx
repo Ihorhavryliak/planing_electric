@@ -260,7 +260,7 @@ export function EditorPage() {
 
           {addingFloor || floors.length === 0 ? (
             <form
-              className="mt-5 flex flex-wrap items-end gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+              className="mt-5 flex flex-wrap items-end gap-2 app-panel p-4"
               onSubmit={handleCreateFloor}
             >
               <label className="min-w-52 flex-1">

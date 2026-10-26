@@ -154,7 +154,7 @@ export function AppPage() {
             </div>
           </div>
 
-          <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6">
+          <section className="mt-8 app-panel p-5 sm:p-6">
             <div className="flex items-center gap-2">
               <FolderPlus className="h-4 w-4 text-amber-300" />
               <h2 className="text-sm font-semibold text-white">

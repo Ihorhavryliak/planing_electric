@@ -315,7 +315,7 @@ export function ProjectDocsPage() {
 
         <section className="mt-4">
           {tab === 'materials' ? (
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 print:border-0 print:bg-transparent print:p-0">
+            <div className="app-panel p-5 print:border-0 print:bg-transparent print:p-0">
               <div className="flex items-center justify-between gap-3 print:hidden">
                 <div>
                   <h2 className="text-sm font-semibold text-white">
@@ -380,7 +380,7 @@ export function ProjectDocsPage() {
 
           {tab === 'estimate' ? (
             <div className="space-y-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 print:hidden">
+              <div className="app-panel p-5 print:hidden">
                 <h2 className="text-sm font-semibold text-white">
                   {t('docs.estimate')}
                 </h2>
@@ -403,7 +403,7 @@ export function ProjectDocsPage() {
                 estimates.map((estimate) => (
                   <article
                     key={estimate.id}
-                    className="rounded-2xl border border-white/10 bg-slate-900/60 p-5"
+                    className="app-panel p-5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -469,7 +469,7 @@ export function ProjectDocsPage() {
           ) : null}
 
           {tab === 'print' ? (
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 print:border-0 print:bg-transparent print:p-0">
+            <div className="app-panel p-5 print:border-0 print:bg-transparent print:p-0">
               <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
                 <div>
                   <h2 className="text-sm font-semibold text-white">
@@ -577,7 +577,7 @@ export function ProjectDocsPage() {
                       ].map((item) => (
                         <div
                           key={item.label}
-                          className="rounded-xl border border-white/10 bg-white/[0.03] p-3 print:border-slate-300"
+                          className="editor-subpanel p-3 print:border-slate-300"
                         >
                           <p className="text-[11px] text-slate-500">
                             {item.label}

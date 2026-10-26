@@ -2701,14 +2701,14 @@ export function PlanEditor({
         data-plan-id={plan.id}
         data-viewport={JSON.stringify(viewport)}
         style={{ zoom: preferences.uiScale }}
-        className={`${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
+        className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
-            : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]'
+            : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]'
         }`}
       >
         <div
-          className={`relative min-h-[440px] ${
+          className={`editor-canvas-frame relative min-h-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100vh-1rem)]'
               : previewMode
@@ -2877,7 +2877,7 @@ export function PlanEditor({
           ) : null}
         </div>
 
-        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 shadow-xl shadow-black/30 backdrop-blur">
+        <div className="editor-toolbar absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl p-1">
           <button
             type="button"
             title={
@@ -2965,7 +2965,7 @@ export function PlanEditor({
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside className="space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+        <aside className="editor-sidebar space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
           <RoomNavigator
             rooms={rooms}
             selectedRoomId={selectedRoomId}
@@ -2977,7 +2977,7 @@ export function PlanEditor({
             onOpenGuide={openGuide}
           />
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.dropDefaults')}
             </h2>
@@ -3015,7 +3015,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.validationRules')}
             </h2>
@@ -3046,7 +3046,7 @@ export function PlanEditor({
             </label>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.saveState')}
             </h2>
@@ -3128,7 +3128,7 @@ export function PlanEditor({
 
           <section
             id="scale-section"
-            className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"
+            className="editor-panel p-4"
           >
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
@@ -3192,7 +3192,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.points')}
@@ -3241,7 +3241,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.layout')}
@@ -3397,7 +3397,7 @@ export function PlanEditor({
             />
           ) : null}
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.openings')}
@@ -3611,7 +3611,7 @@ export function PlanEditor({
             />
           ) : null}
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.view')}
             </h2>
@@ -3673,7 +3673,7 @@ export function PlanEditor({
             </p>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.underlay')}
@@ -3810,7 +3810,7 @@ export function PlanEditor({
           </section>
 
           {isPdf ? (
-            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <section className="editor-panel p-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-amber-300" />
                 <h2 className="text-sm font-semibold text-white">
@@ -3895,7 +3895,7 @@ export function PlanEditor({
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+          <section className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.estimate')}
             </h2>

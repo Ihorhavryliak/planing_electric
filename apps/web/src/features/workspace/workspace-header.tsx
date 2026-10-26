@@ -81,7 +81,7 @@ export function WorkspaceHeader({
   }, [user]);
 
   return (
-    <header className="border-b border-white/10 bg-slate-950/70 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
         <Link to="/app" className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20">
@@ -122,7 +122,7 @@ export function WorkspaceHeader({
             onClick={toggle}
             title={themeLabel}
             aria-label={themeLabel}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             {preference === 'system' ? (
               <Monitor className="h-4 w-4" />
@@ -135,14 +135,14 @@ export function WorkspaceHeader({
           <Link
             to="/app/organizations"
             aria-label={t('nav.organizations')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Building2 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/materials"
             aria-label={t('nav.materials')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Package className="h-4 w-4" />
           </Link>
@@ -153,7 +153,7 @@ export function WorkspaceHeader({
                 ? `${t('nav.notifications')} (${unread})`
                 : t('nav.notifications')
             }
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-white/10 hover:text-white"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Bell className="h-4 w-4" />
             {unread > 0 ? (

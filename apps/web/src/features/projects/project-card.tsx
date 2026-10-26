@@ -27,7 +27,7 @@ export function ProjectCard({
   return (
     <article
       className={cn(
-        'flex h-full flex-col rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition-colors hover:border-white/20',
+        'flex h-full flex-col app-panel p-5 transition-colors hover:border-white/20',
         archived && 'bg-slate-900/35',
       )}
     >
