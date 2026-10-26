@@ -271,6 +271,24 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** користувач може створити та зберегти проєкт без акаунта, перезавантажити його, експортувати/імпортувати та пізніше синхронізувати після входу.
 
+### Фаза 15 — Поглиблення електрики та UX редактора (після MVP)
+
+Порівняння з публічним `drawmyplace.com/editor` показало, що бекенд, акаунти й тестування в нас сильніші, але бракує доменної глибини електрики та полірованого UX редактора. Порядок нижче — пріоритетний.
+
+- [x] 15.1 **Кола (circuits)**: зберігати перелік кіл у `plan.calculationSettings`, призначати точки й траси, показувати панель кіл із кількістю пристроїв/трас, редагувати назву/колір, валідувати призначення.
+- [ ] 15.2 **Каталог підтипів пристроїв**: розетки (одинарна/подвійна/трифазна/підлогова), вимикачі (прохідний/двохклавішний/димер/датчик руху), світло, low-voltage/data, щити й коробки; палітра категорій у редакторі.
+- [ ] 15.3 **Монтажні елементи**: штроби, проходи крізь стіни, позначки кіл на плані; шари та керування видимістю.
+- [ ] 15.4 **Live takeoff у редакторі**: довжина стін, площа, об'єм, кількість вузлів стін, пристрої за типами, кабель і орієнтовна вартість матеріалів без генерації кошторису.
+- [ ] 15.5 **Панель Validation**: агрегувати errors/warnings по всьому плану (кола, кабель, отвори, непідключені пристрої) з кількістю та переходом до проблемного об'єкта.
+- [ ] 15.6 **UX редактора**: preview-режим, command palette, оверлей гарячих клавіш, zoom інтерфейсу, колапс панелей, навігація по кімнатах, grid/snap/ortho.
+- [ ] 15.7 **Split 2D/3D**: одночасний перегляд і редагування 2D зліва й 3D справа; синхронізація камери/виділення.
+- [ ] 15.8 **Documentation workspace**: вкладки Materials / Cost estimate / Validation / Variants / Print PDF в одному місці.
+- [ ] 15.9 **Експорт**: SVG 2D-плану, SVG електричної схеми, повний project JSON для серверних проєктів.
+- [ ] 15.10 **3D-режими**: Walk, Third person, X-ray, перерізи, daylight/sun, ізоляція шарів.
+- [ ] 15.11 **Demo-проєкт і локалізації**: стартовий демо-план, повернення російської локалі або додавання нових мов за потреби.
+
+**Критерії завершення:** електричний проєкт можна вести не лише як набір точок і трас, а як структуровані кола з пристроями, монтажними елементами, живим кошторисом і валідацією; редактор має split 2D/3D, зручну навігацію та експорт плану/схеми.
+
 ## 4. Наскрізний сценарій приймання MVP
 
 Використовуйте цей сценарій як основне визначення працюючого MVP:
@@ -351,3 +369,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 64, web 79), `node scripts/browser-check.mjs` — all passed.
 - Issues/blockers: none.
 - Next action: staging deployment and real Sentry/SMTP credentials.
+
+### 2026-10-26 — session 17: circuits
+- Completed: first-class circuit definitions stored in plan settings (code, name, color); circuit assignment for points and routes; Circuits sidebar with add/rename/recolor/delete guards and device/route counts; unknown-circuit validation warnings; local-first drawing schema, normalization, sync and editor support for circuits; contract/API/local-storage tests and browser-check coverage.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 79, contracts 34), `node scripts/browser-check.mjs`.
+- Issues/blockers: circuit definitions live in plan JSON settings for now; a dedicated table/API can follow if circuits need independent permissions or history.
+- Next action: device subtype catalog and palette (15.2).

@@ -521,6 +521,29 @@ export class DrawingService {
       });
     }
 
+    const circuits =
+      (
+        plan.calculationSettings as {
+          circuits?: Array<{ id: string }>;
+        }
+      )?.circuits ?? [];
+    const circuitIds = new Set(circuits.map((circuit) => circuit.id));
+    if (circuitIds.size > 0) {
+      const unknown = new Set<string>();
+      for (const point of pointRows) {
+        const circuitId = this.readCircuitId(point);
+        if (circuitId && !circuitIds.has(circuitId)) unknown.add(circuitId);
+      }
+      for (const route of routeRows) {
+        if (route.circuitId && !circuitIds.has(route.circuitId)) {
+          unknown.add(route.circuitId);
+        }
+      }
+      for (const code of unknown) {
+        warnings.push(`Unknown circuit code: ${code}.`);
+      }
+    }
+
     const total =
       metersPerUnit === null
         ? null
@@ -535,6 +558,11 @@ export class DrawingService {
       totalRequiredLength: total,
       warnings: [...new Set(warnings)],
     };
+  }
+
+  private readCircuitId(point: { properties: Record<string, unknown> }): string | null {
+    const value = point.properties.circuitId;
+    return typeof value === 'string' && value.trim() !== '' ? value : null;
   }
 
   private calculateOneRoute(

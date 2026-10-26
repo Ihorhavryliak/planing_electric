@@ -1,4 +1,5 @@
 import type {
+  Circuit,
   PublicMaterial,
   PublicRoute,
   RouteCalculation,
@@ -14,6 +15,7 @@ interface RoutePropertiesPanelProps {
   route: PublicRoute;
   calculation: RouteCalculation | undefined;
   materials: PublicMaterial[];
+  circuits?: readonly Circuit[];
   onChange: (patch: UpdateRouteInput) => void;
   onDelete: () => void;
 }
@@ -31,6 +33,7 @@ export function RoutePropertiesPanel({
   route,
   calculation,
   materials,
+  circuits = [],
   onChange,
   onDelete,
 }: RoutePropertiesPanelProps) {
@@ -70,17 +73,32 @@ export function RoutePropertiesPanel({
             ))}
           </select>
         </label>
-        <CommitField
-          key={`${route.id}-circuit-${route.circuitId ?? ''}`}
-          label={t('editor.circuit')}
-          initial={route.circuitId ?? ''}
-          placeholder={t('editor.circuitPlaceholder')}
-          maxLength={40}
-          onCommit={(raw) => {
-            onChange({ circuitId: raw.trim() === '' ? null : raw.trim() });
-            return null;
-          }}
-        />
+        <label className="block text-xs">
+          <span className="text-slate-400">{t('circuits.circuit')}</span>
+          <select
+            value={route.circuitId ?? ''}
+            onChange={(event) =>
+              onChange({
+                circuitId:
+                  event.target.value === '' ? null : event.target.value,
+              })
+            }
+            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+          >
+            <option value="">{t('circuits.none')}</option>
+            {circuits.map((circuit) => (
+              <option key={circuit.id} value={circuit.id}>
+                {circuit.id} · {circuit.name}
+              </option>
+            ))}
+            {route.circuitId &&
+            !circuits.some((circuit) => circuit.id === route.circuitId) ? (
+              <option value={route.circuitId}>
+                {t('circuits.unknown')}: {route.circuitId}
+              </option>
+            ) : null}
+          </select>
+        </label>
         <CommitField
           key={`${route.id}-waste-${route.settings.wastePercent ?? ''}`}
           label={t('editor.waste')}

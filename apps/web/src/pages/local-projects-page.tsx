@@ -21,7 +21,11 @@ import {
   createWall,
   saveCalibration,
 } from '@/features/editor/drawing-api';
-import { createBlankPlan, createFloor } from '@/features/editor/editor-api';
+import {
+  createBlankPlan,
+  createFloor,
+  updatePlan,
+} from '@/features/editor/editor-api';
 import { createProject } from '@/features/projects/projects-api';
 import {
   createLocalProject,
@@ -124,6 +128,13 @@ export function LocalProjectsPage() {
       const floor = await createFloor(created.id, { name: 'Floor 1' });
       const plan = await createBlankPlan(floor.id);
       const drawing = project.drawing;
+
+      if (drawing.circuits.length > 0) {
+        await updatePlan(plan.id, {
+          calculationSettings: { circuits: drawing.circuits },
+          expectedVersion: plan.version,
+        });
+      }
 
       if (drawing.calibration) {
         await saveCalibration(plan.id, {

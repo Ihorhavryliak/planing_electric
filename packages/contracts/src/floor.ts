@@ -2,6 +2,15 @@ import { z } from 'zod';
 
 const dropDefault = z.number().min(0).max(100).optional();
 
+export const circuitSchema = z.object({
+  id: z.string().trim().min(1).max(40),
+  name: z.string().trim().min(1).max(80),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#f59e0b'),
+  note: z.string().trim().max(500).nullable().optional(),
+});
+
+export const circuitsSchema = z.array(circuitSchema).max(200);
+
 export const validationRulesSchema = z
   .object({
     maxCircuitLengthMeters: z.number().positive().max(100_000).optional(),
@@ -22,6 +31,7 @@ export const calculationSettingsSchema = z.object({
     .partial()
     .optional(),
   validation: validationRulesSchema.optional(),
+  circuits: circuitsSchema.optional(),
 });
 
 export const floorNameSchema = z
@@ -96,6 +106,7 @@ export const updatePlanSchema = z
     { message: 'Provide at least one field to update' },
   );
 
+export type Circuit = z.infer<typeof circuitSchema>;
 export type FloorNameInput = z.infer<typeof floorNameSchema>;
 export type CreateFloorInput = z.infer<typeof createFloorSchema>;
 export type PlanSourceType = z.infer<typeof planSourceTypeSchema>;

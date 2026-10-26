@@ -16,6 +16,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
+import { CircuitsPanel } from '@/features/editor/circuits-panel';
 import { EditorCanvas } from '@/features/editor/editor-canvas';
 import { previewMetersPerUnit, type Vec2 } from '@/features/editor/editor-geometry';
 import {
@@ -171,6 +172,8 @@ export function LocalEditorPage() {
 
   const selectedPoint =
     drawing.points.find((point) => point.id === selectedPointId) ?? null;
+  const selectedRoute =
+    drawing.routes.find((route) => route.id === selectedRouteId) ?? null;
   const selectedOpening =
     drawing.openings.find((opening) => opening.id === selectedOpeningId) ?? null;
   const selectedWall =
@@ -570,12 +573,76 @@ export function LocalEditorPage() {
             </dl>
           </section>
 
+          <CircuitsPanel
+            circuits={drawing.circuits}
+            points={drawing.points}
+            routes={drawing.routes}
+            onAdd={(circuit) =>
+              update((current) => ({
+                ...current,
+                circuits: [...current.circuits, circuit],
+              }))
+            }
+            onUpdate={(id, patch) =>
+              update((current) => ({
+                ...current,
+                circuits: current.circuits.map((circuit) =>
+                  circuit.id === id ? { ...circuit, ...patch } : circuit,
+                ),
+              }))
+            }
+            onDelete={(id) =>
+              update((current) => ({
+                ...current,
+                circuits: current.circuits.filter(
+                  (circuit) => circuit.id !== id,
+                ),
+              }))
+            }
+          />
+
           {selectedPoint ? (
             <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-400">
               <h2 className="text-sm font-semibold text-white">
                 {t('local.selectedPoint')}
               </h2>
-              <p className="mt-2 capitalize">{selectedPoint.type}</p>
+              <p className="mt-2">{t(`editor.point.${selectedPoint.type}`)}</p>
+              <label className="mt-3 block">
+                <span className="text-slate-500">
+                  {t('circuits.circuit')}
+                </span>
+                <select
+                  value={selectedPoint.properties.circuitId ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    update((current) => ({
+                      ...current,
+                      points: current.points.map((point) =>
+                        point.id === selectedPoint.id
+                          ? {
+                              ...point,
+                              properties: value
+                                ? { ...point.properties, circuitId: value }
+                                : (() => {
+                                    const { circuitId: _previous, ...rest } =
+                                      point.properties;
+                                    return rest;
+                                  })(),
+                            }
+                          : point,
+                      ),
+                    }));
+                  }}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                >
+                  <option value="">{t('circuits.none')}</option>
+                  {drawing.circuits.map((circuit) => (
+                    <option key={circuit.id} value={circuit.id}>
+                      {circuit.id} · {circuit.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Button
                 variant="outline"
                 size="sm"
@@ -590,6 +657,56 @@ export function LocalEditorPage() {
                 }
               >
                 {t('local.deletePoint')}
+              </Button>
+            </section>
+          ) : null}
+
+          {selectedRoute ? (
+            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-400">
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.cableRoute')}
+              </h2>
+              <label className="mt-3 block">
+                <span className="text-slate-500">
+                  {t('circuits.circuit')}
+                </span>
+                <select
+                  value={selectedRoute.circuitId ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    update((current) => ({
+                      ...current,
+                      routes: current.routes.map((route) =>
+                        route.id === selectedRoute.id
+                          ? { ...route, circuitId: value || null }
+                          : route,
+                      ),
+                    }));
+                  }}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                >
+                  <option value="">{t('circuits.none')}</option>
+                  {drawing.circuits.map((circuit) => (
+                    <option key={circuit.id} value={circuit.id}>
+                      {circuit.id} · {circuit.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() =>
+                  update((current) => ({
+                    ...current,
+                    routes: current.routes.filter(
+                      (route) => route.id !== selectedRoute.id,
+                    ),
+                  }))
+                }
+              >
+                {t('editor.deleteRoute')}
               </Button>
             </section>
           ) : null}

@@ -753,6 +753,77 @@ describe('Drawing API', () => {
     });
   });
 
+  it('stores circuits and point circuit assignments', async () => {
+    const fixture = await createFixture();
+
+    const updated = await server()
+      .patch(`${API}/plans/${fixture.plan.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        calculationSettings: {
+          circuits: [
+            { id: 'L1', name: 'Lighting', color: '#facc15' },
+            { id: 'G1', name: 'Sockets' },
+          ],
+        },
+      })
+      .expect(200);
+
+    expect(updated.body.calculationSettings.circuits).toEqual([
+      { id: 'L1', name: 'Lighting', color: '#facc15' },
+      { id: 'G1', name: 'Sockets', color: '#f59e0b' },
+    ]);
+
+    await server()
+      .post(`${API}/plans/${fixture.plan.id}/points`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        type: 'socket',
+        x: 10,
+        y: 20,
+        properties: { circuitId: 'G1', verticalDropMeters: 1.2 },
+      })
+      .expect(201);
+
+    const drawing = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/drawing`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as { points: Array<{ properties: Record<string, unknown> }> };
+
+    expect(drawing.points[0]?.properties).toMatchObject({
+      circuitId: 'G1',
+      verticalDropMeters: 1.2,
+    });
+
+    await addRoute(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      circuitId: 'G9',
+    });
+    await server()
+      .post(`${API}/plans/${fixture.plan.id}/points`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        type: 'light',
+        x: 30,
+        y: 40,
+        properties: { circuitId: 'G9' },
+      })
+      .expect(201);
+
+    const calculation = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/calculation`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanCalculation;
+    expect(calculation.warnings).toContain('Unknown circuit code: G9.');
+  });
+
   it('reports validation warnings for cable type and circuit length', async () => {
     const fixture = await createFixture();
     await calibrate(fixture).expect(200);

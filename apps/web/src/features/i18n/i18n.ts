@@ -672,6 +672,26 @@ const en: Dictionary = {
   'editor.dropNote':
     'The vertical drop is added to a cable route only when the route end sits exactly on this point. Leave it empty to use the type default.',
   'editor.cableRoute': 'Cable route',
+
+  'circuits.title': 'Circuits',
+  'circuits.hint':
+    'Group devices and cable routes into circuits. Circuit codes are used on the plan and in estimates.',
+  'circuits.empty': 'No circuits yet.',
+  'circuits.add': 'Add circuit',
+  'circuits.code': 'Code',
+  'circuits.name': 'Name',
+  'circuits.color': 'Color',
+  'circuits.codePlaceholder': 'e.g. L1',
+  'circuits.namePlaceholder': 'e.g. Lighting',
+  'circuits.counts': '{points} devices · {routes} routes',
+  'circuits.delete': 'Delete circuit',
+  'circuits.deleteBlocked': 'Reassign devices and routes before deleting.',
+  'circuits.duplicateCode': 'Circuit code already exists.',
+  'circuits.invalid': 'Enter a circuit code and name.',
+  'circuits.unknown': 'Unknown circuit',
+  'circuits.none': 'Unassigned',
+  'circuits.circuit': 'Circuit',
+
   'editor.bends': '{count} bends',
   'editor.dropLabel': 'Drop: {label}',
   'editor.wastePercent': 'Waste {percent}%',
@@ -1423,6 +1443,27 @@ const ua: Dictionary = {
   'editor.dropNote':
     'Вертикальний спуск додається до кабельної траси, лише якщо кінець траси точно збігається з цією точкою. Залиште порожнім, щоб використати типове значення.',
   'editor.cableRoute': 'Кабельна траса',
+
+  'circuits.title': 'Кола',
+  'circuits.hint':
+    'Групуйте пристрої та кабельні траси в кола. Коди кіл використовуються на плані й у кошторисах.',
+  'circuits.empty': 'Кіл ще немає.',
+  'circuits.add': 'Додати коло',
+  'circuits.code': 'Код',
+  'circuits.name': 'Назва',
+  'circuits.color': 'Колір',
+  'circuits.codePlaceholder': 'напр. L1',
+  'circuits.namePlaceholder': 'напр. Освітлення',
+  'circuits.counts': '{points} пристроїв · {routes} трас',
+  'circuits.delete': 'Видалити коло',
+  'circuits.deleteBlocked':
+    'Перепризначте пристрої та траси перед видаленням.',
+  'circuits.duplicateCode': 'Код кола вже існує.',
+  'circuits.invalid': 'Введіть код і назву кола.',
+  'circuits.unknown': 'Невідоме коло',
+  'circuits.none': 'Без кола',
+  'circuits.circuit': 'Коло',
+
   'editor.bends': 'згинів: {count}',
   'editor.dropLabel': 'Спуск: {label}',
   'editor.wastePercent': 'Запас {percent}%',

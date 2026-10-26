@@ -1,4 +1,5 @@
 import type {
+  Circuit,
   ElectricalPointType,
   PublicPoint,
   UpdatePointInput,
@@ -12,6 +13,7 @@ import { POINT_SYMBOL_LIST, POINT_SYMBOLS } from './point-symbols';
 
 interface PointPropertiesPanelProps {
   point: PublicPoint;
+  circuits?: readonly Circuit[];
   onChange: (patch: UpdatePointInput) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -19,6 +21,7 @@ interface PointPropertiesPanelProps {
 
 export function PointPropertiesPanel({
   point,
+  circuits = [],
   onChange,
   onDuplicate,
   onDelete,
@@ -96,6 +99,38 @@ export function PointPropertiesPanel({
                 {t(`editor.point.${item.type}`)}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-xs text-slate-400">
+            {t('circuits.circuit')}
+          </span>
+          <select
+            className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:outline-none"
+            value={point.properties.circuitId ?? ''}
+            onChange={(event) => {
+              const value = event.target.value;
+              const { circuitId: _previous, ...rest } = point.properties;
+              onChange({
+                properties: value ? { ...rest, circuitId: value } : rest,
+              });
+            }}
+          >
+            <option value="">{t('circuits.none')}</option>
+            {circuits.map((circuit) => (
+              <option key={circuit.id} value={circuit.id}>
+                {circuit.id} · {circuit.name}
+              </option>
+            ))}
+            {point.properties.circuitId &&
+            !circuits.some(
+              (circuit) => circuit.id === point.properties.circuitId,
+            ) ? (
+              <option value={point.properties.circuitId}>
+                {t('circuits.unknown')}: {point.properties.circuitId}
+              </option>
+            ) : null}
           </select>
         </label>
 

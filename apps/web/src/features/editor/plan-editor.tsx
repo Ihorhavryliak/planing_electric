@@ -1,4 +1,5 @@
 import type {
+  Circuit,
   CreateDimensionInput,
   CreateOpeningInput,
   CreatePointInput,
@@ -56,6 +57,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
+import { CircuitsPanel } from './circuits-panel';
 import {
   createDimension,
   createOpening,
@@ -2025,6 +2027,41 @@ export function PlanEditor({
   const overlayError = previewError ?? imageError;
   const undoCommand = getUndoCommand(history);
   const redoCommand = getRedoCommand(history);
+  const circuits = plan.calculationSettings?.circuits ?? [];
+
+  async function saveCircuits(next: Circuit[]) {
+    try {
+      const updated = await updatePlan(plan.id, {
+        calculationSettings: {
+          ...plan.calculationSettings,
+          circuits: next,
+        },
+        expectedVersion: plan.version,
+      });
+      onPlanChange(updated);
+    } catch (error) {
+      setLayoutError(getErrorMessage(error));
+    }
+  }
+
+  function handleAddCircuit(circuit: Circuit) {
+    void saveCircuits([...circuits, circuit]);
+  }
+
+  function handleUpdateCircuit(
+    id: string,
+    patch: Partial<Pick<Circuit, 'name' | 'color'>>,
+  ) {
+    void saveCircuits(
+      circuits.map((circuit) =>
+        circuit.id === id ? { ...circuit, ...patch } : circuit,
+      ),
+    );
+  }
+
+  function handleDeleteCircuit(id: string) {
+    void saveCircuits(circuits.filter((circuit) => circuit.id !== id));
+  }
 
   return (
     <>
@@ -2466,6 +2503,15 @@ export function PlanEditor({
             ) : null}
           </section>
 
+          <CircuitsPanel
+            circuits={circuits}
+            points={points}
+            routes={routes}
+            onAdd={handleAddCircuit}
+            onUpdate={handleUpdateCircuit}
+            onDelete={handleDeleteCircuit}
+          />
+
           {selectedWall ? (
             <WallPropertiesPanel
               key={selectedWall.id}
@@ -2652,6 +2698,7 @@ export function PlanEditor({
             <PointPropertiesPanel
               key={selectedPoint.id}
               point={selectedPoint}
+              circuits={circuits}
               onChange={(patch) => void handlePatchPoint(selectedPoint.id, patch)}
               onDuplicate={() => handleDuplicatePoint(selectedPoint)}
               onDelete={() => void handleDeletePoint(selectedPoint.id)}
@@ -2673,6 +2720,7 @@ export function PlanEditor({
               key={selectedRoute.id}
               route={selectedRoute}
               materials={materials}
+              circuits={circuits}
               calculation={calculation?.routes.find(
                 (item) => item.routeId === selectedRoute.id,
               )}

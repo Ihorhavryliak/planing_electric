@@ -42,6 +42,33 @@ describe('floor and plan contracts', () => {
     }
   });
 
+  it('accepts circuit definitions with a color default', () => {
+    const parsed = updatePlanSchema.parse({
+      calculationSettings: {
+        circuits: [
+          { id: 'L1', name: 'Lighting' },
+          { id: 'G1', name: 'Sockets', color: '#38bdf8' },
+        ],
+      },
+    });
+    expect(parsed.calculationSettings?.circuits).toEqual([
+      { id: 'L1', name: 'Lighting', color: '#f59e0b' },
+      { id: 'G1', name: 'Sockets', color: '#38bdf8' },
+    ]);
+    expect(
+      updatePlanSchema.safeParse({
+        calculationSettings: {
+          circuits: [{ id: 'L1', name: 'Lighting', color: 'red' }],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      updatePlanSchema.safeParse({
+        calculationSettings: { circuits: [{ id: '', name: 'Lighting' }] },
+      }).success,
+    ).toBe(false);
+  });
+
   it('accepts page changes and underlay updates', () => {
     expect(updatePlanSchema.parse({ page: 3 })).toEqual({ page: 3 });
     expect(

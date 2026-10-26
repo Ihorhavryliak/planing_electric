@@ -658,6 +658,27 @@ export const ru: Dictionary = {
   'editor.dropNote':
     'Вертикальный спуск добавляется к кабельной трассе, только если конец трассы точно совпадает с этой точкой. Оставьте пустым, чтобы использовать типовое значение.',
   'editor.cableRoute': 'Кабельная трасса',
+
+  'circuits.title': 'Цепи',
+  'circuits.hint':
+    'Группируйте устройства и кабельные трассы в цепи. Коды цепей используются на плане и в сметах.',
+  'circuits.empty': 'Цепей пока нет.',
+  'circuits.add': 'Добавить цепь',
+  'circuits.code': 'Код',
+  'circuits.name': 'Название',
+  'circuits.color': 'Цвет',
+  'circuits.codePlaceholder': 'напр. L1',
+  'circuits.namePlaceholder': 'напр. Освещение',
+  'circuits.counts': '{points} устройств · {routes} трасс',
+  'circuits.delete': 'Удалить цепь',
+  'circuits.deleteBlocked':
+    'Переназначьте устройства и трассы перед удалением.',
+  'circuits.duplicateCode': 'Код цепи уже существует.',
+  'circuits.invalid': 'Введите код и название цепи.',
+  'circuits.unknown': 'Неизвестная цепь',
+  'circuits.none': 'Без цепи',
+  'circuits.circuit': 'Цепь',
+
   'editor.bends': 'изгибов: {count}',
   'editor.dropLabel': 'Спуск: {label}',
   'editor.wastePercent': 'Запас {percent}%',

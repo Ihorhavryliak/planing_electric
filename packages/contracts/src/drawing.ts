@@ -58,6 +58,8 @@ export const pointPropertiesSchema = z
   .object({
     /** Overrides the default vertical cable drop for this point (meters). */
     verticalDropMeters: z.number().min(0).max(100).optional(),
+    /** Circuit code from the plan's circuit list. */
+    circuitId: z.string().trim().min(1).max(40).nullable().optional(),
   })
   .strict();
 

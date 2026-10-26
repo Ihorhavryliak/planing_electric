@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createPointSchema,
   createRouteSchema,
+  pointPropertiesSchema,
   setCalibrationSchema,
   updatePointSchema,
   updateRouteSchema,
@@ -67,5 +68,15 @@ describe('route contracts', () => {
   it('requires at least one field to update', () => {
     expect(() => updateRouteSchema.parse({})).toThrow();
     expect(updateRouteSchema.parse({ circuitId: 'L1' })).toEqual({ circuitId: 'L1' });
+  });
+
+  it('accepts circuit assignments on points', () => {
+    expect(pointPropertiesSchema.parse({ circuitId: 'L1' })).toEqual({
+      circuitId: 'L1',
+    });
+    expect(pointPropertiesSchema.parse({ circuitId: null })).toEqual({
+      circuitId: null,
+    });
+    expect(() => pointPropertiesSchema.parse({ circuitId: '' })).toThrow();
   });
 });

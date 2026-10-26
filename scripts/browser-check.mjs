@@ -127,6 +127,17 @@ async function main() {
   await fileInput.setInputFiles(pngPath);
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
+  const circuitsSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Circuits', exact: true }),
+  });
+  await circuitsSection.getByLabel('Code').fill('L1');
+  await circuitsSection.getByLabel('Name').fill('Lighting');
+  await circuitsSection.getByRole('button', { name: 'Add circuit' }).click();
+  await circuitsSection.getByText('L1', { exact: true }).waitFor();
+  const circuitSelect = page
+    .getByRole('combobox')
+    .filter({ has: page.locator('option[value="L1"]') });
+
   const visibleButton = page.getByRole('button', { name: 'Visible' });
   await visibleButton.click();
   await page.getByRole('button', { name: 'Hidden' }).click();
@@ -229,6 +240,8 @@ async function main() {
   await page.getByRole('textbox', { name: /Rotation/ }).fill('90');
   await page.getByRole('textbox', { name: /Rotation/ }).blur();
   await page.getByRole('button', { name: 'Duplicate' }).click();
+  await circuitSelect.selectOption('L1');
+
   const pointsSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Points', exact: true }),
   });
@@ -237,6 +250,10 @@ async function main() {
   // Select the cable route from the panel, then drag its end bend.
   await routeSection.getByRole('button', { name: /Route 1/ }).click();
   await page.getByRole('heading', { name: 'Cable route', exact: true }).waitFor();
+  await circuitSelect.selectOption('L1');
+  await circuitsSection
+    .getByText('1 devices · 1 routes', { exact: true })
+    .waitFor();
   await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
   const beforeBend = await canvasHash();
   await page.mouse.move(at(0.65, 0.6).x, at(0.65, 0.6).y);
@@ -314,7 +331,7 @@ async function main() {
 
   // Select the whole route and delete it, then undo the deletion.
   await page.getByRole('button', { name: 'Select tool' }).click();
-  await routeSection.getByRole('button', { name: /Route 1/ }).click();
+  await routeSection.getByRole('button').first().click();
   await routeSection.getByText('1', { exact: true }).first().waitFor();
   await page.keyboard.press('Delete');
   await routeSection.getByText('0', { exact: true }).first().waitFor();
@@ -329,6 +346,7 @@ async function main() {
   await page.reload();
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   // Local-first: create an anonymous project, draw a wall, and reload it.
   await page.goto(`${WEB}/local`);

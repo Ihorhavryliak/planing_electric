@@ -34,6 +34,7 @@ describe('local projects', () => {
     const project = createLocalProject('Test local');
     expect(project.name).toBe('Test local');
     expect(project.drawing).toEqual(emptyDrawing());
+    expect(project.drawing.circuits).toEqual([]);
     expect(project.viewport).toEqual({ x: 0, y: 0, zoom: 1 });
     expect(isLocalProject(project)).toBe(true);
   });
@@ -52,6 +53,7 @@ describe('local projects', () => {
       id: 'legacy',
       name: 'Legacy',
       drawing: {
+        circuits: [{ id: 'L1', name: 'Lighting', color: '#facc15' }],
         walls: [],
         points: [{ id: 'p1' }],
       },
@@ -63,6 +65,7 @@ describe('local projects', () => {
     expect(normalized?.drawing.rooms).toEqual([]);
     expect(normalized?.drawing.routes).toEqual([]);
     expect(normalized?.drawing.points).toHaveLength(1);
+    expect(normalized?.drawing.circuits).toHaveLength(1);
     expect(normalized?.viewport).toEqual({ x: 0, y: 0, zoom: 1 });
   });
 

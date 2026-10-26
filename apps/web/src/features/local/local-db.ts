@@ -1,4 +1,5 @@
 import type {
+  Circuit,
   PublicCalibration,
   PublicDimension,
   PublicOpening,
@@ -19,6 +20,7 @@ export const MAX_LOCAL_PROJECT_BYTES = 5 * 1024 * 1024;
 
 export interface LocalDrawing {
   calibration: PublicCalibration | null;
+  circuits: Circuit[];
   walls: PublicWall[];
   rooms: PublicRoom[];
   openings: PublicOpening[];
@@ -61,6 +63,7 @@ export class LocalConflictError extends Error {
 export function emptyDrawing(): LocalDrawing {
   return {
     calibration: null,
+    circuits: [],
     walls: [],
     rooms: [],
     openings: [],
@@ -90,6 +93,7 @@ function normalizeDrawing(drawing: Partial<LocalDrawing>): LocalDrawing {
 
   return {
     calibration: drawing.calibration ?? null,
+    circuits: array(drawing.circuits),
     walls: array(drawing.walls),
     rooms: array(drawing.rooms),
     openings: array(drawing.openings),
