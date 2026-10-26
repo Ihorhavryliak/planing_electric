@@ -793,6 +793,7 @@ describe('Drawing API', () => {
           circuitId: 'G1',
           verticalDropMeters: 1.2,
           subtype: 'socket-double',
+          productId: 'schneider-sedna-double',
         },
       })
       .expect(201);
@@ -808,6 +809,7 @@ describe('Drawing API', () => {
       circuitId: 'G1',
       verticalDropMeters: 1.2,
       subtype: 'socket-double',
+      productId: 'schneider-sedna-double',
     });
 
     await addRoute(fixture, {

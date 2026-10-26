@@ -200,6 +200,8 @@ describe('report templates', () => {
     expect(table.columns.map((column) => column.key)).toEqual([
       'item',
       'type',
+      'manufacturer',
+      'article',
       'circuit',
       'circuitName',
       'quantity',
@@ -208,16 +210,48 @@ describe('report templates', () => {
     ]);
     expect(table.rows).toHaveLength(2);
     expect(table.rows[0]?.slice(0, 2)).toEqual(['Ceiling light', 'Light']);
-    expect(table.rows[1]?.slice(0, 7)).toEqual([
+    expect(table.rows[1]?.slice(0, 9)).toEqual([
       'Double socket',
       'Socket',
+      '—',
+      '—',
       'Q1-1L1',
       'Sockets',
       2,
       'pcs',
       '0.3 m',
     ]);
-    expect(table.total?.[4]).toBe(3);
+    expect(table.total?.[6]).toBe(3);
+  });
+
+  it('adds library article and cost data for linked products', () => {
+    const productPoints = points.map((item) =>
+      item.id === 'p1'
+        ? {
+            ...item,
+            properties: {
+              ...item.properties,
+              productId: 'schneider-sedna-double',
+            },
+          }
+        : item,
+    );
+    const table = buildReportTable(
+      'equipment',
+      { ...source, drawing: { ...drawing, points: productPoints } as typeof drawing },
+      ['item', 'manufacturer', 'article', 'quantity', 'unitPrice', 'totalCost'],
+    );
+    const socketRow = table.rows.find((row) => row[0] === 'Double socket');
+
+    expect(socketRow).toEqual([
+      'Double socket',
+      'Schneider Electric',
+      'SDN3002171',
+      1,
+      5.4,
+      5.4,
+    ]);
+    expect(table.total).toEqual(['Total', '', '', 3, '', 5.4]);
   });
 
   it('honours a custom field selection in template order', () => {

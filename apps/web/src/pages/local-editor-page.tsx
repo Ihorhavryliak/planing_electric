@@ -61,6 +61,7 @@ import { XLSX_MIME } from '@/features/editor/xlsx';
 import { buildIfc } from '@/features/editor/ifc-export';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
+import { SymbolLibraryPanel } from '@/features/editor/symbol-library-panel';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
 import { HotkeysOverlay } from '@/features/editor/hotkeys-overlay';
 import { RoomNavigator } from '@/features/editor/room-navigator';
@@ -408,6 +409,23 @@ export function LocalEditorPage() {
 
   function update(mutator: (current: LocalDrawing) => LocalDrawing) {
     setDrawing((current) => (current ? mutator(current) : current));
+  }
+
+  function assignPointProduct(productId: string | null) {
+    if (!selectedPoint) return;
+
+    update((current) => ({
+      ...current,
+      points: current.points.map((point) => {
+        if (point.id !== selectedPoint.id) return point;
+
+        const { productId: _previous, ...rest } = point.properties;
+        return {
+          ...point,
+          properties: productId ? { ...rest, productId } : rest,
+        };
+      }),
+    }));
   }
 
   function pointIdAt(at: { x: number; y: number } | undefined): string | null {
@@ -993,6 +1011,7 @@ export function LocalEditorPage() {
               type: ElectricalPointType,
               at: Vec2,
               subtype: DeviceSubtype | null,
+              productId?: string | null,
             ) =>
               update((current) => ({
                 ...current,
@@ -1007,7 +1026,10 @@ export function LocalEditorPage() {
                     rotation: 0,
                     label: null,
                     mountingHeight: null,
-                    properties: subtype ? { subtype } : {},
+                    properties: {
+                      ...(subtype ? { subtype } : {}),
+                      ...(productId ? { productId } : {}),
+                    },
                     updatedAt: now(),
                   } satisfies PublicPoint,
                 ],
@@ -1498,6 +1520,20 @@ export function LocalEditorPage() {
                 nonce: Date.now(),
               })
             }
+          />
+
+          <SymbolLibraryPanel
+            selectedPoint={selectedPoint}
+            onPlace={(type, subtype, productId) =>
+              setPlacementRequest({
+                type,
+                subtype,
+                productId,
+                nonce: Date.now(),
+              })
+            }
+            onAssign={assignPointProduct}
+            onClearProduct={() => assignPointProduct(null)}
           />
 
           <TakeoffPanel

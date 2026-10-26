@@ -63,6 +63,8 @@ export const pointPropertiesSchema = z
     circuitId: z.string().trim().min(1).max(40).nullable().optional(),
     /** Catalog subtype (double socket, dimmer, LAN point, ...). */
     subtype: deviceSubtypeSchema.nullable().optional(),
+    /** Selected article from the standard device library. */
+    productId: z.string().trim().min(1).max(120).nullable().optional(),
   })
   .strict();
 

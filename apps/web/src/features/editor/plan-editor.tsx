@@ -157,6 +157,7 @@ import {
 } from './editor-utils';
 import { PdfPageDialog } from './pdf-page-dialog';
 import { PointPropertiesPanel } from './point-properties-panel';
+import { SymbolLibraryPanel } from './symbol-library-panel';
 import { POINT_SYMBOL_LIST, countByType } from './point-symbols';
 import {
   attachRouteEnd,
@@ -1916,6 +1917,15 @@ export function PlanEditor({
     }
   }
 
+  function assignPointProduct(productId: string | null) {
+    if (!selectedPoint) return;
+
+    const { productId: _previous, ...rest } = selectedPoint.properties;
+    void handlePatchPoint(selectedPoint.id, {
+      properties: productId ? { ...rest, productId } : rest,
+    });
+  }
+
   function handleDuplicatePoint(point: PublicPoint) {
     // Offset by a fixed number of screen pixels so the copy is visible at any zoom.
     const offset = 24 / viewport.zoom;
@@ -2793,12 +2803,13 @@ export function PlanEditor({
             onInsertRouteVertex={handleInsertRouteVertex}
             onRemoveRouteVertex={handleRemoveRouteVertex}
             onDeleteRoute={(id) => void handleDeleteRoute(id)}
-            onCreatePoint={(type, at, subtype) =>
-              void handleCreatePoint(
-                type,
-                at,
-                subtype ? { properties: { subtype } } : {},
-              )
+            onCreatePoint={(type, at, subtype, productId) =>
+              void handleCreatePoint(type, at, {
+                properties: {
+                  ...(subtype ? { subtype } : {}),
+                  ...(productId ? { productId } : {}),
+                },
+              })
             }
             onMovePoint={(id, at) =>
               void handlePatchPoint(id, { x: at.x, y: at.y })
@@ -3306,6 +3317,20 @@ export function PlanEditor({
                 nonce: Date.now(),
               })
             }
+          />
+
+          <SymbolLibraryPanel
+            selectedPoint={selectedPoint}
+            onPlace={(type, subtype, productId) =>
+              setPlacementRequest({
+                type,
+                subtype,
+                productId,
+                nonce: Date.now(),
+              })
+            }
+            onAssign={assignPointProduct}
+            onClearProduct={() => assignPointProduct(null)}
           />
 
           <CircuitsPanel

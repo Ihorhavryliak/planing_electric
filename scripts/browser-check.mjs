@@ -379,6 +379,33 @@ async function main() {
   }
   await circuitSelect.selectOption('L1');
 
+  // Standard device library: attach a real article to the selected socket.
+  const libraryPanel = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Device library', exact: true }),
+  });
+  await libraryPanel.scrollIntoViewIfNeeded();
+  await libraryPanel.getByLabel('Search the device library').fill('SDN3002171');
+  const assignResponse = page
+    .waitForResponse(
+      (response) =>
+        response.url().includes('/api/v1/points/') &&
+        response.request().method() === 'PATCH',
+      { timeout: 8000 },
+    )
+    .catch(() => null);
+  await libraryPanel.getByRole('button', { name: 'Assign', exact: true }).click();
+  if (!(await assignResponse)) {
+    await page.screenshot({ path: path.join(dir, 'library-failure.png') });
+    throw new Error('Library assign did not send a point update.');
+  }
+  const articleSelect = page
+    .getByRole('combobox')
+    .filter({ has: page.locator('option[value="schneider-sedna-double"]') });
+  await articleSelect.waitFor({ timeout: 10000 });
+  if ((await articleSelect.inputValue()) !== 'schneider-sedna-double') {
+    throw new Error('Library article was not attached to the selected point.');
+  }
+
   const pointsSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Points', exact: true }),
   });
@@ -949,6 +976,9 @@ async function main() {
   await reportTable.waitFor();
   if ((await reportTable.locator('tbody tr').count()) < 1) {
     throw new Error('Equipment report preview is empty.');
+  }
+  if (!(await reportTable.innerText()).includes('SDN3002171')) {
+    throw new Error('Equipment report is missing the linked device article.');
   }
   const mountingChip = page.getByRole('button', {
     name: 'Mounting',

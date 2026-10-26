@@ -10,6 +10,7 @@ import {
   type ElectricalPlanResult,
   type PanelSchedule,
 } from '@drawmyplace/calculations';
+import { deviceProduct } from '@drawmyplace/contracts';
 import { buildCableJournal, type CableJournalRow } from './cable-journal';
 import { buildCircuitNumbering } from './circuit-numbering';
 import { buildXlsx, type XlsxSheet } from './xlsx';
@@ -74,10 +75,14 @@ export interface ReportSource {
 const equipmentFields: readonly ReportFieldDefinition[] = [
   { key: 'item', labelKey: 'report.field.item' },
   { key: 'type', labelKey: 'report.field.type' },
+  { key: 'manufacturer', labelKey: 'report.field.manufacturer' },
+  { key: 'article', labelKey: 'report.field.article' },
   { key: 'circuit', labelKey: 'report.field.circuitAddress' },
   { key: 'circuitName', labelKey: 'report.field.circuitName' },
   { key: 'quantity', labelKey: 'report.field.quantity', numeric: true },
   { key: 'unit', labelKey: 'report.field.unit' },
+  { key: 'unitPrice', labelKey: 'report.field.unitPrice', numeric: true },
+  { key: 'totalCost', labelKey: 'report.field.totalCost', numeric: true },
   { key: 'mounting', labelKey: 'report.field.mounting' },
   { key: 'notes', labelKey: 'report.field.notes' },
 ];
@@ -120,6 +125,8 @@ export const REPORT_DEFINITIONS: readonly ReportDefinition[] = [
     defaultFields: [
       'item',
       'type',
+      'manufacturer',
+      'article',
       'circuit',
       'circuitName',
       'quantity',
@@ -209,7 +216,7 @@ function mountingLabel(points: readonly PublicPoint[]): string {
 
 function equipmentRows(
   source: ReportSource,
-): { rows: ReportCell[][]; totalQuantity: number } {
+): { rows: ReportCell[][]; totalQuantity: number; totalCost: number | null } {
   const points = source.points ?? source.drawing?.points ?? [];
   const numbering = buildCircuitNumbering(source.circuits, source.electrical);
   const groups = new Map<
@@ -217,24 +224,28 @@ function equipmentRows(
     {
       points: PublicPoint[];
       circuitId: string | null;
+      productId: string | null;
     }
   >();
 
   for (const point of points) {
     const circuitId = point.properties.circuitId ?? null;
+    const productId = point.properties.productId ?? null;
     const key = [
       point.type,
       point.properties.subtype ?? '',
       circuitId ?? '',
+      productId ?? '',
     ].join('|');
     const group = groups.get(key);
 
     if (group) group.points.push(point);
-    else groups.set(key, { points: [point], circuitId });
+    else groups.set(key, { points: [point], circuitId, productId });
   }
 
   const rows: ReportCell[][] = [];
   let totalQuantity = 0;
+  let totalCost = 0;
 
   for (const group of groups.values()) {
     const first = group.points[0]!;
@@ -251,15 +262,23 @@ function equipmentRows(
           .filter((label): label is string => Boolean(label)),
       ),
     ];
+    const product = deviceProduct(group.productId);
+    const unitPrice = product?.unitPrice ?? null;
+    const cost = unitPrice === null ? null : unitPrice * group.points.length;
 
     totalQuantity += group.points.length;
+    if (cost !== null) totalCost += cost;
     rows.push([
       typeLabel(first, source.t),
       source.t(`report.pointType.${first.type}`),
+      product?.manufacturer ?? '—',
+      product?.article ?? '—',
       address,
       circuit?.name ?? '—',
       group.points.length,
       source.t('report.unit.pcs'),
+      unitPrice ?? '—',
+      cost ?? '—',
       mountingLabel(group.points),
       labels.join(', ') || '—',
     ]);
@@ -267,7 +286,11 @@ function equipmentRows(
 
   rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
 
-  return { rows, totalQuantity };
+  return {
+    rows,
+    totalQuantity,
+    totalCost: totalCost > 0 ? totalCost : null,
+  };
 }
 
 function journalSourceRows(source: ReportSource): CableJournalRow[] {
@@ -324,16 +347,20 @@ function panelRows(source: ReportSource): ReportCell[][] {
   ]);
 }
 
-function numericTotal(
+function numericTotals(
   columns: readonly ReportColumn[],
-  index: number,
   label: string,
-  value: number | null,
+  values: Readonly<Record<string, number | null>>,
 ): ReportCell[] {
   const cells: ReportCell[] = columns.map(() => '');
   cells[0] = label;
 
-  if (value !== null && index >= 0) cells[index] = value;
+  for (const column of columns) {
+    const value = values[column.key];
+    if (value !== null && value !== undefined) {
+      cells[columns.indexOf(column)] = value;
+    }
+  }
 
   return cells;
 }
@@ -361,27 +388,26 @@ export function buildReportTable(
     activeFields.map((field) => values[field.key] ?? '');
 
   if (id === 'equipment') {
-    const { rows, totalQuantity } = equipmentRows(source);
-    const quantityIndex = columns.findIndex((column) => column.key === 'quantity');
+    const { rows, totalQuantity, totalCost } = equipmentRows(source);
 
     return {
       columns,
       rows: rows.map((row) => pick(mapRow(definition, row))),
       total:
         rows.length > 0
-          ? numericTotal(
-              columns,
-              quantityIndex,
-              source.t('report.total'),
-              totalQuantity,
-            )
+          ? numericTotals(columns, source.t('report.total'), {
+              quantity: totalQuantity,
+              totalCost:
+                totalCost === null
+                  ? null
+                  : Math.round(totalCost * 100) / 100,
+            })
           : undefined,
     };
   }
 
   if (id === 'cable-journal') {
     const rows = journalSourceRows(source);
-    const lengthIndex = columns.findIndex((column) => column.key === 'length');
     const totalLength = rows.reduce((sum, row) => sum + row.length, 0);
 
     return {
@@ -404,18 +430,14 @@ export function buildReportTable(
       ),
       total:
         rows.length > 0
-          ? numericTotal(
-              columns,
-              lengthIndex,
-              source.t('report.total'),
-              Math.round(totalLength * 100) / 100,
-            )
+          ? numericTotals(columns, source.t('report.total'), {
+              length: Math.round(totalLength * 100) / 100,
+            })
           : undefined,
     };
   }
 
   const rows = panelRows(source);
-  const loadIndex = columns.findIndex((column) => column.key === 'load');
   const totalLoad = panelScheduleOf(source)?.rows.reduce(
     (sum, row) => sum + row.currentA,
     0,
@@ -426,12 +448,9 @@ export function buildReportTable(
     rows: rows.map((row) => pick(mapRow(definition, row))),
     total:
       rows.length > 0 && totalLoad !== undefined
-        ? numericTotal(
-            columns,
-            loadIndex,
-            source.t('report.total'),
-            Math.round(totalLoad * 10) / 10,
-          )
+        ? numericTotals(columns, source.t('report.total'), {
+            load: Math.round(totalLoad * 10) / 10,
+          })
         : undefined,
   };
 }

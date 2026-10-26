@@ -1,5 +1,7 @@
 import {
   DEVICE_SUBTYPES,
+  deviceProduct,
+  deviceProductsForSubtype,
   type Circuit,
   type DeviceSubtype,
   type ElectricalPointType,
@@ -33,6 +35,14 @@ export function PointPropertiesPanel({
   const subtypeOptions = DEVICE_SUBTYPES.filter(
     (definition) => definition.type === point.type,
   );
+  const currentProduct = deviceProduct(point.properties.productId);
+  const productOptions = point.properties.subtype
+    ? deviceProductsForSubtype(point.properties.subtype)
+    : [];
+  const products =
+    currentProduct && !productOptions.some((item) => item.id === currentProduct.id)
+      ? [currentProduct, ...productOptions]
+      : productOptions;
 
   function commitNumber(
     raw: string,
@@ -115,12 +125,20 @@ export function PointPropertiesPanel({
             className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:outline-none"
             value={point.properties.subtype ?? ''}
             onChange={(event) => {
-              const value = event.target.value;
-              const { subtype: _previous, ...rest } = point.properties;
+              const value = event.target.value || null;
+              const nextSubtype = value as DeviceSubtype | null;
+              const keepProduct =
+                currentProduct && currentProduct.subtype === nextSubtype
+                  ? currentProduct
+                  : null;
+              const { subtype: _previous, productId: _article, ...rest } =
+                point.properties;
               onChange({
-                properties: value
-                  ? { ...rest, subtype: value as DeviceSubtype }
-                  : rest,
+                properties: {
+                  ...rest,
+                  ...(nextSubtype ? { subtype: nextSubtype } : {}),
+                  ...(keepProduct ? { productId: keepProduct.id } : {}),
+                },
               });
             }}
           >
@@ -139,6 +157,45 @@ export function PointPropertiesPanel({
               </option>
             ) : null}
           </select>
+        </label>
+
+        <label className="block">
+          <span className="text-xs text-slate-400">
+            {t('library.article')}
+          </span>
+          <select
+            className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20 focus:outline-none"
+            value={point.properties.productId ?? ''}
+            onChange={(event) => {
+              const selected = deviceProduct(event.target.value || null);
+              const { productId: _previous, ...rest } = point.properties;
+              onChange({
+                properties: selected
+                  ? {
+                      ...rest,
+                      productId: selected.id,
+                      subtype: selected.subtype,
+                    }
+                  : rest,
+              });
+            }}
+          >
+            <option value="">{t('library.noArticle')}</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.manufacturer} · {product.article} · {product.name}
+              </option>
+            ))}
+          </select>
+          {currentProduct ? (
+            <span className="mt-1 block text-[10px] leading-relaxed text-slate-500">
+              {currentProduct.rating} · {currentProduct.standard}
+            </span>
+          ) : point.properties.subtype ? (
+            <span className="mt-1 block text-[10px] leading-relaxed text-slate-500">
+              {t('library.noProducts')}
+            </span>
+          ) : null}
         </label>
 
         <label className="block">

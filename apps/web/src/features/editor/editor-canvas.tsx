@@ -199,6 +199,8 @@ interface DragState {
 export interface PlacementRequest {
   type: ElectricalPointType;
   subtype: DeviceSubtype;
+  /** Optional standard-library article to store on the new point. */
+  productId?: string | null;
   /** Changes on every palette click so repeated selections retrigger placement. */
   nonce: number;
 }
@@ -240,6 +242,7 @@ interface EditorCanvasProps {
     type: ElectricalPointType,
     at: Vec2,
     subtype: DeviceSubtype | null,
+    productId?: string | null,
   ) => void;
   onMovePoint: (id: string, at: Vec2) => void;
   onDeletePoint: (id: string) => void;
@@ -468,6 +471,7 @@ export function EditorCanvas({
   const [cursorWorld, setCursorWorld] = useState<Vec2 | null>(null);
   const [placeType, setPlaceType] = useState<ElectricalPointType>('socket');
   const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
+  const [placeProductId, setPlaceProductId] = useState<string | null>(null);
   const [snapEnabled, setSnapEnabled] = useState(false);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [orthoEnabled, setOrthoEnabled] = useState(false);
@@ -530,6 +534,7 @@ export function EditorCanvas({
   const selectedPointIdRef = useRef(selectedPointId);
   const placeTypeRef = useRef(placeType);
   const placeSubtypeRef = useRef(placeSubtype);
+  const placeProductIdRef = useRef(placeProductId);
   const layersRef = useRef(layers);
   layersRef.current = layers;
 
@@ -749,6 +754,7 @@ export function EditorCanvas({
   selectedPointIdRef.current = selectedPointId;
   placeTypeRef.current = placeType;
   placeSubtypeRef.current = placeSubtype;
+  placeProductIdRef.current = placeProductId;
   snapRef.current = snapEnabled;
   orthoRef.current = orthoEnabled;
   readOnlyRef.current = readOnly;
@@ -1211,6 +1217,7 @@ export function EditorCanvas({
 
     setPlaceType(placementRequest.type);
     setPlaceSubtype(placementRequest.subtype);
+    setPlaceProductId(placementRequest.productId ?? null);
     setTool('place');
   }, [placementRequest]);
 
@@ -1222,6 +1229,7 @@ export function EditorCanvas({
     if (toolRequest.pointType) {
       setPlaceType(toolRequest.pointType);
       setPlaceSubtype(null);
+      setPlaceProductId(null);
     }
 
     setTool(toolRequest.tool);
@@ -2258,6 +2266,7 @@ export function EditorCanvas({
             placeTypeRef.current,
             snapped(toWorld(end)),
             placeSubtypeRef.current,
+            placeProductIdRef.current,
           );
         } else if (drag.addsRouteVertex && clicked) {
           addRouteVertex(end);
@@ -2478,6 +2487,7 @@ export function EditorCanvas({
       if (symbol) {
         setPlaceType(symbol.type);
         setPlaceSubtype(null);
+        setPlaceProductId(null);
         setTool('place');
       } else if (event.key === 'Delete' || event.key === 'Backspace') {
         const selected = selectedPointIdRef.current;
@@ -2745,6 +2755,7 @@ export function EditorCanvas({
               onClick={() => {
                 setPlaceType(symbol.type);
                 setPlaceSubtype(null);
+                setPlaceProductId(null);
                 setTool('place');
               }}
               className={cn(
