@@ -13,6 +13,7 @@ import {
   Box,
   BrickWall,
   Cable,
+  Download,
   Hand,
   Lightbulb,
   Magnet,
@@ -2437,6 +2438,25 @@ export function EditorCanvas({
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Maximize2 className="h-4 w-4" />
+        </button>
+
+        <span className="mx-1 h-5 w-px bg-white/10" />
+
+        <button
+          type="button"
+          title="Download drawing as PNG"
+          aria-label="Download drawing as PNG"
+          onClick={() => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = 'drawing.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <Download className="h-4 w-4" />
         </button>
       </div>
 
