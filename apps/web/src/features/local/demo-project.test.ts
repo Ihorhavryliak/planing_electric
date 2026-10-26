@@ -7,6 +7,11 @@ describe('demo project', () => {
     kitchen: 'Kitchen',
     bedroom: 'Bedroom',
     bathroom: 'Bathroom',
+    lighting: 'Lighting',
+    power: 'Power',
+    livingSwitches: 'Living switches',
+    kitchenSwitches: 'Kitchen switches',
+    lowVoltage: 'Low voltage',
   });
 
   it('contains a complete calibrated apartment plan', () => {

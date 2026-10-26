@@ -435,3 +435,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (demo plan loads with rooms and circuits).
 - Issues/blockers: there is still no server-side “new project from template” action; the demo is local-first and synced through the existing local-to-account flow.
 - Next action: post-MVP backlog / final acceptance pass.
+
+### 2026-10-26 — session 28: final acceptance pass
+- Completed: all Phase 15 items (15.1–15.11) are implemented and checked in a final browser smoke run: circuits, device catalog, chases/penetrations/layers, live takeoff, validation, command palette/preview/room navigation, split 2D/3D, documentation workspace, SVG/schematic/project export, advanced 3D modes and the localized demo apartment. Removed the deprecated `THREE.Clock` usage from the render loop.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 100, contracts 38, calculations 34, database 2; 239 automated tests), `node scripts/browser-check.mjs` on a clean database.
+- Issues/blockers: the demo is local-first (no server template endpoint yet); walk mode has no collision detection; the 3D section is a horizontal plane; schematic export is a single-line diagram; Russian UI stays behind `VITE_ENABLE_RU`.
+- Next action: post-MVP backlog — server-side templates, arbitrary clipping boxes, wiring diagrams, additional languages and deployment hardening.

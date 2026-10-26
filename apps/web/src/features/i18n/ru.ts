@@ -221,6 +221,11 @@ export const ru: Dictionary = {
   'demo.kitchen': 'Кухня',
   'demo.bedroom': 'Спальня',
   'demo.bathroom': 'Ванная',
+  'demo.lighting': 'Освещение',
+  'demo.power': 'Питание',
+  'demo.livingSwitches': 'Выключатели гостиной',
+  'demo.kitchenSwitches': 'Выключатели кухни',
+  'demo.lowVoltage': 'Низкое напряжение',
 
   'local.import': 'Импорт JSON',
   'local.loading': 'Загрузка локальных проектов…',

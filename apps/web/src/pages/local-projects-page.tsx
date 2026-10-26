@@ -86,6 +86,11 @@ export function LocalProjectsPage() {
         kitchen: t('demo.kitchen'),
         bedroom: t('demo.bedroom'),
         bathroom: t('demo.bathroom'),
+        lighting: t('demo.lighting'),
+        power: t('demo.power'),
+        livingSwitches: t('demo.livingSwitches'),
+        kitchenSwitches: t('demo.kitchenSwitches'),
+        lowVoltage: t('demo.lowVoltage'),
       });
       await saveLocalProject(project);
       navigate(`/local/${project.id}`);

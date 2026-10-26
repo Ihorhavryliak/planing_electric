@@ -192,10 +192,12 @@ export function ThreeView({
     observer.observe(container);
 
     let frame = 0;
-    const clock = new THREE.Clock();
+    let lastTime = performance.now();
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      const delta = Math.min(clock.getDelta(), 0.1);
+      const now = performance.now();
+      const delta = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
 
       if (modeRef.current === 'walk') {
         const walk = walkRef.current;

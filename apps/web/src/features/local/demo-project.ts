@@ -16,15 +16,12 @@ export interface DemoLabels {
   kitchen: string;
   bedroom: string;
   bathroom: string;
+  lighting: string;
+  power: string;
+  livingSwitches: string;
+  kitchenSwitches: string;
+  lowVoltage: string;
 }
-
-const CIRCUITS: Circuit[] = [
-  { id: 'L1', name: 'Lighting', color: '#f59e0b' },
-  { id: 'L2', name: 'Power', color: '#38bdf8' },
-  { id: 'S1', name: 'Living switches', color: '#a78bfa' },
-  { id: 'S2', name: 'Kitchen switches', color: '#c084fc' },
-  { id: 'LV1', name: 'Low voltage', color: '#34d399' },
-];
 
 const CHASE: RouteSettings = {
   wastePercent: 10,
@@ -47,6 +44,13 @@ export function createDemoLocalProject(
   const now = new Date().toISOString();
   const floorId = project.id;
   const id = () => crypto.randomUUID();
+  const CIRCUITS: Circuit[] = [
+    { id: 'L1', name: labels.lighting, color: '#f59e0b' },
+    { id: 'L2', name: labels.power, color: '#38bdf8' },
+    { id: 'S1', name: labels.livingSwitches, color: '#a78bfa' },
+    { id: 'S2', name: labels.kitchenSwitches, color: '#c084fc' },
+    { id: 'LV1', name: labels.lowVoltage, color: '#34d399' },
+  ];
 
   const point = (
     type: PublicPoint['type'],

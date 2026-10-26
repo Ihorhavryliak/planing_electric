@@ -239,6 +239,11 @@ const en: Dictionary = {
   'demo.kitchen': 'Kitchen',
   'demo.bedroom': 'Bedroom',
   'demo.bathroom': 'Bathroom',
+  'demo.lighting': 'Lighting',
+  'demo.power': 'Power',
+  'demo.livingSwitches': 'Living switches',
+  'demo.kitchenSwitches': 'Kitchen switches',
+  'demo.lowVoltage': 'Low voltage',
 
   'local.import': 'Import JSON',
   'local.loading': 'Loading local projects…',
@@ -1244,6 +1249,11 @@ const ua: Dictionary = {
   'demo.kitchen': 'Кухня',
   'demo.bedroom': 'Спальня',
   'demo.bathroom': 'Ванна',
+  'demo.lighting': 'Освітлення',
+  'demo.power': 'Живлення',
+  'demo.livingSwitches': 'Вимикачі вітальні',
+  'demo.kitchenSwitches': 'Вимикачі кухні',
+  'demo.lowVoltage': 'Низька напруга',
 
   'local.import': 'Імпорт JSON',
   'local.loading': 'Завантаження локальних проєктів…',
