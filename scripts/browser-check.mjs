@@ -110,10 +110,34 @@ async function main() {
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
 
+  // Draw a wall and add a door + window, so the 3D scene has real geometry.
+  const planCanvas = page.locator('canvas').first();
+  const canvasBox = await planCanvas.boundingBox();
+  if (!canvasBox) throw new Error('Canvas is not visible');
+  await page.getByRole('button', { name: 'Draw wall tool' }).click();
+  await page.mouse.click(
+    canvasBox.x + canvasBox.width * 0.3,
+    canvasBox.y + canvasBox.height * 0.5,
+  );
+  await page.mouse.click(
+    canvasBox.x + canvasBox.width * 0.7,
+    canvasBox.y + canvasBox.height * 0.5,
+  );
+  await page.keyboard.press('Enter');
+  await page.getByText('Openings', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Add door' }).click();
+  await page.getByRole('button', { name: 'Add window' }).click();
+
   // 3D view loads lazily and renders a WebGL canvas.
   await page.getByRole('button', { name: '3D view' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
   await page.locator('canvas').last().waitFor({ timeout: 20000 });
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /GLB/ }).click();
+  const download = await downloadPromise;
+  if (!download.suggestedFilename().endsWith('.glb')) {
+    throw new Error(`Unexpected GLB filename: ${download.suggestedFilename()}`);
+  }
   await page.getByRole('button', { name: '2D edit' }).click();
 
   // Replace the raster plan with a PDF and render its page.
