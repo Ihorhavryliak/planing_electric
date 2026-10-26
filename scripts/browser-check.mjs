@@ -178,7 +178,7 @@ async function main() {
     canvasBox.y + canvasBox.height * 0.5,
   );
   await page.keyboard.press('Enter');
-  await page.getByText('Openings', { exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Openings', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Add door' }).click();
   await page.getByRole('button', { name: 'Add window' }).click();
 
@@ -285,6 +285,31 @@ async function main() {
     { timeout: 10000 },
   );
 
+  // Switch the route to a wall chase and change its width.
+  const mountingSelect = page.getByLabel('Installation');
+  const beforeChase = await canvasHash();
+  await mountingSelect.selectOption('chase');
+  await page.getByLabel(/Chase width/).fill('80');
+  await page.getByLabel(/Chase width/).blur();
+  await page.waitForFunction(
+    (previous) => {
+      const canvas = document.querySelector('canvas');
+      const context = canvas?.getContext('2d');
+      if (!context || !canvas) return false;
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let hash = 0;
+      for (let index = 0; index < data.length; index += 997) {
+        hash = (hash * 31 + data[index]) >>> 0;
+      }
+      return hash !== previous;
+    },
+    beforeChase,
+    { timeout: 10000 },
+  );
+  if ((await mountingSelect.inputValue()) !== 'chase') {
+    throw new Error('Route mounting was not saved.');
+  }
+
   // Pan the canvas and confirm the rendered viewport changed.
   await page.getByRole('button', { name: 'Pan tool' }).click();
   const beforePan = await canvasHash();
@@ -350,10 +375,33 @@ async function main() {
   await page.getByRole('button', { name: 'Use this page' }).click();
   await page.getByText(/Loading underlay|Rendering PDF page/).waitFor({ state: 'hidden', timeout: 30000 });
 
+  // Hide the devices layer; it must survive a reload and be restorable.
+  const layersSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Layers', exact: true }),
+  });
+  const devicesToggle = layersSection.getByRole('button', {
+    name: 'Devices',
+    exact: true,
+  });
+  await devicesToggle.click();
+  if ((await devicesToggle.getAttribute('aria-pressed')) !== 'false') {
+    throw new Error('Devices layer did not hide.');
+  }
+
   await page.reload();
   await page.waitForURL('**/editor');
   await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
+  const reloadedDevicesToggle = page
+    .locator('section')
+    .filter({
+      has: page.getByRole('heading', { name: 'Layers', exact: true }),
+    })
+    .getByRole('button', { name: 'Devices', exact: true });
+  if ((await reloadedDevicesToggle.getAttribute('aria-pressed')) !== 'false') {
+    throw new Error('Layer visibility did not persist across reload.');
+  }
+  await reloadedDevicesToggle.click();
 
   // Local-first: create an anonymous project, draw a wall, and reload it.
   await page.goto(`${WEB}/local`);

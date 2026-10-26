@@ -136,6 +136,7 @@ export function drawPointsOverlay(
   points: readonly PointRenderItem[],
   selectedId: string | null,
   ghost: PointGhost | null,
+  showLabels = true,
 ): void {
   context.save();
 
@@ -163,7 +164,7 @@ export function drawPointsOverlay(
 
     drawSymbol(context, point.type, at, point.rotation, 1);
 
-    if (point.label) {
+    if (showLabels && point.label) {
       drawPointLabel(context, point.label, at);
     }
   }

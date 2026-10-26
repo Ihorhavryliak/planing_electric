@@ -277,7 +277,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 - [x] 15.1 **Кола (circuits)**: зберігати перелік кіл у `plan.calculationSettings`, призначати точки й траси, показувати панель кіл із кількістю пристроїв/трас, редагувати назву/колір, валідувати призначення.
 - [x] 15.2 **Каталог підтипів пристроїв**: 37 підтипів у 6 категоріях (розподіл, коробки, живлення, керування, освітлення, низька напруга), палітра в редакторі, збереження підтипу в точці, редагування у властивостях, підтримка локального режиму.
-- [ ] 15.3 **Монтажні елементи**: штроби, проходи крізь стіни, позначки кіл на плані; шари та керування видимістю.
+- [x] 15.3 **Монтажні елементи**: спосіб монтажу траси (стеля/підлога/стіна/штроба) з шириною й глибиною штроби, автоматичний підрахунок проходів крізь стіни з маркерами на плані, підписи кіл на трасах, панель шарів із збереженням видимості, приховування шарів вимикає й hit-testing.
 - [ ] 15.4 **Live takeoff у редакторі**: довжина стін, площа, об'єм, кількість вузлів стін, пристрої за типами, кабель і орієнтовна вартість матеріалів без генерації кошторису.
 - [ ] 15.5 **Панель Validation**: агрегувати errors/warnings по всьому плану (кола, кабель, отвори, непідключені пристрої) з кількістю та переходом до проблемного об'єкта.
 - [ ] 15.6 **UX редактора**: preview-режим, command palette, оверлей гарячих клавіш, zoom інтерфейсу, колапс панелей, навігація по кімнатах, grid/snap/ortho.
@@ -381,3 +381,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 79, contracts 38), `node scripts/browser-check.mjs`.
 - Issues/blockers: low-voltage subtypes currently use the `custom` base symbol; distinct canvas symbols can come with the next point-type expansion.
 - Next action: wall chases, penetrations and circuit labels (15.3).
+
+### 2026-10-26 — session 19: installation elements, penetrations and layers
+- Completed: route settings gained `mounting` (ceiling/floor/wall/chase) plus chase width/depth with validation; chase routes render as a translucent band with a dashed centreline; a geometry helper intersects route polylines with wall polylines (deduplicating crossings at shared vertices) and powers diamond penetration markers plus a per-route count; circuit codes render as coloured chips at route midpoints (`showLabels`); the layers panel toggles walls, openings, rooms, dimensions, devices, routes, labels and penetrations, persists in localStorage and blocks hit-testing on hidden layers; both server and local editors support mounting/chase fields, and local mode stores everything in the drawing payload.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 82, contracts 38, calculations 31), `node scripts/browser-check.mjs`.
+- Issues/blockers: chase width is schematic in 2D (screen-space band); penetration geometry is computed client-side and not yet part of the server estimate.
+- Next action: live takeoff in the editor (15.4).

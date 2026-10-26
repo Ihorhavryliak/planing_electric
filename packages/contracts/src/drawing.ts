@@ -114,10 +114,23 @@ export const routeGeometrySchema = z
   .min(2, 'A route needs at least two points')
   .max(MAX_ROUTE_VERTICES);
 
+export const routeMountingSchema = z.enum([
+  'ceiling',
+  'floor',
+  'wall',
+  'chase',
+]);
+
 export const routeSettingsSchema = z
   .object({
     /** Waste allowance in percent; the default (10) applies when omitted. */
     wastePercent: z.number().min(0).max(100).optional(),
+    /** How the cable is installed along this route. */
+    mounting: routeMountingSchema.optional(),
+    /** Chase (штроба) width in millimetres; only used with mounting = chase. */
+    chaseWidthMm: z.number().min(10).max(400).optional(),
+    /** Chase depth in millimetres; only used with mounting = chase. */
+    chaseDepthMm: z.number().min(5).max(150).optional(),
   })
   .strict();
 
@@ -200,6 +213,8 @@ export type ElectricalPointType = z.infer<typeof electricalPointTypeSchema>;
 export type CreatePointInput = z.infer<typeof createPointSchema>;
 export type UpdatePointInput = z.infer<typeof updatePointSchema>;
 export type PublicPoint = z.infer<typeof publicPointSchema>;
+export type RouteMounting = z.infer<typeof routeMountingSchema>;
+export type RouteSettings = z.infer<typeof routeSettingsSchema>;
 export type CreateRouteInput = z.infer<typeof createRouteSchema>;
 export type UpdateRouteInput = z.infer<typeof updateRouteSchema>;
 export type PublicRoute = z.infer<typeof publicRouteSchema>;

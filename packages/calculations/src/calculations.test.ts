@@ -9,6 +9,10 @@ import {
   totalByMaterial,
   resolveRouteDrops,
   DEFAULT_VERTICAL_DROPS_METERS,
+  countRoutePenetrations,
+  findPenetrations,
+  findRoutePenetrations,
+  segmentIntersection,
 } from './index';
 
 describe('geometry', () => {
@@ -229,5 +233,104 @@ describe('resolveRouteDrops', () => {
 
   it('returns nothing for degenerate geometry', () => {
     expect(resolveRouteDrops({ geometry: [{ x: 0, y: 0 }], points })).toEqual([]);
+  });
+});
+
+describe('wall penetrations', () => {
+  const wall = {
+    id: 'w1',
+    geometry: [
+      { x: 10, y: -5 },
+      { x: 10, y: 5 },
+    ],
+  };
+
+  it('intersects crossing segments and rejects parallel ones', () => {
+    expect(
+      segmentIntersection(
+        { x: 0, y: 0 },
+        { x: 20, y: 0 },
+        { x: 10, y: -5 },
+        { x: 10, y: 5 },
+      ),
+    ).toEqual({ x: 10, y: 0 });
+
+    expect(
+      segmentIntersection(
+        { x: 0, y: 0 },
+        { x: 20, y: 0 },
+        { x: 0, y: 2 },
+        { x: 20, y: 2 },
+      ),
+    ).toBeNull();
+  });
+
+  it('counts a crossing once even across a route vertex', () => {
+    const result = findRoutePenetrations(
+      {
+        id: 'r1',
+        geometry: [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 20, y: 0 },
+        ],
+      },
+      [wall],
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ wallId: 'w1', segmentIndex: 1 });
+  });
+
+  it('ignores routes that stay on one side of the wall', () => {
+    expect(
+      findRoutePenetrations(
+        {
+          id: 'r1',
+          geometry: [
+            { x: 0, y: 0 },
+            { x: 5, y: 0 },
+          ],
+        },
+        [wall],
+      ),
+    ).toEqual([]);
+  });
+
+  it('aggregates counts per route', () => {
+    const secondWall = {
+      id: 'w2',
+      geometry: [
+        { x: 30, y: -5 },
+        { x: 30, y: 5 },
+      ],
+    };
+    const routes = [
+      {
+        id: 'r1',
+        geometry: [
+          { x: 0, y: 0 },
+          { x: 40, y: 0 },
+        ],
+      },
+      {
+        id: 'r2',
+        geometry: [
+          { x: 0, y: 2 },
+          { x: 40, y: 2 },
+        ],
+      },
+    ];
+
+    expect(findPenetrations(routes, [wall, secondWall])).toHaveLength(4);
+    expect(countRoutePenetrations(routes, [wall, secondWall])).toEqual(
+      new Map([
+        ['r1', 2],
+        ['r2', 2],
+      ]),
+    );
+    expect(countRoutePenetrations([routes[0]!], [wall])).toEqual(
+      new Map([['r1', 1]]),
+    );
   });
 });

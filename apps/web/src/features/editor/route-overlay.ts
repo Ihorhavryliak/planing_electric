@@ -1,4 +1,4 @@
-import type { EditorViewport } from '@drawmyplace/contracts';
+import type { EditorViewport, RouteMounting } from '@drawmyplace/contracts';
 import {
   distanceBetween,
   worldToScreen,
@@ -10,6 +10,21 @@ import { MIN_SEGMENT_HANDLE_PX } from './route-geometry';
 export interface RouteRenderItem {
   id: string;
   geometry: readonly Vec2[];
+  circuitId?: string | null;
+  mounting?: RouteMounting | null;
+}
+
+export interface RouteCircuitBadge {
+  id: string;
+  color: string;
+}
+
+export interface RouteOverlayOptions {
+  /** Circuits are drawn as a coloured chip on the route when labels are on. */
+  circuits?: readonly RouteCircuitBadge[];
+  showLabels?: boolean;
+  /** Wall crossing markers (world coordinates). */
+  penetrations?: readonly Vec2[];
 }
 
 const ROUTE_COLOR = '#fb923c';
@@ -30,6 +45,89 @@ function tracePath(
   });
 }
 
+/** Midpoint along a screen-space polyline, used for the circuit chip. */
+function pathMidpoint(path: readonly Vec2[]): Vec2 | null {
+  if (path.length === 0) return null;
+  if (path.length === 1) return path[0] ?? null;
+
+  let total = 0;
+
+  for (let i = 1; i < path.length; i += 1) {
+    const a = path[i - 1];
+    const b = path[i];
+    if (a && b) total += distanceBetween(a, b);
+  }
+
+  let remaining = total / 2;
+
+  for (let i = 1; i < path.length; i += 1) {
+    const a = path[i - 1];
+    const b = path[i];
+
+    if (!a || !b) continue;
+
+    const segment = distanceBetween(a, b);
+
+    if (segment >= remaining) {
+      const ratio = segment === 0 ? 0 : remaining / segment;
+      return {
+        x: a.x + (b.x - a.x) * ratio,
+        y: a.y + (b.y - a.y) * ratio,
+      };
+    }
+
+    remaining -= segment;
+  }
+
+  return path[path.length - 1] ?? null;
+}
+
+function drawCircuitChip(
+  context: CanvasRenderingContext2D,
+  at: Vec2,
+  text: string,
+  color: string,
+): void {
+  context.font = '600 10px ui-sans-serif, system-ui, sans-serif';
+  context.textAlign = 'left';
+  context.textBaseline = 'middle';
+
+  const paddingX = 6;
+  const height = 16;
+  const width = context.measureText(text).width + paddingX * 2 + 8;
+  const left = at.x - width / 2;
+  const top = at.y - height - 9;
+
+  context.fillStyle = 'rgba(2, 6, 23, 0.9)';
+  context.fillRect(left, top, width, height);
+  context.lineWidth = 1;
+  context.strokeStyle = color;
+  context.strokeRect(left + 0.5, top + 0.5, width - 1, height - 1);
+
+  context.fillStyle = color;
+  context.fillRect(left + 5, top + height / 2 - 2, 4, 4);
+
+  context.fillStyle = '#e2e8f0';
+  context.fillText(text, left + paddingX + 8, top + height / 2 + 0.5);
+}
+
+function drawPenetration(
+  context: CanvasRenderingContext2D,
+  at: Vec2,
+): void {
+  context.save();
+  context.translate(at.x, at.y);
+  context.rotate(Math.PI / 4);
+
+  context.fillStyle = 'rgba(2, 6, 23, 0.95)';
+  context.fillRect(-4, -4, 8, 8);
+  context.lineWidth = 1.5;
+  context.strokeStyle = '#f472b6';
+  context.strokeRect(-4, -4, 8, 8);
+
+  context.restore();
+}
+
 /**
  * Draws saved cable routes, the handles of the selected one and the route
  * being drawn (with a rubber band to the cursor). Inputs are world coordinates.
@@ -45,7 +143,12 @@ export function drawRoutesOverlay(
   draft: readonly Vec2[],
   cursor: Vec2 | null,
   selectedVertexIndex: number | null = null,
+  options: RouteOverlayOptions = {},
 ): void {
+  const circuitColors = new Map(
+    (options.circuits ?? []).map((circuit) => [circuit.id, circuit.color]),
+  );
+
   context.save();
   context.lineJoin = 'round';
   context.lineCap = 'round';
@@ -54,10 +157,38 @@ export function drawRoutesOverlay(
     const path = route.geometry.map((v) => worldToScreen(v, viewport, size));
     const selected = route.id === selectedId;
 
-    tracePath(context, path);
-    context.lineWidth = selected ? 4 : 2.5;
-    context.strokeStyle = selected ? SELECTED_COLOR : ROUTE_COLOR;
-    context.stroke();
+    if (route.mounting === 'chase') {
+      // A chase is drawn as a wide translucent band with a dashed centreline.
+      tracePath(context, path);
+      context.lineWidth = 12;
+      context.strokeStyle = 'rgba(251, 146, 60, 0.22)';
+      context.stroke();
+
+      tracePath(context, path);
+      context.setLineDash([9, 6]);
+      context.lineWidth = selected ? 3 : 2;
+      context.strokeStyle = selected ? SELECTED_COLOR : ROUTE_COLOR;
+      context.stroke();
+      context.setLineDash([]);
+    } else {
+      tracePath(context, path);
+      context.lineWidth = selected ? 4 : 2.5;
+      context.strokeStyle = selected ? SELECTED_COLOR : ROUTE_COLOR;
+      context.stroke();
+    }
+
+    if (options.showLabels !== false && route.circuitId) {
+      const midpoint = pathMidpoint(path);
+
+      if (midpoint) {
+        drawCircuitChip(
+          context,
+          midpoint,
+          route.circuitId,
+          circuitColors.get(route.circuitId) ?? ROUTE_COLOR,
+        );
+      }
+    }
 
     if (selected) {
       path.forEach((vertex, index) => {
@@ -96,6 +227,10 @@ export function drawRoutesOverlay(
         context.stroke();
       }
     }
+  }
+
+  for (const penetration of options.penetrations ?? []) {
+    drawPenetration(context, worldToScreen(penetration, viewport, size));
   }
 
   if (draft.length > 0) {

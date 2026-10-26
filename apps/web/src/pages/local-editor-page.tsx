@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
+import { LayersPanel } from '@/features/editor/layers-panel';
+import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import {
   EditorCanvas,
@@ -30,7 +32,11 @@ import {
   type LocalDrawing,
   type LocalProject,
 } from '@/features/local/local-db';
-import { calculateRoute, resolveRouteDrops } from '@drawmyplace/calculations';
+import {
+  calculateRoute,
+  countRoutePenetrations,
+  resolveRouteDrops,
+} from '@drawmyplace/calculations';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { DEVICE_SUBTYPES, type DeviceSubtype } from '@drawmyplace/contracts';
 
@@ -58,6 +64,7 @@ export function LocalEditorPage() {
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
+  const { layers, toggleLayer, showAllLayers } = useEditorLayers();
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedDimensionId, setSelectedDimensionId] = useState<string | null>(
@@ -292,6 +299,8 @@ export function LocalEditorPage() {
             selectedPointId={selectedPointId}
             routes={drawing.routes}
             selectedRouteId={selectedRouteId}
+            circuits={drawing.circuits}
+            layers={layers}
             metersPerUnit={metersPerUnit}
             onCalibrationPoints={(pointA, pointB) =>
               setPendingCalibration({ pointA, pointB })
@@ -595,6 +604,12 @@ export function LocalEditorPage() {
             }
           />
 
+          <LayersPanel
+            layers={layers}
+            onToggle={toggleLayer}
+            onShowAll={showAllLayers}
+          />
+
           <CircuitsPanel
             circuits={drawing.circuits}
             points={drawing.points}
@@ -725,6 +740,125 @@ export function LocalEditorPage() {
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.cableRoute')}
               </h2>
+              <label className="mt-3 block">
+                <span className="text-slate-500">{t('mounting.label')}</span>
+                <select
+                  value={selectedRoute.settings.mounting ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    update((current) => ({
+                      ...current,
+                      routes: current.routes.map((route) =>
+                        route.id === selectedRoute.id
+                          ? {
+                              ...route,
+                              settings: {
+                                ...route.settings,
+                                ...(value === ''
+                                  ? { mounting: undefined }
+                                  : {
+                                      mounting:
+                                        value as typeof route.settings.mounting,
+                                    }),
+                                ...(value === 'chase'
+                                  ? {
+                                      chaseWidthMm:
+                                        route.settings.chaseWidthMm ?? 60,
+                                      chaseDepthMm:
+                                        route.settings.chaseDepthMm ?? 25,
+                                    }
+                                  : {}),
+                              },
+                            }
+                          : route,
+                      ),
+                    }));
+                  }}
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                >
+                  <option value="">{t('mounting.none')}</option>
+                  <option value="ceiling">{t('mounting.ceiling')}</option>
+                  <option value="floor">{t('mounting.floor')}</option>
+                  <option value="wall">{t('mounting.wall')}</option>
+                  <option value="chase">{t('mounting.chase')}</option>
+                </select>
+              </label>
+              {selectedRoute.settings.mounting === 'chase' ? (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="text-slate-500">
+                      {t('editor.chaseWidth')}
+                    </span>
+                    <input
+                      type="number"
+                      min={10}
+                      max={400}
+                      value={selectedRoute.settings.chaseWidthMm ?? 60}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        if (!Number.isFinite(value) || value < 10 || value > 400) {
+                          return;
+                        }
+                        update((current) => ({
+                          ...current,
+                          routes: current.routes.map((route) =>
+                            route.id === selectedRoute.id
+                              ? {
+                                  ...route,
+                                  settings: {
+                                    ...route.settings,
+                                    chaseWidthMm: value,
+                                  },
+                                }
+                              : route,
+                          ),
+                        }));
+                      }}
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-slate-500">
+                      {t('editor.chaseDepth')}
+                    </span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={150}
+                      value={selectedRoute.settings.chaseDepthMm ?? 25}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        if (!Number.isFinite(value) || value < 5 || value > 150) {
+                          return;
+                        }
+                        update((current) => ({
+                          ...current,
+                          routes: current.routes.map((route) =>
+                            route.id === selectedRoute.id
+                              ? {
+                                  ...route,
+                                  settings: {
+                                    ...route.settings,
+                                    chaseDepthMm: value,
+                                  },
+                                }
+                              : route,
+                          ),
+                        }));
+                      }}
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+                    />
+                  </label>
+                </div>
+              ) : null}
+              <p className="mt-2 text-[11px] text-slate-500">
+                {t('editor.penetrations')}:{' '}
+                <span className="font-medium text-slate-200">
+                  {countRoutePenetrations([selectedRoute], drawing.walls).get(
+                    selectedRoute.id,
+                  ) ?? 0}
+                </span>
+              </p>
               <label className="mt-3 block">
                 <span className="text-slate-500">
                   {t('circuits.circuit')}

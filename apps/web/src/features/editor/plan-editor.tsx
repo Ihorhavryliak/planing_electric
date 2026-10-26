@@ -48,6 +48,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -58,6 +59,9 @@ import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
+import { LayersPanel } from './layers-panel';
+import { countRoutePenetrations } from '@drawmyplace/calculations';
+import { useEditorLayers } from './editor-layers';
 import { DevicePalette } from './device-palette';
 import {
   createDimension,
@@ -428,6 +432,7 @@ export function PlanEditor({
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
+  const { layers, toggleLayer, showAllLayers } = useEditorLayers();
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
@@ -2031,6 +2036,10 @@ export function PlanEditor({
   const undoCommand = getUndoCommand(history);
   const redoCommand = getRedoCommand(history);
   const circuits = plan.calculationSettings?.circuits ?? [];
+  const penetrationCounts = useMemo(
+    () => countRoutePenetrations(routes, walls),
+    [routes, walls],
+  );
 
   async function saveCircuits(next: Circuit[]) {
     try {
@@ -2082,6 +2091,8 @@ export function PlanEditor({
             selectedPointId={selectedPointId}
             routes={routes}
             selectedRouteId={selectedRouteId}
+            circuits={circuits}
+            layers={layers}
             walls={walls}
             selectedWallId={selectedWallId}
             openings={openings}
@@ -2532,6 +2543,12 @@ export function PlanEditor({
             onDelete={handleDeleteCircuit}
           />
 
+          <LayersPanel
+            layers={layers}
+            onToggle={toggleLayer}
+            onShowAll={showAllLayers}
+          />
+
           {selectedWall ? (
             <WallPropertiesPanel
               key={selectedWall.id}
@@ -2744,6 +2761,7 @@ export function PlanEditor({
               calculation={calculation?.routes.find(
                 (item) => item.routeId === selectedRoute.id,
               )}
+              penetrationCount={penetrationCounts.get(selectedRoute.id) ?? 0}
               onChange={(patch) => void handlePatchRoute(selectedRoute.id, patch)}
               onDelete={() => void handleDeleteRoute(selectedRoute.id)}
             />

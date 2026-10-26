@@ -541,19 +541,27 @@ describe('Drawing API', () => {
     const route = await addRoute(fixture, {
       geometry: [{ x: 0, y: 0 }, { x: 100, y: 0 }],
       circuitId: 'L1',
+      settings: { mounting: 'chase', chaseWidthMm: 60, chaseDepthMm: 25 },
     });
-    expect(route.settings).toEqual({});
+    expect(route.settings).toEqual({
+      mounting: 'chase',
+      chaseWidthMm: 60,
+      chaseDepthMm: 25,
+    });
 
     const updated = await server()
       .patch(`${API}/routes/${route.id}`)
       .set('Cookie', fixture.cookie)
       .send({
         geometry: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 50 }],
-        settings: { wastePercent: 15 },
+        settings: { mounting: 'ceiling', wastePercent: 15 },
       })
       .expect(200);
     expect((updated.body as PublicRoute).geometry).toHaveLength(3);
-    expect((updated.body as PublicRoute).settings.wastePercent).toBe(15);
+    expect((updated.body as PublicRoute).settings).toEqual({
+      mounting: 'ceiling',
+      wastePercent: 15,
+    });
 
     await server()
       .post(`${API}/plans/${fixture.plan.id}/routes`)

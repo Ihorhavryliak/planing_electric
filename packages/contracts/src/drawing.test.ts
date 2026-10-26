@@ -58,6 +58,28 @@ describe('route contracts', () => {
     expect(() => createRouteSchema.parse({ geometry: [line[0]] })).toThrow();
     expect(() => createRouteSchema.parse({ geometry: line, settings: { wastePercent: 101 } })).toThrow();
     expect(() => createRouteSchema.parse({ geometry: line, settings: { wastePercent: -1 } })).toThrow();
+    expect(
+      createRouteSchema.parse({
+        geometry: line,
+        settings: {
+          mounting: 'chase',
+          chaseWidthMm: 60,
+          chaseDepthMm: 25,
+        },
+      }).settings,
+    ).toEqual({ mounting: 'chase', chaseWidthMm: 60, chaseDepthMm: 25 });
+    expect(() =>
+      createRouteSchema.parse({
+        geometry: line,
+        settings: { mounting: 'trench' },
+      }),
+    ).toThrow();
+    expect(() =>
+      createRouteSchema.parse({
+        geometry: line,
+        settings: { mounting: 'chase', chaseWidthMm: 5 },
+      }),
+    ).toThrow();
   });
 
   it('caps the vertex count', () => {

@@ -1,4 +1,6 @@
+import { findPenetrations } from '@drawmyplace/calculations';
 import type {
+  Circuit,
   DeviceSubtype,
   EditorViewport,
   ElectricalPointType,
@@ -61,6 +63,7 @@ import {
 import { drawOpeningsOverlay, type OpeningRenderItem } from './opening-overlay';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
 import { drawRoutesOverlay, type RouteRenderItem } from './route-overlay';
+import type { EditorLayers } from './editor-layers';
 import {
   drawStructureOverlay,
   type DimensionRenderItem,
@@ -208,6 +211,8 @@ interface EditorCanvasProps {
   selectedPointId: string | null;
   routes: readonly PublicRoute[];
   selectedRouteId: string | null;
+  circuits?: readonly Circuit[];
+  layers?: EditorLayers;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
   onSelectPoint: (id: string | null) => void;
   onCreatePoint: (
@@ -382,6 +387,8 @@ export function EditorCanvas({
   selectedPointId,
   routes,
   selectedRouteId,
+  circuits = [],
+  layers,
   onCalibrationPoints,
   onSelectPoint,
   onCreatePoint,
@@ -477,6 +484,8 @@ export function EditorCanvas({
   const selectedPointIdRef = useRef(selectedPointId);
   const placeTypeRef = useRef(placeType);
   const placeSubtypeRef = useRef(placeSubtype);
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
   const snapRef = useRef(snapEnabled);
   const onSelectPointRef = useRef(onSelectPoint);
   const onCreatePointRef = useRef(onCreatePoint);
@@ -593,6 +602,8 @@ export function EditorCanvas({
       .filter((route) => geometryIntersectsBounds(route.geometry, worldBounds))
       .map((route) => ({
         id: route.id,
+        circuitId: route.circuitId,
+        mounting: route.settings.mounting ?? null,
         geometry:
           attached.get(route.id) ??
           (vertexDrag?.routeId === route.id
@@ -602,6 +613,18 @@ export function EditorCanvas({
             : route.geometry),
       }));
   }, [routes, vertexDrag, pointDrag, points, worldBounds]);
+
+  const penetrationMarkers = useMemo(
+    () =>
+      findPenetrations(
+        renderRoutes.map((route) => ({
+          id: route.id,
+          geometry: route.geometry,
+        })),
+        walls.map((wall) => ({ id: wall.id, geometry: wall.geometry })),
+      ).map((entry) => entry.point),
+    [renderRoutes, walls],
+  );
 
   // Points as drawn: the one being dragged follows the pointer before it is saved.
   const renderPoints = useMemo<PointRenderItem[]>(
@@ -819,9 +842,9 @@ export function EditorCanvas({
       context,
       size,
       viewport,
-      renderWalls,
-      renderRooms,
-      renderDimensions,
+      layers?.walls === false ? [] : renderWalls,
+      layers?.rooms === false ? [] : renderRooms,
+      layers?.dimensions === false ? [] : renderDimensions,
       selectedWallId,
       selectedRoomId,
       selectedDimensionId,
@@ -833,8 +856,8 @@ export function EditorCanvas({
       context,
       size,
       viewport,
-      renderOpenings,
-      renderWalls,
+      layers?.openings === false ? [] : renderOpenings,
+      layers?.walls === false ? [] : renderWalls,
       selectedOpeningId,
     );
     drawCalibrationOverlay(
@@ -849,23 +872,32 @@ export function EditorCanvas({
       context,
       size,
       viewport,
-      renderRoutes,
+      layers?.routes === false ? [] : renderRoutes,
       selectedRouteId,
       routeDraft,
       tool === 'route' ? hoverWorld : null,
       selectedVertex?.routeId === selectedRouteId
         ? selectedVertex.index
         : null,
+      {
+        circuits,
+        showLabels: layers?.labels !== false,
+        penetrations:
+          layers?.routes === false || layers?.penetrations === false
+            ? []
+            : penetrationMarkers,
+      },
     );
     drawPointsOverlay(
       context,
       size,
       viewport,
-      renderPoints,
+      layers?.points === false ? [] : renderPoints,
       selectedPointId,
-      tool === 'place' && hoverWorld
+      tool === 'place' && hoverWorld && layers?.points !== false
         ? { type: placeType, at: hoverWorld }
         : null,
+      layers?.labels !== false,
     );
   }, [
     size,
@@ -881,6 +913,9 @@ export function EditorCanvas({
     renderOpenings,
     renderRooms,
     renderDimensions,
+    circuits,
+    layers,
+    penetrationMarkers,
     selectedOpeningId,
     selectedPointId,
     selectedRouteId,
@@ -1282,12 +1317,15 @@ export function EditorCanvas({
     };
 
     if (plainLeft && toolRef.current === 'select') {
-      const hitId = findPointAt(
-        pointsRef.current,
-        point,
-        viewportRef.current,
-        sizeRef.current,
-      );
+      const hitId =
+        layersRef.current?.points === false
+          ? null
+          : findPointAt(
+              pointsRef.current,
+              point,
+              viewportRef.current,
+              sizeRef.current,
+            );
       const hit = pointsRef.current.find((item) => item.id === hitId);
 
       if (hit) {
@@ -1299,9 +1337,12 @@ export function EditorCanvas({
         onSelectRouteRef.current(null);
         clearStructureSelection();
       } else {
-        const selected = routesRef.current.find(
-          (item) => item.id === selectedRouteIdRef.current,
-        );
+        const selected =
+          layersRef.current?.routes === false
+            ? undefined
+            : routesRef.current.find(
+                (item) => item.id === selectedRouteIdRef.current,
+              );
         const vertexId = selected
           ? findPointAt(
               selected.geometry.map((vertex, index) => ({
@@ -1346,20 +1387,26 @@ export function EditorCanvas({
             };
             setSelectedVertex(null);
           } else {
-            selectsRouteId = findRouteAt(
-              routesRef.current,
-              point,
-              viewportRef.current,
-              sizeRef.current,
-            );
+            selectsRouteId =
+              layersRef.current?.routes === false
+                ? null
+                : findRouteAt(
+                    routesRef.current,
+                    point,
+                    viewportRef.current,
+                    sizeRef.current,
+                  );
             setSelectedVertex(null);
 
             if (selectsRouteId) {
               clearStructureSelection();
             } else {
-              const selectedWall = wallsRef.current.find(
-                (item) => item.id === selectedWallIdRef.current,
-              );
+              const selectedWall =
+                layersRef.current?.walls === false
+                  ? undefined
+                  : wallsRef.current.find(
+                      (item) => item.id === selectedWallIdRef.current,
+                    );
               const wallVertex =
                 selectedWall && selectedWall
                   ? findVertexAt(
@@ -1388,9 +1435,12 @@ export function EditorCanvas({
                   onSelectDimensionRef.current(null);
                 }
               } else {
-                const selectedRoom = roomsRef.current.find(
-                  (item) => item.id === selectedRoomIdRef.current,
-                );
+                const selectedRoom =
+                  layersRef.current?.rooms === false
+                    ? undefined
+                    : roomsRef.current.find(
+                        (item) => item.id === selectedRoomIdRef.current,
+                      );
                 const roomVertex = selectedRoom
                   ? findVertexAt(
                       selectedRoom.boundary,
@@ -1418,12 +1468,15 @@ export function EditorCanvas({
                     onSelectDimensionRef.current(null);
                   }
                 } else {
-                  const dimensionHit = findDimensionAt(
-                    dimensionsRef.current,
-                    point,
-                    viewportRef.current,
-                    sizeRef.current,
-                  );
+                  const dimensionHit =
+                    layersRef.current?.dimensions === false
+                      ? null
+                      : findDimensionAt(
+                          dimensionsRef.current,
+                          point,
+                          viewportRef.current,
+                          sizeRef.current,
+                        );
                   const dimension = dimensionsRef.current.find(
                     (item) => item.id === dimensionHit,
                   );
@@ -1439,12 +1492,15 @@ export function EditorCanvas({
                     onSelectRoomRef.current(null);
                     onSelectDimensionRef.current(dimension.id);
                   } else {
-                    const wallHit = findPolylineAt(
-                      wallsRef.current,
-                      point,
-                      viewportRef.current,
-                      sizeRef.current,
-                    );
+                    const wallHit =
+                      layersRef.current?.walls === false
+                        ? null
+                        : findPolylineAt(
+                            wallsRef.current,
+                            point,
+                            viewportRef.current,
+                            sizeRef.current,
+                          );
                     const wall = wallsRef.current.find(
                       (item) => item.id === wallHit,
                     );
@@ -1462,12 +1518,15 @@ export function EditorCanvas({
                       onSelectDimensionRef.current(null);
                       onSelectWallRef.current(wall.id);
                     } else {
-                      const roomHit = findRoomAt(
-                        roomsRef.current,
-                        point,
-                        viewportRef.current,
-                        sizeRef.current,
-                      );
+                      const roomHit =
+                        layersRef.current?.rooms === false
+                          ? null
+                          : findRoomAt(
+                              roomsRef.current,
+                              point,
+                              viewportRef.current,
+                              sizeRef.current,
+                            );
                       const room = roomsRef.current.find(
                         (item) => item.id === roomHit,
                       );
@@ -1587,36 +1646,41 @@ export function EditorCanvas({
       if (toolRef.current === 'select' && !spaceRef.current) {
         setHoveringUnderlay(pointHitsUnderlay(point.x, point.y));
         setHoveringPoint(
-          findPointAt(
-            pointsRef.current,
-            point,
-            viewportRef.current,
-            sizeRef.current,
-          ) !== null ||
-            findRouteAt(
-              routesRef.current,
+          (layersRef.current?.points !== false &&
+            findPointAt(
+              pointsRef.current,
               point,
               viewportRef.current,
               sizeRef.current,
-            ) !== null ||
-            findPolylineAt(
-              wallsRef.current,
-              point,
-              viewportRef.current,
-              sizeRef.current,
-            ) !== null ||
-            findRoomAt(
-              roomsRef.current,
-              point,
-              viewportRef.current,
-              sizeRef.current,
-            ) !== null ||
-            findDimensionAt(
-              dimensionsRef.current,
-              point,
-              viewportRef.current,
-              sizeRef.current,
-            ) !== null,
+            ) !== null) ||
+            (layersRef.current?.routes !== false &&
+              findRouteAt(
+                routesRef.current,
+                point,
+                viewportRef.current,
+                sizeRef.current,
+              ) !== null) ||
+            (layersRef.current?.walls !== false &&
+              findPolylineAt(
+                wallsRef.current,
+                point,
+                viewportRef.current,
+                sizeRef.current,
+              ) !== null) ||
+            (layersRef.current?.rooms !== false &&
+              findRoomAt(
+                roomsRef.current,
+                point,
+                viewportRef.current,
+                sizeRef.current,
+              ) !== null) ||
+            (layersRef.current?.dimensions !== false &&
+              findDimensionAt(
+                dimensionsRef.current,
+                point,
+                viewportRef.current,
+                sizeRef.current,
+              ) !== null),
         );
       } else {
         if (hoveringUnderlay) {

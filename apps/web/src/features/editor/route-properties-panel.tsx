@@ -3,6 +3,7 @@ import type {
   PublicMaterial,
   PublicRoute,
   RouteCalculation,
+  RouteMounting,
   UpdateRouteInput,
 } from '@drawmyplace/contracts';
 import { Trash2 } from 'lucide-react';
@@ -16,6 +17,7 @@ interface RoutePropertiesPanelProps {
   calculation: RouteCalculation | undefined;
   materials: PublicMaterial[];
   circuits?: readonly Circuit[];
+  penetrationCount?: number;
   onChange: (patch: UpdateRouteInput) => void;
   onDelete: () => void;
 }
@@ -34,6 +36,7 @@ export function RoutePropertiesPanel({
   calculation,
   materials,
   circuits = [],
+  penetrationCount = 0,
   onChange,
   onDelete,
 }: RoutePropertiesPanelProps) {
@@ -41,6 +44,9 @@ export function RoutePropertiesPanel({
   const cableMaterials = materials.filter(
     (material) => material.category === 'cable' || material.category === null,
   );
+  const mounting: RouteMounting | '' = route.settings.mounting ?? '';
+  const isChase = mounting === 'chase';
+
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -53,6 +59,36 @@ export function RoutePropertiesPanel({
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
+        <label className="block text-xs">
+          <span className="text-slate-400">{t('mounting.label')}</span>
+          <select
+            value={mounting}
+            onChange={(event) => {
+              const value = event.target.value as RouteMounting | '';
+              onChange({
+                settings: {
+                  ...route.settings,
+                  ...(value === ''
+                    ? { mounting: undefined }
+                    : { mounting: value }),
+                  ...(value === 'chase'
+                    ? {
+                        chaseWidthMm: route.settings.chaseWidthMm ?? 60,
+                        chaseDepthMm: route.settings.chaseDepthMm ?? 25,
+                      }
+                    : {}),
+                },
+              });
+            }}
+            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+          >
+            <option value="">{t('mounting.none')}</option>
+            <option value="ceiling">{t('mounting.ceiling')}</option>
+            <option value="floor">{t('mounting.floor')}</option>
+            <option value="wall">{t('mounting.wall')}</option>
+            <option value="chase">{t('mounting.chase')}</option>
+          </select>
+        </label>
         <label className="block text-xs">
           <span className="text-slate-400">{t('editor.cableType')}</span>
           <select
@@ -129,6 +165,62 @@ export function RoutePropertiesPanel({
             return null;
           }}
         />
+        {isChase ? (
+          <>
+            <CommitField
+              key={`${route.id}-chase-width-${route.settings.chaseWidthMm ?? ''}`}
+              label={t('editor.chaseWidth')}
+              hint="mm"
+              inputMode="decimal"
+              initial={formatFieldNumber(route.settings.chaseWidthMm)}
+              placeholder="60"
+              onCommit={(raw) => {
+                const parsed = parseOptionalNumber(raw, {
+                  label: t('editor.chaseWidth'),
+                  min: 10,
+                  max: 400,
+                });
+
+                if (!parsed.ok) return parsed.error;
+
+                onChange({
+                  settings: {
+                    ...route.settings,
+                    chaseWidthMm: parsed.value ?? 60,
+                  },
+                });
+
+                return null;
+              }}
+            />
+            <CommitField
+              key={`${route.id}-chase-depth-${route.settings.chaseDepthMm ?? ''}`}
+              label={t('editor.chaseDepth')}
+              hint="mm"
+              inputMode="decimal"
+              initial={formatFieldNumber(route.settings.chaseDepthMm)}
+              placeholder="25"
+              onCommit={(raw) => {
+                const parsed = parseOptionalNumber(raw, {
+                  label: t('editor.chaseDepth'),
+                  min: 5,
+                  max: 150,
+                });
+
+                if (!parsed.ok) return parsed.error;
+
+                onChange({
+                  settings: {
+                    ...route.settings,
+                    chaseDepthMm: parsed.value ?? 25,
+                  },
+                });
+
+                return null;
+              }}
+            />
+          </>
+        ) : null}
       </div>
 
       <div className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-3">
@@ -145,6 +237,10 @@ export function RoutePropertiesPanel({
                 value={formatMeters(drop.meters)}
               />
             ))}
+            <Row
+              label={t('editor.penetrations')}
+              value={String(penetrationCount)}
+            />
             <Row
               label={t('editor.wastePercent', {
                 percent: calculation.wastePercent ?? 0,

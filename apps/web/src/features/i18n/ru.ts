@@ -658,6 +658,27 @@ export const ru: Dictionary = {
   'editor.dropNote':
     'Вертикальный спуск добавляется к кабельной трассе, только если конец трассы точно совпадает с этой точкой. Оставьте пустым, чтобы использовать типовое значение.',
   'editor.cableRoute': 'Кабельная трасса',
+  'layers.title': 'Слои',
+  'layers.hint': 'Управляйте видимостью элементов плана во время работы.',
+  'layers.walls': 'Стены',
+  'layers.openings': 'Проёмы',
+  'layers.rooms': 'Комнаты',
+  'layers.dimensions': 'Размеры',
+  'layers.points': 'Устройства',
+  'layers.routes': 'Кабельные трассы',
+  'layers.labels': 'Подписи',
+  'layers.penetrations': 'Проходы через стены',
+  'layers.showAll': 'Показать все слои',
+  'mounting.label': 'Способ монтажа',
+  'mounting.none': 'Не указано',
+  'mounting.ceiling': 'Потолок',
+  'mounting.floor': 'Пол',
+  'mounting.wall': 'По стене',
+  'mounting.chase': 'Штроба',
+  'editor.chaseWidth': 'Ширина штробы',
+  'editor.chaseDepth': 'Глубина штробы',
+  'editor.penetrations': 'Проходов через стены',
+
 
   'circuits.title': 'Цепи',
   'circuits.hint':
