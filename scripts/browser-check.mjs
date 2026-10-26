@@ -568,6 +568,23 @@ async function main() {
   await page.waitForURL('**/app/projects/*/editor', { timeout: 30000 });
   await page.getByText('Save state').waitFor({ timeout: 20000 });
 
+  // Documentation workspace: materials, estimates, validation and print.
+  const docsUrl = page.url().replace(/\/editor$/, '/documentation');
+  await page.goto(docsUrl);
+  await page.getByRole('heading', { name: 'Documentation', exact: true }).waitFor({
+    timeout: 20000,
+  });
+  await page.getByRole('button', { name: 'Cost estimate' }).click();
+  await page.getByText('No estimates have been generated yet.').waitFor();
+  await page.getByRole('button', { name: 'Validation', exact: true }).click();
+  await page
+    .getByRole('heading', { name: 'Validation', exact: true })
+    .waitFor();
+  await page.getByRole('button', { name: 'Print PDF' }).click();
+  await page.getByRole('button', { name: 'Print / Save as PDF' }).waitFor();
+  await page.getByRole('button', { name: 'Variants', exact: true }).click();
+  await page.getByText('No variants yet.').waitFor();
+
   console.log(JSON.stringify({ ok: true, errors }, null, 2));
   await browser.close();
 }

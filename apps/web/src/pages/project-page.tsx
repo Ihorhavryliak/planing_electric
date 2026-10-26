@@ -441,6 +441,14 @@ export function ProjectPage() {
                           {t('project.viewEstimates')}
                           <ArrowUpRight className="h-4 w-4" />
                         </Link>
+                        <span className="mx-2 text-slate-600">·</span>
+                        <Link
+                          to={`/app/projects/${project.id}/documentation`}
+                          className="mt-3 inline-flex items-center gap-1.5 text-sm text-slate-300 hover:text-white"
+                        >
+                          {t('project.documentation')}
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Link>
                       </div>
                     </>
                   )}

@@ -282,7 +282,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.5 **Панель Validation**: 14 правил для кіл, кабелю, пристроїв, отворів і калібрування; агреговані рядки з кількістю, фільтри за severity, перехід до проблемної точки/траси/стіни/отвору/кола або секції масштабу; працює в серверному й локальному редакторах.
 - [x] 15.6 **UX редактора**: preview-режим без панелей і тулбара, command palette (Ctrl+K) з пошуком, оверлей гарячих клавіш (?), масштаб інтерфейсу 90–120% із збереженням, колапс бічної панелі, навігація кімнатами з фокусом viewport, керування сіткою/прив’язкою/ортогональним трасуванням; усе доступно і в локальному редакторі.
 - [x] 15.7 **Split 2D/3D**: режим split показує 2D-полотно ліворуч і 3D-сцену праворуч, панорамування 2D рухає ціль 3D-камери, клік по стіні/кімнаті/пристрою/трасі в 3D вибирає об’єкт у 2D; камера більше не скидається при зміні виділення; команда в палітрі та кнопка в панелі збереження.
-- [ ] 15.8 **Documentation workspace**: вкладки Materials / Cost estimate / Validation / Variants / Print PDF в одному місці.
+- [x] 15.8 **Documentation workspace**: сторінка `/app/projects/:projectId/documentation` з вкладками Materials (каталог, ціни, використання трасами), Cost estimate (створені кошториси, PDF), Validation (усі правила плану), Variants (існуюча панель) і Print PDF (друкований підсумок із живими кількостями, кнопка друку та PDF кошторису); вибір поверху, посилання з проєкту.
 - [ ] 15.9 **Експорт**: SVG 2D-плану, SVG електричної схеми, повний project JSON для серверних проєктів.
 - [ ] 15.10 **3D-режими**: Walk, Third person, X-ray, перерізи, daylight/sun, ізоляція шарів.
 - [ ] 15.11 **Demo-проєкт і локалізації**: стартовий демо-план, повернення російської локалі або додавання нових мов за потреби.
@@ -411,3 +411,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (split renders two canvases and the 3D hint).
 - Issues/blockers: 3D orbit direction does not drive the 2D viewport (only the target follows 2D pan); split is not available in the local editor because it has no 3D scene yet.
 - Next action: documentation workspace (15.8).
+
+### 2026-10-26 — session 24: documentation workspace
+- Completed: a dedicated project documentation page with five tabs — materials catalog with usage counts and prices, project estimates with PDF export, plan-wide validation, variants, and a printable project summary (wall/room/device/cable quantities, validation count, estimates count) with browser print and estimate PDF shortcuts; floor selector for multi-floor projects; links from the project card and the existing estimates/editor actions.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (docs tabs, validation, print and variants on a synced project).
+- Issues/blockers: the printable summary is HTML print-to-PDF rather than a server-generated document; validation rows in documentation are read-only (jump-to-object remains in the editor).
+- Next action: SVG and project JSON export (15.9).

@@ -20,6 +20,7 @@ import { LocalProjectsPage } from '@/pages/local-projects-page';
 import { MaterialsPage } from '@/pages/materials-page';
 import { LoginPage } from '@/pages/login-page';
 import { ProjectPage } from '@/pages/project-page';
+import { ProjectDocsPage } from '@/pages/project-docs-page';
 import { RegisterPage } from '@/pages/register-page';
 import { ResetPasswordPage } from '@/pages/reset-password-page';
 import { SettingsPage } from '@/pages/settings-page';
@@ -68,6 +69,10 @@ export function App() {
             <Route
               path="/app/projects/:projectId/estimates"
               element={<EstimatesPage />}
+            />
+            <Route
+              path="/app/projects/:projectId/documentation"
+              element={<ProjectDocsPage />}
             />
             <Route
               path="/app/projects/:projectId/activity"
