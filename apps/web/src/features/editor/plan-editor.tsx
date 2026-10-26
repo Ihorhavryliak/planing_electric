@@ -15,6 +15,7 @@ import type {
   PublicPlan,
   PlanCalculation,
   PublicPoint,
+  PlanDrawing,
   PublicRoom,
   PublicRoute,
   PublicWall,
@@ -64,6 +65,7 @@ import { CircuitsPanel } from './circuits-panel';
 import { LayersPanel } from './layers-panel';
 import { TakeoffPanel } from './takeoff-panel';
 import { ValidationPanel } from './validation-panel';
+import { ExportPanel } from './export-panel';
 import {
   validatePlan,
   type ValidationTarget,
@@ -169,6 +171,7 @@ import { cn } from '@/lib/utils';
 
 interface PlanEditorProps {
   plan: PublicPlan;
+  projectId: string;
   floorName: string;
   onPlanChange: (plan: PublicPlan) => void;
 }
@@ -405,6 +408,7 @@ function OverlayCard({ children }: { children: ReactNode }) {
 
 export function PlanEditor({
   plan,
+  projectId,
   floorName,
   onPlanChange,
 }: PlanEditorProps) {
@@ -2075,6 +2079,19 @@ export function PlanEditor({
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
   );
+  const exportDrawing = useMemo<PlanDrawing>(
+    () => ({
+      planId: plan.id,
+      calibration,
+      walls,
+      openings,
+      rooms,
+      dimensions,
+      points,
+      routes,
+    }),
+    [plan.id, calibration, walls, openings, rooms, dimensions, points, routes],
+  );
   const takeoff = useMemo(() => {
     const requiredByRoute = new Map(
       (calculation?.routes ?? []).map((route) => [
@@ -2963,6 +2980,15 @@ export function PlanEditor({
           <ValidationPanel
             issues={validationIssues}
             onSelectTarget={focusValidationTarget}
+          />
+
+          <ExportPanel
+            drawing={exportDrawing}
+            calculation={calculation}
+            circuits={circuits}
+            projectId={projectId}
+            title={`${floorName} plan`}
+            subtitle={floorName}
           />
 
           <LayersPanel

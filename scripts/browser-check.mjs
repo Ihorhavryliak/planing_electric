@@ -461,6 +461,33 @@ async function main() {
   }
   await orthoToggle.click();
 
+  // SVG plan, schematic and full project JSON exports.
+  const exportSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Export', exact: true }),
+  });
+  const planSvgPromise = page.waitForEvent('download');
+  await exportSection.getByRole('button', { name: 'Plan SVG' }).click();
+  const planSvg = await planSvgPromise;
+  if (!planSvg.suggestedFilename().endsWith('.svg')) {
+    throw new Error(`Unexpected plan SVG name: ${planSvg.suggestedFilename()}`);
+  }
+  const schematicSvgPromise = page.waitForEvent('download');
+  await exportSection.getByRole('button', { name: 'Schematic SVG' }).click();
+  const schematicSvg = await schematicSvgPromise;
+  if (!schematicSvg.suggestedFilename().endsWith('.svg')) {
+    throw new Error(
+      `Unexpected schematic SVG name: ${schematicSvg.suggestedFilename()}`,
+    );
+  }
+  const projectJsonPromise = page.waitForEvent('download');
+  await exportSection.getByRole('button', { name: 'Project JSON' }).click();
+  const projectJson = await projectJsonPromise;
+  if (!projectJson.suggestedFilename().endsWith('.json')) {
+    throw new Error(
+      `Unexpected project JSON name: ${projectJson.suggestedFilename()}`,
+    );
+  }
+
   // Validation aggregates plan issues and jumps to the affected device.
   const validationSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Validation', exact: true }),

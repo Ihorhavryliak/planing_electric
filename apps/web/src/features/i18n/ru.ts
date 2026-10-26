@@ -774,6 +774,15 @@ export const ru: Dictionary = {
   'docs.noPlan': 'На этом этаже ещё нет плана. Создайте его в редакторе.',
   'docs.validationIssues': 'Проблемы проверки',
   'docs.estimatesCount': 'Сметы',
+  'export.title': 'Экспорт',
+  'export.hint': 'Векторный план, электрическая схема или весь проект в JSON.',
+  'export.planSvg': 'План SVG',
+  'export.schematicSvg': 'Схема SVG',
+  'export.projectJson': 'Проект JSON',
+  'export.schematicTitle': 'Электрическая схема',
+  'export.planSvgShort': 'SVG',
+  'export.schematicShort': 'Схема',
+
 
   'rooms.navigate': 'Навигация по комнатам',
   'rooms.navigateEmpty': 'На этом этаже пока нет комнат.',

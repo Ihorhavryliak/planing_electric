@@ -788,6 +788,15 @@ const en: Dictionary = {
   'docs.noPlan': 'This floor has no plan yet. Create one in the editor.',
   'docs.validationIssues': 'Validation issues',
   'docs.estimatesCount': 'Estimates',
+  'export.title': 'Export',
+  'export.hint': 'Vector plan, electrical schematic or the whole project as JSON.',
+  'export.planSvg': 'Plan SVG',
+  'export.schematicSvg': 'Schematic SVG',
+  'export.projectJson': 'Project JSON',
+  'export.schematicTitle': 'Electrical schematic',
+  'export.planSvgShort': 'SVG',
+  'export.schematicShort': 'Schematic',
+
 
   'rooms.navigate': 'Room navigation',
   'rooms.navigateEmpty': 'No rooms on this floor yet.',
@@ -1772,6 +1781,15 @@ const ua: Dictionary = {
   'docs.noPlan': 'На цьому поверсі ще немає плану. Створіть його в редакторі.',
   'docs.validationIssues': 'Проблеми перевірки',
   'docs.estimatesCount': 'Кошториси',
+  'export.title': 'Експорт',
+  'export.hint': 'Векторний план, електрична схема або весь проєкт у JSON.',
+  'export.planSvg': 'План SVG',
+  'export.schematicSvg': 'Схема SVG',
+  'export.projectJson': 'Проєкт JSON',
+  'export.schematicTitle': 'Електрична схема',
+  'export.planSvgShort': 'SVG',
+  'export.schematicShort': 'Схема',
+
 
   'rooms.navigate': 'Навігація кімнатами',
   'rooms.navigateEmpty': 'На цьому поверсі ще немає кімнат.',

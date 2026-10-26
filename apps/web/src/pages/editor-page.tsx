@@ -342,6 +342,7 @@ export function EditorPage() {
                     <PlanEditor
                       key={selectedFloor.plan.id}
                       plan={selectedFloor.plan}
+                      projectId={projectId}
                       floorName={selectedFloor.name}
                       onPlanChange={handlePlanChange}
                     />

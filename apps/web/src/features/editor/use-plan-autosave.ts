@@ -53,6 +53,11 @@ export function usePlanAutosave({
 
   const mountedRef = useRef(true);
   const saveGenerationRef = useRef(0);
+  const inFlightRef = useRef(false);
+  const queuedRef = useRef<{
+    state: { underlay: UnderlaySettings; viewport: EditorViewport };
+    serialized: string;
+  } | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -67,6 +72,12 @@ export function usePlanAutosave({
       state: { underlay: UnderlaySettings; viewport: EditorViewport },
       serialized: string,
     ) => {
+      if (inFlightRef.current) {
+        queuedRef.current = { state, serialized };
+        return;
+      }
+
+      inFlightRef.current = true;
       saveGenerationRef.current += 1;
       const generation = saveGenerationRef.current;
 
@@ -104,6 +115,14 @@ export function usePlanAutosave({
         if (mountedRef.current && saveGenerationRef.current === generation) {
           setError(getErrorMessage(saveError));
           setStatus('error');
+        }
+      } finally {
+        inFlightRef.current = false;
+        const queued = queuedRef.current;
+        queuedRef.current = null;
+
+        if (queued && queued.serialized !== lastSavedRef.current) {
+          void saveNow(queued.state, queued.serialized);
         }
       }
     },

@@ -283,7 +283,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.6 **UX редактора**: preview-режим без панелей і тулбара, command palette (Ctrl+K) з пошуком, оверлей гарячих клавіш (?), масштаб інтерфейсу 90–120% із збереженням, колапс бічної панелі, навігація кімнатами з фокусом viewport, керування сіткою/прив’язкою/ортогональним трасуванням; усе доступно і в локальному редакторі.
 - [x] 15.7 **Split 2D/3D**: режим split показує 2D-полотно ліворуч і 3D-сцену праворуч, панорамування 2D рухає ціль 3D-камери, клік по стіні/кімнаті/пристрою/трасі в 3D вибирає об’єкт у 2D; камера більше не скидається при зміні виділення; команда в палітрі та кнопка в панелі збереження.
 - [x] 15.8 **Documentation workspace**: сторінка `/app/projects/:projectId/documentation` з вкладками Materials (каталог, ціни, використання трасами), Cost estimate (створені кошториси, PDF), Validation (усі правила плану), Variants (існуюча панель) і Print PDF (друкований підсумок із живими кількостями, кнопка друку та PDF кошторису); вибір поверху, посилання з проєкту.
-- [ ] 15.9 **Експорт**: SVG 2D-плану, SVG електричної схеми, повний project JSON для серверних проєктів.
+- [x] 15.9 **Експорт**: SVG 2D-плану (стіни, отвори, кімнати, розміри, траси, точки, кола), SVG однолінійної електричної схеми за колами з довжинами кабелю, повний JSON проєкту (проєкт, поверхи, плани, креслення, матеріали); експорт у редакторі, документації та локальному редакторі.
 - [ ] 15.10 **3D-режими**: Walk, Third person, X-ray, перерізи, daylight/sun, ізоляція шарів.
 - [ ] 15.11 **Demo-проєкт і локалізації**: стартовий демо-план, повернення російської локалі або додавання нових мов за потреби.
 
@@ -417,3 +417,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 95, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (docs tabs, validation, print and variants on a synced project).
 - Issues/blockers: the printable summary is HTML print-to-PDF rather than a server-generated document; validation rows in documentation are read-only (jump-to-object remains in the editor).
 - Next action: SVG and project JSON export (15.9).
+
+### 2026-10-26 — session 25: SVG and project export
+- Completed: a pure SVG generator for the 2D plan (white print page, walls with openings, room fills/labels, dimensions with real lengths, points with glyphs, routes with circuit colours/chases and circuit chips) and for a single-line schematic (panel per circuit, device stubs, route count, required cable length, unassigned devices); an export panel in the editor, documentation workspace and local editor; full server project JSON (project, floors with plan settings, every drawing and material catalog) with a shared download helper; 2 new unit tests (97 web tests total). Also serialized `usePlanAutosave` requests with a queue so overlapping viewport saves can no longer produce 409 conflicts.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 97, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice (SVG plan, schematic, project JSON downloads).
+- Issues/blockers: plan SVG omits the raster/PDF underlay by design; the schematic is a single-line diagram, not a terminal-and-conductor wiring diagram.
+- Next action: advanced 3D modes (15.10).

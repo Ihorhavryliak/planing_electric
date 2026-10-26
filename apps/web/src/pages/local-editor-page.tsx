@@ -33,6 +33,8 @@ import {
   type ValidationTarget,
 } from '@/features/editor/validation';
 import { useTakeoffSettings } from '@/features/editor/takeoff-settings';
+import { downloadSvg } from '@/features/editor/export-files';
+import { buildPlanSvg, buildSchematicSvg } from '@/features/editor/svg-export';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import { CommandPalette, type CommandPaletteItem } from '@/features/editor/command-palette';
@@ -346,6 +348,36 @@ export function LocalEditorPage() {
     );
   }
 
+  function exportPlanSvg() {
+    if (!drawing || !project) return;
+    downloadSvg(
+      `${name || 'local-project'}.svg`,
+      buildPlanSvg(
+        { planId: project.id, ...drawing },
+        drawing.circuits,
+        { title: name },
+      ),
+    );
+  }
+
+  function exportSchematicSvg() {
+    if (!drawing || !project) return;
+    const lengths: Record<string, number> = {};
+
+    for (const route of localCable ?? []) {
+      const key = route.circuitId ?? '';
+      lengths[key] = (lengths[key] ?? 0) + (route.requiredLength ?? 0);
+    }
+
+    downloadSvg(
+      `${name || 'local-project'}-schematic.svg`,
+      buildSchematicSvg({ planId: project.id, ...drawing }, lengths, {
+        title: t('export.schematicTitle'),
+        subtitle: name,
+      }),
+    );
+  }
+
   function requestTool(tool: EditorTool, pointType?: ElectricalPointType) {
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
@@ -555,6 +587,12 @@ export function LocalEditorPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => void handleExportPng()}>
               PNG
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportPlanSvg}>
+              {t('export.planSvgShort')}
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportSchematicSvg}>
+              {t('export.schematicShort')}
             </Button>
           </div>
         </div>

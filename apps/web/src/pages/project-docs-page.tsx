@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ValidationPanel } from '@/features/editor/validation-panel';
+import { ExportPanel } from '@/features/editor/export-panel';
 import { validatePlan } from '@/features/editor/validation';
 import { buildTakeoff } from '@drawmyplace/calculations';
 import { getPlanCalculation, getPlanDrawing } from '@/features/editor/drawing-api';
@@ -253,6 +254,17 @@ export function ProjectDocsPage() {
               <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
+        </div>
+
+        <div className="mt-4 max-w-md">
+          <ExportPanel
+            drawing={drawing}
+            calculation={calculation}
+            circuits={plan?.calculationSettings.circuits ?? []}
+            projectId={projectId}
+            title={project?.name}
+            subtitle={floors.find((floor) => floor.id === floorId)?.name}
+          />
         </div>
 
         {error ? (
