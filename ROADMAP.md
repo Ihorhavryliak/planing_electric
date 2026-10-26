@@ -340,3 +340,8 @@ MVP готовий до початкового тестування корист
 - Issues/blockers: none. Sentry remains disabled until DSNs are configured.
 - Next action: release preparation and a clean-database QA pass.
 
+### 2026-10-26 — session 15: clean PostgreSQL QA
+- Completed: applied all 10 migrations to a fresh `drawmyplace_qa` database in the Docker PostgreSQL container, ran the full Playwright smoke check against it, and confirmed persisted users/projects/floors/plans/walls/openings/points/routes/rooms/dimensions/variants; fixed the browser check so room and dimension creation are asserted (the previous room click fell below the visible viewport).
+- Tests run: `pnpm db:migrate` on a clean database, `node scripts/browser-check.mjs`, plus `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 64, web 80).
+- Issues/blockers: the QA database was dropped after the run; no data was touched in the development database.
+- Next action: staging deployment and external Sentry DSNs.
