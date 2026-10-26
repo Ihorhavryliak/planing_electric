@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { localizeMessage, setErrorLocale } from './error-messages';
 import {
+  LOCALES,
   LOCALE_STORAGE_KEY,
   currencyFor,
   formatLocale,
@@ -23,12 +24,13 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 describe('i18n', () => {
-  it('accepts only supported locales', () => {
+  it('accepts supported locale codes but exposes only ua and en', () => {
     expect(isLocale('ua')).toBe(true);
     expect(isLocale('ru')).toBe(true);
     expect(isLocale('en')).toBe(true);
     expect(isLocale('pl')).toBe(false);
     expect(isLocale('de')).toBe(false);
+    expect(LOCALES.map((item) => item.value)).toEqual(['ua', 'en']);
   });
 
   it('reads and persists the locale, migrating the legacy uk value', () => {
@@ -37,6 +39,10 @@ describe('i18n', () => {
     );
     expect(readLocale(memoryStorage({ [LOCALE_STORAGE_KEY]: 'uk' }))).toBe(
       'ua',
+    );
+    // Russian stays in the catalog but is hidden from the UI for now.
+    expect(readLocale(memoryStorage({ [LOCALE_STORAGE_KEY]: 'ru' }))).toBe(
+      'en',
     );
     expect(readLocale(null)).toBe('en');
     const storage = memoryStorage();

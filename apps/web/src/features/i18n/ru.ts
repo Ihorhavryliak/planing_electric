@@ -354,7 +354,7 @@ export const ru: Dictionary = {
   'landing.item.local':
     'Локальный режим с импортом/экспортом JSON и синхронизацией с аккаунтом',
   'landing.item.i18n':
-    'Интерфейс на английском, украинском и русском, тёмная и светлая темы',
+    'Интерфейс на английском и украинском, тёмная и светлая темы',
   'landing.footer': 'DrawMyPlace · React · NestJS · PostgreSQL',
 
   'admin.badge': 'Админ',

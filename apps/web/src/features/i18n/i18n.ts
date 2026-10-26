@@ -4,9 +4,9 @@ export type Locale = 'ua' | 'ru' | 'en';
 
 export const LOCALE_STORAGE_KEY = 'drawmyplace-locale';
 
+// Russian is kept as a ready catalog but temporarily hidden from the switcher.
 export const LOCALES: Array<{ value: Locale; label: string }> = [
   { value: 'ua', label: 'Українська' },
-  { value: 'ru', label: 'Русский' },
   { value: 'en', label: 'English' },
 ];
 
@@ -364,7 +364,7 @@ const en: Dictionary = {
   'landing.item.local':
     'Local-first mode with JSON import/export and sync to an account',
   'landing.item.i18n':
-    'English, Ukrainian and Russian interface with dark and light themes',
+    'English and Ukrainian interface with dark and light themes',
   'landing.footer': 'DrawMyPlace · React · NestJS · PostgreSQL',
 
 
@@ -1111,7 +1111,7 @@ const ua: Dictionary = {
   'landing.item.local':
     'Локальний режим з імпортом/експортом JSON і синхронізацією з акаунтом',
   'landing.item.i18n':
-    'Інтерфейс англійською, українською та російською, темна й світла теми',
+    'Інтерфейс англійською та українською, темна й світла теми',
   'landing.footer': 'DrawMyPlace · React · NestJS · PostgreSQL',
 
 
@@ -1521,6 +1521,8 @@ export function readLocale(
     const stored = storage?.getItem(LOCALE_STORAGE_KEY);
     // Legacy value from the earlier Ukrainian-only catalog.
     if (stored === 'uk') return 'ua';
+    // Russian is staged but not selectable yet.
+    if (stored === 'ru') return 'en';
     if (isLocale(stored)) return stored;
   } catch {
     // ignore
