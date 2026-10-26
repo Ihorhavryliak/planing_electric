@@ -247,6 +247,11 @@ const en: Dictionary = {
   'local.walls': 'Walls',
   'local.selectedPoint': 'Selected point',
   'local.deletePoint': 'Delete point',
+  'local.notFound': 'Local project not found.',
+  'local.saveFailed': 'Could not save the local project.',
+  'local.conflict':
+    'This project was changed in another tab. Reload to continue with the latest version.',
+  'local.reload': 'Reload project',
 
   'editorPage.badge': 'Editor',
   'editorPage.unable': 'Unable to open the editor',
@@ -979,6 +984,11 @@ const uk: Dictionary = {
   'local.walls': 'Стіни',
   'local.selectedPoint': 'Вибрана точка',
   'local.deletePoint': 'Видалити точку',
+  'local.notFound': 'Локальний проєкт не знайдено.',
+  'local.saveFailed': 'Не вдалося зберегти локальний проєкт.',
+  'local.conflict':
+    'Цей проєкт змінено в іншій вкладці. Перезавантажте, щоб продовжити з останньою версією.',
+  'local.reload': 'Перезавантажити проєкт',
 
   'editorPage.badge': 'Редактор',
   'editorPage.unable': 'Не вдалося відкрити редактор',

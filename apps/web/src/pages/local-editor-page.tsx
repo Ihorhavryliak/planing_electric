@@ -19,6 +19,7 @@ import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { EditorCanvas } from '@/features/editor/editor-canvas';
 import { previewMetersPerUnit, type Vec2 } from '@/features/editor/editor-geometry';
 import {
+  LocalConflictError,
   getLocalProject,
   saveLocalProject,
   type LocalDrawing,
@@ -62,25 +63,29 @@ export function LocalEditorPage() {
     pointA: Vec2;
     pointB: Vec2;
   } | null>(null);
-  const [saveState, setSaveState] = useState<'saved' | 'saving'>('saved');
+  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'conflict'>(
+    'saved',
+  );
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
   const loadedRef = useRef(false);
+  const revisionRef = useRef<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       const loaded = await getLocalProject(localId);
       if (!loaded) {
-        setError('Local project not found.');
+        setError(t('local.notFound'));
         return;
       }
       setProject(loaded);
       setDrawing(loaded.drawing);
       setViewport(loaded.viewport);
       setName(loaded.name);
+      revisionRef.current = loaded.updatedAt;
       loadedRef.current = true;
     })();
-  }, [localId]);
+  }, [localId, t]);
 
   useEffect(() => {
     if (!project || !drawing || !loadedRef.current) return;
@@ -93,14 +98,24 @@ export function LocalEditorPage() {
         viewport,
         updatedAt: now(),
       };
-      void saveLocalProject(next)
-        .then(() => setSaveState('saved'))
-        .catch((err: unknown) =>
-          setError(err instanceof Error ? err.message : 'Could not save'),
-        );
+      void saveLocalProject(next, {
+        expectedUpdatedAt: revisionRef.current,
+      })
+        .then(() => {
+          revisionRef.current = next.updatedAt;
+          setSaveState('saved');
+        })
+        .catch((err: unknown) => {
+          if (err instanceof LocalConflictError) {
+            setSaveState('conflict');
+            setError(t('local.conflict'));
+            return;
+          }
+          setError(err instanceof Error ? err.message : t('local.saveFailed'));
+        });
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [project, drawing, viewport, name]);
+  }, [project, drawing, viewport, name, t]);
 
   const metersPerUnit = drawing?.calibration?.metersPerUnit ?? null;
 
@@ -213,8 +228,19 @@ export function LocalEditorPage() {
           <span className="text-xs text-slate-500">
             {saveState === 'saving'
               ? t('local.savingLocally')
-              : t('local.savedLocally')}
+              : saveState === 'conflict'
+                ? t('local.conflict')
+                : t('local.savedLocally')}
           </span>
+          {saveState === 'conflict' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
+              {t('local.reload')}
+            </Button>
+          ) : null}
           <span className="text-xs text-slate-400">
             {total === null
               ? t('local.notCalibrated')

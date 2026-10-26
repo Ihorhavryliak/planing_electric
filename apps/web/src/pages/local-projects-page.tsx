@@ -26,7 +26,7 @@ import { createProject } from '@/features/projects/projects-api';
 import {
   createLocalProject,
   deleteLocalProject,
-  isLocalProject,
+  normalizeLocalProject,
   listLocalProjects,
   saveLocalProject,
   type LocalProject,
@@ -93,8 +93,10 @@ export function LocalProjectsPage() {
   async function handleImport(file: File) {
     setError(null);
     try {
-      const parsed: unknown = JSON.parse(await file.text());
-      if (!isLocalProject(parsed)) {
+      const parsed = normalizeLocalProject(
+        JSON.parse(await file.text()) as unknown,
+      );
+      if (!parsed) {
         setError(t('local.notLocalProject'));
         return;
       }
