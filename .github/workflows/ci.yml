@@ -40,3 +40,81 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: drawmyplace
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d drawmyplace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/drawmyplace
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.5.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Migrate database
+        run: pnpm db:migrate
+
+      - name: Start API
+        run: |
+          pnpm --filter @drawmyplace/api start > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:5004/api/v1/health > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat api.log
+          exit 1
+
+      - name: Start web
+        run: |
+          pnpm --filter @drawmyplace/web dev > web.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3004 > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat web.log
+          exit 1
+
+      - name: Browser smoke check
+        run: pnpm browser:check
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-logs
+          path: |
+            api.log
+            web.log
