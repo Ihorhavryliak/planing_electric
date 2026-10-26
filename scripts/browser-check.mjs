@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document, fetch, localStorage */
+/* global process, Buffer, console, document, fetch, localStorage, history, location */
 import { chromium } from 'playwright';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';

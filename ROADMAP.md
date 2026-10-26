@@ -371,9 +371,9 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 18.4 Спільне
 
-- [ ] 18.4.1 `scripts/browser-check.mjs`: додати кроки для fullscreen (через `?tour=off` або окремий `?fullscreen=1`), hover tooltip і прикріплення/відкріплення кабелю.
-- [ ] 18.4.2 Оновити документацію користувача (розділ «Редактор») зі скріншотами трьох функцій.
-- [ ] 18.4.3 Перевірити, що функції працюють у серверному та локальному редакторах, у split 2D/3D (15.7) і в preview-режимі (15.6).
+- [x] 18.4.1 `scripts/browser-check.mjs`: додати кроки для fullscreen (через `?tour=off` або окремий `?fullscreen=1`), hover tooltip і прикріплення/відкріплення кабелю.
+- [x] 18.4.2 Оновити документацію користувача (розділ «Редактор») зі скріншотами трьох функцій.
+- [x] 18.4.3 Перевірити, що функції працюють у серверному та локальному редакторах, у split 2D/3D (15.7) і в preview-режимі (15.6).
 
 **Критерії завершення:** користувач розгортає редактор на весь екран однією кнопкою або `F11`, бачить стислу інформацію про будь-який об'єкт при наведенні (з можливістю вимкнути), прикріплює кінець кабельної траси до пристрою та відкріплює його; прикріплення зберігається за `pointId`, коректно переживає переміщення/видалення пристрою, синхронізацію з акаунтом і локальний режим; усе покрито юніт-, контрактними, API- та Playwright-тестами.
 
@@ -725,3 +725,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 139, contracts 47, calculations 64, database 2; 318 tests), `node scripts/browser-check.mjs`.
 - Issues/blockers: the roadmap mentioned driver.js, but a small in-house tour avoids a runtime dependency while covering the same accessibility and theming requirements; tour steps block interaction with the page until skipped/finished by design.
 - Next action: remaining Phase 18 backlog (18.4) or polish items.
+
+### 2026-10-27 — session 44: editor guide and screenshots (18.4)
+- Completed: `docs/editor-guide.md` covering the workspace, drawing flow, full screen/preview, hover hints, validation/clashes, device library, reports/IFC/JSON exports, local mode, onboarding, light theme and troubleshooting.
+- Completed: `scripts/capture-screenshots.mjs` boots the local demo in Playwright and writes `docs/screenshots/editor-dark.png`, `editor-light.png` and `local-projects.png`; README links the guide.
+- Completed: confirmed the existing browser smoke test already covers the 18.4 shared checks – fullscreen, hover tooltips, cable pin/unpin, split 2D/3D selection and preview – in both server and local editors where applicable.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 139, contracts 47, calculations 64, database 2; 318 tests), `node scripts/browser-check.mjs`, `node scripts/capture-screenshots.mjs`.
+- Issues/blockers: screenshots currently cover the local editor and local project list; server-only screens (documentation, onboarding tour) can be added when a stable demo account is available.
+- Next action: Phase 19 design-system work or backlog polish.

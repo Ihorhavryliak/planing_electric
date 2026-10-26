@@ -20,6 +20,10 @@ Verified in this repository:
 - Shared Zod contracts package.
 - Tests using Vitest and PGlite, including auth and project integration tests against the real migrations.
 
+## Documentation
+
+- [Editor guide](docs/editor-guide.md) — drawing, validation, device library, reports, IFC and onboarding.
+
 ## Requirements
 
 - Node.js 22.12 or newer.
@@ -144,7 +148,7 @@ After changing the schema, run `pnpm db:generate` and commit the generated migra
 - `pnpm lint` — passed.
 - `pnpm test` — 64 API tests and 79 web tests passed.
 - Live PostgreSQL — migrations `0000`–`0009` applied to a clean `drawmyplace_qa` database created in the Docker container; 24 public tables and the `estimates.warnings` JSONB column verified.
-- Browser smoke check on a clean database (`node scripts/browser-check.mjs`) — registration, theme persistence, Ukrainian/English locale persistence, project/floor creation, PNG and PDF underlays, wall/doors/windows, calibration, circuits (create/assign), device palette (subtype placement), points (place/rotate/duplicate), cable routes (draw, pan, bend drag, chase mounting, delete + undo), layers (toggle and persist), live takeoff (walls, rooms, devices, cable, electrical load), electrical calculation (load, ΔU, fault current, breaker/cable coordination), validation (issues, filters, jump-to-object, estimate blocking), editor UX (command palette, shortcuts overlay, preview, UI scale, room navigation, grid/snap/ortho, split 2D/3D with 3D selection), documentation (materials, estimates, reports with field selection and XLSX/CSV export, validation, variants, print), device library (search, article assignment, product-linked equipment report), exports (plan SVG, schematic SVG, project JSON, IFC4), advanced 3D (walk, third person, X-ray, section, daylight, isolation), local demo apartment, six-step quick guide, optional Russian locale (`VITE_ENABLE_RU=true`), rooms, dimensions, 3D view and GLB download, variants, and local-first create/draw/reload/export/import/sync, and first-run onboarding (five-step tour, contextual next-step hints, account-level persistence, `?tour=editor`/`?tour=off`).
+- Browser smoke check on a clean database (`node scripts/browser-check.mjs`) — registration, theme persistence, Ukrainian/English locale persistence, project/floor creation, PNG and PDF underlays, wall/doors/windows, calibration, circuits (create/assign), device palette (subtype placement), points (place/rotate/duplicate), cable routes (draw, pan, bend drag, chase mounting, delete + undo), layers (toggle and persist), live takeoff (walls, rooms, devices, cable, electrical load), electrical calculation (load, ΔU, fault current, breaker/cable coordination), validation (issues, filters, jump-to-object, estimate blocking), editor UX (command palette, shortcuts overlay, preview, UI scale, room navigation, grid/snap/ortho, split 2D/3D with 3D selection), documentation (materials, estimates, reports with field selection and XLSX/CSV export, validation, variants, print), device library (search, article assignment, product-linked equipment report), exports (plan SVG, schematic SVG, project JSON, IFC4), advanced 3D (walk, third person, X-ray, section, daylight, isolation), local demo apartment, six-step quick guide, optional Russian locale (`VITE_ENABLE_RU=true`), rooms, dimensions, 3D view and GLB download, variants, and local-first create/draw/reload/export/import/sync, and first-run onboarding (five-step tour, contextual next-step hints, account-level persistence, `?tour=editor`/`?tour=off`). See the [editor guide](docs/editor-guide.md) for screenshots and usage.
 - Health endpoints — `/api/v1/health` and `/api/v1/health/ready` return `200` with PostgreSQL available.
 - Optional Sentry reporting is wired for API (HTTP 500s) and web (global handlers + error boundary); it stays disabled until `SENTRY_DSN` / `VITE_SENTRY_DSN` are set.
 
