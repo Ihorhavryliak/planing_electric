@@ -45,6 +45,16 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: `http://localhost:${apiPort}`,
           changeOrigin: true,
+          configure: (proxy) => {
+            // Keep the dev server alive while the API restarts (the editor's
+            // SSE connection otherwise surfaces ECONNRESET as a fatal error).
+            proxy.on('error', (error) => {
+              const code = (error as NodeJS.ErrnoException).code;
+              if (code !== 'ECONNREFUSED' && code !== 'ECONNRESET') {
+                console.warn('[vite] API proxy error:', error.message);
+              }
+            });
+          },
         },
       },
     },
