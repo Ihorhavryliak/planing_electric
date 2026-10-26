@@ -278,7 +278,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 15.1 **Кола (circuits)**: зберігати перелік кіл у `plan.calculationSettings`, призначати точки й траси, показувати панель кіл із кількістю пристроїв/трас, редагувати назву/колір, валідувати призначення.
 - [x] 15.2 **Каталог підтипів пристроїв**: 37 підтипів у 6 категоріях (розподіл, коробки, живлення, керування, освітлення, низька напруга), палітра в редакторі, збереження підтипу в точці, редагування у властивостях, підтримка локального режиму.
 - [x] 15.3 **Монтажні елементи**: спосіб монтажу траси (стеля/підлога/стіна/штроба) з шириною й глибиною штроби, автоматичний підрахунок проходів крізь стіни з маркерами на плані, підписи кіл на трасах, панель шарів із збереженням видимості, приховування шарів вимикає й hit-testing.
-- [ ] 15.4 **Live takeoff у редакторі**: довжина стін, площа, об'єм, кількість вузлів стін, пристрої за типами, кабель і орієнтовна вартість матеріалів без генерації кошторису.
+- [x] 15.4 **Live takeoff у редакторі**: стіни (довжина, вузли, сегменти, площа брутто/нетто, об'єм), кімнати (площа, периметр), пристрої за типами й підтипами, кабель за колами та вартість кабелю за матеріалами; редаговані висота стін і товщина за замовчуванням із збереженням; працює в серверному й локальному редакторах.
 - [ ] 15.5 **Панель Validation**: агрегувати errors/warnings по всьому плану (кола, кабель, отвори, непідключені пристрої) з кількістю та переходом до проблемного об'єкта.
 - [ ] 15.6 **UX редактора**: preview-режим, command palette, оверлей гарячих клавіш, zoom інтерфейсу, колапс панелей, навігація по кімнатах, grid/snap/ortho.
 - [ ] 15.7 **Split 2D/3D**: одночасний перегляд і редагування 2D зліва й 3D справа; синхронізація камери/виділення.
@@ -387,3 +387,9 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 82, contracts 38, calculations 31), `node scripts/browser-check.mjs`.
 - Issues/blockers: chase width is schematic in 2D (screen-space band); penetration geometry is computed client-side and not yet part of the server estimate.
 - Next action: live takeoff in the editor (15.4).
+
+### 2026-10-26 — session 20: live takeoff
+- Completed: a pure `buildTakeoff` summary in the calculations package (wall length/nodes/segments, gross and net wall area with openings, weighted wall volume, room area/perimeter, device and subtype counts, cable by circuit, priced cable cost); a compact panel in both editors with calibrated/uncalibrated state, editable wall height and default thickness persisted in localStorage, and circuit rows that select the matching route; server editor prices cable using the material catalog and default cable, local mode shows quantities without prices.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 65, web 84, contracts 38, calculations 34, database 2), `node scripts/browser-check.mjs` twice; the smoke script now refreshes the canvas box after sidebar scrolling to make drawing coordinates deterministic.
+- Issues/blockers: cable cost uses required length including waste (not purchase rounding); walls without thickness share the default and volume uses length-weighted average thickness.
+- Next action: plan-wide validation panel (15.5).

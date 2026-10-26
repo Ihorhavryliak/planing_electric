@@ -13,6 +13,8 @@ import {
   findPenetrations,
   findRoutePenetrations,
   segmentIntersection,
+  buildTakeoff,
+  DEFAULT_WALL_HEIGHT_METERS,
 } from './index';
 
 describe('geometry', () => {
@@ -332,5 +334,121 @@ describe('wall penetrations', () => {
     expect(countRoutePenetrations([routes[0]!], [wall])).toEqual(
       new Map([['r1', 1]]),
     );
+  });
+});
+
+describe('live takeoff', () => {
+  const walls = [
+    {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 60, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      thickness: 20,
+    },
+    {
+      geometry: [
+        { x: 100, y: 0 },
+        { x: 100, y: 50 },
+      ],
+      thickness: null,
+    },
+  ];
+
+  it('reports counts without calibration but no real units', () => {
+    const result = buildTakeoff({
+      metersPerUnit: null,
+      walls,
+      openings: [{ width: 50, height: 200 }],
+      rooms: [],
+      points: [
+        { type: 'socket', subtype: 'socket-double' },
+        { type: 'socket', subtype: 'socket-double' },
+        { type: 'light', subtype: null },
+      ],
+      routes: [{ circuitId: 'L1', requiredLength: 10 }],
+    });
+
+    expect(result.calibrated).toBe(false);
+    expect(result.wallLengthMeters).toBeNull();
+    expect(result.wallNodes).toBe(4);
+    expect(result.wallCount).toBe(2);
+    expect(result.totalDevices).toBe(3);
+    expect(result.deviceCounts).toEqual({ socket: 2, light: 1 });
+    expect(result.subtypeCounts).toEqual({ 'socket-double': 2 });
+    expect(result.totalCableMeters).toBeNull();
+  });
+
+  it('computes wall areas, openings, volume and rooms', () => {
+    const result = buildTakeoff({
+      metersPerUnit: 0.01,
+      walls,
+      openings: [{ width: 50, height: 200 }],
+      rooms: [
+        {
+          boundary: [
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+            { x: 100, y: 100 },
+            { x: 0, y: 100 },
+          ],
+        },
+      ],
+      points: [],
+      routes: [],
+    });
+
+    expect(result.calibrated).toBe(true);
+    expect(result.wallLengthMeters).toBeCloseTo(1.5, 6);
+    expect(result.grossWallAreaM2).toBeCloseTo(1.5 * DEFAULT_WALL_HEIGHT_METERS, 6);
+    expect(result.openingAreaM2).toBeCloseTo(1, 6);
+    expect(result.netWallAreaM2).toBeCloseTo(
+      1.5 * DEFAULT_WALL_HEIGHT_METERS - 1,
+      6,
+    );
+    expect(result.wallVolumeM3).toBeCloseTo(3.05 * 0.1833333333, 5);
+    expect(result.roomAreaM2).toBeCloseTo(1, 6);
+    expect(result.roomPerimeterMeters).toBeCloseTo(4, 6);
+  });
+
+  it('groups cable by circuit and prices known materials', () => {
+    const result = buildTakeoff({
+      metersPerUnit: 0.01,
+      walls: [],
+      openings: [],
+      rooms: [],
+      points: [],
+      routes: [
+        { circuitId: 'L1', materialId: 'cable', requiredLength: 10 },
+        { circuitId: 'L1', materialId: null, requiredLength: 5 },
+        { circuitId: null, materialId: 'cable', requiredLength: 2 },
+        { circuitId: 'L2', materialId: 'unknown', requiredLength: 3 },
+      ],
+      materials: [
+        { id: 'cable', unit: 'm', unitPrice: 2 },
+        { id: 'other', unit: 'm', unitPrice: 5 },
+      ],
+      defaultCableMaterialId: 'cable',
+    });
+
+    expect(result.cableByCircuit).toEqual([
+      { circuitId: null, meters: 2 },
+      { circuitId: 'L1', meters: 15 },
+      { circuitId: 'L2', meters: 3 },
+    ]);
+    expect(result.totalCableMeters).toBe(20);
+    expect(result.cableCost).toBe(40);
+    expect(result.pricedRoutes).toBe(4);
+
+    const unpriced = buildTakeoff({
+      metersPerUnit: 0.01,
+      walls: [],
+      openings: [],
+      rooms: [],
+      points: [],
+      routes: [{ circuitId: 'L1', requiredLength: 10 }],
+    });
+    expect(unpriced.cableCost).toBeNull();
   });
 });

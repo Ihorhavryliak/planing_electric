@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
 import { LayersPanel } from '@/features/editor/layers-panel';
+import { TakeoffPanel } from '@/features/editor/takeoff-panel';
+import { useTakeoffSettings } from '@/features/editor/takeoff-settings';
 import { useEditorLayers } from '@/features/editor/editor-layers';
 import { DevicePalette } from '@/features/editor/device-palette';
 import {
@@ -33,6 +35,7 @@ import {
   type LocalProject,
 } from '@/features/local/local-db';
 import {
+  buildTakeoff,
   calculateRoute,
   countRoutePenetrations,
   resolveRouteDrops,
@@ -65,6 +68,11 @@ export function LocalEditorPage() {
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
+  const {
+    settings: takeoffSettings,
+    setWallHeight,
+    setDefaultThickness,
+  } = useTakeoffSettings();
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedDimensionId, setSelectedDimensionId] = useState<string | null>(
@@ -134,10 +142,10 @@ export function LocalEditorPage() {
 
   const metersPerUnit = drawing?.calibration?.metersPerUnit ?? null;
 
-  const total = useMemo(() => {
+  const localCable = useMemo(() => {
     if (!drawing || metersPerUnit === null) return null;
-    let sum = 0;
-    for (const route of drawing.routes) {
+
+    return drawing.routes.map((route) => {
       const drops = resolveRouteDrops({
         geometry: route.geometry,
         points: drawing.points.map((point) => ({
@@ -155,10 +163,41 @@ export function LocalEditorPage() {
         drops,
         wastePercent: route.settings.wastePercent,
       });
-      if (result.status === 'ok') sum += result.breakdown.requiredLength;
-    }
-    return sum;
+
+      return {
+        circuitId: route.circuitId,
+        materialId: route.materialId,
+        requiredLength:
+          result.status === 'ok' ? result.breakdown.requiredLength : null,
+      };
+    });
   }, [drawing, metersPerUnit]);
+
+  const total = useMemo(
+    () =>
+      localCable === null
+        ? null
+        : localCable.reduce(
+            (sum, route) => sum + (route.requiredLength ?? 0),
+            0,
+          ),
+    [localCable],
+  );
+
+  const takeoff = useMemo(
+    () =>
+      buildTakeoff({
+        metersPerUnit,
+        walls: drawing?.walls ?? [],
+        openings: drawing?.openings ?? [],
+        rooms: drawing?.rooms ?? [],
+        points: drawing?.points ?? [],
+        routes: localCable ?? [],
+        wallHeightMeters: takeoffSettings.wallHeightMeters,
+        defaultWallThicknessMeters: takeoffSettings.defaultThicknessMeters,
+      }),
+    [drawing, metersPerUnit, localCable, takeoffSettings],
+  );
 
   function update(mutator: (current: LocalDrawing) => LocalDrawing) {
     setDrawing((current) => (current ? mutator(current) : current));
@@ -602,6 +641,26 @@ export function LocalEditorPage() {
                 nonce: Date.now(),
               })
             }
+          />
+
+          <TakeoffPanel
+            summary={takeoff}
+            wallHeightMeters={takeoffSettings.wallHeightMeters}
+            defaultThicknessMeters={takeoffSettings.defaultThicknessMeters}
+            onWallHeightChange={setWallHeight}
+            onDefaultThicknessChange={setDefaultThickness}
+            onSelectCircuit={(circuitId) => {
+              const route = drawing?.routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (!route) return;
+              setSelectedRouteId(route.id);
+              setSelectedPointId(null);
+              setSelectedWallId(null);
+              setSelectedOpeningId(null);
+              setSelectedRoomId(null);
+              setSelectedDimensionId(null);
+            }}
           />
 
           <LayersPanel

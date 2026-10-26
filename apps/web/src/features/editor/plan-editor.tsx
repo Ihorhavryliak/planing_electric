@@ -60,7 +60,12 @@ import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
 import { CircuitsPanel } from './circuits-panel';
 import { LayersPanel } from './layers-panel';
-import { countRoutePenetrations } from '@drawmyplace/calculations';
+import { TakeoffPanel } from './takeoff-panel';
+import { useTakeoffSettings } from './takeoff-settings';
+import {
+  buildTakeoff,
+  countRoutePenetrations,
+} from '@drawmyplace/calculations';
 import { useEditorLayers } from './editor-layers';
 import { DevicePalette } from './device-palette';
 import {
@@ -433,6 +438,11 @@ export function PlanEditor({
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
+  const {
+    settings: takeoffSettings,
+    setWallHeight,
+    setDefaultThickness,
+  } = useTakeoffSettings();
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
@@ -2040,6 +2050,47 @@ export function PlanEditor({
     () => countRoutePenetrations(routes, walls),
     [routes, walls],
   );
+  const takeoff = useMemo(() => {
+    const requiredByRoute = new Map(
+      (calculation?.routes ?? []).map((route) => [
+        route.routeId,
+        route.requiredLength,
+      ]),
+    );
+    const defaultCable =
+      materials.find((material) => material.category === 'cable') ?? null;
+
+    return buildTakeoff({
+      metersPerUnit,
+      walls,
+      openings,
+      rooms,
+      points,
+      routes: routes.map((route) => ({
+        circuitId: route.circuitId,
+        materialId: route.materialId,
+        requiredLength: requiredByRoute.get(route.id) ?? null,
+      })),
+      materials: materials.map((material) => ({
+        id: material.id,
+        unitPrice: material.unitPrice,
+        unit: material.unit,
+      })),
+      defaultCableMaterialId: defaultCable?.id ?? null,
+      wallHeightMeters: takeoffSettings.wallHeightMeters,
+      defaultWallThicknessMeters: takeoffSettings.defaultThicknessMeters,
+    });
+  }, [
+    metersPerUnit,
+    walls,
+    openings,
+    rooms,
+    points,
+    routes,
+    calculation,
+    materials,
+    takeoffSettings,
+  ]);
 
   async function saveCircuits(next: Circuit[]) {
     try {
@@ -2541,6 +2592,20 @@ export function PlanEditor({
             onAdd={handleAddCircuit}
             onUpdate={handleUpdateCircuit}
             onDelete={handleDeleteCircuit}
+          />
+
+          <TakeoffPanel
+            summary={takeoff}
+            wallHeightMeters={takeoffSettings.wallHeightMeters}
+            defaultThicknessMeters={takeoffSettings.defaultThicknessMeters}
+            onWallHeightChange={setWallHeight}
+            onDefaultThicknessChange={setDefaultThickness}
+            onSelectCircuit={(circuitId) => {
+              const route = routes.find(
+                (item) => item.circuitId === circuitId,
+              );
+              if (route) selectRoute(route.id);
+            }}
           />
 
           <LayersPanel

@@ -155,7 +155,7 @@ async function main() {
   // Draw a wall and add a door + window, so the 3D scene has real geometry.
   const planCanvas = page.locator('canvas').first();
   await page.waitForTimeout(750);
-  const canvasBox = await planCanvas.boundingBox();
+  let canvasBox = await planCanvas.boundingBox();
   if (!canvasBox) throw new Error('Canvas is not visible');
   const canvasHash = () =>
     planCanvas.evaluate((canvas) => {
@@ -187,14 +187,24 @@ async function main() {
     y: canvasBox.y + canvasBox.height * y,
   });
 
+  // Sidebar interactions scroll the page; refresh the canvas box before using
+  // stored pixel coordinates for drawing.
+  const syncCanvas = async () => {
+    await planCanvas.scrollIntoViewIfNeeded();
+    const box = await planCanvas.boundingBox();
+    if (box) canvasBox = box;
+  };
+
   // Calibrate so the calculation panel can show real lengths.
   await page.getByRole('button', { name: 'Calibrate scale tool' }).click();
+  await syncCanvas();
   await page.mouse.click(at(0.2, 0.2).x, at(0.2, 0.2).y);
   await page.mouse.click(at(0.8, 0.2).x, at(0.8, 0.2).y);
   await page.getByLabel('Real distance').fill('4');
   await page.getByRole('button', { name: 'Set scale' }).click();
 
   // Place a double socket from the device palette and draw a cable route.
+  await syncCanvas();
   await page.locator('summary').filter({ hasText: 'Power' }).click();
   await page.getByRole('button', { name: 'Double socket' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
@@ -236,6 +246,7 @@ async function main() {
 
   // Select the socket, rotate it, and duplicate it.
   await page.getByRole('button', { name: 'Select tool' }).click();
+  await syncCanvas();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
   await page.getByRole('button', { name: 'Duplicate' }).waitFor();
   await page.getByRole('textbox', { name: /Rotation/ }).fill('90');
@@ -261,6 +272,24 @@ async function main() {
   await circuitsSection
     .getByText('1 devices · 1 routes', { exact: true })
     .waitFor();
+
+  // Live takeoff reflects calibrated walls, rooms, devices and cable.
+  const takeoffSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Live takeoff', exact: true }),
+  });
+  await takeoffSection.getByText('Calibrated', { exact: true }).waitFor();
+  const deviceRow = takeoffSection.getByText('Total devices').locator('..');
+  await deviceRow.getByText('2', { exact: true }).waitFor();
+  const wallLengthRow = takeoffSection.getByText('Wall length').locator('..');
+  if ((await wallLengthRow.innerText()).includes('—')) {
+    throw new Error('Live takeoff did not calculate wall length.');
+  }
+  const cableRow = takeoffSection.getByText('Cable with waste').locator('..');
+  if ((await cableRow.innerText()).includes('—')) {
+    throw new Error('Live takeoff did not calculate cable length.');
+  }
+
+  await syncCanvas();
   await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
   const beforeBend = await canvasHash();
   await page.mouse.move(at(0.65, 0.6).x, at(0.65, 0.6).y);
@@ -286,6 +315,9 @@ async function main() {
   );
 
   // Switch the route to a wall chase and change its width.
+  await page
+    .getByRole('heading', { name: 'Cable route', exact: true })
+    .waitFor({ timeout: 15000 });
   const mountingSelect = page.getByLabel('Installation');
   const beforeChase = await canvasHash();
   await mountingSelect.selectOption('chase');
@@ -312,6 +344,7 @@ async function main() {
 
   // Pan the canvas and confirm the rendered viewport changed.
   await page.getByRole('button', { name: 'Pan tool' }).click();
+  await syncCanvas();
   const beforePan = await canvasHash();
   await page.mouse.move(at(0.5, 0.5).x, at(0.5, 0.5).y);
   await page.mouse.down();
