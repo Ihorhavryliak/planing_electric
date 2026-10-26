@@ -44,6 +44,22 @@ pnpm build
 Run migrations before starting the new API version. Migrations are additive;
 review any destructive change before applying it to production.
 
+## 3a. Docker deployment
+
+The repository ships multi-stage images for the API (`apps/api/Dockerfile`) and
+the web app (`apps/web/Dockerfile`, nginx serving the SPA and proxying `/api`).
+
+```bash
+export POSTGRES_PASSWORD='strong-password'
+export WEB_ORIGIN='https://drawmyplace.example.com'
+export EXPORT_LINK_SECRET='strong-random-secret'
+docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+The `migrate` service applies tracked migrations before the API starts.
+Uploaded files live in the `storage` volume; PostgreSQL data lives in
+`postgres-data`. Put a TLS-terminating proxy in front of the `web` service.
+
 ## 4. Start
 
 ```bash
