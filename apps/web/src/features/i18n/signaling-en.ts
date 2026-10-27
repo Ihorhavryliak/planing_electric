@@ -126,6 +126,10 @@ export const signalingEn: Record<string, string> = {
   'editor.threeCoordinates': 'Coordinates',
   'editor.threeClickWall': 'Click a wall to place it',
   'editor.heightFromFloor': 'Height from floor',
+  'editor.lockPoint': 'Pin in place',
+  'editor.unlockPoint': 'Unpin',
+  'editor.threeDraw': 'Draw in 3D',
+  'editor.threeDrawHint': 'Click the floor to add points · Enter to finish · Esc to cancel',
   'signaling.title': 'Signaling & low current',
   'signaling.hint':
     'Security, fire, CCTV, access, PA and data loops with devices, cable, battery and coverage checks.',

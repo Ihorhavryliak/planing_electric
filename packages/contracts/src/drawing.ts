@@ -71,6 +71,8 @@ export const pointPropertiesSchema = z
     address: z.number().int().min(0).max(9999).nullable().optional(),
     /** Fire/security zone number. */
     zone: z.number().int().min(0).max(999).nullable().optional(),
+    /** Locked elements cannot be dragged on the canvas. */
+    locked: z.boolean().optional(),
   })
   .strict();
 

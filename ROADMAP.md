@@ -484,6 +484,14 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       отвір створюється в місці кліку з правильним offset.
 - [x] 21.9.4 Перевірити 3D-розміщення розетки/вимикача, висоту від
       підлоги, кріплення на стіну та створення дверей/вікон.
+- [x] 21.10.1 Додати «Закріпити» / «Розкріпити» в контекстне меню
+      пристрою у 2D і 3D; зберігати стан у `point.properties.locked`
+      та блокувати перетягування закріпленого елемента.
+- [x] 21.10.2 Перенести інструменти креслення в 3D: стіна, контур
+      кімнати, кабельна траса та розмір; `Enter` — завершити,
+      `Esc` — скасувати.
+- [x] 21.10.3 Додати контекстне меню точки в 3D: закріплення та
+      видалення без переходу в 2D.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -759,6 +767,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-27 — session 24: 3D drawing tools and element locking
+- Completed: point context menus in 2D and 3D now offer Pin in place / Unpin and persist `point.properties.locked`; locked points cannot be dragged on the 2D canvas. 3D gained wall, room, cable-route and dimension drawing with floor raycasting, Enter to finish and Esc to cancel; 3D points have their own right-click menu with Pin/Unpin and Delete.
+- Tests run: Playwright verification of 2D/3D pin-unpin persistence and 2D drag blocking; 3D wall/room/route/dimension creation plus Ctrl+Z undo; `pnpm --filter @drawmyplace/web typecheck`; `pnpm lint`; `pnpm --filter @drawmyplace/web test`.
+- Issues/blockers: none; Docker images still need a rebuild to include these changes.
+- Next action: rebuild the Docker web and API images and repeat the browser checks on <http://localhost:8090>.
 
 ### 2026-10-27 — session 22: full-screen reference editor
 - Completed: editor now opens as a full-viewport workspace with a compact project bar (logo, project, floor selector, Project/Installation/Documentation/Estimates, back); global workspace header is hidden for plan editing; left Rooms/Circuits panel, center 2D/3D/split canvas, right Properties/Layers/Validation/Calculation/Signaling panel; viewport-height canvas with independently scrolling sidebars; refreshed screenshots.

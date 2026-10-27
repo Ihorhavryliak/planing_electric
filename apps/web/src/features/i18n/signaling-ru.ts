@@ -126,6 +126,10 @@ export const signalingRu: Record<string, string> = {
   'editor.threeCoordinates': 'Координаты',
   'editor.threeClickWall': 'Щёлкните стену, чтобы разместить',
   'editor.heightFromFloor': 'Высота от пола',
+  'editor.lockPoint': 'Закрепить',
+  'editor.unlockPoint': 'Открепить',
+  'editor.threeDraw': 'Чертить в 3D',
+  'editor.threeDrawHint': 'Щёлкайте пол, чтобы добавить точки · Enter — завершить · Esc — отменить',
   'signaling.title': 'Сигнализация и слаботочка',
   'signaling.hint':
     'Шлейфы охранной, пожарной сигнализации, видео, доступа, оповещения и СКС с проверкой устройств, кабеля, АКБ и покрытия.',

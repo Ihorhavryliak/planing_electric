@@ -37,6 +37,8 @@ import {
   SquareDashed,
   ToggleRight,
   Trash2,
+  Lock,
+  Unlock,
   Unlink,
   Undo2,
   Zap,
@@ -261,6 +263,7 @@ interface EditorCanvasProps {
   onMovePoint: (id: string, at: Vec2) => void;
   onDeletePoint: (id: string) => void;
   onDuplicatePoint?: (id: string) => void;
+  onTogglePointLock?: (id: string, locked: boolean) => void;
   onSelectRoute: (id: string | null) => void;
   onCreateRoute: (geometry: Vec2[]) => void;
   onMoveRouteVertex: (routeId: string, index: number, at: Vec2) => void;
@@ -457,6 +460,7 @@ export function EditorCanvas({
   onMovePoint,
   onDeletePoint,
   onDuplicatePoint,
+  onTogglePointLock,
   onSelectRoute,
   onCreateRoute,
   onMoveRouteVertex,
@@ -1792,6 +1796,10 @@ export function EditorCanvas({
         onSelectPointRef.current(hit.id);
         onSelectRouteRef.current(null);
         clearStructureSelection();
+
+        if ((hit.properties as { locked?: boolean }).locked) {
+          return;
+        }
       } else {
         const selected =
           layersRef.current?.routes === false
@@ -2967,6 +2975,35 @@ export function EditorCanvas({
                     </button>
                   ) : null}
                 </>
+              );
+            })() : null}
+            {contextMenu.target.kind === 'point' && onTogglePointLock ? (() => {
+              const point = points.find(
+                (item) => item.id === contextMenu.target.id,
+              );
+              if (!point) return null;
+              const locked = Boolean(
+                (point.properties as { locked?: boolean }).locked,
+              );
+
+              return (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={() => {
+                    onTogglePointLock(point.id, !locked);
+                    setContextMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                >
+                  {locked ? (
+                    <Unlock className="h-3.5 w-3.5" />
+                  ) : (
+                    <Lock className="h-3.5 w-3.5" />
+                  )}
+                  {locked ? t('editor.unlockPoint') : t('editor.lockPoint')}
+                </button>
               );
             })() : null}
             <button

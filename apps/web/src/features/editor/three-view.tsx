@@ -8,16 +8,23 @@ import type {
 } from '@drawmyplace/contracts';
 import {
   Box,
+  BrickWall,
+  Cable,
   CircleDot,
   Download,
   Lightbulb,
   LoaderCircle,
+  Lock,
   Plug,
+  RulerDimensionLine,
   Shapes,
   Square,
+  SquareDashed,
   ToggleRight,
+  Unlock,
+  X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
@@ -55,12 +62,20 @@ interface ThreeViewProps {
   ) => void;
   onUpdatePoint?: (
     id: string,
-    patch: { mountingHeight?: number | null },
+    patch: { mountingHeight?: number | null; locked?: boolean },
   ) => void;
+  onDeletePoint?: (id: string) => void;
   onCreateOpening?: (
     wallId: string,
     type: 'door' | 'window',
     offset: number,
+  ) => void;
+  onCreateWall?: (geometry: { x: number; y: number }[]) => void;
+  onCreateRoom?: (boundary: { x: number; y: number }[]) => void;
+  onCreateRoute?: (geometry: { x: number; y: number }[]) => void;
+  onCreateDimension?: (
+    pointA: { x: number; y: number },
+    pointB: { x: number; y: number },
   ) => void;
 }
 
@@ -235,7 +250,12 @@ export function ThreeView({
   lengthUnit = 'm',
   onCreatePoint,
   onUpdatePoint,
+  onDeletePoint,
   onCreateOpening,
+  onCreateWall,
+  onCreateRoom,
+  onCreateRoute,
+  onCreateDimension,
 }: ThreeViewProps) {
   const [placementType, setPlacementType] =
     useState<ElectricalPointType | null>(null);
@@ -245,6 +265,15 @@ export function ThreeView({
   const [mountMode, setMountMode] = useState<'floor' | 'wall' | 'ceiling'>(
     'wall',
   );
+  const [draftMode, setDraftMode] = useState<
+    'wall' | 'room' | 'route' | 'dimension' | null
+  >(null);
+  const [draftPoints, setDraftPoints] = useState<{ x: number; y: number }[]>([]);
+  const [pointMenu, setPointMenu] = useState<{
+    id: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const { t } = useI18n();
   const { resolved } = useTheme();
   const lightScene = resolved === 'light';
@@ -299,6 +328,22 @@ export function ThreeView({
   onUpdatePointRef.current = onUpdatePoint;
   const onCreateOpeningRef = useRef(onCreateOpening);
   onCreateOpeningRef.current = onCreateOpening;
+  const onDeletePointRef = useRef(onDeletePoint);
+  onDeletePointRef.current = onDeletePoint;
+  const onCreateWallRef = useRef(onCreateWall);
+  onCreateWallRef.current = onCreateWall;
+  const onCreateRoomRef = useRef(onCreateRoom);
+  onCreateRoomRef.current = onCreateRoom;
+  const onCreateRouteRef = useRef(onCreateRoute);
+  onCreateRouteRef.current = onCreateRoute;
+  const onCreateDimensionRef = useRef(onCreateDimension);
+  onCreateDimensionRef.current = onCreateDimension;
+  const draftModeRef = useRef<typeof draftMode>(draftMode);
+  draftModeRef.current = draftMode;
+  const draftPointsRef = useRef(draftPoints);
+  draftPointsRef.current = draftPoints;
+  const draftGroupRef = useRef(new THREE.Group());
+  const finishDraftRef = useRef<() => void>(() => {});
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -340,6 +385,7 @@ export function ThreeView({
     fillRef.current = fill;
     scene.add(fill);
     scene.add(contentRef.current);
+    scene.add(draftGroupRef.current);
 
     const pick = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -370,6 +416,34 @@ export function ThreeView({
         start &&
         Math.hypot(event.clientX - start.x, event.clientY - start.y) < 5
       ) {
+        const draft = draftModeRef.current;
+        if (draft) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+          const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+          const hit = new THREE.Vector3();
+          if (raycaster.ray.intersectPlane(plane, hit)) {
+            if (draft === 'dimension') {
+              const previous = draftPointsRef.current[0];
+              if (previous) {
+                onCreateDimensionRef.current?.(previous, {
+                  x: hit.x,
+                  y: hit.z,
+                });
+                setDraftPoints([]);
+              } else {
+                setDraftPoints([{ x: hit.x, y: hit.z }]);
+              }
+            } else {
+              setDraftPoints((current) => [...current, { x: hit.x, y: hit.z }]);
+            }
+          }
+          return;
+        }
+
         const placement = placementRef.current;
         const opening = placementOpeningRef.current;
         if (
@@ -980,8 +1054,112 @@ export function ThreeView({
         .sort((a, b) => a.distance - b.distance)[0]
     : undefined;
 
+  const finishDraft = () => {
+    const mode = draftModeRef.current;
+    const points = draftPointsRef.current;
+    if (mode && points.length >= 2) {
+      if (mode === 'wall') onCreateWallRef.current?.(points);
+      else if (mode === 'route') onCreateRouteRef.current?.(points);
+      else if (mode === 'room' && points.length >= 3) {
+        onCreateRoomRef.current?.(points);
+      }
+    }
+    setDraftPoints([]);
+    setDraftMode(null);
+  };
+  finishDraftRef.current = finishDraft;
+
+  useEffect(() => {
+    const group = draftGroupRef.current;
+    for (const child of [...group.children]) {
+      group.remove(child);
+      if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+        child.geometry.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) material.forEach((item) => item.dispose());
+        else material.dispose();
+      }
+    }
+    if (draftPoints.length === 0) return;
+    const material = new THREE.LineBasicMaterial({ color: 0x2f6bd8 });
+    const linePoints = draftPoints.map(
+      (point) => new THREE.Vector3(point.x, 2, point.y),
+    );
+    if (linePoints.length >= 2) {
+      group.add(
+        new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(linePoints),
+          material,
+        ),
+      );
+    }
+    for (const point of draftPoints) {
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(5, 10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x2f6bd8 }),
+      );
+      dot.position.set(point.x, 2, point.y);
+      group.add(dot);
+    }
+  }, [draftPoints]);
+
+  useEffect(() => {
+    if (!draftMode) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        finishDraftRef.current();
+      } else if (event.key === 'Escape') {
+        setDraftPoints([]);
+        setDraftMode(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [draftMode]);
+
+  useEffect(() => {
+    if (!pointMenu) return;
+    const close = () => setPointMenu(null);
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [pointMenu]);
+
+  const handleContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const renderer = rendererRef.current;
+    const camera = cameraRef.current;
+    const container = containerRef.current;
+    if (!renderer || !camera || !container) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+    const hit = raycaster
+      .intersectObjects(contentRef.current.children, true)
+      .find((entry) => entry.object.userData?.kind === 'point');
+    if (!hit) {
+      setPointMenu(null);
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    setPointMenu({
+      id: hit.object.userData.id as string,
+      x: event.clientX - containerRect.left,
+      y: event.clientY - containerRect.top,
+    });
+  };
+
+  const menuPoint = pointMenu
+    ? points.find((point) => point.id === pointMenu.id)
+    : undefined;
+
   return (
-    <div className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
+    <div
+      className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950"
+      onContextMenu={handleContextMenu}
+    >
       <div ref={containerRef} className="absolute inset-0" />
       <div className="absolute top-3 left-3 flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-xs text-slate-300 backdrop-blur">
         <Box className="h-4 w-4 text-amber-300" />
@@ -1114,11 +1292,45 @@ export function ThreeView({
             {label}
           </button>
         ))}
-        {placementType || placementOpening ? (
+        <div className="my-1 border-t border-white/10" />
+        <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+          {t('editor.threeDraw')}
+        </p>
+        {(
+          [
+            ['wall', t('editor.wall'), BrickWall],
+            ['room', t('editor.room'), SquareDashed],
+            ['route', t('editor.cableRoute'), Cable],
+            ['dimension', t('editor.dimension'), RulerDimensionLine],
+          ] as const
+        ).map(([mode, label, Icon]) => (
+          <button
+            key={mode}
+            type="button"
+            aria-pressed={draftMode === mode}
+            onClick={() => {
+              setDraftMode((current) => (current === mode ? null : mode));
+              setDraftPoints([]);
+              setPlacementType(null);
+              setPlacementOpening(null);
+            }}
+            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
+              draftMode === mode
+                ? 'bg-[var(--dmp-color-brand)] text-white'
+                : 'hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+        {placementType || placementOpening || draftMode ? (
           <p className="px-1 pt-1 text-[10px] leading-snug text-amber-200">
-            {placementOpening || mountMode === 'wall'
-              ? t('editor.threeClickWall')
-              : t('editor.threeClickFloor')}
+            {draftMode
+              ? t('editor.threeDrawHint')
+              : placementOpening || mountMode === 'wall'
+                ? t('editor.threeClickWall')
+                : t('editor.threeClickFloor')}
           </p>
         ) : null}
       </div>
@@ -1279,6 +1491,77 @@ export function ThreeView({
         <p className="pointer-events-none absolute right-3 bottom-20 rounded-lg border border-white/10 bg-slate-950/90 px-2.5 py-1 text-[11px] text-slate-300 backdrop-blur">
           {t('editor.walkHint')}
         </p>
+      ) : null}
+
+      {pointMenu && menuPoint ? (
+        <>
+          <div
+            className="absolute inset-0 z-40"
+            onPointerDown={() => setPointMenu(null)}
+          />
+          <div
+            role="menu"
+            aria-label={t('editor.contextMenu')}
+            className="absolute z-50 min-w-44 rounded-xl border border-white/10 bg-slate-900 p-1 text-xs text-slate-200 shadow-xl shadow-black/40"
+            style={{
+              left: Math.min(
+                pointMenu.x,
+                Math.max(
+                  8,
+                  (rendererRef.current?.domElement.clientWidth ?? 300) - 190,
+                ),
+              ),
+              top: Math.min(
+                pointMenu.y,
+                Math.max(
+                  8,
+                  (rendererRef.current?.domElement.clientHeight ?? 300) - 120,
+                ),
+              ),
+            }}
+          >
+            <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-slate-500">
+              {t(`editor.point.${menuPoint.type}`)}
+            </p>
+            <button
+              type="button"
+              role="menuitem"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => {
+                const locked = Boolean(
+                  (menuPoint.properties as { locked?: boolean }).locked,
+                );
+                onUpdatePointRef.current?.(menuPoint.id, { locked: !locked });
+                setPointMenu(null);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+            >
+              {(menuPoint.properties as { locked?: boolean }).locked ? (
+                <Unlock className="h-3.5 w-3.5" />
+              ) : (
+                <Lock className="h-3.5 w-3.5" />
+              )}
+              {(menuPoint.properties as { locked?: boolean }).locked
+                ? t('editor.unlockPoint')
+                : t('editor.lockPoint')}
+            </button>
+            {onDeletePoint ? (
+              <button
+                type="button"
+                role="menuitem"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => {
+                  onDeletePointRef.current?.(menuPoint.id);
+                  setPointMenu(null);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-200 hover:bg-rose-400/10"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t('editor.delete')}
+              </button>
+            ) : null}
+          </div>
+        </>
       ) : null}
 
       {error ? (

@@ -2885,11 +2885,41 @@ export function PlanEditor({
             mountingHeight: options?.mountingHeight ?? null,
           })
         }
-        onUpdatePoint={(id: string, patch: { mountingHeight?: number | null }) => void handlePatchPoint(id, patch)}
+        onUpdatePoint={(
+          id: string,
+          patch: { mountingHeight?: number | null; locked?: boolean },
+        ) => {
+          const point = points.find((item) => item.id === id);
+          if (!point) return;
+          if (patch.locked !== undefined) {
+            const { locked: _locked, ...rest } = point.properties;
+            void handlePatchPoint(id, {
+              properties: patch.locked
+                ? { ...rest, locked: true }
+                : rest,
+            });
+          } else {
+            void handlePatchPoint(id, { mountingHeight: patch.mountingHeight });
+          }
+        }}
+        onDeletePoint={(id: string) => void handleDeletePoint(id)}
         onCreateOpening={(wallId: string, type: 'door' | 'window', offset: number) => {
           const wall = walls.find((item) => item.id === wallId);
           if (wall) void handleAddOpening(wall, type, offset);
         }}
+        onCreateWall={(geometry: { x: number; y: number }[]) =>
+          void handleCreateWall(geometry)
+        }
+        onCreateRoom={(boundary: { x: number; y: number }[]) =>
+          void handleCreateRoom(boundary)
+        }
+        onCreateRoute={(geometry: { x: number; y: number }[]) =>
+          void handleCreateRoute(geometry)
+        }
+        onCreateDimension={(
+          pointA: { x: number; y: number },
+          pointB: { x: number; y: number },
+        ) => void handleCreateDimension(pointA, pointB, 0)}
       />
     </Suspense>
   );
@@ -3144,6 +3174,14 @@ export function PlanEditor({
             onDuplicatePoint={(id) => {
               const point = points.find((item) => item.id === id);
               if (point) handleDuplicatePoint(point);
+            }}
+            onTogglePointLock={(id, locked) => {
+              const point = points.find((item) => item.id === id);
+              if (!point) return;
+              const { locked: _locked, ...rest } = point.properties;
+              void handlePatchPoint(id, {
+                properties: locked ? { ...rest, locked: true } : rest,
+              });
             }}
             onSelectWall={selectWall}
             onCreateWall={(geometry) => void handleCreateWall(geometry)}

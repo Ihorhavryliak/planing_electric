@@ -126,6 +126,10 @@ export const signalingUa: Record<string, string> = {
   'editor.threeCoordinates': 'Координати',
   'editor.threeClickWall': 'Клацніть стіну, щоб розмістити',
   'editor.heightFromFloor': 'Висота від підлоги',
+  'editor.lockPoint': 'Закріпити',
+  'editor.unlockPoint': 'Розкріпити',
+  'editor.threeDraw': 'Креслити в 3D',
+  'editor.threeDrawHint': 'Клацайте підлогу, щоб додати точки · Enter — завершити · Esc — скасувати',
   'signaling.title': 'Сигналізація та слабкострум',
   'signaling.hint':
     'Шлейфи охоронної, пожежної сигналізації, відео, доступу, оповіщення й СКС з перевіркою пристроїв, кабелю, АКБ та покриття.',
