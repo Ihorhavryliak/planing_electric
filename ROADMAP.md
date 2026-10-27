@@ -739,6 +739,13 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-27 — session 22: full-screen reference editor
+- Completed: editor now opens as a full-viewport workspace with a compact project bar (logo, project, floor selector, Project/Installation/Documentation/Estimates, back); global workspace header is hidden for plan editing; left Rooms/Circuits panel, center 2D/3D/split canvas, right Properties/Layers/Validation/Calculation/Signaling panel; viewport-height canvas with independently scrolling sidebars; refreshed screenshots.
+- Tests run: `pnpm --filter @drawmyplace/web test` (149), `pnpm lint`, Playwright signaling/3D/split and responsive checks against Docker.
+- Issues/blockers: none.
+- Next action: manual visual QA on the Docker stack.
+
 ### 2026-10-27 — session 21: editor layout, 3D/split and context menu
 - Completed: fixed 3D in the dev server by forcing a clean Vite dependency cache; added a ground plane/grid and empty-state context for 3D; verified interactive split 2D/3D; moved the whole tabbed inspector into a top panel above the canvas with the view-mode segmented control; moved canvas toolbars to the bottom above the status bar; added a right-click context menu with object detection, Duplicate for devices and Delete for devices/routes/walls/rooms/openings/dimensions; added ROADMAP Phase 21 for these requirements; refreshed screenshots.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), Playwright 3D/split/context-menu check against Docker at <http://localhost:8090>.
