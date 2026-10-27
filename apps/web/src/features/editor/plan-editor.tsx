@@ -176,7 +176,6 @@ import {
   signalingSettings as selectSignalingSettings,
 } from './signaling';
 import { EditorTour } from '@/features/onboarding/editor-tour';
-import { NextStepHint, type NextStep } from '@/features/onboarding/next-step-hint';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
 import { POINT_SYMBOL_LIST, countByType } from './point-symbols';
 import {
@@ -2566,62 +2565,6 @@ export function PlanEditor({
     setToolRequest({ tool, pointType, nonce: Date.now() });
   }
 
-  const nextSteps: NextStep[] = [
-    ...(points.length > 0
-      ? [
-          {
-            id: 'first-route' as const,
-            titleKey: 'hint.firstRoute.title',
-            bodyKey: 'hint.firstRoute.body',
-            actionLabelKey: 'hint.firstRoute.action',
-            onAction: () => requestTool('route'),
-          },
-        ]
-      : []),
-    ...(routes.some((route) => !route.circuitId)
-      ? [
-          {
-            id: 'first-circuit' as const,
-            titleKey: 'hint.firstCircuit.title',
-            bodyKey: 'hint.firstCircuit.body',
-            actionLabelKey: 'hint.firstCircuit.action',
-            onAction: () => {
-              const route = routes.find((item) => !item.circuitId);
-              if (route) selectRoute(route.id);
-              document
-                .querySelector('[data-tour="circuits"]')
-                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            },
-          },
-        ]
-      : []),
-    {
-      id: 'command-palette',
-      titleKey: 'hint.palette.title',
-      bodyKey: 'hint.palette.body',
-      actionLabelKey: 'hint.palette.action',
-      onAction: () => setPaletteOpen(true),
-    },
-    ...(walls.length > 0 || rooms.length > 0 || routes.length > 0
-      ? [
-          {
-            id: 'three-d-view' as const,
-            titleKey: 'hint.threeD.title',
-            bodyKey: 'hint.threeD.body',
-            actionLabelKey: 'hint.threeD.action',
-            onAction: () => setViewMode('3d'),
-          },
-        ]
-      : []),
-    {
-      id: 'documentation',
-      titleKey: 'hint.docs.title',
-      bodyKey: 'hint.docs.body',
-      actionLabelKey: 'hint.docs.action',
-      href: `/app/projects/${projectId}/documentation`,
-    },
-  ];
-
   function focusRoom(roomId: string) {
     const room = rooms.find((item) => item.id === roomId);
 
@@ -3292,7 +3235,6 @@ export function PlanEditor({
               ]}
             />
           </div>
-          <NextStepHint steps={nextSteps} />
 
 <div data-sidebar-tab="properties">
           <RoomNavigator

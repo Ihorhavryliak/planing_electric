@@ -127,6 +127,14 @@ async function main() {
   });
 
   await page.reload({ waitUntil: 'networkidle' });
+  await page.getByRole('tab', { name: '3D view' }).click();
+  await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
+  await page.getByRole('tab', { name: 'Split 2D/3D' }).click();
+  await page.waitForTimeout(1500);
+  if ((await page.locator('canvas').count()) < 2) {
+    throw new Error('Split 2D/3D did not render both canvases.');
+  }
+  await page.getByRole('tab', { name: '2D edit' }).click();
   await page.getByRole('tab', { name: 'Signaling' }).click();
   await page.getByText('4/128').waitFor({ timeout: 15000 });
   await page.getByRole('tab', { name: /Calculation/ }).click();
