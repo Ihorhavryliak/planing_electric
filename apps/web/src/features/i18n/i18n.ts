@@ -359,6 +359,26 @@ const en: Dictionary = {
     'The API is not reachable. Start the development stack with pnpm dev.',
   'landing.direction': 'Product direction',
   'landing.cap.read': 'Read the plan',
+  'landing.previewAlt': 'DrawMyPlace editor with a demo apartment plan',
+  'landing.previewHint':
+    'Walls, rooms, circuits, cable routes and devices in one editor — with reports and BIM export built in.',
+  'landing.workflow.eyebrow': 'How it works',
+  'landing.workflow.title': 'From a plan to a documented project',
+  'landing.workflow.hint':
+    'Four steps cover the normal workflow: draw, electrify, price and document.',
+  'landing.workflow.plan.title': 'Read and draw',
+  'landing.workflow.plan.body':
+    'Upload a PDF or image, calibrate it, then trace walls, openings and rooms.',
+  'landing.workflow.circuits.title': 'Build circuits',
+  'landing.workflow.circuits.body':
+    'Place devices, link them with cable routes and assign circuits; loads and protection update live.',
+  'landing.workflow.estimate.title': 'Price the work',
+  'landing.workflow.estimate.body':
+    'Live takeoff, material prices and estimate versions turn the drawing into a priced specification.',
+  'landing.workflow.docs.title': 'Document and export',
+  'landing.workflow.docs.body':
+    'Panel schedules, reports, single-line diagrams, IFC and PDF keep the project ready for handover.',
+
   'landing.cap.readHint':
     'Start from a blank canvas or calibrate an uploaded JPG, PNG, or PDF against a known distance.',
   'landing.cap.draw': 'Draw the electrics',
@@ -1771,6 +1791,26 @@ const ua: Dictionary = {
     'API недоступний. Запустіть середовище розробки через pnpm dev.',
   'landing.direction': 'Напрям продукту',
   'landing.cap.read': 'Прочитати план',
+  'landing.previewAlt': 'Редактор DrawMyPlace із демонстраційним планом квартири',
+  'landing.previewHint':
+    'Стіни, кімнати, кола, кабельні траси й пристрої в одному редакторі — зі звітами та BIM-експортом.',
+  'landing.workflow.eyebrow': 'Як це працює',
+  'landing.workflow.title': 'Від плану до задокументованого проєкту',
+  'landing.workflow.hint':
+    'Чотири кроки охоплюють звичайний процес: накреслити, електрифікувати, оцінити й задокументувати.',
+  'landing.workflow.plan.title': 'Прочитати й накреслити',
+  'landing.workflow.plan.body':
+    'Завантажте PDF або зображення, відкалібруйте й обведіть стіни, отвори та кімнати.',
+  'landing.workflow.circuits.title': 'Створити кола',
+  'landing.workflow.circuits.body':
+    'Розмістіть пристрої, з’єднайте їх трасами й призначте кола — навантаження та захист оновлюються наживо.',
+  'landing.workflow.estimate.title': 'Оцінити роботи',
+  'landing.workflow.estimate.body':
+    'Живий розрахунок, ціни матеріалів і версії кошторису перетворюють креслення на специфікацію з цінами.',
+  'landing.workflow.docs.title': 'Задокументувати й експортувати',
+  'landing.workflow.docs.body':
+    'Відомості щитів, звіти, однолінійна схема, IFC і PDF готують проєкт до передачі.',
+
   'landing.cap.readHint':
     'Почніть із порожнього полотна або відкалібруйте завантажений JPG, PNG чи PDF за відомою відстанню.',
   'landing.cap.draw': 'Намалювати електрику',

@@ -14,6 +14,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { type CheckState, useSystemHealth } from '@/hooks/use-system-health';
 import { cn } from '@/lib/utils';
+import editorPreview from '@/assets/editor-preview.png';
 
 const statusKeys: Record<CheckState, string> = {
   checking: 'landing.status.checking',
@@ -154,7 +155,32 @@ export function LandingPage() {
               </p>
             </div>
 
-            <aside className="app-panel p-6 shadow-2xl shadow-black/40 backdrop-blur">
+            <aside className="space-y-4">
+              <figure className="app-panel overflow-hidden p-2 shadow-2xl shadow-black/40">
+                <div className="relative overflow-hidden rounded-xl border border-white/10">
+                  <img
+                    src={editorPreview}
+                    alt={t('landing.previewAlt')}
+                    className="aspect-[16/11] w-full object-cover object-top"
+                    loading="lazy"
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-wrap gap-1.5 bg-gradient-to-t from-slate-950/95 to-transparent p-3">
+                    {['2D · 3D', 'IFC4', 'XLSX', 'PDF'].map((badge) => (
+                      <span
+                        key={badge}
+                        className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-slate-100 backdrop-blur"
+                      >
+                        {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <figcaption className="px-2 py-2 text-[11px] leading-relaxed text-slate-500">
+                  {t('landing.previewHint')}
+                </figcaption>
+              </figure>
+
+              <div className="app-panel p-6 shadow-2xl shadow-black/40 backdrop-blur">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-sm font-semibold text-white">
@@ -230,6 +256,7 @@ export function LandingPage() {
                   </p>
                 </div>
               ) : null}
+              </div>
             </aside>
           </section>
 
@@ -250,6 +277,43 @@ export function LandingPage() {
                 </p>
               </article>
             ))}
+          </section>
+
+          <section className="border-t border-white/10 py-14">
+            <div className="max-w-2xl">
+              <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+                {t('landing.workflow.eyebrow')}
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
+                {t('landing.workflow.title')}
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                {t('landing.workflow.hint')}
+              </p>
+            </div>
+            <ol className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                ['landing.workflow.plan', '01'],
+                ['landing.workflow.circuits', '02'],
+                ['landing.workflow.estimate', '03'],
+                ['landing.workflow.docs', '04'],
+              ].map(([key, number]) => (
+                <li
+                  key={key}
+                  className="app-panel p-5"
+                >
+                  <span className="font-mono text-xs text-amber-300">
+                    {number}
+                  </span>
+                  <h3 className="mt-2 text-sm font-semibold text-white">
+                    {t(`${key}.title`)}
+                  </h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+                    {t(`${key}.body`)}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </section>
 
           <section

@@ -65,6 +65,21 @@ async function main() {
     path: path.join(OUTPUT, 'local-projects.png'),
     fullPage: false,
   });
+  await publicPage.goto(`${WEB}/`);
+  await publicPage.waitForTimeout(900);
+  await publicPage.screenshot({
+    path: path.join(OUTPUT, 'landing-light.png'),
+    fullPage: false,
+  });
+  await publicPage.evaluate(() => {
+    window.localStorage.setItem('drawmyplace-theme', 'dark');
+  });
+  await publicPage.reload();
+  await publicPage.waitForTimeout(900);
+  await publicPage.screenshot({
+    path: path.join(OUTPUT, 'landing-dark.png'),
+    fullPage: false,
+  });
   await publicPage.close();
 
   await browser.close();

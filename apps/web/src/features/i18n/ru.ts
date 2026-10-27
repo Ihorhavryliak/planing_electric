@@ -343,6 +343,26 @@ export const ru: Dictionary = {
     'API недоступен. Запустите среду разработки через pnpm dev.',
   'landing.direction': 'Направление продукта',
   'landing.cap.read': 'Прочитать план',
+  'landing.previewAlt': 'Редактор DrawMyPlace с демонстрационным планом квартиры',
+  'landing.previewHint':
+    'Стены, комнаты, цепи, кабельные трассы и устройства в одном редакторе — с отчётами и BIM-экспортом.',
+  'landing.workflow.eyebrow': 'Как это работает',
+  'landing.workflow.title': 'От плана к задокументированному проекту',
+  'landing.workflow.hint':
+    'Четыре шага охватывают обычный процесс: начертить, электрифицировать, оценить и задокументировать.',
+  'landing.workflow.plan.title': 'Прочитать и начертить',
+  'landing.workflow.plan.body':
+    'Загрузите PDF или изображение, откалибруйте и обведите стены, проёмы и комнаты.',
+  'landing.workflow.circuits.title': 'Создать цепи',
+  'landing.workflow.circuits.body':
+    'Разместите устройства, соедините их трассами и назначьте цепи — нагрузки и защита обновляются наживо.',
+  'landing.workflow.estimate.title': 'Оценить работы',
+  'landing.workflow.estimate.body':
+    'Живой расчёт, цены материалов и версии сметы превращают чертёж в спецификацию с ценами.',
+  'landing.workflow.docs.title': 'Задокументировать и экспортировать',
+  'landing.workflow.docs.body':
+    'Ведомости щитов, отчёты, однолинейная схема, IFC и PDF готовят проект к передаче.',
+
   'landing.cap.readHint':
     'Начните с пустого полотна или откалибруйте загруженный JPG, PNG или PDF по известному расстоянию.',
   'landing.cap.draw': 'Нарисовать электрику',

@@ -401,11 +401,11 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 19.3 Лендінг і публічні сторінки
 
-- [ ] 19.3.1 Переробити лендінг: hero з реальним скріншотом редактора (не мокапом), 3–4 ключові блоки (план → кола → кошторис → схема), соціальний доказ, CTA «Спробувати локально» + «Увійти».
-- [ ] 19.3.2 Секція «Як це працює» з 6 кроків Quick guide (перевикористати тексти з 15.11/сесії 29).
+- [x] 19.3.1 Переробити лендінг: hero з реальним скріншотом редактора (не мокапом), 3–4 ключові блоки (план → кола → кошторис → схема), соціальний доказ, CTA «Спробувати локально» + «Увійти».
+- [x] 19.3.2 Секція «Як це працює» з 6 кроків Quick guide (перевикористати тексти з 15.11/сесії 29).
 - [ ] 19.3.3 Сторінки pricing, login, register, verify, reset — привести до єдиного шаблону (одна колонка, лого, картка форми, secondary actions).
 - [ ] 19.3.4 Адаптивність: breakpoints 360/768/1024/1440; перевірити hero, pricing, forms на мобільному.
-- [ ] 19.3.5 Favicon, OG-зображення, meta-theme-color, соціальні прев'ю.
+- [x] 19.3.5 Favicon, OG-зображення, meta-theme-color, соціальні прев'ю.
 
 #### 19.4 Редактор (найважливіше)
 
@@ -444,7 +444,7 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 - [ ] 19.8.1 Оновити `scripts/browser-check.mjs` — додати візуальні перевірки (наявність дизайн-токенів, segmented-перемикача режимів, sticky-статусбара).
 - [ ] 19.8.2 Playwright-скріншоти (light + dark) для лендінгу, /app, /local, редактора, документації; зберігати в `docs/screenshots/`.
-- [ ] 19.8.3 Оновити README та документацію користувача зі скріншотами нового UI.
+- [x] 19.8.3 Оновити README та документацію користувача зі скріншотами нового UI.
 - [x] 19.8.4 Перевірити, що всі попередні Playwright-селектори (`data-testid`, `data-tour`) не зламані — контракт стабільності (Фаза 17.2).
 - [x] 19.8.5 Повний прогін: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test`, `node scripts/browser-check.mjs` — усе зелене.
 
@@ -756,3 +756,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
 - Issues/blockers: the status bar is read-only; clickable zoom presets and a unit switcher remain for a later pass (19.4.3 polish).
 - Next action: app shell/page headers (19.2), landing refresh (19.3) or remaining Phase 19 accessibility/local cards.
+
+### 2026-10-27 — session 48: landing refresh and social metadata (19.3.1, 19.3.2, 19.3.5, 19.8.3)
+- Completed: landing hero now uses a real editor screenshot with floating capability badges (2D/3D, IFC4, XLSX, PDF), keeps the local-first CTA and adds a four-step “How it works” workflow (read/draw → circuits → estimate → documents).
+- Completed: favicon, dark/light `theme-color`, Open Graph and Twitter card metadata, and a social preview image; the document title/description now describe the full workflow.
+- Completed: screenshot capture covers landing in dark and light themes in addition to the editor and local project list; README links the illustrated editor guide.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`, `node scripts/capture-screenshots.mjs`.
+- Issues/blockers: authenticated `/app` and documentation screenshots are not captured yet; OG image paths are root-relative until the production domain is fixed.
+- Next action: app shell/page headers (19.2), remaining editor chrome (19.4), local cards (19.6) or accessibility (19.7).
