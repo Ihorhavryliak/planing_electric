@@ -1,4 +1,14 @@
-import { Search } from 'lucide-react';
+import {
+  Bell,
+  FolderOpen,
+  LayoutDashboard,
+  Package,
+  Receipt,
+  Search,
+  Settings,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/features/i18n/i18n-context';
 
@@ -7,8 +17,24 @@ export interface CommandPaletteItem {
   label: string;
   hint?: string;
   shortcut?: string;
+  /** Optional visual group rendered as a heading. */
+  group?: string;
+  /** Icon key used by the workspace palette. */
+  icon?: string;
   run: () => void;
 }
+
+const ICONS: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  local: FolderOpen,
+  materials: Package,
+  estimates: Receipt,
+  notifications: Bell,
+  settings: Settings,
+  theme: Sun,
+};
+
+const RECENT_KEY = 'dmp:palette:recent';
 
 interface CommandPaletteProps {
   open: boolean;
@@ -62,6 +88,20 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
   if (!open) return null;
 
   const execute = (command: CommandPaletteItem) => {
+    try {
+      const recent = JSON.parse(
+        window.localStorage.getItem(RECENT_KEY) ?? '[]',
+      ) as unknown;
+      const ids = Array.isArray(recent)
+        ? recent.filter((id): id is string => typeof id === 'string')
+        : [];
+      window.localStorage.setItem(
+        RECENT_KEY,
+        JSON.stringify([command.id, ...ids.filter((id) => id !== command.id)].slice(0, 5)),
+      );
+    } catch {
+      // Recent commands are a convenience only.
+    }
     onClose();
     command.run();
   };
@@ -123,8 +163,19 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
           </p>
         ) : (
           <ul ref={listRef} className="max-h-80 overflow-y-auto p-1.5">
-            {visible.map((command, index) => (
+            {visible.map((command, index) => {
+              const previous = visible[index - 1];
+              const group = command.group;
+              const showGroup = group && group !== previous?.group;
+              const Icon = command.icon ? ICONS[command.icon] : undefined;
+
+              return (
               <li key={command.id}>
+                {showGroup ? (
+                  <p className="px-3 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    {group}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   data-command-index={index}
@@ -132,10 +183,13 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
                   onClick={() => execute(command)}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition ${
                     index === active
-                      ? 'bg-amber-400/15 text-white'
+                      ? 'bg-[var(--dmp-color-brand)]/15 text-white'
                       : 'text-slate-300 hover:bg-white/5'
                   }`}
                 >
+                  {Icon ? (
+                    <Icon className="h-4 w-4 shrink-0 text-slate-400" />
+                  ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium">
                       {command.label}
@@ -153,7 +207,8 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
                   ) : null}
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

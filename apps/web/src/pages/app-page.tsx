@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CardSkeleton } from '@/components/ui/skeleton';
 import { ProjectCard } from '@/features/projects/project-card';
 import {
   archiveProject,
@@ -318,10 +319,12 @@ export function AppPage() {
           {projects === null && !listError ? (
             <div
               role="status"
-              className="mt-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/40 px-5 py-10 text-sm text-slate-400"
+              aria-label={t('app.loading')}
+              className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
             >
-              <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-              {t('app.loading')}
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
             </div>
           ) : null}
 

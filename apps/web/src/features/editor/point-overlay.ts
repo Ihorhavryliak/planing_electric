@@ -331,7 +331,12 @@ export function drawPointsOverlay(
       context.setLineDash([4, 3]);
       context.lineWidth = 1.5;
       context.strokeStyle = pointLight ? '#2f6bd8' : '#fbbf24';
+      context.shadowColor = pointLight
+        ? 'rgba(47, 107, 216, 0.45)'
+        : 'rgba(251, 191, 36, 0.55)';
+      context.shadowBlur = 10;
       context.stroke();
+      context.shadowBlur = 0;
       context.setLineDash([]);
     }
 

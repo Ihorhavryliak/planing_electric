@@ -6,11 +6,14 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import {
+  estimateTypeSchema,
   updateEstimateSchema,
+  type EstimateType,
   type UpdateEstimateInput,
 } from '@drawmyplace/contracts';
 import type { Response } from 'express';
@@ -34,8 +37,15 @@ export class EstimatesController {
   generate(
     @CurrentUser() user: { id: string },
     @Param('planId', uuid()) planId: string,
+    @Query('type') type?: string,
   ) {
-    return this.estimates.generate(user.id, planId);
+    const parsed = estimateTypeSchema.safeParse(type ?? 'power');
+
+    return this.estimates.generate(
+      user.id,
+      planId,
+      parsed.success ? (parsed.data as EstimateType) : 'power',
+    );
   }
 
   @Get('projects/:projectId/estimates')

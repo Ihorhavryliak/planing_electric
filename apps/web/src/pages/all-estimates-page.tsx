@@ -81,7 +81,8 @@ export function AllEstimatesPage() {
                       version: estimate.version,
                     })}{' '}
                     <span className="text-xs font-normal text-slate-400">
-                      ({t(`estimates.status.${estimate.status}`)})
+                      ({t(`estimates.status.${estimate.status}`)} ·{' '}
+                      {t(`estimates.type.${estimate.type}`)})
                     </span>
                   </p>
                   <p className="text-xs text-slate-500">

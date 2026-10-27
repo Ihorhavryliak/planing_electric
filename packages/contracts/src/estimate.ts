@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 export const estimateStatusSchema = z.enum(['draft', 'final']);
 
+export const estimateTypeSchema = z.enum(['power', 'signaling']);
+export type EstimateType = z.infer<typeof estimateTypeSchema>;
+
 export const publicEstimateItemSchema = z.object({
   id: z.string().uuid(),
   estimateId: z.string().uuid(),
@@ -21,6 +24,7 @@ export const publicEstimateSchema = z.object({
   id: z.string().uuid(),
   projectId: z.string().uuid(),
   version: z.number().int(),
+  type: estimateTypeSchema.default('power'),
   status: estimateStatusSchema,
   calculationSettings: z.record(z.string(), z.unknown()).default({}),
   warnings: z.array(z.string()).default([]),

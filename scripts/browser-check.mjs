@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document, fetch, localStorage, history, location, window */
+/* global process, Buffer, console, document, fetch, localStorage, history, location, window, getComputedStyle */
 import { chromium } from 'playwright';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -1063,6 +1063,30 @@ async function main() {
     .click();
   await page.waitForURL('**/app/projects/*/editor', { timeout: 30000 });
   await page.getByText('Save state').waitFor({ timeout: 20000 });
+
+  // Design tokens and CAD chrome are present in the production editor shell.
+  const brandToken = await page.evaluate(() =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--dmp-color-brand')
+      .trim(),
+  );
+  if (!brandToken) throw new Error('Design token --dmp-color-brand is missing');
+
+  const sidebarTab = await page
+    .locator('.editor-sidebar')
+    .getAttribute('data-active-tab');
+  if (!sidebarTab) throw new Error('Sidebar tab state is missing');
+
+  for (const label of ['2D view', '3D view', 'Split 2D/3D']) {
+    if ((await page.getByRole('button', { name: label }).count()) === 0) {
+      throw new Error(`Editor mode button is missing: ${label}`);
+    }
+  }
+  for (const label of ['Grid', 'Snap', 'Ortho']) {
+    if ((await page.getByText(label, { exact: true }).count()) === 0) {
+      throw new Error(`CAD status bar control is missing: ${label}`);
+    }
+  }
 
   // Documentation workspace: materials, estimates, validation and print.
   const docsUrl = page.url().replace(/\/editor$/, '/documentation');

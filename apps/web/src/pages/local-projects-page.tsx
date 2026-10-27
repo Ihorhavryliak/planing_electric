@@ -3,7 +3,6 @@ import {
   CloudUpload,
   Download,
   HardDrive,
-  LoaderCircle,
   Map as MapIcon,
   Plus,
   Sparkles,
@@ -44,6 +43,9 @@ import {
   type LocalProject,
 } from '@/features/local/local-db';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { useToast } from '@/features/toast/toast-context';
+import { CardSkeleton } from '@/components/ui/skeleton';
+import { Dialog } from '@/components/ui/dialog';
 import { WorkspaceHeader } from '@/features/workspace/workspace-header';
 import { getErrorMessage } from '@/lib/api';
 
@@ -55,7 +57,9 @@ export function LocalProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,14 +96,13 @@ export function LocalProjectsPage() {
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setError(null);
     try {
       const project = createLocalProject(name.trim() || t('local.defaultName'));
       await saveLocalProject(project);
       setName('');
       navigate(`/local/${project.id}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast({ tone: 'error', title: t('local.createFailed'), description: getErrorMessage(err) });
     } finally {
       setBusy(false);
     }
@@ -107,7 +110,6 @@ export function LocalProjectsPage() {
 
   async function handleDemo() {
     setBusy(true);
-    setError(null);
     try {
       const project = createDemoLocalProject(t('local.demoName'), {
         livingRoom: t('demo.livingRoom'),
@@ -124,9 +126,14 @@ export function LocalProjectsPage() {
         firePanel: t('demo.firePanel'),
       });
       await saveLocalProject(project);
+      toast({
+        tone: 'success',
+        title: t('local.demoCreated'),
+        description: t('signaling.hint'),
+      });
       navigate(`/local/${project.id}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast({ tone: 'error', title: t('local.createFailed'), description: getErrorMessage(err) });
     } finally {
       setBusy(false);
     }
@@ -137,6 +144,16 @@ export function LocalProjectsPage() {
       return;
     await deleteLocalProject(project.id);
     await reload();
+    toast({
+      tone: 'info',
+      title: t('local.deleted', { name: project.name }),
+      action: {
+        label: t('common.undo'),
+        onClick: () => {
+          void saveLocalProject(project).then(reload);
+        },
+      },
+    });
   }
 
   function handleExport(project: LocalProject) {
@@ -152,13 +169,16 @@ export function LocalProjectsPage() {
   }
 
   async function handleImport(file: File) {
-    setError(null);
     try {
       const parsed = normalizeLocalProject(
         JSON.parse(await file.text()) as unknown,
       );
       if (!parsed) {
-        setError(t('local.notLocalProject'));
+        toast({
+          tone: 'error',
+          title: t('local.importFailed'),
+          description: t('local.notLocalProject'),
+        });
         return;
       }
       const project: LocalProject = {
@@ -168,8 +188,14 @@ export function LocalProjectsPage() {
       };
       await saveLocalProject(project);
       await reload();
+      setImportOpen(false);
+      toast({ tone: 'success', title: t('local.imported') });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('local.importFailed'));
+      toast({
+        tone: 'error',
+        title: t('local.importFailed'),
+        description: err instanceof Error ? err.message : t('local.importFailed'),
+      });
     }
   }
 
@@ -179,7 +205,6 @@ export function LocalProjectsPage() {
       return;
     }
     setBusy(true);
-    setError(null);
     try {
       const created = await createProject({ name: project.name });
       const floor = await createFloor(created.id, { name: 'Floor 1' });
@@ -261,9 +286,10 @@ export function LocalProjectsPage() {
 
       await deleteLocalProject(project.id);
       await reload();
+      toast({ tone: 'success', title: t('local.synced') });
       navigate(`/app/projects/${created.id}/editor`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toast({ tone: 'error', title: t('local.syncFailed'), description: getErrorMessage(err) });
     } finally {
       setBusy(false);
     }
@@ -336,7 +362,7 @@ export function LocalProjectsPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => setImportOpen(true)}
           >
             <Upload className="h-4 w-4" />
             {t('local.import')}
@@ -354,18 +380,73 @@ export function LocalProjectsPage() {
           />
         </form>
 
+        <Dialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          title={t('local.importTitle')}
+          description={t('local.importHint')}
+          footer={
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => setImportOpen(false)}
+              >
+                {t('editor.cancel')}
+              </Button>
+              <Button onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4" />
+                {t('local.chooseFile')}
+              </Button>
+            </>
+          }
+        >
+          <div
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragActive(false);
+              const file = event.dataTransfer.files?.[0];
+              if (file) void handleImport(file);
+            }}
+            onClick={() => fileRef.current?.click()}
+            className={`flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center transition-colors ${
+              dragActive
+                ? 'border-[var(--dmp-color-brand)] bg-[var(--dmp-color-brand)]/10'
+                : 'border-white/15 bg-white/[0.02] hover:border-white/25'
+            }`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileRef.current?.click();
+              }
+            }}
+          >
+            <Upload className="h-6 w-6 text-[var(--dmp-color-brand)]" />
+            <p className="mt-2 text-sm font-medium text-slate-200">
+              {t('local.dropFile')}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('local.importHint')}
+            </p>
+          </div>
+        </Dialog>
+
         {!loading && projects.length === 0 ? <DemoHint /> : null}
 
-        {error ? (
-          <p role="alert" className="mt-4 text-sm text-rose-300">
-            {error}
-          </p>
-        ) : null}
-
         {loading ? (
-          <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
-            <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
-            {t('local.loading')}
+          <div
+            className="mt-8 grid gap-3 sm:grid-cols-2"
+            role="status"
+            aria-label={t('local.loading')}
+          >
+            <CardSkeleton compact />
+            <CardSkeleton compact />
           </div>
         ) : projects.length === 0 ? (
           <div className="mt-8 app-panel p-8 text-center">

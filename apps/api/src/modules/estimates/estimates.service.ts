@@ -1,16 +1,20 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import {
   buildPanelSchedule,
+  buildSignalingTakeoff,
   calculateElectrical,
 } from '@drawmyplace/calculations';
 
 function escapePdf(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
+import { deviceProduct } from '@drawmyplace/contracts';
 import type {
   ElectricalSettings,
+  EstimateType,
   PlanCalculation,
   PublicEstimate,
+  SignalingLoop,
 } from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { DrawingService } from '../drawing/drawing.service';
@@ -34,7 +38,11 @@ export class EstimatesService {
     @Inject(EstimatesRepository) private readonly estimates: EstimatesRepository,
   ) {}
 
-  async generate(ownerId: string, planId: string): Promise<PublicEstimate> {
+  async generate(
+    ownerId: string,
+    planId: string,
+    type: EstimateType = 'power',
+  ): Promise<PublicEstimate> {
     const plan = await this.plans.findById(planId);
     if (!plan) {
       throw new Error('Plan not found');
@@ -66,6 +74,7 @@ export class EstimatesService {
     const planSettings = (plan.calculationSettings ?? {}) as {
       circuits?: { id: string; name: string }[];
       electrical?: ElectricalSettings;
+      signaling?: { loops?: SignalingLoop[] };
     };
     const routeLengths = new Map(
       calculation.routes.map((route) => [route.routeId, route.requiredLength]),
@@ -76,6 +85,222 @@ export class EstimatesService {
       circuitLengths[route.circuitId] =
         (circuitLengths[route.circuitId] ?? 0) +
         (routeLengths.get(route.id) ?? 0);
+    }
+
+
+    if (type === 'signaling') {
+      if (!drawing) {
+        throw new BadRequestException({
+          code: 'NO_DRAWING',
+          message: 'Create the plan drawing before generating a signaling estimate.',
+        });
+      }
+
+      const loops = planSettings.signaling?.loops ?? [];
+      if (loops.length === 0) {
+        throw new BadRequestException({
+          code: 'NO_SIGNALING_LOOPS',
+          message:
+            'Add at least one signaling loop before generating a signaling estimate.',
+        });
+      }
+
+      const takeoff = buildSignalingTakeoff({
+        loops,
+        points: drawing.points.map((point) => {
+          const product = deviceProduct(point.properties.productId ?? null);
+
+          return {
+            id: point.id,
+            subtype: point.properties.subtype ?? null,
+            loopId: point.properties.loopId ?? null,
+            address: point.properties.address ?? null,
+            zone: point.properties.zone ?? null,
+            x: point.x,
+            y: point.y,
+            standbyA: product?.currentStandbyA ?? 0,
+            alarmA: product?.currentAlarmA ?? 0,
+            coverageAreaM2: product?.coverageAreaM2,
+            coverageRadiusM: product?.coverageRadiusM,
+            coverageAngleDeg: product?.coverageAngleDeg ?? null,
+            rotation: point.rotation,
+          };
+        }),
+        routes: drawing.routes.map((route) => ({
+          id: route.id,
+          system:
+            (route.settings.system as
+              | 'power'
+              | 'security'
+              | 'fire'
+              | 'access'
+              | 'cctv'
+              | 'pa'
+              | 'data'
+              | undefined) ?? 'power',
+          loopId: route.settings.loopId ?? null,
+          mounting: route.settings.mounting ?? null,
+          geometry: route.geometry,
+          requiredLength: routeLengths.get(route.id) ?? null,
+        })),
+        rooms: drawing.rooms,
+        metersPerUnit: calculation.metersPerUnit,
+      });
+
+      const critical = takeoff.issues.filter(
+        (issue) => issue.severity === 'error',
+      );
+      if (critical.length > 0) {
+        throw new BadRequestException({
+          code: 'SIGNALING_COORDINATION',
+          message:
+            'Fix critical signaling issues before generating a signaling estimate.',
+          issues: critical,
+        });
+      }
+
+      const materialByCode = new Map(
+        catalog.map((material) => [material.code, material]),
+      );
+      const grouped = new Map<
+        string,
+        {
+          productId: string | null;
+          subtype: string | null;
+          count: number;
+          loopCodes: Set<string>;
+        }
+      >();
+
+      for (const point of drawing.points) {
+        const loopId = point.properties.loopId;
+        if (!loopId) continue;
+        const loop = loops.find((item) => item.id === loopId);
+        if (!loop) continue;
+        const productId = point.properties.productId ?? null;
+        const subtype = point.properties.subtype ?? point.type;
+        const key = productId ?? `subtype:${subtype}`;
+        const group = grouped.get(key);
+        if (group) {
+          group.count += 1;
+          group.loopCodes.add(loop.code);
+        } else {
+          grouped.set(key, {
+            productId,
+            subtype,
+            count: 1,
+            loopCodes: new Set([loop.code]),
+          });
+        }
+      }
+
+      const items: Array<{
+        materialId: string | null;
+        description: string;
+        unit: string;
+        quantity: number;
+        purchaseQuantity: number | null;
+        unitPrice: number | null;
+        subtotal: number | null;
+        note: string | null;
+      }> = [];
+
+      for (const group of grouped.values()) {
+        const product = deviceProduct(group.productId);
+        const material = product?.catalogCode
+          ? materialByCode.get(product.catalogCode)
+          : undefined;
+        const unitPrice = product?.unitPrice ?? material?.unitPrice ?? null;
+        const quantity = group.count;
+
+        items.push({
+          materialId: material?.id ?? null,
+          description: product
+            ? `${product.manufacturer} ${product.article} — ${product.name}`
+            : `Signaling device — ${group.subtype ?? 'unknown'}`,
+          unit: product?.unit ?? 'pcs',
+          quantity,
+          purchaseQuantity: quantity,
+          unitPrice,
+          subtotal: unitPrice === null ? null : quantity * unitPrice,
+          note: `Loop ${[...group.loopCodes].join(', ')}`,
+        });
+      }
+
+      for (const result of takeoff.loops) {
+        if (result.cableMeters <= 0) continue;
+        const loop = loops.find((item) => item.id === result.id);
+        const material = loop?.cableMaterialId
+          ? materialById.get(loop.cableMaterialId)
+          : defaultCable;
+        const unitPrice = material?.unitPrice ?? null;
+        const purchaseQuantity = Math.ceil(result.cableMeters);
+
+        items.push({
+          materialId: material?.id ?? null,
+          description: `Signaling cable ${result.code} (${loop?.type ?? 'signaling'})`,
+          unit: material?.unit ?? 'm',
+          quantity: result.cableMeters,
+          purchaseQuantity,
+          unitPrice,
+          subtotal: unitPrice === null ? null : purchaseQuantity * unitPrice,
+          note: `${result.deviceCount} devices · ${result.addresses.length} addresses`,
+        });
+      }
+
+      if (takeoff.battery.batteries > 0) {
+        const battery = deviceProduct('yuasa-battery-7ah');
+        const quantity = takeoff.battery.batteries;
+        const unitPrice = battery?.unitPrice ?? null;
+
+        items.push({
+          materialId: null,
+          description:
+            battery?.name ?? 'Sealed lead-acid battery, 12 V 7 Ah',
+          unit: battery?.unit ?? 'pcs',
+          quantity,
+          purchaseQuantity: quantity,
+          unitPrice,
+          subtotal: unitPrice === null ? null : quantity * unitPrice,
+          note: `Battery calculation: ${takeoff.battery.requiredAh} Ah required, ${takeoff.battery.recommendedAh} Ah recommended`,
+        });
+      }
+
+      const created = await this.estimates.create(
+        floor.projectId,
+        ownerId,
+        items,
+        [
+          ...calculation.warnings,
+          `Signaling: ${takeoff.loops.length} loops, ${takeoff.totalDevices} devices, ${takeoff.totalCableMeters} m cable, ${takeoff.battery.recommendedAh} Ah battery.`,
+          ...takeoff.issues.slice(0, 20).map((issue) => {
+            const params = issue.params
+              ? Object.entries(issue.params)
+                  .map(([key, value]) => `${key}=${value}`)
+                  .join(', ')
+              : '';
+
+            return `Signaling warning ${issue.code}${params ? ` (${params})` : ''}.`;
+          }),
+        ],
+        'signaling',
+      );
+
+      const result = await this.getById(ownerId, created.id);
+
+      if (!result) {
+        throw new Error('Failed to load estimate');
+      }
+
+      await this.activity.record({
+        projectId: floor.projectId,
+        actorId: ownerId,
+        action: 'estimate.generated',
+        resourceType: 'estimate',
+        resourceId: created.id,
+      });
+
+      return result;
     }
 
     const electrical = calculateElectrical({
@@ -282,6 +507,7 @@ export class EstimatesService {
       id: estimate.id,
       projectId: estimate.projectId,
       version: estimate.version,
+      type: estimate.type as 'power' | 'signaling',
       status: estimate.status as 'draft' | 'final',
       calculationSettings: (estimate.calculationSettings ?? {}) as Record<
         string,
@@ -385,7 +611,7 @@ export class EstimatesService {
   }
 
   private toPublic(
-    estimate: { id: string; projectId: string; version: number; status: string; calculationSettings: unknown; warnings?: string[]; createdAt: Date; updatedAt: Date },
+    estimate: { id: string; projectId: string; version: number; type?: string | null; status: string; calculationSettings: unknown; warnings?: string[]; createdAt: Date; updatedAt: Date },
     items: Array<{
       materialId: string | null;
       description: string;
@@ -401,6 +627,7 @@ export class EstimatesService {
       id: estimate.id,
       projectId: estimate.projectId,
       version: estimate.version,
+      type: (estimate.type as 'power' | 'signaling' | null) ?? 'power',
       status: estimate.status as 'draft' | 'final',
       calculationSettings: (estimate.calculationSettings ?? {}) as Record<
         string,

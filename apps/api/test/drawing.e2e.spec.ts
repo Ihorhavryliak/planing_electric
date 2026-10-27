@@ -1188,4 +1188,93 @@ describe('Drawing API', () => {
     ).toMatchObject({ system: 'fire', loopId: 'F1' });
   });
 
+
+  it('generates a dedicated signaling estimate', async () => {
+    const fixture = await createFixture();
+    const panel = await addPoint(fixture, {
+      type: 'panel',
+      x: 0,
+      y: 0,
+      properties: {
+        subtype: 'fire-panel',
+        productId: 'hochiki-firenet-panel',
+        loopId: 'F1',
+      },
+    });
+
+    await server()
+      .patch(`${API}/plans/${fixture.plan.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        calculationSettings: {
+          signaling: {
+            loops: [
+              {
+                id: 'F1',
+                code: 'F1',
+                name: 'Fire loop',
+                type: 'fire',
+                topology: 'loop',
+                color: '#dc2626',
+                panelId: panel.id,
+                maxDevices: 128,
+                maxLength: 500,
+                voltageV: 24,
+              },
+            ],
+          },
+        },
+      })
+      .expect(200);
+
+    await server()
+      .put(`${API}/plans/${fixture.plan.id}/calibration`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        pointA: { x: 0, y: 0 },
+        pointB: { x: 1000, y: 0 },
+        realDistance: 10,
+        unit: 'm',
+      })
+      .expect(200);
+
+    await addRoute(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 300, y: 0 },
+      ],
+      settings: { mounting: 'ceiling', system: 'fire', loopId: 'F1' },
+    });
+
+    for (let address = 1; address <= 2; address += 1) {
+      await addPoint(fixture, {
+        type: 'custom',
+        x: address * 100,
+        y: 0,
+        properties: {
+          subtype: 'smoke-detector',
+          productId: 'hochiki-soc-e-smoke',
+          loopId: 'F1',
+          address,
+        },
+      });
+    }
+
+    const response = await server()
+      .post(`${API}/plans/${fixture.plan.id}/estimate?type=signaling`)
+      .set('Cookie', fixture.cookie)
+      .expect(201);
+
+    const estimate = response.body as PublicEstimate;
+    expect(estimate.type).toBe('signaling');
+    expect(estimate.items.length).toBeGreaterThanOrEqual(2);
+    expect(
+      estimate.items.some((item) => item.description.includes('FireNET')),
+    ).toBe(true);
+    expect(
+      estimate.items.some((item) => item.description.includes('Signaling cable')),
+    ).toBe(true);
+    expect(estimate.warnings.join(' ')).toContain('Signaling:');
+  });
+
 });

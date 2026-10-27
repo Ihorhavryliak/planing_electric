@@ -8,10 +8,23 @@ import {
   Sparkles,
   Sun,
 } from 'lucide-react';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
+import { Popover } from '@/components/ui/popover';
+import { Tabs } from '@/components/ui/tabs';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useTheme } from '@/features/theme/theme-context';
 import { cn } from '@/lib/utils';
 
@@ -86,6 +99,8 @@ function Section({
 
 export function DesignPage() {
   const { resolved, toggle } = useTheme();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [tab, setTab] = useState<'overview' | 'tokens'>('overview');
 
   const values = useMemo(() => {
     if (typeof window === 'undefined') return {} as Record<string, string>;
@@ -240,6 +255,98 @@ export function DesignPage() {
             </div>
           </Section>
         </div>
+
+
+        <Section
+          title="Components"
+          hint="Token-driven primitives with sm/md/lg sizes and primary, secondary, ghost and danger variants."
+        >
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button>Primary</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="outline">Outline</Button>
+              <Button variant="ghost">Ghost</Button>
+              <Button variant="danger">Danger</Button>
+              <Button variant="link">Link</Button>
+              <Button size="sm">Small</Button>
+              <Button size="lg">Large</Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input placeholder="Input" />
+              <Select defaultValue="a">
+                <option value="a">Option A</option>
+                <option value="b">Option B</option>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Neutral</Badge>
+              <Badge variant="brand">Brand</Badge>
+              <Badge variant="success">Success</Badge>
+              <Badge variant="warning">Warning</Badge>
+              <Badge variant="danger">Danger</Badge>
+              <Badge variant="info">Info</Badge>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Tabs
+                ariaLabel="Design tabs"
+                value={tab}
+                onChange={setTab}
+                items={[
+                  { id: 'overview', label: 'Overview' },
+                  { id: 'tokens', label: 'Tokens', badge: '12' },
+                ]}
+              />
+              <Popover trigger={<Button variant="outline" size="sm">Popover</Button>}>
+                <p className="px-1 py-1 text-xs text-slate-300">
+                  Popover content uses the raised surface token.
+                </p>
+              </Popover>
+              <Tooltip label="Tooltip content">
+                <Button variant="ghost" size="sm">Hover me</Button>
+              </Tooltip>
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                Open dialog
+              </Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Card title</CardTitle>
+                  <CardDescription>Compact card for panels and summaries.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Badge variant="brand">Ready</Badge>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Second card</CardTitle>
+                  <CardDescription>Same primitives in both themes.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" size="sm">Action</Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          <Dialog
+            open={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            title="Dialog primitive"
+            description="Scale + fade in 180 ms, Escape and backdrop close."
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => setDialogOpen(false)}>Confirm</Button>
+              </>
+            }
+          >
+            <Input placeholder="Dialog field" />
+          </Dialog>
+        </Section>
 
         <Section title="Motion" hint="Durations and easing for interactions and dialogs.">
           <div className="grid gap-2 sm:grid-cols-3">

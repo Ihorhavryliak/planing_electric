@@ -159,7 +159,8 @@ export function EstimatesPage() {
                         version: estimate.version,
                       })}{' '}
                       <span className="text-sm font-normal text-slate-400">
-                        ({t(`estimates.status.${estimate.status}`)})
+                        ({t(`estimates.status.${estimate.status}`)} ·{' '}
+                        {t(`estimates.type.${estimate.type}`)})
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500">

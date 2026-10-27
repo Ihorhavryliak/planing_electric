@@ -34,11 +34,12 @@ export class EstimatesRepository {
       note: string | null;
     }>,
     warnings: string[] = [],
+    type: 'power' | 'signaling' = 'power',
   ) {
     const version = await this.nextVersion(projectId);
     const [estimate] = await this.db
       .insert(estimates)
-      .values({ projectId, version, createdBy, warnings })
+      .values({ projectId, version, createdBy, warnings, type })
       .returning();
 
     if (!estimate) {

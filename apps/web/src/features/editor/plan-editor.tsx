@@ -32,10 +32,12 @@ import type {
 } from '@drawmyplace/contracts';
 import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
 import {
+  Box,
   Calculator,
   Check,
   CircuitBoard,
   Clock3,
+  Columns2,
   Eye,
   EyeOff,
   FileImage,
@@ -55,6 +57,7 @@ import {
   Save,
   ShieldCheck,
   SlidersHorizontal,
+  Square,
   TriangleAlert,
   Unlock,
   Upload,
@@ -70,6 +73,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tabs } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from './calibration-dialog';
 import { CalculationPanel } from './calculation-panel';
@@ -512,6 +516,19 @@ export function PlanEditor({
   const [fitRequest, setFitRequest] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const stored = Number(
+        window.localStorage.getItem('dmp:editor:sidebarWidth'),
+      );
+      if (Number.isFinite(stored)) {
+        return Math.min(420, Math.max(280, stored));
+      }
+    } catch {
+      // Fall back to the default width when storage is unavailable.
+    }
+    return 336;
+  });
   const [sidebarTab, setSidebarTab] = useState<EditorSidebarTab>(() => {
     try {
       const stored = window.localStorage.getItem('dmp:editor:sidebarTab');
@@ -2801,6 +2818,36 @@ export function PlanEditor({
     },
   ];
 
+  function startSidebarResize(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = sidebarWidth;
+    let latest = startWidth;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      latest = Math.min(
+        420,
+        Math.max(280, startWidth - (moveEvent.clientX - startX)),
+      );
+      setSidebarWidth(latest);
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      try {
+        window.localStorage.setItem(
+          'dmp:editor:sidebarWidth',
+          String(latest),
+        );
+      } catch {
+        // Width persistence is a convenience only.
+      }
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
   function focusValidationTarget(target: ValidationTarget) {
     switch (target.kind) {
       case 'point':
@@ -2927,12 +2974,17 @@ export function PlanEditor({
         data-editor-tooltips
         data-plan-id={plan.id}
         data-viewport={JSON.stringify(viewport)}
-        style={{ zoom: preferences.uiScale }}
         className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
-            : 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]'
+            : 'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_var(--editor-sidebar-width)]'
         }`}
+        style={
+          {
+            zoom: preferences.uiScale,
+            '--editor-sidebar-width': `${sidebarWidth}px`,
+          } as React.CSSProperties
+        }
       >
         <div
           data-tour="editor-canvas"
@@ -3204,7 +3256,14 @@ export function PlanEditor({
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside data-active-tab={sidebarTab} className="editor-sidebar flex flex-col gap-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+        <aside data-active-tab={sidebarTab} className="editor-sidebar relative flex flex-col gap-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('editor.resizeSidebar')}
+            onPointerDown={startSidebarResize}
+            className="absolute top-0 bottom-0 -left-2 hidden w-2 cursor-col-resize rounded-full transition-colors hover:bg-[var(--dmp-color-brand)]/30 lg:block"
+          />
           <NextStepHint steps={nextSteps} />
 
           <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
@@ -3356,32 +3415,32 @@ export function PlanEditor({
               <SaveStatus status={status} error={saveError} onRetry={retry} />
             </div>
 
-            <div className="mt-3 flex gap-2">
-              <Button
-                variant={viewMode === '2d' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('2d')}
-              >
-                {t('editor.view2d')}
-              </Button>
-              <Button
-                variant={viewMode === '3d' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('3d')}
-              >
-                {t('editor.view3d')}
-              </Button>
-              <Button
-                variant={viewMode === 'split' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('split')}
-              >
-                {t('editor.splitView')}
-              </Button>
-            </div>
+            <Tabs
+              className="mt-3 w-full"
+              ariaLabel={t('editor.viewMode')}
+              value={viewMode}
+              onChange={setViewMode}
+              items={[
+                {
+                  id: '2d',
+                  label: t('editor.view2d'),
+                  icon: <Square className="h-3.5 w-3.5" />,
+                },
+                {
+                  id: '3d',
+                  label: t('editor.view3d'),
+                  icon: <Box className="h-3.5 w-3.5" />,
+                },
+                {
+                  id: 'split',
+                  label: t('editor.splitView'),
+                  icon: <Columns2 className="h-3.5 w-3.5" />,
+                },
+              ]}
+            />
 
             {remoteUpdate ? (
-              <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+              <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100 motion-safe:animate-[dmp-pulse-once_900ms_ease-in-out_2]">
                 <p>{t('editor.collaboratorChanged')}</p>
                 <Button
                   variant="outline"
@@ -4306,6 +4365,32 @@ export function PlanEditor({
                 ? t('editor.generating')
                 : t('editor.generateEstimate')}
             </Button>
+            {signaling.loops.length > 0 ? (
+              <Button
+                variant="outline"
+                className="mt-2 w-full"
+                size="sm"
+                disabled={estimateBusy}
+                onClick={() => {
+                  setEstimateBusy(true);
+                  setEstimateError(null);
+                  void generateEstimate(plan.id, 'signaling')
+                    .then((result) => setEstimate(result))
+                    .catch((error: unknown) =>
+                      setEstimateError(
+                        error instanceof Error
+                          ? error.message
+                          : t('editor.estimateFailed'),
+                      ),
+                    )
+                    .finally(() => setEstimateBusy(false));
+                }}
+              >
+                {estimateBusy
+                  ? t('editor.generating')
+                  : t('editor.generateSignalingEstimate')}
+              </Button>
+            ) : null}
             {electricalBlocked ? (
               <p className="mt-2 rounded-lg border border-rose-400/20 bg-rose-400/10 px-2.5 py-2 text-[11px] leading-relaxed text-rose-100">
                 {t('electrical.blocked')}

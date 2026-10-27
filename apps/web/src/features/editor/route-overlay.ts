@@ -195,7 +195,14 @@ export function drawRoutesOverlay(
       tracePath(context, path);
       context.lineWidth = selected ? 4 : 2.5;
       context.strokeStyle = selected ? SELECTED_COLOR : routeColor;
+      if (selected) {
+        context.shadowColor = routeLight
+          ? 'rgba(47, 107, 216, 0.4)'
+          : 'rgba(251, 191, 36, 0.5)';
+        context.shadowBlur = 10;
+      }
       context.stroke();
+      context.shadowBlur = 0;
     }
 
     const label = route.label ?? route.circuitId;

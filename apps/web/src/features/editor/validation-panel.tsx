@@ -66,6 +66,8 @@ export function ValidationPanel({
           {t('validation.title')}
         </h2>
         <span
+          role="status"
+          aria-live="polite"
           className={`rounded-full border px-2 py-0.5 text-[11px] ${
             issues.length === 0
               ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200'

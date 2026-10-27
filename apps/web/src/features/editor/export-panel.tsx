@@ -22,6 +22,7 @@ import {
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { useToast } from '@/features/toast/toast-context';
 import { getErrorMessage } from '@/lib/api';
 import {
   downloadBytes,
@@ -88,8 +89,8 @@ export function ExportPanel({
   subtitle,
 }: ExportPanelProps) {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const planName = title ?? 'plan';
 
@@ -267,7 +268,6 @@ export function ExportPanel({
     if (!projectId) return;
 
     setBusy('json');
-    setError(null);
     try {
       const payload = await loadProjectExport(projectId);
       downloadTextFile(
@@ -275,8 +275,17 @@ export function ExportPanel({
         JSON.stringify(payload, null, 2),
         'application/json',
       );
+      toast({
+        tone: 'success',
+        title: t('export.downloaded'),
+        description: t('export.projectJson'),
+      });
     } catch (exportError) {
-      setError(getErrorMessage(exportError));
+      toast({
+        tone: 'error',
+        title: t('export.failed'),
+        description: getErrorMessage(exportError),
+      });
     } finally {
       setBusy(null);
     }
@@ -414,11 +423,6 @@ export function ExportPanel({
         ) : null}
       </div>
 
-      {error ? (
-        <p role="alert" className="mt-2 text-[11px] text-rose-300">
-          {error}
-        </p>
-      ) : null}
     </section>
   );
 }

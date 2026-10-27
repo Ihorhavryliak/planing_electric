@@ -22,6 +22,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ValidationPanel } from '@/features/editor/validation-panel';
+import { CardSkeleton } from '@/components/ui/skeleton';
+import { Tabs } from '@/components/ui/tabs';
 import { ExportPanel } from '@/features/editor/export-panel';
 import { ReportsPanel } from '@/features/editor/reports-panel';
 import { buildElectricalPlan } from '@/features/editor/electrical';
@@ -351,24 +353,17 @@ export function ProjectDocsPage() {
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 print:hidden">
-          {TABS.map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={tab === id}
-              onClick={() => setTab(id)}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition',
-                tab === id
-                  ? 'border-amber-400/40 bg-amber-400/15 text-amber-100'
-                  : 'border-white/10 text-slate-400 hover:bg-white/5 hover:text-slate-200',
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {t(label)}
-            </button>
-          ))}
+        <div className="sticky top-[4.25rem] z-20 -mx-2 mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-slate-950/80 px-2 py-2 backdrop-blur print:hidden">
+          <Tabs
+            ariaLabel={t('docs.title')}
+            value={tab}
+            onChange={setTab}
+            items={TABS.map(({ id, icon: Icon, label }) => ({
+              id,
+              label: t(label),
+              icon: <Icon className="h-3.5 w-3.5" />,
+            }))}
+          />
 
           {floors.length > 1 ? (
             <label className="ml-auto flex items-center gap-2 text-xs text-slate-400">
@@ -487,7 +482,8 @@ export function ProjectDocsPage() {
                         </p>
                         <p className="mt-0.5 text-xs text-slate-500">
                           {formatDate(estimate.createdAt)} ·{' '}
-                          {t(`estimates.status.${estimate.status}`)}
+                          {t(`estimates.status.${estimate.status}`)} ·{' '}
+                          {t(`estimates.type.${estimate.type}`)}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -601,10 +597,16 @@ export function ProjectDocsPage() {
                 </p>
 
                 {planLoading ? (
-                  <p className="mt-6 flex items-center gap-2 text-sm text-slate-400">
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                    {t('docs.loadingPlan')}
-                  </p>
+                  <div
+                    role="status"
+                    aria-label={t('docs.loadingPlan')}
+                    className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                  >
+                    <CardSkeleton compact />
+                    <CardSkeleton compact />
+                    <CardSkeleton compact />
+                    <CardSkeleton compact />
+                  </div>
                 ) : !plan ? (
                   <p className="mt-6 text-sm text-slate-400">
                     {t('docs.noPlan')}

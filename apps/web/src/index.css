@@ -2,6 +2,45 @@
 
 @theme {
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Semantic utilities: bg-surface, text-ink, border-subtle, etc.
+     Values resolve through the design tokens so light/dark remapping works. */
+  --color-surface: var(--dmp-color-surface);
+  --color-surface-raised: var(--dmp-color-surface-raised);
+  --color-surface-overlay: var(--dmp-color-surface-overlay);
+  --color-subtle: var(--dmp-color-border);
+  --color-subtle-strong: var(--dmp-color-border-strong);
+  --color-ink: var(--dmp-color-text);
+  --color-muted: var(--dmp-color-text-muted);
+  --color-faint: var(--dmp-color-text-subtle);
+  --color-brand: var(--dmp-color-brand);
+  --color-brand-strong: var(--dmp-color-brand-strong);
+}
+
+@keyframes dmp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dmp-scale-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dmp-pulse-once {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* One icon weight/size contract for lucide-react across the app. */
+.lucide {
+  stroke-width: 1.75;
+}
+
+@media (min-width: 1024px) {
+  body:has(.workspace-rail) #main-content {
+    padding-left: 3.5rem;
+  }
 }
 
 html,
@@ -24,8 +63,12 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-amber-400);
+  outline: 2px solid var(--dmp-color-brand);
   outline-offset: 2px;
+}
+
+[data-theme='light'] :focus-visible {
+  outline-color: var(--dmp-color-brand-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -142,7 +185,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(251 191 36 / 0.5);
+  background-color: var(--dmp-color-brand);
 }
 
 .editor-shell {

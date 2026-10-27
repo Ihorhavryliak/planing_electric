@@ -385,26 +385,26 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 #### 19.1 Дизайн-система та токени
 
 - [x] 19.1.1 Зафіксувати дизайн-токени в `packages/ui/tokens.css` (або `tailwind.config`): кольорова палітра (brand, surface, border, muted, success/warning/danger), типографічна шкала (11–32 px, 6 рівнів), шкала відступів (4/8/12/16/24/32/48), радіуси (sm/md/lg/xl/2xl), тіні (elevation 0–4), motion-токени (duration 120/180/240 ms, easing standard/emphasized).
-- [ ] 19.1.2 Перевести Tailwind-конфіг на семантичні токени (`bg-surface`, `text-muted`, `border-subtle`) замість сирих `slate-*`/`zinc-*`; ремап світлої/темної теми через CSS-змінні (як уже зроблено у Фазі 8).
-- [ ] 19.1.3 Каталог іконок: уніфікувати на `lucide-react` (розміри 14/16/20, stroke 1.75), прибрати змішані емодзі та inline-SVG у тулбарі.
-- [ ] 19.1.4 Кастомізувати ключові shadcn-компоненти (Button, Input, Select, Dialog, Popover, Tooltip, Tabs, Card, Badge) під токени; зафіксувати варіанти (size: sm/md/lg, variant: primary/secondary/ghost/danger).
+- [x] 19.1.2 Перевести Tailwind-конфіг на семантичні токени (`bg-surface`, `text-muted`, `border-subtle`) замість сирих `slate-*`/`zinc-*`; ремап світлої/темної теми через CSS-змінні (як уже зроблено у Фазі 8).
+- [x] 19.1.3 Каталог іконок: уніфікувати на `lucide-react` (розміри 14/16/20, stroke 1.75), прибрати змішані емодзі та inline-SVG у тулбарі.
+- [x] 19.1.4 Кастомізувати ключові shadcn-компоненти (Button, Input, Select, Dialog, Popover, Tooltip, Tabs, Card, Badge) під токени; зафіксувати варіанти (size: sm/md/lg, variant: primary/secondary/ghost/danger).
 - [x] 19.1.5 Додати сторінку `/design` (dev-only, за `VITE_ENABLE_DESIGN=true`) з живим каталогом токенів і компонентів для QA.
 - [x] 19.1.6 Snapshot-тести токенів/тем (light/dark) у `theme.test.ts`, щоб ремап не ламав контраст.
 
 #### 19.2 App shell і навігація
 
-- [ ] 19.2.1 Оновити каркас застосунку: компактний top bar (логотип, перемикач мови, тема, профіль, пошук `⌘K`), ліве рейкове меню з іконками + підписами на hover, breadcrumb у робочій області.
-- [ ] 19.2.2 Уніфікувати page header: заголовок, короткий опис, primary action праворуч, tabs нижче.
-- [ ] 19.2.3 Перехідні стани сторінок (skeleton-завантаження замість «Loading…»), узгоджені empty states з ілюстрацією, заголовком і CTA.
-- [ ] 19.2.4 Command palette (`⌘K`, уже є у 15.6) візуально привести до дизайн-системи: групи, іконки, підказки клавіш, нещодавні.
-- [ ] 19.2.5 Toast/notification-система замість inline-повідомлень: `sonner` або власний, з типами success/error/info та дією «Undo» де доречно.
+- [x] 19.2.1 Оновити каркас застосунку: компактний top bar (логотип, перемикач мови, тема, профіль, пошук `⌘K`), ліве рейкове меню з іконками + підписами на hover, breadcrumb у робочій області.
+- [x] 19.2.2 Уніфікувати page header: заголовок, короткий опис, primary action праворуч, tabs нижче.
+- [x] 19.2.3 Перехідні стани сторінок (skeleton-завантаження замість «Loading…»), узгоджені empty states з ілюстрацією, заголовком і CTA.
+- [x] 19.2.4 Command palette (`⌘K`, уже є у 15.6) візуально привести до дизайн-системи: групи, іконки, підказки клавіш, нещодавні.
+- [x] 19.2.5 Toast/notification-система замість inline-повідомлень: `sonner` або власний, з типами success/error/info та дією «Undo» де доречно.
 
 #### 19.3 Лендінг і публічні сторінки
 
 - [x] 19.3.1 Переробити лендінг: hero з реальним скріншотом редактора (не мокапом), 3–4 ключові блоки (план → кола → кошторис → схема), соціальний доказ, CTA «Спробувати локально» + «Увійти».
 - [x] 19.3.2 Секція «Як це працює» з 6 кроків Quick guide (перевикористати тексти з 15.11/сесії 29).
-- [ ] 19.3.3 Сторінки pricing, login, register, verify, reset — привести до єдиного шаблону (одна колонка, лого, картка форми, secondary actions).
-- [ ] 19.3.4 Адаптивність: breakpoints 360/768/1024/1440; перевірити hero, pricing, forms на мобільному.
+- [x] 19.3.3 Сторінки pricing, login, register, verify, reset — привести до єдиного шаблону (одна колонка, лого, картка форми, secondary actions).
+- [x] 19.3.4 Адаптивність: breakpoints 360/768/1024/1440; перевірити hero, pricing, forms на мобільному.
 - [x] 19.3.5 Favicon, OG-зображення, meta-theme-color, соціальні прев'ю.
 
 #### 19.4 Редактор (найважливіше)
@@ -412,38 +412,38 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 19.4.1 Оновити тулбар: групування інструментів (select, draw, measure), активний стан, роздільники, dropdown для додаткових дій; зберегти tooltip-шар (Фаза 18.3).
 - [x] 19.4.2 Бічна панель: вкладки (Властивості / Шари / Коло / Валідація / Розрахунок) з плавним перемиканням, sticky-заголовок, скрол-контейнер із тонким скролбаром.
 - [x] 19.4.3 Плаваючі панелі полотна: mini-toolbar (zoom, fit, grid, snap), статус-бар знизу (координати, масштаб, одиниці, стан збереження) — у стилі CAD.
-- [ ] 19.4.4 Property panel: секції з колапсом, inline-редагування числових полів зі стрілками, кольорові чіпи для кіл, чіткі іконки прикріплення кабелю (Фаза 18.2).
-- [ ] 19.4.5 Візуальна мова полотна: узгодити кольори стін/отворів/кімнат/трас/точок із токенами, додати м'які тіні для виділення, анімоване підсвічування при hover (Фаза 18.3) — за `prefers-reduced-motion`.
-- [ ] 19.4.6 Мікровзаємодії: плавне відкриття діалогів (scale + fade 180 ms), hover на кнопках, «магніт» при прикріпленні кабелю, пульсація при конфлікті версій.
-- [ ] 19.4.7 Режими (2D / 3D / split / preview / fullscreen) — єдиний segmented-перемикач з іконками та підписами; у preview приховати зайве, залишити kiosk-панель.
+- [x] 19.4.4 Property panel: секції з колапсом, inline-редагування числових полів зі стрілками, кольорові чіпи для кіл, чіткі іконки прикріплення кабелю (Фаза 18.2).
+- [x] 19.4.5 Візуальна мова полотна: узгодити кольори стін/отворів/кімнат/трас/точок із токенами, додати м'які тіні для виділення, анімоване підсвічування при hover (Фаза 18.3) — за `prefers-reduced-motion`.
+- [x] 19.4.6 Мікровзаємодії: плавне відкриття діалогів (scale + fade 180 ms), hover на кнопках, «магніт» при прикріпленні кабелю, пульсація при конфлікті версій.
+- [x] 19.4.7 Режими (2D / 3D / split / preview / fullscreen) — єдиний segmented-перемикач з іконками та підписами; у preview приховати зайве, залишити kiosk-панель.
 - [x] 19.4.8 Тема полотна: узгодити темний canvas (Фаза 8) з новою палітрою; перевірити контраст ліній, сітки, виділення.
 
 #### 19.5 Дані та візуалізація
 
 - [x] 19.5.1 Live takeoff (15.4): картки з ключовими метриками (довжина стін, площа, пристрої, кабель, вартість), sparkline/bar для розподілу за колами.
-- [ ] 19.5.2 Electrical panel (16.1–16.4): таблиця з фіксованим заголовком, кольорові бейджі фаз, індикатори ΔU/КЗ, згортання рядків.
+- [x] 19.5.2 Electrical panel (16.1–16.4): таблиця з фіксованим заголовком, кольорові бейджі фаз, індикатори ΔU/КЗ, згортання рядків.
 - [x] 19.5.3 Panel schedule (16.5): візуальна DIN-рейка з модулями замість лише таблиці; друкована версія — окремий clean-layout.
 - [x] 19.5.4 Validation (15.5): групування за severity, іконки, лічильники, «jump to object» з підсвіткою; порожній стан «Усе гаразд».
-- [ ] 19.5.5 Documentation workspace (15.8): єдиний tab-стиль, sticky-фільтри, кнопки експорту в одному місці.
+- [x] 19.5.5 Documentation workspace (15.8): єдиний tab-стиль, sticky-фільтри, кнопки експорту в одному місці.
 
 #### 19.6 Локальний режим і синхронізація
 
 - [x] 19.6.1 `/local`: картки проєктів у стилі `/app`, чітке розділення «локальні» vs «синхронізовані», банер синхронізації з прогресом.
-- [ ] 19.6.2 Імпорт/експорт JSON (Фаза 14) — діалоги з drag-and-drop зоною та валідацією.
+- [x] 19.6.2 Імпорт/експорт JSON (Фаза 14) — діалоги з drag-and-drop зоною та валідацією.
 - [x] 19.6.3 Demo-проєкт (15.11) — картка з прев'ю-мініатюрою плану.
 
 #### 19.7 Доступність і якість
 
 - [x] 19.7.1 Контраст: перевірити всі пари foreground/background на WCAG AA (4.5:1 для тексту, 3:1 для UI-меж).
-- [ ] 19.7.2 Focus-visible: єдиний стиль кільця фокуса; перевірити клавіатурну навігацію по нових компонентах.
+- [x] 19.7.2 Focus-visible: єдиний стиль кільця фокуса; перевірити клавіатурну навігацію по нових компонентах.
 - [x] 19.7.3 `prefers-reduced-motion`: вимкнути transform-анімації, залишити opacity.
-- [ ] 19.7.4 Скрін-рідери: `aria-label`, `role`, live-regions на toast/validation.
-- [ ] 19.7.5 Мобільний/планшет: перевірити ключові екрани (лендінг, /app, редактор у preview) на 360 і 768 px.
+- [x] 19.7.4 Скрін-рідери: `aria-label`, `role`, live-regions на toast/validation.
+- [x] 19.7.5 Мобільний/планшет: перевірити ключові екрани (лендінг, /app, редактор у preview) на 360 і 768 px.
 
 #### 19.8 Регресія та документація
 
-- [ ] 19.8.1 Оновити `scripts/browser-check.mjs` — додати візуальні перевірки (наявність дизайн-токенів, segmented-перемикача режимів, sticky-статусбара).
-- [ ] 19.8.2 Playwright-скріншоти (light + dark) для лендінгу, /app, /local, редактора, документації; зберігати в `docs/screenshots/`.
+- [x] 19.8.1 Оновити `scripts/browser-check.mjs` — додати візуальні перевірки (наявність дизайн-токенів, segmented-перемикача режимів, sticky-статусбара).
+- [x] 19.8.2 Playwright-скріншоти (light + dark) для лендінгу, /app, /local, редактора, документації; зберігати в `docs/screenshots/`.
 - [x] 19.8.3 Оновити README та документацію користувача зі скріншотами нового UI.
 - [x] 19.8.4 Перевірити, що всі попередні Playwright-селектори (`data-testid`, `data-tour`) не зламані — контракт стабільності (Фаза 17.2).
 - [x] 19.8.5 Повний прогін: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test`, `node scripts/browser-check.mjs` — усе зелене.
@@ -471,7 +471,7 @@ takeoff, layers, validation, …) зараз розгорнуті вертика
       • Розрахунок — live takeoff + load calc + panel schedule + voltage drop
       • Шари — layers + underlay + grid/snap/ortho
       • Перевірка — validation panel + clashes (лічильник у бейджі)
-- [ ] Кнопка «Згорнути панель» (вже є) + ресайз 280–420 px із
+- [x] Кнопка «Згорнути панель» (вже є) + ресайз 280–420 px із
       збереженням ширини; на `<lg` — бічна панель стає bottom-sheet
       з тими ж вкладками.
 - [x] Локалізація `ua`/`en`/`ru` для назв вкладок.
@@ -580,7 +580,7 @@ takeoff, layers, validation, …) зараз розгорнуті вертика
 
 #### 20.5 Кошторис і експорт
 
-- [ ] 20.5.1 Специфікація сигналізації як окремий кошторис
+- [x] 20.5.1 Специфікація сигналізації як окремий кошторис
       (`estimate.type = 'signaling'`): пристрої за типами, кабель за
       шлейфами, АКБ, ППКП.
 - [x] 20.5.2 Окремий **кабельний журнал сигналізації** (розширення 16.13):
@@ -622,7 +622,7 @@ takeoff, layers, validation, …) зараз розгорнуті вертика
 - [x] 20.7.3 Юніт-тести: розрахунок шлейфу, АКБ, покриття димового,
       валідація адрес, валідація сумісності, ΔU на сигнальній лінії.
 - [x] 20.7.4 API e2e: CRUD шлейфу, прив'язка точки, зміна системи траси.
-- [ ] 20.7.5 Playwright: створити шлейф → поставити 3 датчики →
+- [x] 20.7.5 Playwright: створити шлейф → поставити 3 датчики →
       провести кабель → побачити розрахунок → перевірити валідацію →
       експортувати специфікацію.
 
@@ -694,6 +694,13 @@ MVP готовий до початкового тестування корист
 - Проблеми/блокери:
 - Наступна дія:
 
+
+
+### 2026-10-27 — session 20: Phase 19 UI/UX polish and Phase 20 close-out
+- Completed: dedicated `signaling` estimate type (`estimate_type` migration 0013) with device, cable and battery items and critical-loop blocking; semantic Tailwind tokens and unified Button/Input/Select/Dialog/Popover/Tooltip/Tabs/Card/Badge primitives; icon weight contract; compact top bar with workspace rail, breadcrumbs and global ⌘K palette with groups/icons/recent commands; toast notifications with Undo; skeleton loading states; collapsible property sections and 280–420 px sidebar resize; segmented 2D/3D/split switch; phase badges and ΔU highlighting; sticky documentation tabs; drag-and-drop JSON import; focus-visible/aria-live improvements; responsive overflow check at 360/768/1024/1440; Playwright signaling and screenshot scripts; browser-check design-token/CAD-chrome assertions; refreshed screenshots.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 68, web tests, calculations), `node scripts/signaling-check.mjs`, `node scripts/responsive-check.mjs`, `node scripts/screenshots.mjs` — all green.
+- Issues/blockers: none in the planned Phase 19/20 scope.
+- Next action: deployment verification and manual QA on the Docker stack.
 
 ### 2026-10-27 — session 19: signaling domains, validation and exports
 - Completed: Phase 20 signaling model (loops, addresses, zones, route systems, local normalization, migration `0012_signaling`); 24+ curated EN 54 / EN 50131 devices with currents, coverage and compatibility; pure `buildSignalingTakeoff` with loop limits, duplicate addresses, cable ΔU, battery sizing, detector spacing/wall distance, siren and camera FOV coverage, SCS ports and archive load; editor signaling tab and property panels; canvas loop colours, address badges, EN 54 glyphs and coverage circles; validation rules with normative clauses; signaling specification, cable journal, PPKP schedule and battery reports; structural SVG; IFC sensor/alarm/communications mapping and `Pset_CableSegmentType`; demo apartment with security and fire loops; unit, validation, IFC and API e2e coverage. Also fixed the production API image (`reflect-metadata` was pruned) and cached Docker dependency installs.

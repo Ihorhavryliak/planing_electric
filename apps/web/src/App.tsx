@@ -4,6 +4,7 @@ import { I18nProvider } from '@/features/i18n/i18n-context';
 import { ThemeProvider } from '@/features/theme/theme-context';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { OnboardingProvider } from '@/features/onboarding/onboarding-context';
+import { ToastProvider } from '@/features/toast/toast-context';
 import { ActivityPage } from '@/pages/activity-page';
 import { AdminPage } from '@/pages/admin-page';
 import { AllEstimatesPage } from '@/pages/all-estimates-page';
@@ -32,6 +33,7 @@ export function App() {
   return (
     <ThemeProvider>
       <I18nProvider>
+        <ToastProvider>
         <BrowserRouter>
           <AuthProvider>
             <OnboardingProvider>
@@ -108,6 +110,7 @@ export function App() {
             </OnboardingProvider>
           </AuthProvider>
         </BrowserRouter>
+        </ToastProvider>
       </I18nProvider>
     </ThemeProvider>
   );

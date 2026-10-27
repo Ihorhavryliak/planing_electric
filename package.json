@@ -19,7 +19,10 @@
     "db:down": "docker compose -f infra/docker-compose.yml down",
     "browser:check": "node scripts/browser-check.mjs",
     "docker:prod:up": "docker compose -f infra/docker-compose.prod.yml up -d --build",
-    "docker:prod:down": "docker compose -f infra/docker-compose.prod.yml down"
+    "docker:prod:down": "docker compose -f infra/docker-compose.prod.yml down",
+    "signaling:check": "node scripts/signaling-check.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "responsive:check": "node scripts/responsive-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

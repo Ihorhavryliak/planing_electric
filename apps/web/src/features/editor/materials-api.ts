@@ -1,4 +1,8 @@
-import type { PublicEstimate, PublicMaterial } from '@drawmyplace/contracts';
+import type {
+  EstimateType,
+  PublicEstimate,
+  PublicMaterial,
+} from '@drawmyplace/contracts';
 import { apiRequest } from '@/lib/api';
 
 export function listMaterials(): Promise<PublicMaterial[]> {
@@ -44,8 +48,13 @@ export function createExportLinks(
   );
 }
 
-export function generateEstimate(planId: string): Promise<PublicEstimate> {
-  return apiRequest<PublicEstimate>(`/plans/${planId}/estimate`, {
+export function generateEstimate(
+  planId: string,
+  type: EstimateType = 'power',
+): Promise<PublicEstimate> {
+  const query = type === 'power' ? '' : `?type=${type}`;
+
+  return apiRequest<PublicEstimate>(`/plans/${planId}/estimate${query}`, {
     method: 'POST',
   });
 }

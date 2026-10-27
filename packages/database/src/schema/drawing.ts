@@ -16,6 +16,7 @@ import { organizations, users } from './identity';
 import {
   electricalPointTypeEnum,
   estimateStatusEnum,
+  estimateTypeEnum,
   openingTypeEnum,
 } from './enums';
 import type { CalculationSettings, Point2D } from './types';
@@ -220,6 +221,7 @@ export const estimates = pgTable(
       .references(() => projects.id, { onDelete: 'cascade' }),
     version: integer('version').notNull().default(1),
     status: estimateStatusEnum('status').notNull().default('draft'),
+    type: estimateTypeEnum('type').notNull().default('power'),
     createdBy: uuid('created_by').references(() => users.id, {
       onDelete: 'set null',
     }),

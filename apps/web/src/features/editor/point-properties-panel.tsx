@@ -321,6 +321,12 @@ export function PointPropertiesPanel({
           </select>
         </label>
 
+        <details open className="group rounded-xl border border-white/8 bg-white/[0.02] px-2.5 py-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] font-medium text-slate-300 [&::-webkit-details-marker]:hidden">
+            {t('editor.section.position')}
+            <span className="text-slate-500 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="mt-2 space-y-3">
         <CommitField
           key={`${point.id}-label-${point.label ?? ''}`}
           label={t('editor.label')}
@@ -399,6 +405,8 @@ export function PointPropertiesPanel({
             onCommit={(raw) => commitCoordinate(raw, 'y')}
           />
         </div>
+          </div>
+        </details>
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
