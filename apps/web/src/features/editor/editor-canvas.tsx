@@ -3369,19 +3369,6 @@ export function EditorCanvas({
                               : t('editor.hint.idle')}
       </div>
 
-      {!image ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-center backdrop-blur">
-            <p className="text-sm font-medium text-slate-200">
-              {t('editor.blankPlan')}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {t('editor.blankPlanHint')}
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       {hoverTooltip ? (
         <CanvasHoverTooltip
           target={hoverTooltip.target}
