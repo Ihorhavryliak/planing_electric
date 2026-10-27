@@ -35,7 +35,7 @@ const STEPS: readonly TourStep[] = [
     bodyKey: 'tour.circuits.body',
   },
   {
-    target: '[data-tour="validation"]',
+    target: '[data-testid="sidebar-tab-validation"]',
     titleKey: 'tour.validation.title',
     bodyKey: 'tour.validation.body',
   },

@@ -991,6 +991,7 @@ export const ru: Dictionary = {
   'guide.checkHint':
     'Просмотрите Validation и Live takeoff, затем экспортируйте SVG/PDF или создайте смету.',
   'guide.openShortcuts': 'Горячие клавиши',
+  'guide.startTour': 'Начать тур',
   'guide.show': 'Показать руководство',
   'guide.hide': 'Скрыть руководство',
   'guide.demoHint':

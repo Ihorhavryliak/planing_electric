@@ -1014,6 +1014,7 @@ const en: Dictionary = {
   'guide.checkHint':
     'Review Validation and Live takeoff, then export SVG/PDF or generate an estimate.',
   'guide.openShortcuts': 'Keyboard shortcuts',
+  'guide.startTour': 'Start the tour',
   'guide.show': 'Show quick guide',
   'guide.hide': 'Hide quick guide',
   'guide.demoHint':
@@ -2508,6 +2509,7 @@ const ua: Dictionary = {
   'guide.checkHint':
     'Перегляньте Validation і Live takeoff, потім експортуйте SVG/PDF або створіть кошторис.',
   'guide.openShortcuts': 'Гарячі клавіші',
+  'guide.startTour': 'Почати тур',
   'guide.show': 'Показати посібник',
   'guide.hide': 'Сховати посібник',
   'guide.demoHint':

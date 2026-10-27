@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Download,
   HelpCircle,
+  Play,
   Plug,
   Ruler,
   ShieldCheck,
@@ -19,6 +20,7 @@ import { useI18n } from '@/features/i18n/i18n-context';
 interface EditorGuideProps {
   onOpenShortcuts?: () => void;
   onOpenGuide?: () => void;
+  onStartTour?: () => void;
 }
 
 interface EditorGuideOverlayProps {
@@ -146,6 +148,7 @@ function GuideStepCard({
 export function EditorGuide({
   onOpenShortcuts,
   onOpenGuide,
+  onStartTour,
 }: EditorGuideProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(loadOpen);
@@ -198,8 +201,19 @@ export function EditorGuide({
           </ol>
 
           <div className="mt-3 grid gap-2">
+            {onStartTour ? (
+              <Button size="sm" className="w-full" onClick={onStartTour}>
+                <Play className="h-4 w-4" />
+                {t('guide.startTour')}
+              </Button>
+            ) : null}
             {onOpenGuide ? (
-              <Button size="sm" className="w-full" onClick={onOpenGuide}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={onOpenGuide}
+              >
                 {t('guide.openFull')}
                 <ArrowRight className="h-4 w-4" />
               </Button>

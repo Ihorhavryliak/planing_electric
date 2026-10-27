@@ -465,7 +465,7 @@ export function PlanEditor({
   onPlanChange,
 }: PlanEditorProps) {
   const { t, formatNumber, formatScale, formatUnit } = useI18n();
-  const { markHint } = useOnboarding();
+  const { markHint, restartTour } = useOnboarding();
   const [underlay, setUnderlay] = useState<UnderlaySettings>(plan.underlay);
   const [viewport, setViewport] = useState<EditorViewport>(plan.viewport);
   const [assetNonce, setAssetNonce] = useState(0);
@@ -3514,13 +3514,6 @@ export function PlanEditor({
               })}
             </div>
           </div>
-<div data-sidebar-tab="properties">
-          <EditorGuide
-            onOpenShortcuts={() => setHotkeysOpen(true)}
-            onOpenGuide={openGuide}
-          />
-</div>
-
           <section data-sidebar-tab="properties" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.dropDefaults')}
@@ -4583,6 +4576,14 @@ export function PlanEditor({
               </div>
             ) : null}
           </section>
+
+          <div data-sidebar-tab="properties">
+          <EditorGuide
+            onOpenShortcuts={() => setHotkeysOpen(true)}
+            onOpenGuide={openGuide}
+            onStartTour={() => restartTour()}
+          />
+        </div>
         </aside>
         )}
       </div>

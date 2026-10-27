@@ -32,6 +32,7 @@ interface OnboardingContextValue {
   dismissTour: () => void;
   markHint: (hint: OnboardingHint) => void;
   reset: () => void;
+  restartTour: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
@@ -162,6 +163,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     persist(DEFAULT_ONBOARDING_STATE);
   }, [persist]);
 
+  const restartTour = useCallback(() => {
+    setDismissed(false);
+    persist({ ...state, editorTour: null });
+  }, [persist, state]);
+
   const shouldShowTour =
     !loading &&
     tourMode !== 'off' &&
@@ -179,6 +185,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       dismissTour,
       markHint,
       reset,
+      restartTour,
     }),
     [
       state,
@@ -190,6 +197,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       dismissTour,
       markHint,
       reset,
+      restartTour,
     ],
   );
 
