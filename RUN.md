@@ -237,6 +237,31 @@ pnpm --filter @drawmyplace/api start
 pnpm --filter @drawmyplace/web preview
 ```
 
+## 5a. Повний стек у Docker (production-like)
+
+Окрім PostgreSQL, увесь застосунок можна запустити контейнерами:
+
+```bash
+WEB_PORT=8090 WEB_ORIGIN=http://localhost:8090   docker compose -f infra/docker-compose.prod.yml up -d --build
+```
+
+Відкрийте <http://localhost:8090>. Nginx віддає зібраний веб і проксіює
+`/api` на контейнер API. Міграції застосовуються сервісом `migrate`
+автоматично перед стартом API.
+
+Порти задаються змінними `WEB_PORT` і `WEB_ORIGIN`. Якщо 8080 уже зайнятий
+(наприклад, іншим проєктом), використайте 8090, як у прикладі.
+
+```bash
+WEB_PORT=8090 WEB_ORIGIN=http://localhost:8090   docker compose -f infra/docker-compose.prod.yml down
+```
+
+Перевірка:
+
+```bash
+curl http://localhost:8090/api/v1/health/ready
+```
+
 ## 6. Як змінити порти
 
 Порти читаються з кореневого `.env`:

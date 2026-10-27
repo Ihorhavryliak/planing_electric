@@ -694,6 +694,13 @@ MVP готовий до початкового тестування корист
 - Проблеми/блокери:
 - Наступна дія:
 
+
+### 2026-10-27 — session 19: signaling domains, validation and exports
+- Completed: Phase 20 signaling model (loops, addresses, zones, route systems, local normalization, migration `0012_signaling`); 24+ curated EN 54 / EN 50131 devices with currents, coverage and compatibility; pure `buildSignalingTakeoff` with loop limits, duplicate addresses, cable ΔU, battery sizing, detector spacing/wall distance, siren and camera FOV coverage, SCS ports and archive load; editor signaling tab and property panels; canvas loop colours, address badges, EN 54 glyphs and coverage circles; validation rules with normative clauses; signaling specification, cable journal, PPKP schedule and battery reports; structural SVG; IFC sensor/alarm/communications mapping and `Pset_CableSegmentType`; demo apartment with security and fire loops; unit, validation, IFC and API e2e coverage. Also fixed the production API image (`reflect-metadata` was pruned) and cached Docker dependency installs.
+- Tests run: `pnpm test` (API 67, web 149, calculations 6 signaling tests), `pnpm typecheck`, `pnpm lint`, full production Docker stack at <http://localhost:8090>.
+- Issues/blockers: signalling estimate is exposed as a report/spec rather than a separate `estimate.type`; Playwright signaling scenario and sidebar resize remain.
+- Next action: dedicated signaling estimate type, Playwright signaling flow, remaining Phase 19 polish (toasts, skeletons, page templates).
+
 ### 2026-10-26 — session 13: 3D, variants, local-first, i18n foundation
 - Completed: 3D view with ceiling/layers/selection/camera sync and GLB export; doors/windows as wall openings shared by 2D/3D; configurable validation rules; project variants with snapshot comparison; local-first anonymous projects in IndexedDB with JSON import/export and sync-to-account; i18n infrastructure (uk/en/pl) with language switcher; theme switch verified in browser; expanded Playwright smoke check to walls, openings, calibration, points, routes, rooms, dimensions, 3D, GLB, variants and local sync.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` — API 62 tests, web 73 tests, all passing.
