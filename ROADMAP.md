@@ -569,6 +569,9 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 21.15.5 Прибрати скасування драфту на `pointerleave`
       (використовувати `pointercancel`) і очищати стан висоти/стіни
       після завершення або скасування траси.
+- [x] 21.15.6 Вписати план у вікно за фактичними межами стін, кімнат,
+      пристроїв, трас і розмірів, коли немає растрової підкладки;
+      оновити прев’ю-скріншот редактора для лендінгу.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -847,7 +850,8 @@ MVP готовий до початкового тестування корист
 
 ### 2026-10-28 — session 28: reliable 3D wall cable routing
 - Completed: wall-mounted routes now lock to the wall that was first hit. Every later pointer position is projected onto that wall plane and clamped to the wall polyline, so the cable no longer drops to the floor or cuts across the room when the cursor leaves the wall silhouette. The first click sets the cable height (`elevationMm`), which matches the live preview and the Properties field. Pointer capture keeps the drag alive when the mouse is released outside the canvas. Route rendering switched from 1 px lines (WebGL ignores `lineWidth`) to solid tubes with joint spheres, a soft halo and a translucent tube in the live preview. Draft state for the wall/height is cleared on finish, Escape and `pointercancel`.
-- Tests run: `pnpm --filter @drawmyplace/web typecheck`, `pnpm lint`, Playwright visual check of the wall drag preview/final route (geometry stayed at the wall face, `elevationMm` = 1900), API read-back of the created route.
+- Completed: “Fit plan” now uses the real geometry bounds (walls, rooms, points, routes, dimensions) when a plan has no raster underlay, instead of the default blank sheet, so the drawing is centred and fills the canvas. The landing editor preview was regenerated with the modern glyphs and the new fit.
+- Tests run: `pnpm --filter @drawmyplace/web typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), `node scripts/browser-check.mjs` (dev), Playwright visual check of the wall drag preview/final route (geometry stayed at the wall face, `elevationMm` = 1900), API read-back of the created route.
 - Issues/blockers: temporary test wall and wall routes were removed from the demo project; the Docker web image still needs a rebuild for this batch.
 - Next action: rerun the full web test suite and `scripts/browser-check.mjs`, rebuild only the Docker web image, verify <http://localhost:8090>, then refresh screenshots.
 

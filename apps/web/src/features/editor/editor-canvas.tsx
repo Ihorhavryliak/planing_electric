@@ -1145,6 +1145,44 @@ export function EditorCanvas({
     let centerX = 0;
     let centerY = 0;
 
+    // A plan without a raster underlay should fit its actual geometry, not the
+    // default blank sheet, otherwise "fit" leaves the drawing off-centre.
+    if (!currentImage || currentImage.naturalWidth === 0) {
+      let minX = Number.POSITIVE_INFINITY;
+      let minY = Number.POSITIVE_INFINITY;
+      let maxX = Number.NEGATIVE_INFINITY;
+      let maxY = Number.NEGATIVE_INFINITY;
+      const include = (x: number, y: number) => {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      };
+
+      for (const wall of wallsRef.current) {
+        for (const vertex of wall.geometry) include(vertex.x, vertex.y);
+      }
+      for (const room of roomsRef.current) {
+        for (const vertex of room.boundary) include(vertex.x, vertex.y);
+      }
+      for (const point of pointsRef.current) include(point.x, point.y);
+      for (const route of routesRef.current) {
+        for (const vertex of route.geometry) include(vertex.x, vertex.y);
+      }
+      for (const dimension of dimensionsRef.current) {
+        include(dimension.pointA.x, dimension.pointA.y);
+        include(dimension.pointB.x, dimension.pointB.y);
+      }
+
+      if (Number.isFinite(minX) && Number.isFinite(minY)) {
+        const padding = 90;
+        contentWidth = maxX - minX + padding * 2;
+        contentHeight = maxY - minY + padding * 2;
+        centerX = (minX + maxX) / 2;
+        centerY = (minY + maxY) / 2;
+      }
+    }
+
     if (currentImage && currentImage.naturalWidth > 0) {
       const rotatedWidth =
         currentImage.naturalWidth * Math.abs(currentUnderlay.scale);
