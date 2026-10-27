@@ -554,6 +554,21 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       висотою стелі та товщиною стіни.
 - [x] 21.14.5 Перенести панель інструментів полотна на верх
       canvas-області, як у референсі.
+- [x] 21.15.1 Прив’язувати 3D-трасу до стіни, на якій почато
+      креслення: проєкція руху на площину стіни та обрізання по її
+      довжині, щоб кабель не зісковзував на підлогу й не летів через
+      кімнату.
+- [x] 21.15.2 Брати висоту стінової траси з першого кліку по стіні
+      та зберігати її в `settings.elevationMm`; placeholder висоти
+      для стіни — 1100 мм.
+- [x] 21.15.3 Захоплювати вказівник під час креслення траси/отвору,
+      щоб відпускання миші поза полотном коректно завершувало дію.
+- [x] 21.15.4 Рендерити кабельні траси в 3D об’ємними трубками зі
+      сферами на згинах і світінням замість 1-піксельної лінії;
+      показувати напівпрозору трубку в живому preview.
+- [x] 21.15.5 Прибрати скасування драфту на `pointerleave`
+      (використовувати `pointercancel`) і очищати стан висоти/стіни
+      після завершення або скасування траси.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -829,6 +844,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-28 — session 28: reliable 3D wall cable routing
+- Completed: wall-mounted routes now lock to the wall that was first hit. Every later pointer position is projected onto that wall plane and clamped to the wall polyline, so the cable no longer drops to the floor or cuts across the room when the cursor leaves the wall silhouette. The first click sets the cable height (`elevationMm`), which matches the live preview and the Properties field. Pointer capture keeps the drag alive when the mouse is released outside the canvas. Route rendering switched from 1 px lines (WebGL ignores `lineWidth`) to solid tubes with joint spheres, a soft halo and a translucent tube in the live preview. Draft state for the wall/height is cleared on finish, Escape and `pointercancel`.
+- Tests run: `pnpm --filter @drawmyplace/web typecheck`, `pnpm lint`, Playwright visual check of the wall drag preview/final route (geometry stayed at the wall face, `elevationMm` = 1900), API read-back of the created route.
+- Issues/blockers: temporary test wall and wall routes were removed from the demo project; the Docker web image still needs a rebuild for this batch.
+- Next action: rerun the full web test suite and `scripts/browser-check.mjs`, rebuild only the Docker web image, verify <http://localhost:8090>, then refresh screenshots.
 
 ### 2026-10-27 — session 27: reference editor alignment and dark palette
 - Completed: aligned the editor with <https://drawmyplace.com/editor> — room cards with area/device/circuit summaries in the left rail, a “No element selected” Properties default with ceiling height and wall thickness, the canvas tool row at the top, and a labeled workspace rail plus mobile menu. Project cards now show real SVG thumbnails and floor/device/route/circuit counts from a new `/projects/summary` endpoint with a unit-tested contract. The Local page and all workspace pages use the same 6xl width and card language, the landing uses a light editor preview and blue accents, and the dark theme uses the new neutral navy/blue palette. 3D cable drawing now previews the run as a dashed line while the mouse is held and commits a wall-mounted route on release.

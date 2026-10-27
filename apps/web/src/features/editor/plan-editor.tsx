@@ -1104,7 +1104,10 @@ export function PlanEditor({
     return point?.id ?? null;
   }
 
-  async function handleCreateRoute(geometry: Vec2[]) {
+  async function handleCreateRoute(
+    geometry: Vec2[],
+    options?: { elevationMm?: number },
+  ) {
     setRoutesError(null);
 
     try {
@@ -1112,7 +1115,12 @@ export function PlanEditor({
         geometry,
         startPointId: pointIdAt(geometry[0]),
         endPointId: pointIdAt(geometry[geometry.length - 1]),
-        settings: { mounting: routeMounting },
+        settings: {
+          mounting: routeMounting,
+          ...(options?.elevationMm != null
+            ? { elevationMm: options.elevationMm }
+            : {}),
+        },
       });
 
       setRoutes((current) => [...current, created]);
@@ -2984,9 +2992,10 @@ export function PlanEditor({
         onCreateRoom={(boundary: { x: number; y: number }[]) =>
           void handleCreateRoom(boundary)
         }
-        onCreateRoute={(geometry: { x: number; y: number }[]) =>
-          void handleCreateRoute(geometry)
-        }
+        onCreateRoute={(
+          geometry: { x: number; y: number }[],
+          options?: { elevationMm?: number },
+        ) => void handleCreateRoute(geometry, options)}
         onCreateDimension={(
           pointA: { x: number; y: number },
           pointB: { x: number; y: number },

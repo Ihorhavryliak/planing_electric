@@ -244,11 +244,38 @@ function drawSymbol(
   context.translate(at.x, at.y);
   context.rotate((rotation * Math.PI) / 180);
   context.lineCap = 'round';
+  context.shadowColor = pointLight
+    ? 'rgba(15, 23, 42, 0.18)'
+    : 'rgba(0, 0, 0, 0.55)';
+  context.shadowBlur = 5;
+  context.shadowOffsetY = 1;
   const resolved = color ?? POINT_SYMBOLS[type].color;
   if (!(subtype && signalingGlyph(context, subtype, resolved))) {
     PAINTERS[type](context, resolved);
   }
   context.restore();
+}
+
+function roundedRectPath(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+): void {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + r);
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - r);
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
 }
 
 function drawAddressBadge(
@@ -261,18 +288,16 @@ function drawAddressBadge(
   context.textAlign = 'left';
   context.textBaseline = 'middle';
 
-  const paddingX = 4;
-  const height = 13;
+  const paddingX = 5;
+  const height = 14;
   const width = context.measureText(text).width + paddingX * 2;
-  const left = at.x + RADIUS + 1;
+  const left = at.x + RADIUS + 2;
   const top = at.y - RADIUS - height;
 
-  context.fillStyle = pointLight ? '#ffffff' : '#020617';
-  context.fillRect(left, top, width, height);
-  context.lineWidth = 1;
-  context.strokeStyle = color;
-  context.strokeRect(left + 0.5, top + 0.5, width - 1, height - 1);
+  roundedRectPath(context, left, top, width, height, 7);
   context.fillStyle = color;
+  context.fill();
+  context.fillStyle = '#ffffff';
   context.fillText(text, left + paddingX, top + height / 2 + 0.5);
 }
 
@@ -285,15 +310,22 @@ function drawPointLabel(
   context.textAlign = 'center';
   context.textBaseline = 'top';
 
-  const width = context.measureText(text).width + 8;
-  const top = at.y + RADIUS + 5;
+  const width = context.measureText(text).width + 12;
+  const height = 17;
+  const top = at.y + RADIUS + 4;
 
+  roundedRectPath(context, at.x - width / 2, top, width, height, 8);
   context.fillStyle = pointLight
-    ? 'rgba(255, 255, 255, 0.94)'
-    : 'rgba(2, 6, 23, 0.85)';
-  context.fillRect(at.x - width / 2, top - 1, width, 16);
+    ? 'rgba(255, 255, 255, 0.96)'
+    : 'rgba(15, 23, 42, 0.92)';
+  context.fill();
+  context.lineWidth = 1;
+  context.strokeStyle = pointLight
+    ? 'rgba(15, 23, 42, 0.08)'
+    : 'rgba(148, 163, 184, 0.18)';
+  context.stroke();
   context.fillStyle = pointLight ? '#28313a' : '#e2e8f0';
-  context.fillText(text, at.x, top + 1);
+  context.fillText(text, at.x, top + 2.5);
 }
 
 /**
@@ -328,16 +360,14 @@ export function drawPointsOverlay(
     if (point.id === selectedId) {
       context.beginPath();
       context.arc(at.x, at.y, RADIUS + 7, 0, Math.PI * 2);
-      context.setLineDash([4, 3]);
-      context.lineWidth = 1.5;
-      context.strokeStyle = pointLight ? '#2f6bd8' : '#fbbf24';
+      context.lineWidth = 2;
+      context.strokeStyle = pointLight ? '#2f6bd8' : '#5b8def';
       context.shadowColor = pointLight
         ? 'rgba(47, 107, 216, 0.45)'
-        : 'rgba(251, 191, 36, 0.55)';
-      context.shadowBlur = 10;
+        : 'rgba(91, 141, 239, 0.55)';
+      context.shadowBlur = 12;
       context.stroke();
       context.shadowBlur = 0;
-      context.setLineDash([]);
     }
 
     drawSymbol(

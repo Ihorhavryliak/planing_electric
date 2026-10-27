@@ -77,7 +77,10 @@ interface ThreeViewProps {
   ) => void;
   onCreateWall?: (geometry: { x: number; y: number }[]) => void;
   onCreateRoom?: (boundary: { x: number; y: number }[]) => void;
-  onCreateRoute?: (geometry: { x: number; y: number }[]) => void;
+  onCreateRoute?: (
+    geometry: { x: number; y: number }[],
+    options?: { elevationMm?: number },
+  ) => void;
   onCreateDimension?: (
     pointA: { x: number; y: number },
     pointB: { x: number; y: number },
@@ -106,6 +109,62 @@ function planUnitsPerMeter(metersPerUnit: number | null): number {
   return metersPerUnit ? 1 / metersPerUnit : 100;
 }
 
+/** Gap between a wall-mounted cable and the wall face (plan units ≈ cm). */
+const WALL_ROUTE_OFFSET = 3;
+/** Cable tube radius in plan units; keeps routes readable at plan scale. */
+const ROUTE_RADIUS = 2.4;
+
+/** Projects a plan point onto the nearest segment of a wall polyline. */
+function clampToWall(
+  wall: PublicWall,
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  const nodes = wall.geometry;
+  const first = nodes[0];
+  if (!first) return point;
+  if (nodes.length === 1) return { x: first.x, y: first.y };
+
+  let best = { x: first.x, y: first.y };
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let index = 0; index < nodes.length - 1; index += 1) {
+    const a = nodes[index]!;
+    const b = nodes[index + 1]!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSquared = dx * dx + dy * dy;
+    const t =
+      lengthSquared === 0
+        ? 0
+        : Math.min(
+            1,
+            Math.max(
+              0,
+              ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared,
+            ),
+          );
+    const candidate = { x: a.x + dx * t, y: a.y + dy * t };
+    const distance = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
+  }
+
+  return best;
+}
+
+/** World-space normal of the wall face that was hit. */
+function wallFaceNormal(hit: THREE.Intersection): THREE.Vector3 | null {
+  if (!hit.face) return null;
+
+  return hit.face.normal
+    .clone()
+    .transformDirection(hit.object.matrixWorld)
+    .normalize();
+}
+
 function wallHeightPlanUnits(metersPerUnit: number | null): number {
   return 2.7 * planUnitsPerMeter(metersPerUnit);
 }
@@ -122,6 +181,24 @@ function mountingElevation(
   // Wall is the default: put the cable clearly on the wall instead of at the
   // floor, and keep legacy routes without a mounting level visible.
   return 1.1 * scale;
+}
+
+/** Converts a drafted wall height into the route elevation setting. */
+function draftElevationOption(
+  mounting: RouteMounting,
+  elevation: number | null,
+  metersPerUnit: number | null,
+): { elevationMm: number } | undefined {
+  if ((mounting !== 'wall' && mounting !== 'chase') || elevation === null) {
+    return undefined;
+  }
+
+  const millimetres =
+    (elevation / planUnitsPerMeter(metersPerUnit)) * 1000;
+
+  return {
+    elevationMm: Math.max(0, Math.min(10_000, Math.round(millimetres))),
+  };
 }
 
 function routeElevation(
@@ -273,6 +350,77 @@ function disposeGroup(group: THREE.Group): void {
   }
 }
 
+/**
+ * Builds a solid cable run instead of a one-pixel line. WebGL ignores
+ * `lineWidth`, so thin lines disappear against walls; tubes stay readable from
+ * every angle and read as physical cables in 3D.
+ */
+function routeCable(
+  route: PublicRoute,
+  elevation: number,
+  selected: boolean,
+): THREE.Group {
+  const group = new THREE.Group();
+  const color = selected ? 0xf472b6 : ROUTE_COLOR;
+  const radius = selected ? ROUTE_RADIUS * 1.3 : ROUTE_RADIUS;
+  const material = new THREE.MeshStandardMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: selected ? 0.45 : 0.22,
+    roughness: 0.35,
+    metalness: 0.2,
+  });
+  const halo = new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity: selected ? 0.22 : 0.1,
+    depthWrite: false,
+  });
+  const nodes = route.geometry.map(
+    (point) => new THREE.Vector3(point.x, elevation, point.y),
+  );
+  const add = (mesh: THREE.Mesh) => {
+    mesh.userData = { kind: 'route', id: route.id };
+    group.add(mesh);
+  };
+  const up = new THREE.Vector3(0, 1, 0);
+
+  for (let index = 0; index < nodes.length - 1; index += 1) {
+    const start = nodes[index]!;
+    const end = nodes[index + 1]!;
+    const direction = end.clone().sub(start);
+    const length = direction.length();
+    if (length <= 0) continue;
+
+    const segment = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, length, 12),
+      material,
+    );
+    segment.position.copy(start).add(end).multiplyScalar(0.5);
+    segment.quaternion.setFromUnitVectors(up, direction.normalize());
+    add(segment);
+
+    const glow = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 2.1, radius * 2.1, length, 12),
+      halo,
+    );
+    glow.position.copy(segment.position);
+    glow.quaternion.copy(segment.quaternion);
+    group.add(glow);
+  }
+
+  for (const node of nodes) {
+    const joint = new THREE.Mesh(
+      new THREE.SphereGeometry(radius * 1.15, 12, 10),
+      material,
+    );
+    joint.position.copy(node);
+    add(joint);
+  }
+
+  return group;
+}
+
 export function ThreeView({
   walls,
   openings,
@@ -317,6 +465,7 @@ export function ThreeView({
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(
     null,
   );
+  const [draftElevation, setDraftElevation] = useState<number | null>(null);
   const [pointMenu, setPointMenu] = useState<{
     id: string;
     x: number;
@@ -405,12 +554,20 @@ export function ThreeView({
   draftPointsRef.current = draftPoints;
   const draftCursorRef = useRef<{ x: number; y: number } | null>(null);
   const draftStartRef = useRef<{ x: number; y: number } | null>(null);
+  const draftElevationRef = useRef<number | null>(null);
+  const draftWallRef = useRef<{
+    id: string;
+    normal: THREE.Vector3;
+    point: THREE.Vector3;
+  } | null>(null);
   const draftGroupRef = useRef(new THREE.Group());
   const finishDraftRef = useRef<() => void>(() => {});
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const wallsRef = useRef(walls);
   wallsRef.current = walls;
+  const routeMountingRef = useRef(routeMounting);
+  routeMountingRef.current = routeMounting;
   const openingDragRef = useRef<{
     wallId: string;
     startClientX: number;
@@ -502,15 +659,113 @@ export function ThreeView({
       return { x: hit.x, y: hit.z };
     };
 
+    const rayAt = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      return raycaster.ray;
+    };
+
+    /**
+     * Wall-mounted strokes stay on the wall that was first hit. Once a wall is
+     * locked, every later move is projected onto that wall plane and clamped to
+     * the wall polyline, so the cable never dives to the floor or flies through
+     * the room when the cursor leaves the wall silhouette.
+     */
+    const routePointAt = (event: PointerEvent) => {
+      const mounting = routeMountingRef.current;
+      if (mounting !== 'wall' && mounting !== 'chase') return groundAt(event);
+
+      const locked = draftWallRef.current;
+      if (locked) {
+        const wall = wallsRef.current.find((item) => item.id === locked.id);
+        if (wall) {
+          const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+            locked.normal,
+            locked.point,
+          );
+          const hit = new THREE.Vector3();
+          if (rayAt(event).intersectPlane(plane, hit)) {
+            const onWall = clampToWall(wall, { x: hit.x, y: hit.z });
+            const faceOffset =
+              Math.max(0, (wall.thickness ?? 8) / 2) + WALL_ROUTE_OFFSET;
+            return {
+              x: onWall.x + locked.normal.x * faceOffset,
+              y: onWall.y + locked.normal.z * faceOffset,
+            };
+          }
+        }
+      }
+
+      const wallHit = wallAt(event);
+      const normal = wallHit ? wallFaceNormal(wallHit) : null;
+      if (wallHit && normal) {
+        return {
+          x: wallHit.point.x + normal.x * WALL_ROUTE_OFFSET,
+          y: wallHit.point.z + normal.z * WALL_ROUTE_OFFSET,
+        };
+      }
+
+      return groundAt(event);
+    };
+
+    const lockDraftWall = (event: PointerEvent) => {
+      const mounting = routeMountingRef.current;
+      const fallback = mountingElevation(
+        mounting,
+        wallHeightPlanUnits(metersPerUnitRef.current),
+        metersPerUnitRef.current,
+      );
+
+      if (mounting !== 'wall' && mounting !== 'chase') {
+        draftWallRef.current = null;
+        draftElevationRef.current = fallback;
+        setDraftElevation(fallback);
+        return;
+      }
+
+      const wallHit = wallAt(event);
+      const normal = wallHit ? wallFaceNormal(wallHit) : null;
+      const wall = wallHit
+        ? wallsRef.current.find(
+            (item) => item.id === wallHit.object.userData.id,
+          )
+        : undefined;
+
+      if (wallHit && normal && wall) {
+        const maxHeight = wallHeightPlanUnits(metersPerUnitRef.current);
+        const height = Math.min(maxHeight, Math.max(0, wallHit.point.y));
+        draftWallRef.current = {
+          id: wall.id,
+          normal,
+          point: wallHit.point.clone(),
+        };
+        draftElevationRef.current = height;
+        setDraftElevation(height);
+        return;
+      }
+
+      draftWallRef.current = null;
+      draftElevationRef.current = fallback;
+      setDraftElevation(fallback);
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       pointerStartRef.current = { x: event.clientX, y: event.clientY };
       openingDragRef.current = null;
 
       if (draftModeRef.current) {
-        const startPoint = groundAt(event);
+        if (draftModeRef.current === 'route') lockDraftWall(event);
+        const startPoint =
+          draftModeRef.current === 'route'
+            ? routePointAt(event)
+            : groundAt(event);
         draftStartRef.current = startPoint;
         setDraftStart(startPoint);
         controls.enabled = false;
+        renderer.domElement.setPointerCapture?.(event.pointerId);
         return;
       }
 
@@ -533,6 +788,7 @@ export function ThreeView({
         startY: wallHit.point.y,
       };
       controls.enabled = false;
+      renderer.domElement.setPointerCapture?.(event.pointerId);
     };
     const handleDragMove = (event: PointerEvent) => {
       const drag = openingDragRef.current;
@@ -564,7 +820,10 @@ export function ThreeView({
 
     const handleDraftMove = (event: PointerEvent) => {
       if (!draftModeRef.current) return;
-      const point = groundAt(event);
+      const point =
+        draftModeRef.current === 'route'
+          ? routePointAt(event)
+          : groundAt(event);
       if (!point) return;
       draftCursorRef.current = point;
       setDraftCursor(point);
@@ -573,6 +832,9 @@ export function ThreeView({
     const handlePointerUp = (event: PointerEvent) => {
       const start = pointerStartRef.current;
       pointerStartRef.current = null;
+      if (renderer.domElement.hasPointerCapture?.(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
 
       const openingDrag = openingDragRef.current;
       if (openingDrag) {
@@ -654,7 +916,8 @@ export function ThreeView({
       const draft = draftModeRef.current;
       if (draft) {
         controls.enabled = true;
-        const endPoint = groundAt(event);
+        const endPoint =
+          draft === 'route' ? routePointAt(event) : groundAt(event);
         const startPoint = draftStartRef.current;
         draftStartRef.current = null;
         setDraftStart(null);
@@ -671,7 +934,17 @@ export function ThreeView({
             distance >= 5 &&
             startPoint
           ) {
-            onCreateRouteRef.current?.([startPoint, endPoint]);
+            onCreateRouteRef.current?.(
+              [startPoint, endPoint],
+              draftElevationOption(
+                routeMountingRef.current,
+                draftElevationRef.current,
+                metersPerUnitRef.current,
+              ),
+            );
+            draftElevationRef.current = null;
+            setDraftElevation(null);
+            draftWallRef.current = null;
             setDraftMode(null);
             return;
           }
@@ -780,6 +1053,9 @@ export function ThreeView({
         setDraftCursor(null);
         controls.enabled = true;
       }
+      draftWallRef.current = null;
+      draftElevationRef.current = null;
+      setDraftElevation(null);
       if (!openingDragRef.current) return;
       openingDragRef.current = null;
       setOpeningDraft(null);
@@ -790,7 +1066,7 @@ export function ThreeView({
     renderer.domElement.addEventListener('pointermove', handleDragMove);
     renderer.domElement.addEventListener('pointermove', handleDraftMove);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
-    renderer.domElement.addEventListener('pointerleave', handlePointerCancel);
+    renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
 
     const resize = () => {
       const width = container.clientWidth;
@@ -850,7 +1126,7 @@ export function ThreeView({
       renderer.domElement.removeEventListener('pointermove', handleDraftMove);
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener(
-        'pointerleave',
+        'pointercancel',
         handlePointerCancel,
       );
       controls.dispose();
@@ -1156,17 +1432,9 @@ export function ThreeView({
     if (showRoutes) {
       for (const route of visibleRoutes) {
         const elevation = routeElevation(route, wallHeight, metersPerUnit);
-        const geometry = new THREE.BufferGeometry().setFromPoints(
-          route.geometry.map(
-            (point) => new THREE.Vector3(point.x, elevation, point.y),
-          ),
+        group.add(
+          routeCable(route, elevation, route.id === selectedRouteId),
         );
-        const material = new THREE.LineBasicMaterial({
-          color: route.id === selectedRouteId ? 0xf472b6 : ROUTE_COLOR,
-        });
-        const line = new THREE.Line(geometry, material);
-        line.userData = { kind: 'route', id: route.id };
-        group.add(line);
 
         for (const [end, pinned] of [
           ['start', route.startPointId],
@@ -1340,8 +1608,16 @@ export function ThreeView({
     const points = draftPointsRef.current;
     if (mode && points.length >= 2) {
       if (mode === 'wall') onCreateWallRef.current?.(points);
-      else if (mode === 'route') onCreateRouteRef.current?.(points);
-      else if (mode === 'room' && points.length >= 3) {
+      else if (mode === 'route') {
+        onCreateRouteRef.current?.(
+          points,
+          draftElevationOption(
+            routeMountingRef.current,
+            draftElevationRef.current,
+            metersPerUnitRef.current,
+          ),
+        );
+      } else if (mode === 'room' && points.length >= 3) {
         onCreateRoomRef.current?.(points);
       }
     }
@@ -1351,6 +1627,9 @@ export function ThreeView({
     setDraftStart(null);
     draftCursorRef.current = null;
     setDraftCursor(null);
+    draftElevationRef.current = null;
+    setDraftElevation(null);
+    draftWallRef.current = null;
   };
   finishDraftRef.current = finishDraft;
 
@@ -1368,11 +1647,12 @@ export function ThreeView({
     if (!draftMode) return;
     const draftHeight =
       draftMode === 'route'
-        ? mountingElevation(
+        ? (draftElevation ??
+          mountingElevation(
             routeMounting,
             wallHeightPlanUnits(metersPerUnit),
             metersPerUnit,
-          )
+          ))
         : 2;
     const material = new THREE.LineBasicMaterial({ color: 0x2f6bd8 });
     const linePoints = draftPoints.map(
@@ -1390,11 +1670,35 @@ export function ThreeView({
     const rubberStart =
       draftStart ?? draftPoints[draftPoints.length - 1] ?? null;
     if (rubberStart && draftCursor) {
+      const from = new THREE.Vector3(
+        rubberStart.x,
+        draftHeight,
+        rubberStart.y,
+      );
+      const to = new THREE.Vector3(draftCursor.x, draftHeight, draftCursor.y);
+      const length = from.distanceTo(to);
+
+      if (draftMode === 'route' && length > 0.5) {
+        const preview = new THREE.Mesh(
+          new THREE.CylinderGeometry(ROUTE_RADIUS, ROUTE_RADIUS, length, 10),
+          new THREE.MeshStandardMaterial({
+            color: 0x2f6bd8,
+            emissive: 0x2f6bd8,
+            emissiveIntensity: 0.45,
+            transparent: true,
+            opacity: 0.55,
+          }),
+        );
+        preview.position.copy(from).add(to).multiplyScalar(0.5);
+        preview.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          to.clone().sub(from).normalize(),
+        );
+        group.add(preview);
+      }
+
       const rubber = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(rubberStart.x, draftHeight, rubberStart.y),
-          new THREE.Vector3(draftCursor.x, draftHeight, draftCursor.y),
-        ]),
+        new THREE.BufferGeometry().setFromPoints([from, to]),
         new THREE.LineDashedMaterial({
           color: 0x2f6bd8,
           dashSize: 8,
@@ -1437,6 +1741,7 @@ export function ThreeView({
     metersPerUnit,
     draftCursor,
     draftStart,
+    draftElevation,
   ]);
 
   useEffect(() => {
@@ -1496,6 +1801,9 @@ export function ThreeView({
         setDraftStart(null);
         draftCursorRef.current = null;
         setDraftCursor(null);
+        draftElevationRef.current = null;
+        setDraftElevation(null);
+        draftWallRef.current = null;
       }
     };
     window.addEventListener('keydown', onKey);
@@ -1508,6 +1816,9 @@ export function ThreeView({
     setDraftStart(null);
     draftCursorRef.current = null;
     setDraftCursor(null);
+    draftElevationRef.current = null;
+    setDraftElevation(null);
+    draftWallRef.current = null;
   }, [draftMode]);
 
   useEffect(() => {

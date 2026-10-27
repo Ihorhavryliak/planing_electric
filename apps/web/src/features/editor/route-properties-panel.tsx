@@ -108,7 +108,13 @@ export function RoutePropertiesPanel({
             hint="mm"
             inputMode="decimal"
             initial={formatFieldNumber(route.settings.elevationMm)}
-            placeholder={mounting === 'ceiling' ? '2650' : '300'}
+            placeholder={
+              mounting === 'ceiling'
+                ? '2650'
+                : mounting === 'wall'
+                  ? '1100'
+                  : '300'
+            }
             onCommit={(raw) => {
               const parsed = parseOptionalNumber(raw, {
                 label: t('editor.heightFromFloor'),
