@@ -233,6 +233,23 @@ export const ru: Dictionary = {
   'local.emptyCta': 'Создать первый локальный проект',
   'local.emptyDemo': 'Загрузить демо-квартиру',
   'local.empty': 'Локальных проектов пока нет.',
+  'local.localOnly': 'Только локально',
+  'local.storageBanner':
+    'Эти проекты хранятся в этом браузере. Экспортируйте JSON или синхронизируйте их с аккаунтом, чтобы открывать на других устройствах.',
+  'local.storageBannerSignedOut':
+    'Эти проекты хранятся в этом браузере. Войдите, чтобы синхронизировать проект с аккаунтом.',
+  'local.openProject': 'Открыть {name}',
+  'local.thumbnailAlt': 'Предпросмотр плана {name}',
+  'local.pointsShort': 'точек',
+  'local.routesShort': 'трасс',
+  'local.roomsShort': 'комнат',
+  'local.circuitsShort': 'цепей',
+  'local.exportJson': 'Экспорт JSON',
+  'local.delete': 'Удалить проект',
+  'local.demoCardTitle': 'Демо-квартира',
+  'local.demoCardBody':
+    'Готовый план с комнатами, устройствами, цепями, трассами и отчётами — открывается одним кликом.',
+
   'local.updated':
     'Обновлено {date} · точек: {points} · трасс: {routes}',
   'local.open': 'Открыть',

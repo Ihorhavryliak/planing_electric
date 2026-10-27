@@ -995,7 +995,7 @@ async function main() {
 
   // Export, import and sync the local project.
   await page.goto(`${WEB}/local`);
-  const localRow = page.getByRole('listitem').filter({ hasText: 'Local check' });
+  const localRow = page.getByRole('article').filter({ hasText: 'Local check' });
   const exportPromise = page.waitForEvent('download');
   await localRow.getByRole('button', { name: /JSON/ }).click();
   const exported = await exportPromise;
@@ -1007,13 +1007,13 @@ async function main() {
 
   await page.locator('input[type=file]').setInputFiles(exportPath);
   await page
-    .getByRole('listitem')
+    .getByRole('article')
     .filter({ hasText: 'Local check' })
     .nth(1)
     .waitFor({ timeout: 10000 });
 
   await page
-    .getByRole('listitem')
+    .getByRole('article')
     .filter({ hasText: 'Local check' })
     .first()
     .getByRole('button', { name: /Sync to account/ })

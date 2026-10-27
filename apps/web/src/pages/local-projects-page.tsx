@@ -1,14 +1,17 @@
 import {
   ArrowUpRight,
+  CloudUpload,
   Download,
+  HardDrive,
   LoaderCircle,
+  Map as MapIcon,
   Plus,
   Sparkles,
   Trash2,
   Upload,
   UserRound,
 } from 'lucide-react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +33,8 @@ import {
 import { createProject } from '@/features/projects/projects-api';
 import { createDemoLocalProject } from '@/features/local/demo-project';
 import { DemoHint } from '@/features/editor/editor-guide';
+import { buildPlanSvg } from '@/features/editor/svg-export';
+import editorPreview from '@/assets/editor-preview.png';
 import {
   createLocalProject,
   deleteLocalProject,
@@ -53,6 +58,27 @@ export function LocalProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const thumbnails = useMemo(() => {
+    const map = new Map<string, string>();
+
+    for (const project of projects) {
+      try {
+        const svg = buildPlanSvg(
+          { planId: project.id, ...project.drawing },
+          project.drawing.circuits,
+        );
+        map.set(
+          project.id,
+          `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
+        );
+      } catch {
+        // A malformed snapshot should still be listed and exportable.
+      }
+    }
+
+    return map;
+  }, [projects]);
 
   async function reload() {
     setProjects(await listLocalProjects());
@@ -268,7 +294,22 @@ export function LocalProjectsPage() {
           )}
         </div>
 
-        <form className="mt-6 flex flex-wrap gap-2" onSubmit={handleCreate}>
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-slate-400">
+          <HardDrive className="h-4 w-4 shrink-0 text-amber-300" />
+          <p className="min-w-0 flex-1 leading-relaxed">
+            {user ? t('local.storageBanner') : t('local.storageBannerSignedOut')}
+          </p>
+          {!user ? (
+            <Link
+              to="/login"
+              className="shrink-0 text-amber-300 hover:text-amber-200"
+            >
+              {t('local.signInSync')}
+            </Link>
+          ) : null}
+        </div>
+
+        <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleCreate}>
           <Input
             ref={nameInputRef}
             value={name}
@@ -334,6 +375,21 @@ export function LocalProjectsPage() {
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-400">
               {t('local.empty')}
             </p>
+            <div className="mx-auto mt-5 max-w-md overflow-hidden rounded-xl border border-white/10 bg-slate-950/60 text-left">
+              <img
+                src={editorPreview}
+                alt={t('local.demoCardTitle')}
+                className="aspect-[16/9] w-full object-cover object-top opacity-90"
+              />
+              <div className="p-3">
+                <p className="text-sm font-semibold text-white">
+                  {t('local.demoCardTitle')}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  {t('local.demoCardBody')}
+                </p>
+              </div>
+            </div>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
               <Button
                 onClick={() => {
@@ -358,58 +414,98 @@ export function LocalProjectsPage() {
             </div>
           </div>
         ) : (
-          <ul className="mt-8 space-y-3">
-            {projects.map((project) => (
-              <li
-                key={project.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4"
-              >
-                <div>
-                  <p className="font-medium text-white">{project.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {t('local.updated', {
-                      date: formatDate(project.updatedAt),
-                      points: project.drawing.points.length,
-                      routes: project.drawing.routes.length,
-                    })}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {projects.map((project) => {
+              const thumbnail = thumbnails.get(project.id);
+
+              return (
+                <article
+                  key={project.id}
+                  className="app-panel flex flex-col overflow-hidden"
+                >
+                  <button
+                    type="button"
                     onClick={() => navigate(`/local/${project.id}`)}
+                    className="group relative block aspect-[16/10] w-full overflow-hidden bg-slate-950 text-left"
+                    aria-label={t('local.openProject', { name: project.name })}
                   >
-                    {t('local.open')}
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleExport(project)}
-                  >
-                    <Download className="h-4 w-4" />
-                    JSON
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleSync(project)}
-                    disabled={busy}
-                  >
-                    {user ? t('local.sync') : t('local.signInSync')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void handleDelete(project)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    {thumbnail ? (
+                      <img
+                        src={thumbnail}
+                        alt={t('local.thumbnailAlt', { name: project.name })}
+                        className="h-full w-full object-contain p-3 transition-transform duration-200 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <span className="flex h-full items-center justify-center text-slate-600">
+                        <MapIcon className="h-8 w-8" />
+                      </span>
+                    )}
+                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] text-slate-300 backdrop-blur">
+                      <HardDrive className="h-2.5 w-2.5" />
+                      {t('local.localOnly')}
+                    </span>
+                  </button>
+                  <div className="flex flex-1 flex-col p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-sm font-semibold text-white">
+                          {project.name}
+                        </h2>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          {formatDate(project.updatedAt)}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[10px] text-slate-500">
+                        {project.drawing.points.length} ·{' '}
+                        {t('local.pointsShort')}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+                      {project.drawing.routes.length} {t('local.routesShort')} ·{' '}
+                      {project.drawing.rooms.length} {t('local.roomsShort')} ·{' '}
+                      {project.drawing.circuits.length}{' '}
+                      {t('local.circuitsShort')}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/local/${project.id}`)}
+                      >
+                        {t('local.open')}
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleExport(project)}
+                        title={t('local.exportJson')}
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleSync(project)}
+                        disabled={busy}
+                        title={user ? t('local.sync') : t('local.signInSync')}
+                      >
+                        <CloudUpload className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto text-slate-500 hover:text-rose-300"
+                        onClick={() => void handleDelete(project)}
+                        title={t('local.delete')}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         )}
       </main>
     </div>

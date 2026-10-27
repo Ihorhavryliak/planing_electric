@@ -251,6 +251,23 @@ const en: Dictionary = {
   'local.emptyCta': 'Create your first local project',
   'local.emptyDemo': 'Load the demo apartment',
   'local.empty': 'No local projects yet.',
+  'local.localOnly': 'Local only',
+  'local.storageBanner':
+    'These projects are stored in this browser. Export JSON or sync them to your account to open them elsewhere.',
+  'local.storageBannerSignedOut':
+    'These projects are stored in this browser. Sign in to sync one to your account.',
+  'local.openProject': 'Open {name}',
+  'local.thumbnailAlt': '{name} plan preview',
+  'local.pointsShort': 'points',
+  'local.routesShort': 'routes',
+  'local.roomsShort': 'rooms',
+  'local.circuitsShort': 'circuits',
+  'local.exportJson': 'Export JSON',
+  'local.delete': 'Delete project',
+  'local.demoCardTitle': 'Demo apartment',
+  'local.demoCardBody':
+    'A ready plan with rooms, devices, circuits, routes and reports — open it in one click.',
+
   'local.updated':
     'Updated {date} · {points} points · {routes} routes',
   'local.open': 'Open',
@@ -1681,6 +1698,23 @@ const ua: Dictionary = {
   'local.emptyCta': 'Створити перший локальний проєкт',
   'local.emptyDemo': 'Завантажити демо-квартиру',
   'local.empty': 'Локальних проєктів ще немає.',
+  'local.localOnly': 'Лише локально',
+  'local.storageBanner':
+    'Ці проєкти зберігаються в цьому браузері. Експортуйте JSON або синхронізуйте їх з акаунтом, щоб відкривати на інших пристроях.',
+  'local.storageBannerSignedOut':
+    'Ці проєкти зберігаються в цьому браузері. Увійдіть, щоб синхронізувати проєкт з акаунтом.',
+  'local.openProject': 'Відкрити {name}',
+  'local.thumbnailAlt': 'Попередній перегляд плану {name}',
+  'local.pointsShort': 'точок',
+  'local.routesShort': 'трас',
+  'local.roomsShort': 'кімнат',
+  'local.circuitsShort': 'кіл',
+  'local.exportJson': 'Експорт JSON',
+  'local.delete': 'Видалити проєкт',
+  'local.demoCardTitle': 'Демо-квартира',
+  'local.demoCardBody':
+    'Готовий план із кімнатами, пристроями, колами, трасами й звітами — відкривається одним кліком.',
+
   'local.updated':
     'Оновлено {date} · точок: {points} · трас: {routes}',
   'local.open': 'Відкрити',

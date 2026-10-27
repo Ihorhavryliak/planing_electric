@@ -428,9 +428,9 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 19.6 Локальний режим і синхронізація
 
-- [ ] 19.6.1 `/local`: картки проєктів у стилі `/app`, чітке розділення «локальні» vs «синхронізовані», банер синхронізації з прогресом.
+- [x] 19.6.1 `/local`: картки проєктів у стилі `/app`, чітке розділення «локальні» vs «синхронізовані», банер синхронізації з прогресом.
 - [ ] 19.6.2 Імпорт/експорт JSON (Фаза 14) — діалоги з drag-and-drop зоною та валідацією.
-- [ ] 19.6.3 Demo-проєкт (15.11) — картка з прев'ю-мініатюрою плану.
+- [x] 19.6.3 Demo-проєкт (15.11) — картка з прев'ю-мініатюрою плану.
 
 #### 19.7 Доступність і якість
 
@@ -450,6 +450,35 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** єдина дизайн-система з токенами; лендінг, `/app`, `/local`, редактор (2D/3D/split/preview/fullscreen), документація та публічні сторінки візуально узгоджені; світла/темна теми проходять контраст AA; усі існуючі e2e та Playwright-селектори працюють; у `docs/screenshots/` оновлені скріншоти.
 
+#### 19.4.2a Табована бічна панель (fix cramped sidebar)
+
+Проблема: усі панелі (properties, circuits, electrical, panel schedule,
+takeoff, layers, validation, …) зараз розгорнуті вертикально в одному
+стовпці; полотно стискається, потрібен постійний скрол.
+
+- [ ] Згрупувати панелі у 5 вкладок з іконкою + коротким підписом:
+      **Властивості** | **Кола** | **Розрахунок** | **Шари** | **Перевірка**
+- [ ] Вкладки sticky вгорі панелі; активна вкладка зберігається в
+      `localStorage` (`dmp:editor:sidebarTab`).
+- [ ] Автоперемикання на «Властивості» при виборі об'єкта (окрім
+      випадку, коли користувач явно обрав іншу вкладку — тоді лише
+      бейдж-лічильник, без примусового перемикання).
+- [ ] Всередині вкладки — секції з колапсом (19.4.4), sticky-заголовок
+      секції, тонкий скролбар (`scrollbar-width: thin`).
+- [ ] Вміст вкладок:
+      • Властивості — object property panel (точка/траса/стіна/кімната/отвір/розмір)
+      • Кола — circuits list + electrical defaults
+      • Розрахунок — live takeoff + load calc + panel schedule + voltage drop
+      • Шари — layers + underlay + grid/snap/ortho
+      • Перевірка — validation panel + clashes (лічильник у бейджі)
+- [ ] Кнопка «Згорнути панель» (вже є) + ресайз 280–420 px із
+      збереженням ширини; на `<lg` — бічна панель стає bottom-sheet
+      з тими ж вкладками.
+- [ ] Локалізація `ua`/`en`/`ru` для назв вкладок.
+- [ ] Playwright: перемикання вкладок, збереження після reload,
+      автоперемикання на «Властивості» при кліку на точку, бейдж
+      валідації рахує issues.
+      
 ## 4. Наскрізний сценарій приймання MVP
 
 Використовуйте цей сценарій як основне визначення працюючого MVP:
@@ -764,3 +793,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`, `node scripts/capture-screenshots.mjs`.
 - Issues/blockers: authenticated `/app` and documentation screenshots are not captured yet; OG image paths are root-relative until the production domain is fixed.
 - Next action: app shell/page headers (19.2), remaining editor chrome (19.4), local cards (19.6) or accessibility (19.7).
+
+### 2026-10-27 — session 49: local project cards and demo preview (19.6.1, 19.6.3)
+- Completed: `/local` now uses the same card language as `/app`: a generated SVG plan thumbnail per project (with a map fallback), “Local only” badge, updated date, point/route/room/circuit counts, and compact Open/Export/Sync/Delete actions.
+- Completed: storage banner explains that projects live in this browser and offers sign-in when needed; the empty state includes a demo preview card with a one-click load action.
+- Completed: browser smoke test selectors migrated from the old list items to the new article cards.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
+- Issues/blockers: sync is still one-shot with a busy state, not a progress banner; import/export remains a file picker without drag-and-drop (19.6.2).
+- Next action: app shell/page headers (19.2), local import/export dialog (19.6.2) or accessibility pass (19.7).
