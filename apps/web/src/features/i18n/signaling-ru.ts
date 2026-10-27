@@ -129,7 +129,7 @@ export const signalingRu: Record<string, string> = {
   'editor.lockPoint': 'Закрепить',
   'editor.unlockPoint': 'Открепить',
   'editor.threeDraw': 'Чертить в 3D',
-  'editor.threeDrawHint': 'Щёлкайте пол, чтобы добавить точки · Enter — завершить · Esc — отменить',
+  'editor.threeDrawHint': 'Щёлкайте план, чтобы добавить точки · Enter — завершить · Esc — отменить',
   'editor.dock.title': 'Устройства и размещение',
   'editor.dock.devices': 'Устройства',
   'editor.dock.openings': 'Дверь / окно',

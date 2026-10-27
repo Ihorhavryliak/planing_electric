@@ -129,7 +129,7 @@ export const signalingEn: Record<string, string> = {
   'editor.lockPoint': 'Pin in place',
   'editor.unlockPoint': 'Unpin',
   'editor.threeDraw': 'Draw in 3D',
-  'editor.threeDrawHint': 'Click the floor to add points · Enter to finish · Esc to cancel',
+  'editor.threeDrawHint': 'Click the plan to add points · Enter to finish · Esc to cancel',
   'editor.dock.title': 'Devices and placement',
   'editor.dock.devices': 'Devices',
   'editor.dock.openings': 'Door / window',

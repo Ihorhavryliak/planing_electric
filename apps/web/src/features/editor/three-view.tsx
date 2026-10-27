@@ -1419,6 +1419,7 @@ export function ThreeView({
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       const raycaster = new THREE.Raycaster();
+      raycaster.params.Line.threshold = 4;
       raycaster.setFromCamera(new THREE.Vector2(x, y), cameraRef.current!);
       const hit = raycaster
         .intersectObjects(contentRef.current.children, true)
