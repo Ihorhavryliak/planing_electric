@@ -708,7 +708,10 @@ export function ThreeView({
         };
       }
 
-      return groundAt(event);
+      // A wall/chase cable only exists on a wall. Falling back to the floor
+      // here produced a cable floating at wall height in front of the wall,
+      // which looked like it was attached but was metres away.
+      return null;
     };
 
     const lockDraftWall = (event: PointerEvent) => {
@@ -769,6 +772,10 @@ export function ThreeView({
           draftModeRef.current === 'route'
             ? routePointAt(event)
             : groundAt(event);
+        if (!startPoint) {
+          controls.enabled = true;
+          return;
+        }
         draftStartRef.current = startPoint;
         setDraftStart(startPoint);
         controls.enabled = false;
