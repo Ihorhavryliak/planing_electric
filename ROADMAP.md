@@ -532,6 +532,28 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       службовий бейдж фази з хедера.
 - [x] 21.12.6 Замінити System check на лендінгу користувацькою
       карткою можливостей і прибрати «Last live check».
+- [x] 21.13.1 Вирівняти ширину сторінок робочого простору (6xl),
+      додати підписи до навігації, розширений лівий rail і мобільне
+      меню з тими самими назвами.
+- [x] 21.13.2 Додати API-зведення проєктів із кількістю поверхів,
+      пристроїв, трас, кімнат і кіл та SVG-мініатюрою; показати це
+      у картці проєкту.
+- [x] 21.13.3 Привести сторінку Local projects до стилю кабінету:
+      ширина 6xl, заголовок, панель створення, порожній стан і картки.
+- [x] 21.13.4 Перевести лендінг на світлий прев’ю-скріншот, сині
+      акценти та картку можливостей; прибрати теплі маркетингові
+      градієнти.
+- [x] 21.14.1 Додати нову темну палітру (нейтральний navy + синій
+      акцент) для всього застосунку та редактора.
+- [x] 21.14.2 Додати живе проведення кабелю в 3D: пунктирна лінія
+      від старту до курсора під час утримання миші, створення траси
+      після відпускання та підтримка кліків/Enter.
+- [x] 21.14.3 Показувати в лівій панелі картки кімнат із площею,
+      кількістю пристроїв і кольоровими колами кіл.
+- [x] 21.14.4 Додати в Properties стан «Нічого не вибрано» з типовими
+      висотою стелі та товщиною стіни.
+- [x] 21.14.5 Перенести панель інструментів полотна на верх
+      canvas-області, як у референсі.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -807,6 +829,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-27 — session 27: reference editor alignment and dark palette
+- Completed: aligned the editor with <https://drawmyplace.com/editor> — room cards with area/device/circuit summaries in the left rail, a “No element selected” Properties default with ceiling height and wall thickness, the canvas tool row at the top, and a labeled workspace rail plus mobile menu. Project cards now show real SVG thumbnails and floor/device/route/circuit counts from a new `/projects/summary` endpoint with a unit-tested contract. The Local page and all workspace pages use the same 6xl width and card language, the landing uses a light editor preview and blue accents, and the dark theme uses the new neutral navy/blue palette. 3D cable drawing now previews the run as a dashed line while the mouse is held and commits a wall-mounted route on release.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), `pnpm --filter @drawmyplace/api test projects.e2e.spec.ts` (7), `node scripts/browser-check.mjs` (dev), Playwright visual checks for 3D cable drag preview, light/dark editor, project-card thumbnail and room cards.
+- Issues/blockers: screenshots and Docker images need a final rebuild after this batch.
+- Next action: rebuild Docker web/api, rerun browser/signaling/responsive/screenshot checks on <http://localhost:8090>, then review the room-card density on phones.
 
 ### 2026-10-27 — session 26: UX, visual hierarchy and convenience pass
 - Completed: moved view controls (fullscreen / preview / panels / help) into the top mode bar so they remain reachable in fullscreen, removed duplicate zoom/fit from the canvas toolbar, and moved Grid / Snap / Ortho into the clickable status bar. Raised the canvas toolbar button size and kept it on one row.

@@ -753,6 +753,12 @@ const en: Dictionary = {
   'editor.calcFailed': 'Could not calculate: {error}',
   'editor.type': 'Type',
   'editor.quickEdit': 'Quick edit',
+  'editor.noSelection': 'No element selected',
+  'editor.noSelectionHint':
+    'Select a device, wall, room or cable route on the plan to edit it.',
+  'editor.defaultCeilingHeight': 'Default ceiling height',
+  'editor.defaultWallThickness': 'Default wall thickness',
+  'editor.invalidNumber': 'Enter a valid number.',
   'editor.label': 'Label',
   'editor.labelPlaceholder': 'e.g. S1',
   'editor.mountingHeight': 'Mounting height',
@@ -1016,6 +1022,7 @@ const en: Dictionary = {
 
   'rooms.navigate': 'Room navigation',
   'rooms.navigateEmpty': 'No rooms on this floor yet.',
+  'rooms.devicesShort': 'dev',
   'palette.title': 'Command palette',
   'palette.placeholder': 'Search tools and commands…',
   'palette.search': 'Search commands',
@@ -2275,6 +2282,12 @@ const ua: Dictionary = {
   'editor.calcFailed': 'Не вдалося обчислити: {error}',
   'editor.type': 'Тип',
   'editor.quickEdit': 'Швидке редагування',
+  'editor.noSelection': 'Нічого не вибрано',
+  'editor.noSelectionHint':
+    'Виберіть пристрій, стіну, кімнату або кабельну трасу на плані, щоб редагувати їх.',
+  'editor.defaultCeilingHeight': 'Типова висота стелі',
+  'editor.defaultWallThickness': 'Типова товщина стіни',
+  'editor.invalidNumber': 'Введіть коректне число.',
   'editor.label': 'Позначка',
   'editor.labelPlaceholder': 'напр. S1',
   'editor.mountingHeight': 'Висота монтажу',
@@ -2538,6 +2551,7 @@ const ua: Dictionary = {
 
   'rooms.navigate': 'Навігація кімнатами',
   'rooms.navigateEmpty': 'На цьому поверсі ще немає кімнат.',
+  'rooms.devicesShort': 'пристр.',
   'palette.title': 'Палітра команд',
   'palette.placeholder': 'Пошук інструментів і команд…',
   'palette.search': 'Пошук команд',

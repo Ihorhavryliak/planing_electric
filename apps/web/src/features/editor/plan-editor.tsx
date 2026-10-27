@@ -100,6 +100,7 @@ import {
 } from '@drawmyplace/calculations';
 import { useEditorLayers } from './editor-layers';
 import { ComponentDock, type OpeningSizeMeters } from './component-dock';
+import { CommitField } from './commit-field';
 import { HistoryPanel } from './history-panel';
 import {
   createDimension,
@@ -3220,6 +3221,10 @@ export function PlanEditor({
           <aside className="editor-sidebar order-1 flex flex-col gap-3 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
             <RoomNavigator
               rooms={rooms}
+              points={points}
+              routes={routes}
+              circuits={circuits}
+              metersPerUnit={metersPerUnit}
               selectedRoomId={selectedRoomId}
               onSelect={focusRoom}
             />
@@ -3530,6 +3535,58 @@ export function PlanEditor({
               })}
             </div>
           </div>
+          {selectedPoint ||
+          selectedRoute ||
+          selectedWall ||
+          selectedOpening ||
+          selectedRoom ||
+          selectedDimension ? null : (
+            <section
+              data-object-panel
+              data-sidebar-tab="properties"
+              className="editor-panel p-4"
+            >
+              <h2 className="text-sm font-semibold text-white">
+                {t('editor.noSelection')}
+              </h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                {t('editor.noSelectionHint')}
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <CommitField
+                  key={`ceiling-${takeoffSettings.wallHeightMeters}`}
+                  label={t('editor.defaultCeilingHeight')}
+                  hint="m"
+                  inputMode="decimal"
+                  initial={String(takeoffSettings.wallHeightMeters)}
+                  onCommit={(raw) => {
+                    const parsed = Number(raw.replace(',', '.'));
+                    if (!Number.isFinite(parsed) || parsed <= 0) {
+                      return t('editor.invalidNumber');
+                    }
+                    setWallHeight(Math.min(10, Math.max(0.5, parsed)));
+                    return null;
+                  }}
+                />
+                <CommitField
+                  key={`thickness-${takeoffSettings.defaultThicknessMeters}`}
+                  label={t('editor.defaultWallThickness')}
+                  hint="m"
+                  inputMode="decimal"
+                  initial={String(takeoffSettings.defaultThicknessMeters)}
+                  onCommit={(raw) => {
+                    const parsed = Number(raw.replace(',', '.'));
+                    if (!Number.isFinite(parsed) || parsed <= 0) {
+                      return t('editor.invalidNumber');
+                    }
+                    setDefaultThickness(Math.min(2, Math.max(0.02, parsed)));
+                    return null;
+                  }}
+                />
+              </div>
+            </section>
+          )}
+
           <section data-sidebar-tab="properties" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.dropDefaults')}

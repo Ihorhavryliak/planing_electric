@@ -72,8 +72,8 @@ body {
 }
 
 ::selection {
-  background-color: var(--color-amber-400);
-  color: var(--color-slate-950);
+  background-color: var(--dmp-color-brand);
+  color: #ffffff;
 }
 
 :focus-visible {
@@ -94,6 +94,30 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/*
+ * Dark theme: the same neutral blue/gray family as the reference, with a
+ * deeper navy surface and the blue brand accent.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-slate-950: #070b11;
+  --color-slate-900: #0d131c;
+  --color-slate-800: #131c27;
+  --color-slate-700: #1c2a38;
+  --color-slate-600: #2b3a4a;
+  --color-slate-500: #64748b;
+  --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
+  --color-slate-200: #e2e8f0;
+  --color-slate-100: #f1f5f9;
+  --color-white: #f8fafc;
+
+  --panel-bg-top: rgb(13 19 28 / 0.94);
+  --panel-bg-bottom: rgb(7 11 17 / 0.96);
+  --panel-border: rgb(148 163 184 / 0.14);
 }
 
 /*
@@ -222,7 +246,7 @@ body {
 
 .editor-panel:hover,
 .app-panel:hover {
-  border-color: rgb(251 191 36 / 0.22);
+  border-color: rgb(91 141 239 / 0.35);
   box-shadow: 0 20px 52px -28px rgb(0 0 0 / 0.95);
 }
 
@@ -266,14 +290,14 @@ body {
 .editor-shell input:hover,
 .editor-shell select:hover,
 .editor-shell textarea:hover {
-  border-color: rgb(251 191 36 / 0.28);
+  border-color: rgb(91 141 239 / 0.4);
 }
 
 .editor-shell input:focus,
 .editor-shell select:focus,
 .editor-shell textarea:focus {
-  border-color: rgb(251 191 36 / 0.55);
-  box-shadow: 0 0 0 3px rgb(251 191 36 / 0.12);
+  border-color: rgb(91 141 239 / 0.7);
+  box-shadow: 0 0 0 3px rgb(91 141 239 / 0.16);
   outline: none;
 }
 

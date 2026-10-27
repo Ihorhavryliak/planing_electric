@@ -311,6 +311,12 @@ export function ThreeView({
     'wall' | 'room' | 'route' | 'dimension' | null
   >(null);
   const [draftPoints, setDraftPoints] = useState<{ x: number; y: number }[]>([]);
+  const [draftCursor, setDraftCursor] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [pointMenu, setPointMenu] = useState<{
     id: string;
     x: number;
@@ -397,6 +403,8 @@ export function ThreeView({
   draftModeRef.current = draftMode;
   const draftPointsRef = useRef(draftPoints);
   draftPointsRef.current = draftPoints;
+  const draftCursorRef = useRef<{ x: number; y: number } | null>(null);
+  const draftStartRef = useRef<{ x: number; y: number } | null>(null);
   const draftGroupRef = useRef(new THREE.Group());
   const finishDraftRef = useRef<() => void>(() => {});
   const fitSignatureRef = useRef<string | null>(null);
@@ -482,9 +490,29 @@ export function ThreeView({
         .find((entry) => entry.object.userData?.kind === 'wall');
     };
 
+    const groundAt = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+      const hit = new THREE.Vector3();
+      if (!raycaster.ray.intersectPlane(plane, hit)) return null;
+      return { x: hit.x, y: hit.z };
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       pointerStartRef.current = { x: event.clientX, y: event.clientY };
       openingDragRef.current = null;
+
+      if (draftModeRef.current) {
+        const startPoint = groundAt(event);
+        draftStartRef.current = startPoint;
+        setDraftStart(startPoint);
+        controls.enabled = false;
+        return;
+      }
 
       if (!placementOpeningRef.current) return;
       const wallHit = wallAt(event);
@@ -532,6 +560,14 @@ export function ThreeView({
         bottom,
         top,
       });
+    };
+
+    const handleDraftMove = (event: PointerEvent) => {
+      if (!draftModeRef.current) return;
+      const point = groundAt(event);
+      if (!point) return;
+      draftCursorRef.current = point;
+      setDraftCursor(point);
     };
 
     const handlePointerUp = (event: PointerEvent) => {
@@ -615,38 +651,56 @@ export function ThreeView({
         }
       }
 
+      const draft = draftModeRef.current;
+      if (draft) {
+        controls.enabled = true;
+        const endPoint = groundAt(event);
+        const startPoint = draftStartRef.current;
+        draftStartRef.current = null;
+        setDraftStart(null);
+        draftCursorRef.current = null;
+        setDraftCursor(null);
+        const distance = start
+          ? Math.hypot(event.clientX - start.x, event.clientY - start.y)
+          : 0;
+
+        if (endPoint) {
+          if (
+            draft === 'route' &&
+            draftPointsRef.current.length === 0 &&
+            distance >= 5 &&
+            startPoint
+          ) {
+            onCreateRouteRef.current?.([startPoint, endPoint]);
+            setDraftMode(null);
+            return;
+          }
+          if (draft === 'dimension') {
+            const previous = draftPointsRef.current[0];
+            if (previous) {
+              onCreateDimensionRef.current?.(previous, endPoint);
+              setDraftPoints([]);
+            } else if (distance >= 5 && startPoint) {
+              onCreateDimensionRef.current?.(startPoint, endPoint);
+            } else {
+              setDraftPoints([endPoint]);
+            }
+          } else {
+            setDraftPoints((current) => {
+              if (current.length === 0 && distance >= 5 && startPoint) {
+                return [startPoint, endPoint];
+              }
+              return [...current, endPoint];
+            });
+          }
+        }
+        return;
+      }
+
       if (
         start &&
         Math.hypot(event.clientX - start.x, event.clientY - start.y) < 5
       ) {
-        const draft = draftModeRef.current;
-        if (draft) {
-          const rect = renderer.domElement.getBoundingClientRect();
-          const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-          const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          const raycaster = new THREE.Raycaster();
-          raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-          const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-          const hit = new THREE.Vector3();
-          if (raycaster.ray.intersectPlane(plane, hit)) {
-            if (draft === 'dimension') {
-              const previous = draftPointsRef.current[0];
-              if (previous) {
-                onCreateDimensionRef.current?.(previous, {
-                  x: hit.x,
-                  y: hit.z,
-                });
-                setDraftPoints([]);
-              } else {
-                setDraftPoints([{ x: hit.x, y: hit.z }]);
-              }
-            } else {
-              setDraftPoints((current) => [...current, { x: hit.x, y: hit.z }]);
-            }
-          }
-          return;
-        }
-
         const placement = placementRef.current;
         const opening = placementOpeningRef.current;
         if (
@@ -719,6 +773,13 @@ export function ThreeView({
       }
     };
     const handlePointerCancel = () => {
+      if (draftModeRef.current) {
+        draftStartRef.current = null;
+        setDraftStart(null);
+        draftCursorRef.current = null;
+        setDraftCursor(null);
+        controls.enabled = true;
+      }
       if (!openingDragRef.current) return;
       openingDragRef.current = null;
       setOpeningDraft(null);
@@ -727,6 +788,7 @@ export function ThreeView({
 
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointermove', handleDragMove);
+    renderer.domElement.addEventListener('pointermove', handleDraftMove);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointerleave', handlePointerCancel);
 
@@ -785,6 +847,7 @@ export function ThreeView({
       observer.disconnect();
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
       renderer.domElement.removeEventListener('pointermove', handleDragMove);
+      renderer.domElement.removeEventListener('pointermove', handleDraftMove);
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener(
         'pointerleave',
@@ -1284,6 +1347,10 @@ export function ThreeView({
     }
     setDraftPoints([]);
     setDraftMode(null);
+    draftStartRef.current = null;
+    setDraftStart(null);
+    draftCursorRef.current = null;
+    setDraftCursor(null);
   };
   finishDraftRef.current = finishDraft;
 
@@ -1298,7 +1365,7 @@ export function ThreeView({
         else material.dispose();
       }
     }
-    if (draftPoints.length === 0) return;
+    if (!draftMode) return;
     const draftHeight =
       draftMode === 'route'
         ? mountingElevation(
@@ -1319,15 +1386,58 @@ export function ThreeView({
         ),
       );
     }
-    for (const point of draftPoints) {
-      const dot = new THREE.Mesh(
-        new THREE.SphereGeometry(5, 10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x2f6bd8 }),
+
+    const rubberStart =
+      draftStart ?? draftPoints[draftPoints.length - 1] ?? null;
+    if (rubberStart && draftCursor) {
+      const rubber = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(rubberStart.x, draftHeight, rubberStart.y),
+          new THREE.Vector3(draftCursor.x, draftHeight, draftCursor.y),
+        ]),
+        new THREE.LineDashedMaterial({
+          color: 0x2f6bd8,
+          dashSize: 8,
+          gapSize: 6,
+          transparent: true,
+          opacity: 0.75,
+        }),
       );
+      rubber.computeLineDistances();
+      group.add(rubber);
+    }
+
+    const dotMaterial = new THREE.MeshStandardMaterial({ color: 0x2f6bd8 });
+    for (const point of draftPoints) {
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(5, 10, 10), dotMaterial);
       dot.position.set(point.x, draftHeight, point.y);
       group.add(dot);
     }
-  }, [draftPoints, draftMode, routeMounting, metersPerUnit]);
+    if (draftStart) {
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(5, 10, 10), dotMaterial);
+      dot.position.set(draftStart.x, draftHeight, draftStart.y);
+      group.add(dot);
+    }
+    if (draftCursor && !draftStart) {
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(4, 10, 10),
+        new THREE.MeshStandardMaterial({
+          color: 0x60a5fa,
+          transparent: true,
+          opacity: 0.9,
+        }),
+      );
+      dot.position.set(draftCursor.x, draftHeight, draftCursor.y);
+      group.add(dot);
+    }
+  }, [
+    draftPoints,
+    draftMode,
+    routeMounting,
+    metersPerUnit,
+    draftCursor,
+    draftStart,
+  ]);
 
   useEffect(() => {
     const group = openingDraftGroupRef.current;
@@ -1382,10 +1492,22 @@ export function ThreeView({
       } else if (event.key === 'Escape') {
         setDraftPoints([]);
         setDraftMode(null);
+        draftStartRef.current = null;
+        setDraftStart(null);
+        draftCursorRef.current = null;
+        setDraftCursor(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, [draftMode]);
+
+  useEffect(() => {
+    if (draftMode) return;
+    draftStartRef.current = null;
+    setDraftStart(null);
+    draftCursorRef.current = null;
+    setDraftCursor(null);
   }, [draftMode]);
 
   useEffect(() => {

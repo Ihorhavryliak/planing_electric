@@ -139,7 +139,7 @@ export function AppPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="app-grid pointer-events-none absolute inset-0 opacity-40" />
-      <div className="pointer-events-none absolute -top-48 left-1/2 h-[30rem] w-[52rem] -translate-x-1/2 rounded-full bg-amber-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-48 left-1/2 h-[30rem] w-[52rem] -translate-x-1/2 rounded-full bg-[var(--dmp-color-brand)]/10 blur-3xl" />
 
       <div className="relative">
         <WorkspaceHeader />
@@ -147,7 +147,7 @@ export function AppPage() {
         <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+              <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
                 {t('app.projects')}
               </p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -159,7 +159,7 @@ export function AppPage() {
             </div>
 
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-              <FolderKanban className="h-4 w-4 text-amber-300" />
+              <FolderKanban className="h-4 w-4 text-[var(--dmp-color-brand)]" />
               <span>
                 <strong className="font-semibold text-white">
                   {activeProjects.length}
@@ -175,7 +175,7 @@ export function AppPage() {
 
           <section className="mt-8 app-panel p-5 sm:p-6">
             <div className="flex items-center gap-2">
-              <FolderPlus className="h-4 w-4 text-amber-300" />
+              <FolderPlus className="h-4 w-4 text-[var(--dmp-color-brand)]" />
               <h2 className="text-sm font-semibold text-white">
                 {t('app.newProject')}
               </h2>

@@ -9,7 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { cn } from '@/lib/utils';
-import editorPreview from '@/assets/editor-preview.png';
+import editorPreview from '@/assets/editor-preview-light.png';
 
 const capabilities = [
   { titleKey: 'landing.cap.read', hintKey: 'landing.cap.readHint' },
@@ -35,12 +35,12 @@ export function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="app-grid pointer-events-none absolute inset-0 opacity-60" />
-      <div className="pointer-events-none absolute -top-48 left-1/2 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-amber-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-48 left-1/2 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full bg-[var(--dmp-color-brand)]/10 blur-3xl" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-12">
         <header className="flex flex-wrap items-center justify-between gap-4 py-6">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-amber-400/20">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-blue-500/20">
               <Zap className="h-5 w-5" fill="currentColor" />
             </span>
             <div>
@@ -79,14 +79,14 @@ export function LandingPage() {
         <main id="main-content" className="flex-1">
           <section className="grid items-center gap-10 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-200">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--dmp-color-brand)]/25 bg-[var(--dmp-color-brand)]/10 px-3 py-1 text-xs font-medium text-[var(--dmp-color-brand)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 {t('landing.badge')}
               </span>
 
               <h1 className="mt-6 max-w-2xl text-5xl leading-[1.05] font-semibold tracking-tight text-white sm:text-6xl">
                 {t('landing.title')}{' '}
-                <span className="text-amber-300">{t('landing.titleAccent')}</span>
+                <span className="text-[var(--dmp-color-brand)]">{t('landing.titleAccent')}</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-400">
@@ -184,7 +184,7 @@ export function LandingPage() {
                 key={capability.titleKey}
                 className="rounded-2xl border border-white/10 bg-white/[0.03] p-5"
               >
-                <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+                <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
                   {t('landing.direction')}
                 </p>
                 <h3 className="mt-2 text-base font-semibold text-white">
@@ -199,7 +199,7 @@ export function LandingPage() {
 
           <section className="border-t border-white/10 py-14">
             <div className="max-w-2xl">
-              <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+              <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
                 {t('landing.workflow.eyebrow')}
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight text-white">
@@ -220,7 +220,7 @@ export function LandingPage() {
                   key={key}
                   className="app-panel p-5"
                 >
-                  <span className="font-mono text-xs text-amber-300">
+                  <span className="font-mono text-xs text-[var(--dmp-color-brand)]">
                     {number}
                   </span>
                   <h3 className="mt-2 text-sm font-semibold text-white">
@@ -239,7 +239,7 @@ export function LandingPage() {
             className="grid gap-10 border-t border-white/10 py-14 lg:grid-cols-[0.9fr_1.1fr]"
           >
             <div>
-              <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+              <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
                 {t('landing.verified')}
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">

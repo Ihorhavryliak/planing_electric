@@ -301,7 +301,7 @@ export function LocalProjectsPage() {
       <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+            <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
               {t('local.badge')}
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -321,7 +321,7 @@ export function LocalProjectsPage() {
           ) : (
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 text-sm text-amber-300"
+              className="inline-flex items-center gap-1.5 text-sm text-[var(--dmp-color-brand)]"
             >
               <UserRound className="h-4 w-4" />
               {t('local.signInSync')}
@@ -330,14 +330,14 @@ export function LocalProjectsPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-slate-400">
-          <HardDrive className="h-4 w-4 shrink-0 text-amber-300" />
+          <HardDrive className="h-4 w-4 shrink-0 text-[var(--dmp-color-brand)]" />
           <p className="min-w-0 flex-1 leading-relaxed">
             {user ? t('local.storageBanner') : t('local.storageBannerSignedOut')}
           </p>
           {!user ? (
             <Link
               to="/login"
-              className="shrink-0 text-amber-300 hover:text-amber-200"
+              className="shrink-0 text-[var(--dmp-color-brand)] hover:underline"
             >
               {t('local.signInSync')}
             </Link>
@@ -468,7 +468,7 @@ export function LocalProjectsPage() {
         ) : projects.length === 0 ? (
           <div className="mx-auto mt-8 max-w-3xl app-panel p-8 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5">
-              <Plus className="h-5 w-5 text-amber-300" />
+              <Plus className="h-5 w-5 text-[var(--dmp-color-brand)]" />
             </span>
             <h2 className="mt-4 text-base font-semibold text-white">
               {t('local.emptyTitle')}

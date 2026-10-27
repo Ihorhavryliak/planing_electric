@@ -732,6 +732,12 @@ export const ru: Dictionary = {
   'editor.calcFailed': 'Не удалось вычислить: {error}',
   'editor.type': 'Тип',
   'editor.quickEdit': 'Быстрое редактирование',
+  'editor.noSelection': 'Ничего не выбрано',
+  'editor.noSelectionHint':
+    'Выберите устройство, стену, комнату или кабельную трассу на плане, чтобы редактировать их.',
+  'editor.defaultCeilingHeight': 'Типовая высота потолка',
+  'editor.defaultWallThickness': 'Типовая толщина стены',
+  'editor.invalidNumber': 'Введите корректное число.',
   'editor.label': 'Обозначение',
   'editor.labelPlaceholder': 'например, S1',
   'editor.mountingHeight': 'Высота монтажа',
@@ -993,6 +999,7 @@ export const ru: Dictionary = {
 
   'rooms.navigate': 'Навигация по комнатам',
   'rooms.navigateEmpty': 'На этом этаже пока нет комнат.',
+  'rooms.devicesShort': 'устр.',
   'palette.title': 'Палитра команд',
   'palette.placeholder': 'Поиск инструментов и команд…',
   'palette.search': 'Поиск команд',

@@ -3051,7 +3051,7 @@ export function EditorCanvas({
       ) : null}
 
       {readOnly ? null : (
-      <div data-tour="editor-toolbar" className="editor-toolbar absolute bottom-24 left-3 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-xl p-1">
+      <div data-tour="editor-toolbar" className="editor-toolbar absolute top-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-xl p-1">
         <button
           type="button"
           title={t('editor.select')}

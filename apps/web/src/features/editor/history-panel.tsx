@@ -96,7 +96,7 @@ export function HistoryPanel({
             aria-pressed={open}
             onClick={onToggle}
             className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-white/10 ${
-              open ? 'text-amber-300' : 'text-slate-500'
+              open ? 'text-[var(--dmp-color-brand)]' : 'text-slate-500'
             }`}
           >
             {open ? (

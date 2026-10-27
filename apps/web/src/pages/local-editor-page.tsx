@@ -1563,6 +1563,10 @@ export function LocalEditorPage() {
           <NextStepHint steps={nextSteps} />
           <RoomNavigator
             rooms={drawing.rooms}
+            points={drawing.points}
+            routes={drawing.routes}
+            circuits={drawing.circuits}
+            metersPerUnit={metersPerUnit}
             selectedRoomId={selectedRoomId}
             onSelect={focusRoom}
           />
