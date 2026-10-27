@@ -520,13 +520,22 @@ async function main() {
     has: page.getByRole('heading', { name: 'Live takeoff', exact: true }),
   });
   await takeoffSection.getByText('Calibrated', { exact: true }).waitFor();
-  const deviceRow = takeoffSection.getByText('Total devices').locator('..');
+  const deviceRow = takeoffSection
+    .getByText('Total devices', { exact: true })
+    .last()
+    .locator('..');
   await deviceRow.getByText('2', { exact: true }).waitFor();
-  const wallLengthRow = takeoffSection.getByText('Wall length').locator('..');
+  const wallLengthRow = takeoffSection
+    .getByText('Wall length', { exact: true })
+    .last()
+    .locator('..');
   if ((await wallLengthRow.innerText()).includes('—')) {
     throw new Error('Live takeoff did not calculate wall length.');
   }
-  const cableRow = takeoffSection.getByText('Cable with waste').locator('..');
+  const cableRow = takeoffSection
+    .getByText('Cable with waste', { exact: true })
+    .last()
+    .locator('..');
   if ((await cableRow.innerText()).includes('—')) {
     throw new Error('Live takeoff did not calculate cable length.');
   }

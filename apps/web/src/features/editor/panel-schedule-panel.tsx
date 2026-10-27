@@ -205,6 +205,72 @@ export function PanelSchedulePanel({
         </div>
       </div>
 
+      {schedule.rows.length > 0 ? (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-slate-500">
+            <span>{t('panel.dinRail')}</span>
+            <span>
+              {schedule.usedWays}/{schedule.totalWays}
+            </span>
+          </div>
+          <div className="mt-1.5 space-y-1 rounded-lg border border-white/10 bg-slate-950/70 p-1.5">
+            {Array.from({ length: board.rows }, (_, rowIndex) => {
+              const start = rowIndex * board.waysPerRow + 1;
+
+              return (
+                <div key={start} className="flex items-center gap-1">
+                  <span className="w-3 shrink-0 text-right font-mono text-[8px] text-slate-600">
+                    {rowIndex + 1}
+                  </span>
+                  <div className="flex flex-1 gap-[2px]">
+                    {Array.from(
+                      { length: board.waysPerRow },
+                      (_, slotIndex) => {
+                        const way = start + slotIndex;
+                        const row = schedule.rows.find(
+                          (item) =>
+                            way >= item.way &&
+                            way < item.way + item.moduleWidth,
+                        );
+
+                        if (!row) {
+                          return (
+                            <span
+                              key={way}
+                              title={`${way} · ${t('panel.reserve')}`}
+                              className="h-2.5 flex-1 rounded-[1px] border border-white/5 bg-white/[0.03]"
+                            />
+                          );
+                        }
+
+                        const tone =
+                          row.status === 'error'
+                            ? 'border-rose-400/40 bg-rose-400/70'
+                            : row.status === 'warning'
+                              ? 'border-amber-400/40 bg-amber-400/70'
+                              : row.phase === 'L2'
+                                ? 'border-sky-400/40 bg-sky-400/70'
+                                : row.phase === 'L3'
+                                  ? 'border-emerald-400/40 bg-emerald-400/70'
+                                  : 'border-amber-300/40 bg-amber-300/70';
+
+                        return (
+                          <span
+                            key={way}
+                            title={`${way} · ${row.circuitId} · ${row.name}`}
+                            className={`h-2.5 flex-1 rounded-[1px] border ${tone}`}
+                          />
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {schedule.rows.length === 0 ? (
         <p className="mt-3 text-xs text-slate-500">{t('panel.noCircuits')}</p>
       ) : (

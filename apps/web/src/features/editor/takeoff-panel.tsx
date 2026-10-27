@@ -1,5 +1,12 @@
 import type { TakeoffSummary } from '@drawmyplace/calculations';
-import { CheckCircle2, CircleSlash } from 'lucide-react';
+import {
+  Cable,
+  CheckCircle2,
+  CircleSlash,
+  Layers3,
+  Plug,
+  Ruler,
+} from 'lucide-react';
 import { useI18n } from '@/features/i18n/i18n-context';
 
 interface TakeoffPanelProps {
@@ -111,6 +118,55 @@ export function TakeoffPanel({
       <p className="mt-1 text-xs leading-relaxed text-slate-500">
         {t('takeoff.hint')}
       </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {[
+          {
+            label: t('takeoff.wallLength'),
+            value:
+              summary.wallLengthMeters === null
+                ? '—'
+                : formatMeters(summary.wallLengthMeters),
+            icon: Ruler,
+            tone: 'text-amber-300',
+          },
+          {
+            label: t('takeoff.roomArea'),
+            value:
+              summary.roomAreaM2 === null ? '—' : area(summary.roomAreaM2),
+            icon: Layers3,
+            tone: 'text-sky-300',
+          },
+          {
+            label: t('takeoff.totalDevices'),
+            value: formatNumber(summary.totalDevices),
+            icon: Plug,
+            tone: 'text-violet-300',
+          },
+          {
+            label: t('takeoff.cable'),
+            value:
+              summary.totalCableMeters === null
+                ? '—'
+                : formatMeters(summary.totalCableMeters),
+            icon: Cable,
+            tone: 'text-orange-300',
+          },
+        ].map(({ label, value, icon: Icon, tone }) => (
+          <div
+            key={label}
+            className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5"
+          >
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-500">
+              <Icon className={`h-3 w-3 ${tone}`} />
+              <span className="truncate">{label}</span>
+            </div>
+            <p className="mt-1 truncate text-lg font-semibold tabular-nums text-white">
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <label className="block text-xs">

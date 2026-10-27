@@ -420,9 +420,9 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 19.5 Дані та візуалізація
 
-- [ ] 19.5.1 Live takeoff (15.4): картки з ключовими метриками (довжина стін, площа, пристрої, кабель, вартість), sparkline/bar для розподілу за колами.
+- [x] 19.5.1 Live takeoff (15.4): картки з ключовими метриками (довжина стін, площа, пристрої, кабель, вартість), sparkline/bar для розподілу за колами.
 - [ ] 19.5.2 Electrical panel (16.1–16.4): таблиця з фіксованим заголовком, кольорові бейджі фаз, індикатори ΔU/КЗ, згортання рядків.
-- [ ] 19.5.3 Panel schedule (16.5): візуальна DIN-рейка з модулями замість лише таблиці; друкована версія — окремий clean-layout.
+- [x] 19.5.3 Panel schedule (16.5): візуальна DIN-рейка з модулями замість лише таблиці; друкована версія — окремий clean-layout.
 - [ ] 19.5.4 Validation (15.5): групування за severity, іконки, лічильники, «jump to object» з підсвіткою; порожній стан «Усе гаразд».
 - [ ] 19.5.5 Documentation workspace (15.8): єдиний tab-стиль, sticky-фільтри, кнопки експорту в одному місці.
 
@@ -742,3 +742,10 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
 - Issues/blockers: the existing slate/amber utilities are not yet migrated to semantic utility classes (19.1.2); the design page is intentionally untranslated and dev-only. Other Phase 19 items (app shell, landing, editor toolbar/status bar, visualization, local cards, remaining accessibility) remain open.
 - Next action: Phase 19.2 app shell or 19.4 editor chrome, then the remaining Phase 19 sections.
+
+### 2026-10-27 — session 46: takeoff KPI cards and DIN-rail panel view (19.5.1, 19.5.3)
+- Completed: live takeoff now opens with four KPI cards – wall length, floor area, total devices and cable with waste – with graceful “—” values before calibration; the existing detailed groups remain below.
+- Completed: panel schedule gained a DIN-rail visual grouped by board row: used modules are coloured by phase/status, free ways stay muted, each slot has a tooltip with way/circuit/name, and the rail header shows used/total ways.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
+- Issues/blockers: the DIN rail is a read-only overview; module drag-and-drop/reordering is not part of the schema yet. KPI sparklines/circuit distribution bars remain for a later pass.
+- Next action: app shell/page headers (19.2), editor status bar/toolbar groups (19.4) or remaining Phase 19 polish.

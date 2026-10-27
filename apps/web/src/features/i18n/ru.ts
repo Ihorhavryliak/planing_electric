@@ -1113,6 +1113,7 @@ export const ru: Dictionary = {
     'Компоновка щита, аппараты защиты и резервные модули. Экспорт в CSV или печать в PDF.',
   'panel.fill': '{used} / {total} модулей',
   'panel.reserve': 'Резерв',
+  'panel.dinRail': 'DIN-рейка',
   'panel.name': 'Название щита',
   'panel.location': 'Расположение',
   'panel.rows': 'Рядов',
