@@ -67,10 +67,6 @@ interface ThreeViewProps {
     patch: { mountingHeight?: number | null; locked?: boolean },
   ) => void;
   onDeletePoint?: (id: string) => void;
-  openingSizes?: Record<
-    'door' | 'window',
-    { width: number; height: number; sill: number }
-  >;
   routeMounting?: RouteMounting;
   onRouteMountingChange?: (mounting: RouteMounting) => void;
   onCreateOpening?: (
@@ -292,10 +288,6 @@ export function ThreeView({
   onCreatePoint,
   onUpdatePoint,
   onDeletePoint,
-  openingSizes = {
-    door: { width: 0.9, height: 2.1, sill: 0 },
-    window: { width: 1.3, height: 1.3, sill: 0.9 },
-  },
   routeMounting = 'floor',
   onRouteMountingChange,
   onCreateOpening,
@@ -408,10 +400,6 @@ export function ThreeView({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const wallsRef = useRef(walls);
   wallsRef.current = walls;
-  const openingSizesRef = useRef(openingSizes);
-  openingSizesRef.current = openingSizes;
-  const routeMountingRef = useRef(routeMounting);
-  routeMountingRef.current = routeMounting;
   const openingDragRef = useRef<{
     wallId: string;
     startClientX: number;

@@ -2974,7 +2974,6 @@ export function PlanEditor({
           }
         }}
         onDeletePoint={(id: string) => void handleDeletePoint(id)}
-        openingSizes={openingSizes}
         routeMounting={routeMounting}
         onRouteMountingChange={setRouteMounting}
         onCreateOpening={(
