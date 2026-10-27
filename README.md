@@ -24,7 +24,7 @@ Verified in this repository:
 
 - [Editor guide](docs/editor-guide.md) — drawing, validation, device library, reports, IFC and onboarding.
 - Landing and editor screenshots live in `docs/screenshots/`; regenerate them with `node scripts/capture-screenshots.mjs`.
-- Design system: `@drawmyplace/ui/tokens.css`; the live catalogue is at `/design` in development or with `VITE_ENABLE_DESIGN=true`.
+- Design system: `@drawmyplace/ui/tokens.css`; the live catalogue is at `/design` in development or with `VITE_ENABLE_DESIGN=true`. The editor defaults to the light IBM Plex / blue-accent theme inspired by the DrawMyPlace reference editor.
 
 ## Requirements
 

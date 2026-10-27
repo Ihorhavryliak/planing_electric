@@ -12,6 +12,7 @@ import type {
 } from '@drawmyplace/contracts';
 import {
   ArrowLeft,
+  ChevronDown,
   Download,
   Eye,
   EyeOff,
@@ -898,18 +899,25 @@ export function LocalEditorPage() {
   return (
     <div className="relative min-h-screen">
       <EditorTour />
-      <header className="border-b border-white/10 bg-slate-950/70 px-6 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
-          <Link to="/local" className="text-slate-400 hover:text-white">
-            <ArrowLeft className="h-5 w-5" />
+      <header className="border-b border-white/10 bg-slate-900/90 px-4 backdrop-blur-xl">
+        <div className="mx-auto flex h-[52px] max-w-[1600px] items-center gap-2">
+          <Link
+            to="/local"
+            className="text-slate-500 transition hover:text-slate-900 dark:hover:text-white"
+            aria-label={t('local.projects')}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="h-9 max-w-xs"
+            className="h-8 max-w-[15rem] border-transparent bg-transparent px-2 text-sm font-semibold shadow-none hover:border-white/10 focus:border-white/20 focus:bg-white/5"
             aria-label={t('local.projectName')}
           />
-          <span data-tour="save" className="text-xs text-slate-500">
+          <span className="hidden rounded-md border border-[var(--dmp-color-brand)]/20 bg-[var(--dmp-color-brand)]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--dmp-color-brand)] sm:inline">
+            2D
+          </span>
+          <span data-tour="save" className="hidden text-[11px] text-slate-500 sm:inline">
             {saveState === 'saving'
               ? t('local.savingLocally')
               : saveState === 'conflict'
@@ -925,37 +933,44 @@ export function LocalEditorPage() {
               {t('local.reload')}
             </Button>
           ) : null}
-          <span className="text-xs text-slate-400">
+          <span className="hidden text-[11px] text-slate-500 md:inline">
             {total === null
               ? t('local.notCalibrated')
               : t('local.cable', { length: formatMeters(total) })}
           </span>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/local')}>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/local')}>
               {t('local.projects')}
             </Button>
-            <Button variant="outline" size="sm" onClick={exportJson}>
-              <Download className="h-4 w-4" />
-              JSON
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => void handleExportPng()}>
-              PNG
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportPlanSvg}>
-              {t('export.planSvgShort')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportSchematicSvg}>
-              {t('export.schematicShort')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportCableJournal}>
-              {t('export.cableJournal')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportReportsExcel}>
-              {t('export.reportsExcel')}
-            </Button>
-            <Button variant="outline" size="sm" onClick={exportIfc}>
-              {t('export.ifc')}
-            </Button>
+            <details className="relative">
+              <summary className="inline-flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-xs font-medium text-slate-300 transition hover:bg-white/[0.08] [&::-webkit-details-marker]:hidden">
+                {t('export.title')}
+                <ChevronDown className="h-3.5 w-3.5" />
+              </summary>
+              <div className="absolute right-0 z-50 mt-1 w-56 rounded-lg border border-white/10 bg-[var(--dmp-color-surface-raised)] p-1 shadow-xl shadow-black/20">
+                <button type="button" onClick={exportJson} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  <Download className="h-3.5 w-3.5" /> JSON
+                </button>
+                <button type="button" onClick={() => void handleExportPng()} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  PNG
+                </button>
+                <button type="button" onClick={exportPlanSvg} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  {t('export.planSvgShort')}
+                </button>
+                <button type="button" onClick={exportSchematicSvg} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  {t('export.schematicShort')}
+                </button>
+                <button type="button" onClick={exportCableJournal} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  {t('export.cableJournal')}
+                </button>
+                <button type="button" onClick={exportReportsExcel} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  {t('export.reportsExcel')}
+                </button>
+                <button type="button" onClick={exportIfc} className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-300 hover:bg-white/5">
+                  {t('export.ifc')}
+                </button>
+              </div>
+            </details>
           </div>
         </div>
       </header>
@@ -1417,7 +1432,7 @@ export function LocalEditorPage() {
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               fullscreen.isFullscreen
-                ? 'bg-amber-400 text-slate-950'
+                ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -1437,7 +1452,7 @@ export function LocalEditorPage() {
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               previewMode
-                ? 'bg-amber-400 text-slate-950'
+                ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >

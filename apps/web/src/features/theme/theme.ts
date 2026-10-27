@@ -12,7 +12,7 @@ export function readThemePreference(
 ): ThemePreference {
   try {
     const stored = storage?.getItem(THEME_STORAGE_KEY);
-    return isThemePreference(stored) ? stored : 'system';
+    return isThemePreference(stored) ? stored : 'light';
   } catch {
     return 'system';
   }

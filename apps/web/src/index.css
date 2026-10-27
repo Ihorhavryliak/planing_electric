@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 html,
@@ -47,17 +47,17 @@ body {
 [data-theme='light'] {
   color-scheme: light;
 
-  --color-slate-950: #f8fafc;
+  --color-slate-950: #eef1f4;
   --color-slate-900: #ffffff;
-  --color-slate-800: #f1f5f9;
-  --color-slate-700: #e2e8f0;
-  --color-slate-600: #cbd5e1;
-  --color-slate-500: #64748b;
-  --color-slate-400: #475569;
-  --color-slate-300: #334155;
-  --color-slate-200: #1e293b;
-  --color-slate-100: #0f172a;
-  --color-white: #0f172a;
+  --color-slate-800: #f5f7fa;
+  --color-slate-700: #e9edf2;
+  --color-slate-600: #dfe4ea;
+  --color-slate-500: #8a949e;
+  --color-slate-400: #5a636c;
+  --color-slate-300: #434c55;
+  --color-slate-200: #2d353d;
+  --color-slate-100: #1c2229;
+  --color-white: #1c2229;
 
   --color-amber-100: #92400e;
   --color-amber-200: #92400e;
@@ -70,7 +70,11 @@ body {
   --color-rose-100: #881337;
   --color-rose-200: #9f1239;
   --color-rose-300: #be123c;
-  --color-rose-400: #e11d48;
+  --color-rose-400: #d1344f;
+  --color-sky-100: #075985;
+  --color-sky-200: #0369a1;
+  --color-sky-300: #0284c7;
+  --color-sky-400: #2f6bd8;
 }
 
 [data-theme='light'] .text-slate-950 {
@@ -118,9 +122,7 @@ body {
 }
 
 [data-theme='light'] body {
-  background-image:
-    radial-gradient(60rem 38rem at 50% -12%, rgb(245 158 11 / 0.12), transparent 70%),
-    radial-gradient(42rem 32rem at 100% 100%, rgb(14 165 233 / 0.08), transparent 70%);
+  background-image: none;
 }
 
 ::-webkit-scrollbar {
@@ -167,10 +169,18 @@ body {
   box-shadow: 0 20px 52px -28px rgb(0 0 0 / 0.95);
 }
 
+[data-theme='light'] .editor-panel,
+[data-theme='light'] .app-panel {
+  border-radius: 0.75rem;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(28 34 41 / 0.05);
+  backdrop-filter: none;
+}
+
 [data-theme='light'] .editor-panel:hover,
 [data-theme='light'] .app-panel:hover {
-  border-color: rgb(217 119 6 / 0.26);
-  box-shadow: 0 20px 44px -30px rgb(15 23 42 / 0.4);
+  border-color: #cfd6de;
+  box-shadow: 0 8px 20px -16px rgb(28 34 41 / 0.22);
 }
 
 .editor-subpanel {
@@ -217,9 +227,9 @@ body {
 }
 
 [data-theme='light'] .editor-canvas-frame {
-  box-shadow:
-    0 30px 60px -38px rgb(15 23 42 / 0.4),
-    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  border-color: #d7dee6;
+  background: #f5f7fa;
+  box-shadow: 0 1px 2px rgb(28 34 41 / 0.05);
 }
 
 .editor-toolbar {
@@ -232,8 +242,9 @@ body {
 }
 
 [data-theme='light'] .editor-toolbar {
-  border-color: rgb(15 23 42 / 0.1);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(241 245 249 / 0.96));
+  border-color: #e3e7ec;
+  background: rgb(255 255 255 / 0.97);
+  box-shadow: 0 4px 14px -8px rgb(28 34 41 / 0.25);
 }
 
 .editor-sidebar {
@@ -293,4 +304,9 @@ body {
 .editor-sidebar [data-sidebar-tab] {
   animation: editor-panel-in var(--dmp-duration-base, 180ms)
     var(--dmp-ease-standard, ease) both;
+}
+
+/* In the light reference theme dark translucent chips become white cards. */
+[data-theme='light'] [class*='bg-slate-950/'] {
+  background-color: rgb(255 255 255 / 0.92);
 }

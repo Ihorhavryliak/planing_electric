@@ -3039,7 +3039,7 @@ export function PlanEditor({
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               fullscreen.isFullscreen
-                ? 'bg-amber-400 text-slate-950'
+                ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -3059,7 +3059,7 @@ export function PlanEditor({
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               previewMode
-                ? 'bg-amber-400 text-slate-950'
+                ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -3137,7 +3137,7 @@ export function PlanEditor({
                     onClick={() => setSidebarTab(id)}
                     className={
                       active
-                        ? 'flex flex-col items-center gap-0.5 rounded-lg bg-amber-400/15 px-1 py-1.5 text-amber-100'
+                        ? 'flex flex-col items-center gap-0.5 rounded-lg bg-[var(--dmp-color-brand)]/12 px-1 py-1.5 text-[var(--dmp-color-brand)]'
                         : 'flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-200'
                     }
                   >

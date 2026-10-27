@@ -96,6 +96,7 @@ export function drawOpeningsOverlay(
   openings: readonly OpeningRenderItem[],
   walls: readonly WallLike[],
   selectedOpeningId: string | null,
+  light = false,
 ): void {
   const wallById = new Map(walls.map((wall) => [wall.id, wall]));
 
@@ -111,14 +112,16 @@ export function drawOpeningsOverlay(
     const screenEnd = worldToScreen(end.point, viewport, size);
     const selected = opening.id === selectedOpeningId;
     const color = selected
-      ? SELECTED_COLOR
+      ? light
+        ? '#2f6bd8'
+        : SELECTED_COLOR
       : opening.type === 'door'
         ? DOOR_COLOR
         : WINDOW_COLOR;
 
     // Erase the wall segment so the opening reads as a gap.
     context.save();
-    context.strokeStyle = CUT_COLOR;
+    context.strokeStyle = light ? '#f5f7fa' : CUT_COLOR;
     context.lineWidth = Math.max(8, 10 * viewport.zoom);
     context.lineCap = 'butt';
     context.beginPath();

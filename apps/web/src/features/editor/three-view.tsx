@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { useTheme } from '@/features/theme/theme-context';
 import { computeWallBoxes } from './three-geometry';
 
 interface ThreeViewProps {
@@ -73,6 +74,8 @@ export function ThreeView({
   onSelect,
 }: ThreeViewProps) {
   const { t } = useI18n();
+  const { resolved } = useTheme();
+  const lightScene = resolved === 'light';
   const [showPoints, setShowPoints] = useState(true);
   const [showRoutes, setShowRoutes] = useState(true);
   const [showWalls, setShowWalls] = useState(true);
@@ -118,7 +121,7 @@ export function ThreeView({
     if (!container) return;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
+    scene.background = new THREE.Color(lightScene ? 0xf5f7fa : 0x020617);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100_000);
@@ -259,11 +262,13 @@ export function ThreeView({
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
-    scene.background = new THREE.Color(daylight ? 0xf1f5f9 : 0x020617);
+    scene.background = new THREE.Color(
+      daylight || lightScene ? 0xf1f5f9 : 0x020617,
+    );
     if (ambientRef.current) ambientRef.current.intensity = daylight ? 2.2 : 1.4;
     if (sunRef.current) sunRef.current.intensity = daylight ? 3.2 : 2;
     if (fillRef.current) fillRef.current.intensity = daylight ? 1.1 : 0.7;
-  }, [daylight]);
+  }, [daylight, lightScene]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
@@ -387,13 +392,13 @@ export function ThreeView({
     );
 
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: WALL_COLOR,
+      color: lightScene ? 0xdce3ea : WALL_COLOR,
       roughness: 0.85,
       transparent: xray,
       opacity: xray ? 0.22 : 1,
     });
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: FLOOR_COLOR,
+      color: lightScene ? 0xe8edf2 : FLOOR_COLOR,
       roughness: 0.95,
       side: THREE.DoubleSide,
       transparent: xray,
@@ -608,6 +613,7 @@ export function ThreeView({
     rooms,
     points,
     routes,
+    lightScene,
     clashes,
     showClashes,
     metersPerUnit,
@@ -750,7 +756,7 @@ export function ThreeView({
             onClick={() => setMode(value)}
             className={`rounded-lg px-2 py-1 transition ${
               mode === value
-                ? 'bg-amber-400 text-slate-950'
+                ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'hover:bg-white/10 hover:text-white'
             }`}
           >

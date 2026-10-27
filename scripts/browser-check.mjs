@@ -74,9 +74,8 @@ async function main() {
     throw new Error(`Workspace header is not sticky: ${headerPosition}`);
   }
 
-  // Theme: system -> light -> dark, persists across reload, then back to system.
+  // Theme: light by default, then dark, persisted across reload, back to system.
   const themeButton = page.getByRole('button', { name: /^Theme:/ });
-  await themeButton.click();
   await page.waitForFunction(
     () => document.documentElement.dataset.theme === 'light',
   );
@@ -90,6 +89,9 @@ async function main() {
     () => document.documentElement.dataset.theme === 'dark',
   );
   await page.getByRole('button', { name: /^Theme:/ }).click();
+  await page.waitForFunction(
+    () => document.documentElement.dataset.theme === 'light',
+  );
 
   const languageOptions = await page
     .getByLabel('Language')
@@ -432,6 +434,7 @@ async function main() {
   }
 
   // Touch long-press shows the same tooltip after 500 ms.
+  await syncCanvas();
   await page.dispatchEvent('canvas', 'pointerdown', {
     pointerType: 'touch',
     pointerId: 51,

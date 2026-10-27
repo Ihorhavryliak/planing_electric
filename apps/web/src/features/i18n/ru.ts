@@ -283,6 +283,11 @@ export const ru: Dictionary = {
   'editorPage.loading': 'Загрузка редактора…',
   'editorPage.details': 'Детали проекта',
   'editorPage.planEditor': 'Редактор плана',
+  'editorPage.tabs': 'Разделы проекта',
+  'editorPage.tab.project': 'Проект',
+  'editorPage.tab.installation': 'Монтаж',
+  'editorPage.tab.documentation': 'Документация',
+  'editorPage.tab.estimates': 'Сметы',
   'editorPage.addFloor': 'Добавить этаж',
   'editorPage.archived':
     'Этот проект архивирован. Восстановите его на странице проекта, прежде чем редактировать план.',

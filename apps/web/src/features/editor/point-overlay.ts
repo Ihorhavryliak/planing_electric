@@ -20,12 +20,14 @@ export interface PointGhost {
 const RADIUS = 9;
 const BACKGROUND = '#020617';
 
+let pointLight = false;
+
 type Painter = (context: CanvasRenderingContext2D, color: string) => void;
 
 function circle(context: CanvasRenderingContext2D, color: string): void {
   context.beginPath();
   context.arc(0, 0, RADIUS, 0, Math.PI * 2);
-  context.fillStyle = BACKGROUND;
+  context.fillStyle = pointLight ? '#ffffff' : BACKGROUND;
   context.fill();
   context.lineWidth = 2;
   context.strokeStyle = color;
@@ -119,9 +121,11 @@ function drawPointLabel(
   const width = context.measureText(text).width + 8;
   const top = at.y + RADIUS + 5;
 
-  context.fillStyle = 'rgba(2, 6, 23, 0.85)';
+  context.fillStyle = pointLight
+    ? 'rgba(255, 255, 255, 0.94)'
+    : 'rgba(2, 6, 23, 0.85)';
   context.fillRect(at.x - width / 2, top - 1, width, 16);
-  context.fillStyle = '#e2e8f0';
+  context.fillStyle = pointLight ? '#28313a' : '#e2e8f0';
   context.fillText(text, at.x, top + 1);
 }
 
@@ -137,7 +141,9 @@ export function drawPointsOverlay(
   selectedId: string | null,
   ghost: PointGhost | null,
   showLabels = true,
+  light = false,
 ): void {
+  pointLight = light;
   context.save();
 
   for (const point of points) {
@@ -157,7 +163,7 @@ export function drawPointsOverlay(
       context.arc(at.x, at.y, RADIUS + 7, 0, Math.PI * 2);
       context.setLineDash([4, 3]);
       context.lineWidth = 1.5;
-      context.strokeStyle = '#fbbf24';
+      context.strokeStyle = pointLight ? '#2f6bd8' : '#fbbf24';
       context.stroke();
       context.setLineDash([]);
     }

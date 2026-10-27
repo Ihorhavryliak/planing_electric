@@ -48,6 +48,8 @@ const ROOM_SELECTED_FILL = 'rgba(251, 191, 36, 0.1)';
 const ROOM_STROKE = 'rgba(45, 212, 191, 0.55)';
 const DIMENSION_COLOR = '#94a3b8';
 
+let structureLight = false;
+
 function traceClosed(
   context: CanvasRenderingContext2D,
   path: readonly Vec2[],
@@ -72,10 +74,10 @@ function drawHandles(
   for (const vertex of path) {
     context.beginPath();
     context.rect(vertex.x - 4.5, vertex.y - 4.5, 9, 9);
-    context.fillStyle = '#020617';
+    context.fillStyle = structureLight ? '#ffffff' : '#020617';
     context.fill();
     context.lineWidth = 2;
-    context.strokeStyle = SELECTED_COLOR;
+    context.strokeStyle = structureLight ? '#2f6bd8' : SELECTED_COLOR;
     context.stroke();
   }
 }
@@ -94,9 +96,11 @@ function drawText(
   const padding = 3;
   const width = context.measureText(text).width + padding * 2;
 
-  context.fillStyle = 'rgba(2, 6, 23, 0.82)';
+  context.fillStyle = structureLight
+    ? 'rgba(255, 255, 255, 0.94)'
+    : 'rgba(2, 6, 23, 0.82)';
   context.fillRect(at.x - width / 2, at.y - 8, width, 16);
-  context.fillStyle = color;
+  context.fillStyle = structureLight && color === '#e2e8f0' ? '#434c55' : color;
   context.fillText(text, at.x, at.y + 0.5);
 }
 
@@ -135,7 +139,9 @@ export function drawStructureOverlay(
   draft: StructureDraft | null,
   cursor: Vec2 | null,
   metersPerUnit: number | null,
+  light = false,
 ): void {
+  structureLight = light;
   context.save();
   context.lineJoin = 'round';
   context.lineCap = 'round';
@@ -152,18 +158,30 @@ export function drawStructureOverlay(
     );
 
     traceClosed(context, path);
-    context.fillStyle = selected ? ROOM_SELECTED_FILL : ROOM_FILL;
+    context.fillStyle = light
+      ? selected
+        ? 'rgba(47, 107, 216, 0.09)'
+        : 'rgba(47, 107, 216, 0.035)'
+      : selected
+        ? ROOM_SELECTED_FILL
+        : ROOM_FILL;
     context.fill();
     context.lineWidth = selected ? 3 : 2;
-    context.strokeStyle = selected ? SELECTED_COLOR : ROOM_STROKE;
+    context.strokeStyle = light
+      ? selected
+        ? '#2f6bd8'
+        : 'rgba(47, 107, 216, 0.4)'
+      : selected
+        ? SELECTED_COLOR
+        : ROOM_STROKE;
     context.stroke();
 
-    drawText(context, room.name, { x: center.x, y: center.y - 7 }, '#ccfbf1', '600');
+    drawText(context, room.name, { x: center.x, y: center.y - 7 }, light ? '#1c2229' : '#ccfbf1', '600');
     drawText(
       context,
       areaLabel(polygonArea(room.boundary), metersPerUnit),
       { x: center.x, y: center.y + 10 },
-      '#5eead4',
+      light ? '#2f6bd8' : '#5eead4',
     );
 
     if (selected) {
@@ -192,8 +210,12 @@ export function drawStructureOverlay(
       });
       context.lineWidth = thicknessPx;
       context.strokeStyle = selected
-        ? 'rgba(251, 191, 36, 0.28)'
-        : 'rgba(203, 213, 225, 0.16)';
+        ? light
+          ? 'rgba(47, 107, 216, 0.18)'
+          : 'rgba(251, 191, 36, 0.28)'
+        : light
+          ? 'rgba(63, 74, 86, 0.08)'
+          : 'rgba(203, 213, 225, 0.16)';
       context.stroke();
     }
 
@@ -206,7 +228,13 @@ export function drawStructureOverlay(
       }
     });
     context.lineWidth = selected ? 3.5 : 2.5;
-    context.strokeStyle = selected ? SELECTED_COLOR : WALL_COLOR;
+    context.strokeStyle = selected
+      ? light
+        ? '#2f6bd8'
+        : SELECTED_COLOR
+      : light
+        ? '#3f4a56'
+        : WALL_COLOR;
     context.stroke();
 
     if (wall.label || selected) {
@@ -223,7 +251,7 @@ export function drawStructureOverlay(
               )}`
             : lengthLabel(polylineLength(wall.geometry), metersPerUnit),
           { x: anchor.x, y: anchor.y - 14 },
-          selected ? SELECTED_COLOR : '#e2e8f0',
+          selected ? (light ? '#2f6bd8' : SELECTED_COLOR) : light ? '#434c55' : '#e2e8f0',
         );
       }
     }
@@ -244,11 +272,19 @@ export function drawStructureOverlay(
     const b = worldToScreen(dimension.pointB, viewport, size);
     const start = worldToScreen(line.start, viewport, size);
     const end = worldToScreen(line.end, viewport, size);
-    const color = selected ? SELECTED_COLOR : DIMENSION_COLOR;
+    const color = selected
+      ? light
+        ? '#2f6bd8'
+        : SELECTED_COLOR
+      : light
+        ? '#5a636c'
+        : DIMENSION_COLOR;
 
     context.setLineDash([4, 4]);
     context.lineWidth = 1;
-    context.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+    context.strokeStyle = light
+      ? 'rgba(90, 99, 108, 0.35)'
+      : 'rgba(148, 163, 184, 0.4)';
     context.beginPath();
     context.moveTo(a.x, a.y);
     context.lineTo(start.x, start.y);
@@ -282,7 +318,7 @@ export function drawStructureOverlay(
       context,
       dimension.label ? `${dimension.label} · ${measured}` : measured,
       middle,
-      selected ? SELECTED_COLOR : '#cbd5e1',
+      selected ? (light ? '#2f6bd8' : SELECTED_COLOR) : light ? '#5a636c' : '#cbd5e1',
     );
 
     if (selected) {
@@ -296,14 +332,22 @@ export function drawStructureOverlay(
     );
     const color =
       draft.kind === 'wall'
-        ? WALL_COLOR
+        ? light
+          ? '#3f4a56'
+          : WALL_COLOR
         : draft.kind === 'room'
-          ? '#5eead4'
-          : DIMENSION_COLOR;
+          ? light
+            ? '#2f6bd8'
+            : '#5eead4'
+          : light
+            ? '#5a636c'
+            : DIMENSION_COLOR;
 
     if (draft.kind === 'room' && path.length >= 2) {
       traceClosed(context, path);
-      context.fillStyle = ROOM_FILL;
+      context.fillStyle = light
+        ? 'rgba(47, 107, 216, 0.035)'
+        : ROOM_FILL;
       context.fill();
     }
 

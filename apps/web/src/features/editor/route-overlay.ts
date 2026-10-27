@@ -29,10 +29,15 @@ export interface RouteOverlayOptions {
   penetrations?: readonly Vec2[];
   /** Point under a route end being dragged; draws a magnetic snap cue. */
   attachHint?: Vec2 | null;
+  /** Light canvas palette (reference-style light theme). */
+  light?: boolean;
 }
 
 const ROUTE_COLOR = '#fb923c';
 const SELECTED_COLOR = '#fbbf24';
+
+let routeLight = false;
+let routeSelected = SELECTED_COLOR;
 
 function tracePath(
   context: CanvasRenderingContext2D,
@@ -102,7 +107,9 @@ function drawCircuitChip(
   const left = at.x - width / 2;
   const top = at.y - height - 9;
 
-  context.fillStyle = 'rgba(2, 6, 23, 0.9)';
+  context.fillStyle = routeLight
+    ? 'rgba(255, 255, 255, 0.96)'
+    : 'rgba(2, 6, 23, 0.9)';
   context.fillRect(left, top, width, height);
   context.lineWidth = 1;
   context.strokeStyle = color;
@@ -111,7 +118,7 @@ function drawCircuitChip(
   context.fillStyle = color;
   context.fillRect(left + 5, top + height / 2 - 2, 4, 4);
 
-  context.fillStyle = '#e2e8f0';
+  context.fillStyle = routeLight ? '#28313a' : '#e2e8f0';
   context.fillText(text, left + paddingX + 8, top + height / 2 + 0.5);
 }
 
@@ -123,7 +130,9 @@ function drawPenetration(
   context.translate(at.x, at.y);
   context.rotate(Math.PI / 4);
 
-  context.fillStyle = 'rgba(2, 6, 23, 0.95)';
+  context.fillStyle = routeLight
+    ? 'rgba(255, 255, 255, 0.96)'
+    : 'rgba(2, 6, 23, 0.95)';
   context.fillRect(-4, -4, 8, 8);
   context.lineWidth = 1.5;
   context.strokeStyle = '#f472b6';
@@ -149,6 +158,8 @@ export function drawRoutesOverlay(
   selectedVertexIndex: number | null = null,
   options: RouteOverlayOptions = {},
 ): void {
+  routeLight = options.light ?? false;
+  routeSelected = routeLight ? '#2f6bd8' : SELECTED_COLOR;
   const circuitColors = new Map(
     (options.circuits ?? []).map((circuit) => [circuit.id, circuit.color]),
   );
@@ -205,10 +216,10 @@ export function drawRoutesOverlay(
           active ? 11 : 9,
           active ? 11 : 9,
         );
-        context.fillStyle = active ? SELECTED_COLOR : '#020617';
+        context.fillStyle = active ? routeSelected : routeLight ? '#ffffff' : '#020617';
         context.fill();
         context.lineWidth = 2;
-        context.strokeStyle = SELECTED_COLOR;
+        context.strokeStyle = routeSelected;
         context.stroke();
       });
 
@@ -224,10 +235,14 @@ export function drawRoutesOverlay(
 
         context.beginPath();
         context.arc(at.x, at.y, 4, 0, Math.PI * 2);
-        context.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        context.fillStyle = routeLight
+          ? 'rgba(255, 255, 255, 0.96)'
+          : 'rgba(2, 6, 23, 0.85)';
         context.fill();
         context.lineWidth = 1.5;
-        context.strokeStyle = 'rgba(251, 191, 36, 0.75)';
+        context.strokeStyle = routeLight
+          ? 'rgba(47, 107, 216, 0.7)'
+          : 'rgba(251, 191, 36, 0.75)';
         context.stroke();
       }
     }
@@ -248,7 +263,7 @@ export function drawRoutesOverlay(
 
       context.beginPath();
       context.arc(at.x, at.y, 5.5, 0, Math.PI * 2);
-      context.fillStyle = '#020617';
+      context.fillStyle = routeLight ? '#ffffff' : '#020617';
       context.fill();
       context.lineWidth = 2;
       context.strokeStyle = end === 'start' ? '#38bdf8' : '#34d399';
@@ -267,11 +282,15 @@ export function drawRoutesOverlay(
     context.beginPath();
     context.arc(at.x, at.y, 9, 0, Math.PI * 2);
     context.lineWidth = 2;
-    context.strokeStyle = 'rgba(251, 191, 36, 0.9)';
+    context.strokeStyle = routeLight
+      ? 'rgba(47, 107, 216, 0.9)'
+      : 'rgba(251, 191, 36, 0.9)';
     context.stroke();
     context.beginPath();
     context.arc(at.x, at.y, 4, 0, Math.PI * 2);
-    context.fillStyle = 'rgba(251, 191, 36, 0.25)';
+    context.fillStyle = routeLight
+      ? 'rgba(47, 107, 216, 0.2)'
+      : 'rgba(251, 191, 36, 0.25)';
     context.fill();
   }
 

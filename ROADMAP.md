@@ -409,14 +409,14 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 #### 19.4 Редактор (найважливіше)
 
-- [ ] 19.4.1 Оновити тулбар: групування інструментів (select, draw, measure), активний стан, роздільники, dropdown для додаткових дій; зберегти tooltip-шар (Фаза 18.3).
+- [x] 19.4.1 Оновити тулбар: групування інструментів (select, draw, measure), активний стан, роздільники, dropdown для додаткових дій; зберегти tooltip-шар (Фаза 18.3).
 - [ ] 19.4.2 Бічна панель: вкладки (Властивості / Шари / Коло / Валідація / Розрахунок) з плавним перемиканням, sticky-заголовок, скрол-контейнер із тонким скролбаром.
 - [ ] 19.4.3 Плаваючі панелі полотна: mini-toolbar (zoom, fit, grid, snap), статус-бар знизу (координати, масштаб, одиниці, стан збереження) — у стилі CAD.
 - [ ] 19.4.4 Property panel: секції з колапсом, inline-редагування числових полів зі стрілками, кольорові чіпи для кіл, чіткі іконки прикріплення кабелю (Фаза 18.2).
 - [ ] 19.4.5 Візуальна мова полотна: узгодити кольори стін/отворів/кімнат/трас/точок із токенами, додати м'які тіні для виділення, анімоване підсвічування при hover (Фаза 18.3) — за `prefers-reduced-motion`.
 - [ ] 19.4.6 Мікровзаємодії: плавне відкриття діалогів (scale + fade 180 ms), hover на кнопках, «магніт» при прикріпленні кабелю, пульсація при конфлікті версій.
 - [ ] 19.4.7 Режими (2D / 3D / split / preview / fullscreen) — єдиний segmented-перемикач з іконками та підписами; у preview приховати зайве, залишити kiosk-панель.
-- [ ] 19.4.8 Тема полотна: узгодити темний canvas (Фаза 8) з новою палітрою; перевірити контраст ліній, сітки, виділення.
+- [x] 19.4.8 Тема полотна: узгодити темний canvas (Фаза 8) з новою палітрою; перевірити контраст ліній, сітки, виділення.
 
 #### 19.5 Дані та візуалізація
 
@@ -960,3 +960,11 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs` with tab-aware selectors.
 - Issues/blockers: the local editor still uses the flat sidebar; tabs will be mirrored there when the reference-style three-column layout is applied.
 - Next action: align the editor visual language with https://drawmyplace.com/editor (light IBM Plex surfaces, blue accent, three-column shell).
+
+### 2026-10-27 — session 51: reference-inspired light editor (19.4.1, 19.4.8)
+- Completed: aligned the visual language with https://drawmyplace.com/editor — IBM Plex Sans, light-first default theme, `#eef1f4` page surface, white panels with `#e3e7ec` borders and 8 px controls, `#1c2229` ink, `#2f6bd8` blue accent, compact 52 px headers, white toolbar and status chips.
+- Completed: the canvas now has a light palette (light grid, dark slate walls, pale blue rooms, white device/label chips, blue selection) and the 3D scene uses a light gray background/floor in light theme. The dark theme keeps a dark canvas but now uses the blue primary accent.
+- Completed: server editor page gained compact breadcrumb/title tabs (Project / Installation / Documentation / Estimates); the local editor header is a 52 px bar with a compact Export menu; sidebar tab active state and onboarding hints use the blue accent.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`, screenshots regenerated.
+- Issues/blockers: the reference three-column shell (rooms left / canvas / properties right) is approximated by the existing canvas + tabbed sidebar; a dedicated left rooms rail and the remaining 19.4 property-panel polish are still open. 19.4.5 hover/selection animation polish remains.
+- Next action: left rooms rail + property-panel accordion (19.4.4/19.4.5), then Phase 19.2/19.3 polish.

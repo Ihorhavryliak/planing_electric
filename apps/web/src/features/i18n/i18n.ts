@@ -299,6 +299,11 @@ const en: Dictionary = {
   'editorPage.loading': 'Loading editor…',
   'editorPage.details': 'Project details',
   'editorPage.planEditor': 'Plan editor',
+  'editorPage.tabs': 'Project sections',
+  'editorPage.tab.project': 'Project',
+  'editorPage.tab.installation': 'Installation',
+  'editorPage.tab.documentation': 'Documentation',
+  'editorPage.tab.estimates': 'Estimates',
   'editorPage.addFloor': 'Add floor',
   'editorPage.archived':
     'This project is archived. Restore it from the project page before editing the plan.',
@@ -1754,6 +1759,11 @@ const ua: Dictionary = {
   'editorPage.loading': 'Завантаження редактора…',
   'editorPage.details': 'Деталі проєкту',
   'editorPage.planEditor': 'Редактор плану',
+  'editorPage.tabs': 'Розділи проєкту',
+  'editorPage.tab.project': 'Проєкт',
+  'editorPage.tab.installation': 'Монтаж',
+  'editorPage.tab.documentation': 'Документація',
+  'editorPage.tab.estimates': 'Кошториси',
   'editorPage.addFloor': 'Додати поверх',
   'editorPage.archived':
     'Цей проєкт архівовано. Відновіть його на сторінці проєкту, перш ніж редагувати план.',

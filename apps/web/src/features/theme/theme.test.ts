@@ -28,12 +28,12 @@ describe('theme preferences', () => {
     expect(isThemePreference(null)).toBe(false);
   });
 
-  it('reads a stored preference and falls back to system', () => {
+  it('reads a stored preference and falls back to light', () => {
     expect(readThemePreference(memoryStorage({ [THEME_STORAGE_KEY]: 'dark' }))).toBe(
       'dark',
     );
-    expect(readThemePreference(memoryStorage())).toBe('system');
-    expect(readThemePreference(null)).toBe('system');
+    expect(readThemePreference(memoryStorage())).toBe('light');
+    expect(readThemePreference(null)).toBe('light');
   });
 
   it('persists the preference', () => {

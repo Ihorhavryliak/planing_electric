@@ -7,13 +7,15 @@ import {
 
 const ACCENT = '#fbbf24';
 
+let calibrationLight = false;
+
 function drawHandle(context: CanvasRenderingContext2D, at: Vec2): void {
   context.beginPath();
   context.arc(at.x, at.y, 5, 0, Math.PI * 2);
-  context.fillStyle = '#020617';
+  context.fillStyle = calibrationLight ? '#ffffff' : '#020617';
   context.fill();
   context.lineWidth = 2;
-  context.strokeStyle = ACCENT;
+  context.strokeStyle = calibrationLight ? '#2f6bd8' : ACCENT;
   context.stroke();
 }
 
@@ -28,12 +30,16 @@ function drawLabel(
 
   const width = context.measureText(text).width + 14;
 
-  context.fillStyle = 'rgba(2, 6, 23, 0.92)';
+  context.fillStyle = calibrationLight
+    ? 'rgba(255, 255, 255, 0.96)'
+    : 'rgba(2, 6, 23, 0.92)';
   context.fillRect(at.x - width / 2, at.y - 11, width, 22);
-  context.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+  context.strokeStyle = calibrationLight
+    ? 'rgba(47, 107, 216, 0.45)'
+    : 'rgba(251, 191, 36, 0.5)';
   context.lineWidth = 1;
   context.strokeRect(at.x - width / 2 + 0.5, at.y - 10.5, width - 1, 21);
-  context.fillStyle = ACCENT;
+  context.fillStyle = calibrationLight ? '#2f6bd8' : ACCENT;
   context.fillText(text, at.x, at.y);
 }
 
@@ -48,7 +54,9 @@ export function drawCalibrationOverlay(
   saved: PublicCalibration | null,
   draft: readonly Vec2[],
   cursor: Vec2 | null,
+  light = false,
 ): void {
+  calibrationLight = light;
   context.save();
 
   if (saved) {
@@ -56,7 +64,7 @@ export function drawCalibrationOverlay(
     const b = worldToScreen(saved.pointB, viewport, size);
 
     context.lineWidth = 2;
-    context.strokeStyle = ACCENT;
+    context.strokeStyle = calibrationLight ? '#2f6bd8' : ACCENT;
     context.beginPath();
     context.moveTo(a.x, a.y);
     context.lineTo(b.x, b.y);
@@ -80,7 +88,7 @@ export function drawCalibrationOverlay(
 
       context.setLineDash([6, 5]);
       context.lineWidth = 2;
-      context.strokeStyle = ACCENT;
+      context.strokeStyle = calibrationLight ? '#2f6bd8' : ACCENT;
       context.beginPath();
       context.moveTo(a.x, a.y);
       context.lineTo(b.x, b.y);

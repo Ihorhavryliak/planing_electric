@@ -49,6 +49,7 @@ import {
 } from 'react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { useTheme } from '@/features/theme/theme-context';
 import { drawCalibrationOverlay } from './calibration-overlay';
 import {
   distanceBetween,
@@ -290,6 +291,7 @@ function drawGrid(
   width: number,
   height: number,
   viewport: EditorViewport,
+  light = false,
 ): void {
   const left = viewport.x - width / (2 * viewport.zoom);
   const right = viewport.x + width / (2 * viewport.zoom);
@@ -327,10 +329,18 @@ function drawGrid(
     context.stroke();
   };
 
-  drawLines(minorStep, 'rgba(148, 163, 184, 0.055)');
-  drawLines(majorStep, 'rgba(148, 163, 184, 0.12)');
+  drawLines(
+    minorStep,
+    light ? 'rgba(90, 99, 108, 0.035)' : 'rgba(148, 163, 184, 0.055)',
+  );
+  drawLines(
+    majorStep,
+    light ? 'rgba(90, 99, 108, 0.08)' : 'rgba(148, 163, 184, 0.12)',
+  );
 
-  context.strokeStyle = 'rgba(251, 191, 36, 0.22)';
+  context.strokeStyle = light
+    ? 'rgba(47, 107, 216, 0.2)'
+    : 'rgba(251, 191, 36, 0.22)';
   context.beginPath();
 
   const originX = (0 - viewport.x) * viewport.zoom + width / 2;
@@ -465,6 +475,8 @@ export function EditorCanvas({
   const dragRef = useRef<DragState | null>(null);
   const autoFitPendingRef = useRef(autoFit);
   const { t } = useI18n();
+  const { resolved } = useTheme();
+  const canvasLight = resolved === 'light';
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [tool, setTool] = useState<EditorTool>('select');
   const [spaceDown, setSpaceDown] = useState(false);
@@ -1066,11 +1078,11 @@ export function EditorCanvas({
     }
 
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    context.fillStyle = '#020617';
+    context.fillStyle = canvasLight ? '#f5f7fa' : '#020617';
     context.fillRect(0, 0, size.width, size.height);
 
     if (gridEnabled) {
-      drawGrid(context, size.width, size.height, viewport);
+      drawGrid(context, size.width, size.height, viewport, canvasLight);
     }
     drawUnderlay(
       context,
@@ -1093,6 +1105,7 @@ export function EditorCanvas({
       structureDraft,
       hoverWorld,
       metersPerUnit,
+      canvasLight,
     );
     drawOpeningsOverlay(
       context,
@@ -1101,6 +1114,7 @@ export function EditorCanvas({
       layers?.openings === false ? [] : renderOpenings,
       layers?.walls === false ? [] : renderWalls,
       selectedOpeningId,
+      canvasLight,
     );
     drawCalibrationOverlay(
       context,
@@ -1109,6 +1123,7 @@ export function EditorCanvas({
       calibration,
       calibrationDraft,
       cursorWorld,
+      canvasLight,
     );
     drawRoutesOverlay(
       context,
@@ -1129,6 +1144,7 @@ export function EditorCanvas({
             ? []
             : penetrationMarkers,
         attachHint: routeAttachHint,
+        light: canvasLight,
       },
     );
     drawPointsOverlay(
@@ -1141,12 +1157,14 @@ export function EditorCanvas({
         ? { type: placeType, at: hoverWorld }
         : null,
       layers?.labels !== false,
+      canvasLight,
     );
   }, [
     size,
     viewport,
     underlay,
     image,
+    canvasLight,
     calibration,
     calibrationDraft,
     cursorWorld,
@@ -2711,7 +2729,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'select'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2727,7 +2745,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'pan'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2743,7 +2761,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'calibrate'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2776,7 +2794,7 @@ export function EditorCanvas({
               className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
                 active
-                  ? 'bg-amber-400 text-slate-950'
+                  ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white',
               )}
             >
@@ -2795,7 +2813,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'route'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2812,7 +2830,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'wall'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2829,7 +2847,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'room'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2846,7 +2864,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             tool === 'dimension'
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2863,7 +2881,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             snapEnabled
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2880,7 +2898,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             orthoEnabled
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -2897,7 +2915,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
             gridEnabled
-              ? 'bg-amber-400 text-slate-950'
+              ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >

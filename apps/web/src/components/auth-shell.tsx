@@ -20,7 +20,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
           to="/"
           className="inline-flex items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:outline-none"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-amber-400/20">
             <Zap className="h-5 w-5" fill="currentColor" />
           </span>
           <span>

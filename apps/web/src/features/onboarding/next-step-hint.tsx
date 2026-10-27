@@ -39,13 +39,13 @@ export function NextStepHint({ steps, className }: NextStepHintProps) {
     <section
       data-testid="next-step-hint"
       className={cn(
-        'editor-panel border-amber-400/25 p-4',
+        'editor-panel border-[var(--dmp-color-brand)]/25 p-4',
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-amber-300" />
+          <Lightbulb className="h-4 w-4 text-[var(--dmp-color-brand)]" />
           <h2 className="text-sm font-semibold text-white">
             {t(step.titleKey)}
           </h2>

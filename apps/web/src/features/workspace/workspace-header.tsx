@@ -81,19 +81,14 @@ export function WorkspaceHeader({
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
         <Link to="/app" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20">
-            <Zap className="h-4 w-4" fill="currentColor" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-amber-400/20">
+            <Zap className="h-3.5 w-3.5" fill="currentColor" />
           </span>
-          <span>
-            <span className="block text-sm font-semibold tracking-wide text-white">
-              DrawMyPlace
-            </span>
-            <span className="block text-xs text-slate-400">
-              {t('nav.workspace')}
-            </span>
+          <span className="text-sm font-semibold tracking-wide text-white">
+            DrawMyPlace
           </span>
         </Link>
 
@@ -122,7 +117,7 @@ export function WorkspaceHeader({
             onClick={toggle}
             title={themeLabel}
             aria-label={themeLabel}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             {preference === 'system' ? (
               <Monitor className="h-4 w-4" />
@@ -135,14 +130,14 @@ export function WorkspaceHeader({
           <Link
             to="/app/organizations"
             aria-label={t('nav.organizations')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Building2 className="h-4 w-4" />
           </Link>
           <Link
             to="/app/materials"
             aria-label={t('nav.materials')}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Package className="h-4 w-4" />
           </Link>
@@ -153,7 +148,7 @@ export function WorkspaceHeader({
                 ? `${t('nav.notifications')} (${unread})`
                 : t('nav.notifications')
             }
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             <Bell className="h-4 w-4" />
             {unread > 0 ? (
@@ -170,7 +165,7 @@ export function WorkspaceHeader({
               {user.name}
             </Link>
           ) : null}
-          <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-200 md:block">
+          <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 md:block">
             {badge}
           </span>
           <Button
