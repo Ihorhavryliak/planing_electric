@@ -2572,21 +2572,6 @@ export function PlanEditor({
     }
   }
 
-  function handleAddCircuit(circuit: Circuit) {
-    void saveCircuits([...circuits, circuit]);
-  }
-
-  function handleUpdateCircuit(
-    id: string,
-    patch: Partial<Pick<Circuit, 'name' | 'color'>>,
-  ) {
-    void saveCircuits(
-      circuits.map((circuit) =>
-        circuit.id === id ? { ...circuit, ...patch } : circuit,
-      ),
-    );
-  }
-
   function handleDeleteCircuit(id: string) {
     void saveCircuits(circuits.filter((circuit) => circuit.id !== id));
   }
@@ -3835,18 +3820,7 @@ export function PlanEditor({
           />
 </div>
 
-<div data-sidebar-tab="circuits">
-          <CircuitsPanel
-            circuits={circuits}
-            points={points}
-            routes={routes}
-            onAdd={handleAddCircuit}
-            onUpdate={handleUpdateCircuit}
-            onDelete={handleDeleteCircuit}
-          />
-</div>
-
-<div data-sidebar-tab="circuits">
+<div data-sidebar-tab="calculation">
           <PanelSchedulePanel
             schedule={panelSchedule}
             fileName={`${floorName}-panel`}
@@ -3872,7 +3846,7 @@ export function PlanEditor({
           />
 </div>
 
-<div data-sidebar-tab="circuits">
+<div data-sidebar-tab="calculation">
           <ElectricalPanel
             result={electrical}
             onSettingsChange={handleElectricalSettingsChange}

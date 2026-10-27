@@ -890,6 +890,15 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
     );
   }
 
+  // Several clashes between the same pair of routes share the target id;
+  // disambiguate them so React keys and jump-to links stay unique.
+  const seen = new Map<string, number>();
+  for (const item of issues) {
+    const count = (seen.get(item.id) ?? 0) + 1;
+    seen.set(item.id, count);
+    if (count > 1) item.id = `${item.id}#${count}`;
+  }
+
   return sortIssues(issues);
 }
 

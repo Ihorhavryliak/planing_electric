@@ -247,10 +247,13 @@ async function main() {
   await page.getByRole('button', { name: 'Fullscreen editor' }).waitFor();
   await page.locator('canvas').first().waitFor();
 
-  await page.getByTestId('sidebar-tab-circuits').click();
-  const circuitsSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Circuits', exact: true }),
-  });
+  const circuitsSection = page
+    .locator('aside')
+    .first()
+    .locator('section')
+    .filter({
+      has: page.getByRole('heading', { name: 'Circuits', exact: true }),
+    });
   await circuitsSection.getByLabel('Code').fill('L1');
   await circuitsSection.getByLabel('Name').fill('Lighting');
   await circuitsSection.getByRole('button', { name: 'Add circuit' }).click();
@@ -350,7 +353,7 @@ async function main() {
     await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
   } catch (routeCountError) {
     console.error('ROUTE DIAG', JSON.stringify({
-      active: await page.locator('.editor-sidebar').getAttribute('data-active-tab'),
+      active: await page.locator('.editor-sidebar[data-active-tab]').getAttribute('data-active-tab'),
       routeVisible: await routeSection.isVisible().catch(() => false),
       routeText: await routeSection.innerText().catch((error) => String(error)),
       tabs: await page.getByRole('tab').allTextContents(),
@@ -363,9 +366,9 @@ async function main() {
   // Room outline and a dimension. Keep clicks inside the visible viewport.
   await page.getByRole('button', { name: 'Draw room outline tool' }).click();
   await page.getByText(/Click to start a room outline/).waitFor();
-  await page.mouse.click(at(0.25, 0.68).x, at(0.25, 0.68).y);
-  await page.mouse.click(at(0.55, 0.68).x, at(0.55, 0.68).y);
-  await page.mouse.click(at(0.55, 0.78).x, at(0.55, 0.78).y);
+  await page.mouse.click(at(0.25, 0.55).x, at(0.25, 0.55).y);
+  await page.mouse.click(at(0.55, 0.55).x, at(0.55, 0.55).y);
+  await page.mouse.click(at(0.55, 0.66).x, at(0.55, 0.66).y);
   await page.keyboard.press('Enter');
 
   const layoutSection = page.locator('section').filter({
@@ -378,8 +381,8 @@ async function main() {
     .waitFor({ timeout: 10000 });
 
   await page.getByRole('button', { name: 'Add dimension tool' }).click();
-  await page.mouse.click(at(0.25, 0.7).x, at(0.25, 0.7).y);
-  await page.mouse.click(at(0.55, 0.7).x, at(0.55, 0.7).y);
+  await page.mouse.click(at(0.25, 0.62).x, at(0.25, 0.62).y);
+  await page.mouse.click(at(0.55, 0.62).x, at(0.55, 0.62).y);
   await layoutSection
     .getByText('Dimensions')
     .locator('..')
@@ -480,7 +483,6 @@ async function main() {
   await routeSection.getByRole('button', { name: /Route 1/ }).click();
   await page.getByRole('heading', { name: 'Cable route', exact: true }).waitFor();
   await circuitSelect.selectOption('L1');
-  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection
     .getByText('1 devices · 1 routes', { exact: true })
     .waitFor();
@@ -538,7 +540,7 @@ async function main() {
   }
 
   // Engineering calculation runs live for every circuit.
-  await page.getByTestId('sidebar-tab-circuits').click();
+  await page.getByTestId('sidebar-tab-calculation').click();
   const electricalSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Electrical calculation', exact: true }),
   });
@@ -570,7 +572,7 @@ async function main() {
   if (!(await page.getByRole('button', { name: 'Generate estimate' }).isDisabled())) {
     throw new Error('Critical electrical error did not block the estimate.');
   }
-  await page.getByTestId('sidebar-tab-circuits').click();
+  await page.getByTestId('sidebar-tab-calculation').click();
   await cableSelect.selectOption('2.5');
   await breakerSelect.selectOption('16');
   await electricalSection.getByText('Coordinated', { exact: true }).waitFor();
@@ -656,14 +658,14 @@ async function main() {
     beforePan,
     { timeout: 10000 },
   );
-  await page.getByRole('button', { name: 'Fit plan to view' }).click();
+  await page.getByRole('button', { name: 'Fit plan to view' }).first().click();
   await page.getByRole('button', { name: 'Select tool' }).click();
 
   // Zoom controls and a viewport resize.
   const zoomLabel = page.locator('button[title^="Reset to 100%"]');
   await zoomLabel.click();
   const beforeZoom = (await zoomLabel.innerText()).trim();
-  await page.getByRole('button', { name: 'Zoom in' }).click();
+  await page.getByRole('button', { name: 'Zoom in' }).first().click();
   await page.waitForFunction(
     (previous) =>
       document.querySelector('button[title^="Reset to 100%"]')?.textContent?.trim() !==
@@ -726,7 +728,7 @@ async function main() {
     throw new Error('Split view did not render both canvases.');
   }
 
-  await page.getByRole('button', { name: '2D edit' }).click();
+  await page.getByRole('tab', { name: '2D edit' }).click();
 
   // Select the whole route and delete it, then undo the deletion.
   await page.getByRole('button', { name: 'Select tool' }).click();
@@ -751,7 +753,6 @@ async function main() {
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Exit preview' }).waitFor();
   await page.getByRole('button', { name: 'Exit preview' }).click();
-  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   await page.keyboard.press('?');
@@ -761,7 +762,6 @@ async function main() {
 
   await page.getByRole('button', { name: 'Hide panels' }).click();
   await page.getByRole('button', { name: 'Show panels' }).click();
-  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   await page.getByTestId('sidebar-tab-layers').click();
@@ -875,7 +875,6 @@ async function main() {
   await page.reload();
   await page.waitForURL('**/editor');
   await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
-  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   await page.getByTestId('sidebar-tab-calculation').click();
@@ -1033,6 +1032,7 @@ async function main() {
     .getByRole('button', { name: /Sync to account/ })
     .click();
   await page.waitForURL('**/app/projects/*/editor', { timeout: 30000 });
+  await page.getByTestId('sidebar-tab-properties').click();
   await page.getByText('Save state').waitFor({ timeout: 20000 });
 
   // Design tokens and CAD chrome are present in the production editor shell.
@@ -1044,11 +1044,11 @@ async function main() {
   if (!brandToken) throw new Error('Design token --dmp-color-brand is missing');
 
   const sidebarTab = await page
-    .locator('.editor-sidebar')
+    .locator('.editor-sidebar[data-active-tab]')
     .getAttribute('data-active-tab');
   if (!sidebarTab) throw new Error('Sidebar tab state is missing');
 
-  for (const label of ['2D view', '3D view', 'Split 2D/3D']) {
+  for (const label of ['2D edit', '3D view', 'Split 2D/3D']) {
     if ((await page.getByRole('tab', { name: label }).count()) === 0) {
       throw new Error(`Editor mode button is missing: ${label}`);
     }
@@ -1124,9 +1124,9 @@ async function main() {
   if (reportBytes.length < 1000) {
     throw new Error('Excel export is unexpectedly small.');
   }
-  await page.getByRole('tab', { name: 'Cable journal' }).click();
+  await page.getByRole('tab', { name: 'Cable journal', exact: true }).click();
   await page
-    .getByRole('tab', { name: 'Cable journal', selected: true })
+    .getByRole('tab', { name: 'Cable journal', exact: true, selected: true })
     .waitFor();
   await page
     .locator('table.report-table thead')
@@ -1171,9 +1171,11 @@ async function main() {
   await page
     .getByRole('heading', { name: 'Documentation', exact: true })
     .waitFor({ timeout: 20000 });
-  await page.getByRole('button', { name: 'Print PDF' }).click();
-  await page.getByRole('button', { name: 'Print / Save as PDF' }).waitFor();
-  await page.getByRole('button', { name: 'Variants', exact: true }).click();
+  await page.getByRole('tab', { name: 'Print PDF' }).click();
+  await page
+    .getByRole('button', { name: 'Print / Save as PDF' })
+    .waitFor();
+  await page.getByRole('tab', { name: 'Variants', exact: true }).click();
   await page.getByText('No variants yet.').waitFor();
 
   console.log(JSON.stringify({ ok: true, errors }, null, 2));
