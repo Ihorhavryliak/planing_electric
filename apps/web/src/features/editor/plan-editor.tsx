@@ -516,19 +516,6 @@ export function PlanEditor({
   const [fitRequest, setFitRequest] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    try {
-      const stored = Number(
-        window.localStorage.getItem('dmp:editor:sidebarWidth'),
-      );
-      if (Number.isFinite(stored)) {
-        return Math.min(420, Math.max(280, stored));
-      }
-    } catch {
-      // Fall back to the default width when storage is unavailable.
-    }
-    return 336;
-  });
   const [sidebarTab, setSidebarTab] = useState<EditorSidebarTab>(() => {
     try {
       const stored = window.localStorage.getItem('dmp:editor:sidebarTab');
@@ -2818,36 +2805,6 @@ export function PlanEditor({
     },
   ];
 
-  function startSidebarResize(event: React.PointerEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = sidebarWidth;
-    let latest = startWidth;
-
-    const onMove = (moveEvent: PointerEvent) => {
-      latest = Math.min(
-        420,
-        Math.max(280, startWidth - (moveEvent.clientX - startX)),
-      );
-      setSidebarWidth(latest);
-    };
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      try {
-        window.localStorage.setItem(
-          'dmp:editor:sidebarWidth',
-          String(latest),
-        );
-      } catch {
-        // Width persistence is a convenience only.
-      }
-    };
-
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-  }
-
   function focusValidationTarget(target: ValidationTarget) {
     switch (target.kind) {
       case 'point':
@@ -2977,23 +2934,22 @@ export function PlanEditor({
         className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
-            : 'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_var(--editor-sidebar-width)]'
+            : 'flex flex-col gap-3'
         }`}
         style={
           {
             zoom: preferences.uiScale,
-            '--editor-sidebar-width': `${sidebarWidth}px`,
           } as React.CSSProperties
         }
       >
         <div
           data-tour="editor-canvas"
-          className={`editor-canvas-frame relative min-h-[440px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
+          className={`editor-canvas-frame relative order-2 min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100vh-1rem)]'
               : previewMode
                 ? 'h-[calc(100vh-6rem)]'
-                : 'h-[65vh] lg:h-[calc(100vh-12rem)]'
+                : 'h-[62vh] lg:h-[calc(100vh-34rem)]'
           }`}
         >
           {viewMode === '2d' || viewMode === 'split' ? (
@@ -3079,6 +3035,10 @@ export function PlanEditor({
               void handlePatchPoint(id, { x: at.x, y: at.y })
             }
             onDeletePoint={(id) => void handleDeletePoint(id)}
+            onDuplicatePoint={(id) => {
+              const point = points.find((item) => item.id === id);
+              if (point) handleDuplicatePoint(point);
+            }}
             onSelectWall={selectWall}
             onCreateWall={(geometry) => void handleCreateWall(geometry)}
             onMoveWall={handleMoveWall}
@@ -3087,6 +3047,7 @@ export function PlanEditor({
             onCreateRoom={(boundary) => void handleCreateRoom(boundary)}
             onMoveRoom={handleMoveRoom}
             onDeleteRoom={(id) => void handleDeleteRoom(id)}
+            onDeleteOpening={(id) => void handleDeleteOpening(id)}
             onSelectDimension={selectDimension}
             onCreateDimension={(pointA, pointB, offset) =>
               void handleCreateDimension(pointA, pointB, offset)
@@ -3168,7 +3129,7 @@ export function PlanEditor({
           ) : null}
         </div>
 
-        <div className="editor-toolbar absolute top-3 right-3 z-20 flex items-center gap-1 rounded-xl p-1">
+        <div className="editor-toolbar absolute right-3 bottom-20 z-20 flex items-center gap-1 rounded-xl p-1">
           <button
             type="button"
             title={
@@ -3256,16 +3217,7 @@ export function PlanEditor({
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside data-active-tab={sidebarTab} className="editor-sidebar relative flex flex-col gap-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label={t('editor.resizeSidebar')}
-            onPointerDown={startSidebarResize}
-            className="absolute top-0 bottom-0 -left-2 hidden w-2 cursor-col-resize rounded-full transition-colors hover:bg-[var(--dmp-color-brand)]/30 lg:block"
-          />
-          <NextStepHint steps={nextSteps} />
-
+        <aside data-active-tab={sidebarTab} className="editor-sidebar order-1 relative flex w-full flex-col gap-2 lg:max-h-[30vh] lg:overflow-y-auto lg:pr-1">
           <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
             <div
               role="tablist"
@@ -3313,6 +3265,34 @@ export function PlanEditor({
               })}
             </div>
           </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5">
+            <span className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              {t('editor.viewMode')}
+            </span>
+            <Tabs
+              ariaLabel={t('editor.viewMode')}
+              value={viewMode}
+              onChange={setViewMode}
+              items={[
+                {
+                  id: '2d',
+                  label: t('editor.view2d'),
+                  icon: <Square className="h-3.5 w-3.5" />,
+                },
+                {
+                  id: '3d',
+                  label: t('editor.view3d'),
+                  icon: <Box className="h-3.5 w-3.5" />,
+                },
+                {
+                  id: 'split',
+                  label: t('editor.splitView'),
+                  icon: <Columns2 className="h-3.5 w-3.5" />,
+                },
+              ]}
+            />
+          </div>
+          <NextStepHint steps={nextSteps} />
 
 <div data-sidebar-tab="properties">
           <RoomNavigator
@@ -3415,29 +3395,6 @@ export function PlanEditor({
               <SaveStatus status={status} error={saveError} onRetry={retry} />
             </div>
 
-            <Tabs
-              className="mt-3 w-full"
-              ariaLabel={t('editor.viewMode')}
-              value={viewMode}
-              onChange={setViewMode}
-              items={[
-                {
-                  id: '2d',
-                  label: t('editor.view2d'),
-                  icon: <Square className="h-3.5 w-3.5" />,
-                },
-                {
-                  id: '3d',
-                  label: t('editor.view3d'),
-                  icon: <Box className="h-3.5 w-3.5" />,
-                },
-                {
-                  id: 'split',
-                  label: t('editor.splitView'),
-                  icon: <Columns2 className="h-3.5 w-3.5" />,
-                },
-              ]}
-            />
 
             {remoteUpdate ? (
               <div className="mt-3 rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-100 motion-safe:animate-[dmp-pulse-once_900ms_ease-in-out_2]">

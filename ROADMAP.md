@@ -450,6 +450,35 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 
 **Критерії завершення:** єдина дизайн-система з токенами; лендінг, `/app`, `/local`, редактор (2D/3D/split/preview/fullscreen), документація та публічні сторінки візуально узгоджені; світла/темна теми проходять контраст AA; усі існуючі e2e та Playwright-селектори працюють; у `docs/screenshots/` оновлені скріншоти.
 
+
+### Фаза 21 — Компонування редактора, 3D і контекстні дії (за запитом)
+
+Мета — наблизити редактор до `https://drawmyplace.com/editor`: більше
+полотна, зрозумілі інструменти знизу, швидкий доступ до 3D та дії з
+об’єктами без переходу в праву панель.
+
+- [x] 21.1.1 Виправити 3D-режим: стабільне завантаження `three-view`,
+      підсвічена підлога/сітка навіть для планів без стін, коректний
+      порожній стан.
+- [x] 21.1.2 Дозволити одночасну роботу в розділеному режимі
+      «2D + 3D» (split): обидва полотна інтерактивні, вибір синхронізовано.
+- [x] 21.2.1 Перенести список вкладок правої панелі у верхню панель
+      редактора (Properties / Layers / Circuits / Validation /
+      Calculation / Signaling) з горизонтальним списком.
+- [x] 21.2.2 Вміст активної вкладки показувати у верхній панелі з
+      обмеженою висотою та скролом, щоб полотно не стискалося.
+- [x] 21.3.1 Перенести верхню панель інструментів полотна вниз,
+      над статус-баром; зберегти tooltip-шар і гарячі клавіші.
+- [x] 21.3.2 Перемикач 2D / 3D / split зробити компактним segmented-
+      контролом з іконками та підписами у верхній панелі.
+- [x] 21.4.1 Додати контекстне меню правої кнопки миші на полотні:
+      визначення об’єкта (пристрій, траса, стіна, кімната, отвір, розмір),
+      «Дублювати» для пристрою та «Видалити» для всіх типів.
+- [x] 21.4.2 Закриття меню по кліку поза ним, `Esc`, підсвічування
+      вибраного об’єкта та локалізація `ua`/`en`/`ru`.
+- [x] 21.5.1 Перевірити компонування на 360/768/1024/1440 px,
+      оновити Playwright-скріншоти та browser-check.
+
 #### 19.4.2a Табована бічна панель (fix cramped sidebar)
 
 Проблема: усі панелі (properties, circuits, electrical, panel schedule,
@@ -695,6 +724,13 @@ MVP готовий до початкового тестування корист
 - Наступна дія:
 
 
+
+
+### 2026-10-27 — session 21: editor layout, 3D/split and context menu
+- Completed: fixed 3D in the dev server by forcing a clean Vite dependency cache; added a ground plane/grid and empty-state context for 3D; verified interactive split 2D/3D; moved the whole tabbed inspector into a top panel above the canvas with the view-mode segmented control; moved canvas toolbars to the bottom above the status bar; added a right-click context menu with object detection, Duplicate for devices and Delete for devices/routes/walls/rooms/openings/dimensions; added ROADMAP Phase 21 for these requirements; refreshed screenshots.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), Playwright 3D/split/context-menu check against Docker at <http://localhost:8090>.
+- Issues/blockers: none.
+- Next action: final browser smoke check and screenshot refresh.
 
 ### 2026-10-27 — session 20: Phase 19 UI/UX polish and Phase 20 close-out
 - Completed: dedicated `signaling` estimate type (`estimate_type` migration 0013) with device, cable and battery items and critical-loop blocking; semantic Tailwind tokens and unified Button/Input/Select/Dialog/Popover/Tooltip/Tabs/Card/Badge primitives; icon weight contract; compact top bar with workspace rail, breadcrumbs and global ⌘K palette with groups/icons/recent commands; toast notifications with Undo; skeleton loading states; collapsible property sections and 280–420 px sidebar resize; segmented 2D/3D/split switch; phase badges and ΔU highlighting; sticky documentation tabs; drag-and-drop JSON import; focus-visible/aria-live improvements; responsive overflow check at 360/768/1024/1440; Playwright signaling and screenshot scripts; browser-check design-token/CAD-chrome assertions; refreshed screenshots.

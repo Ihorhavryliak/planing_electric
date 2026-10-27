@@ -23,7 +23,7 @@ Verified in this repository:
 ## Documentation
 
 - [Editor guide](docs/editor-guide.md) — drawing, validation, device library, reports, IFC and onboarding.
-- Landing and editor screenshots live in `docs/screenshots/`; regenerate them with `node scripts/capture-screenshots.mjs`.
+- Landing and editor screenshots live in `docs/screenshots/`; regenerate them with `pnpm screenshots`.
 - Design system: `@drawmyplace/ui/tokens.css`; the live catalogue is at `/design` in development or with `VITE_ENABLE_DESIGN=true`. The editor defaults to the light IBM Plex / blue-accent theme inspired by the DrawMyPlace reference editor.
 
 ## Requirements
@@ -111,6 +111,9 @@ Every project belongs to the user who created it. List, read, update, archive, a
 | `pnpm db:migrate` | Apply tracked migrations to `DATABASE_URL`. |
 | `pnpm db:up` / `pnpm db:down` | Start or stop local PostgreSQL with Docker Compose. |
 | `pnpm browser:check` | Run the Playwright browser smoke check (API and web must be running). |
+| `pnpm signaling:check` | Create a signaling loop, add detectors and cable, verify takeoff, validation, SVG export and reports. |
+| `pnpm responsive:check` | Assert no horizontal overflow at 360/768/1024/1440 px. |
+| `pnpm screenshots` | Capture light/dark screenshots for landing, app, local, editor and documentation. |
 
 ## Repository layout
 
@@ -131,7 +134,7 @@ RUN.md                  Detailed Ukrainian setup and troubleshooting guide
 - The API logs each request with a request id, duration, status, and route. The id is returned as `X-Request-Id`.
 - Set `SENTRY_DSN` to send API exceptions (HTTP 500s) to Sentry; without it, reporting is a no-op.
 - Set `VITE_SENTRY_DSN` to enable browser error and performance reporting; the React tree is wrapped in a Sentry error boundary.
-- Screenshots — `node scripts/capture-screenshots.mjs` writes the editor and local-project screenshots used in the [editor guide](docs/editor-guide.md).
+- Screenshots — `pnpm screenshots` writes the light/dark landing, workspace, local, editor and documentation screenshots used in the [editor guide](docs/editor-guide.md).
 - Health endpoints: `GET /api/v1/health` (liveness) and `GET /api/v1/health/ready` (database readiness).
 
 ## Database

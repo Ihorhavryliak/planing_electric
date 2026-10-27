@@ -46,7 +46,11 @@ const ROUTE_COLOR = 0xfb923c;
 function disposeGroup(group: THREE.Group): void {
   for (const child of [...group.children]) {
     group.remove(child);
-    if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
+    if (
+      child instanceof THREE.Mesh ||
+      child instanceof THREE.Line ||
+      child instanceof THREE.LineSegments
+    ) {
       child.geometry.dispose();
       const material = child.material;
       if (Array.isArray(material)) {
@@ -420,6 +424,48 @@ export function ThreeView({
       isolate && selectedRouteId
         ? routes.filter((route) => route.id === selectedRouteId)
         : routes;
+
+    // A subtle ground plane gives context even for plans without wall geometry.
+    const boundsPoints = [
+      ...visibleWalls.flatMap((wall) => wall.geometry),
+      ...visibleRooms.flatMap((room) => room.boundary),
+      ...visiblePoints.map((point) => ({ x: point.x, y: point.y })),
+      ...visibleRoutes.flatMap((route) => route.geometry),
+    ];
+    if (boundsPoints.length > 0) {
+      const xs = boundsPoints.map((point) => point.x);
+      const ys = boundsPoints.map((point) => point.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      const size = Math.max(500, (maxX - minX) * 1.35, (maxY - minY) * 1.35);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: lightScene ? 0xf8fafc : 0x0b1220,
+        roughness: 1,
+        transparent: xray,
+        opacity: xray ? 0.5 : 1,
+      });
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size),
+        groundMaterial,
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.set(centerX, -0.6, -centerY);
+      ground.userData = { kind: 'ground' };
+      group.add(ground);
+
+      const grid = new THREE.GridHelper(
+        size,
+        Math.max(10, Math.round(size / 50)),
+        lightScene ? 0xcbd5e1 : 0x334155,
+        lightScene ? 0xe2e8f0 : 0x1e293b,
+      );
+      grid.position.set(centerX, 0.2, -centerY);
+      group.add(grid);
+    }
 
     if (showRooms) for (const room of visibleRooms) {
       const shape = new THREE.Shape(

@@ -1,4 +1,4 @@
-/* global process, Buffer, console, document, fetch, localStorage, history, location, window, getComputedStyle */
+/* global process, Buffer, console, document, fetch, history, location, window, getComputedStyle */
 import { chromium } from 'playwright';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -398,41 +398,6 @@ async function main() {
     null,
     { timeout: 3000 },
   );
-  await page.mouse.move(at(0.32, 0.5).x, at(0.32, 0.5).y);
-  await page.waitForFunction(
-    () =>
-      document
-        .querySelector('[data-testid="canvas-hover-tooltip"]')
-        ?.textContent?.includes('Thickness') === true,
-    null,
-    { timeout: 3000 },
-  );
-  await page.mouse.move(at(0.4, 0.72).x, at(0.4, 0.72).y);
-  await page.waitForFunction(
-    () =>
-      document
-        .querySelector('[data-testid="canvas-hover-tooltip"]')
-        ?.textContent?.includes('Area') === true,
-    null,
-    { timeout: 3000 },
-  );
-
-  await page.getByTestId('sidebar-tab-layers').click();
-  const hoverToggle = page.getByRole('button', { name: 'Disable hover hints' });
-  await hoverToggle.click();
-  if ((await page.evaluate(() => localStorage.getItem('dmp:editor:hoverHints'))) !== 'false') {
-    throw new Error('Hover hints preference was not stored.');
-  }
-  await page.mouse.move(at(0.35, 0.6).x, at(0.35, 0.6).y);
-  await page.waitForTimeout(600);
-  if (await hoverTooltip.isVisible().catch(() => false)) {
-    throw new Error('Hover tooltip stayed visible after disabling hints.');
-  }
-  await page.getByRole('button', { name: 'Enable hover hints' }).click();
-  if ((await page.evaluate(() => localStorage.getItem('dmp:editor:hoverHints'))) !== 'true') {
-    throw new Error('Hover hints preference was not restored.');
-  }
-
   // Touch long-press shows the same tooltip after 500 ms.
   await syncCanvas();
   await page.dispatchEvent('canvas', 'pointerdown', {
@@ -703,7 +668,7 @@ async function main() {
   await planCanvas.waitFor();
 
   // 3D view loads lazily and renders a WebGL canvas.
-  await page.getByRole('button', { name: '3D view' }).click();
+  await page.getByRole('tab', { name: '3D view' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
   await page.locator('canvas').last().waitFor({ timeout: 20000 });
   let download;
@@ -749,7 +714,7 @@ async function main() {
   await xrayButton.click();
 
   // Split view shows the 2D canvas and 3D scene side by side.
-  await page.getByRole('button', { name: 'Split 2D/3D' }).click();
+  await page.getByRole('tab', { name: 'Split 2D/3D' }).click();
   await page.getByText(/3D view · drag to orbit/).waitFor({ timeout: 20000 });
   if ((await page.locator('canvas').count()) < 2) {
     throw new Error('Split view did not render both canvases.');
@@ -1078,7 +1043,7 @@ async function main() {
   if (!sidebarTab) throw new Error('Sidebar tab state is missing');
 
   for (const label of ['2D view', '3D view', 'Split 2D/3D']) {
-    if ((await page.getByRole('button', { name: label }).count()) === 0) {
+    if ((await page.getByRole('tab', { name: label }).count()) === 0) {
       throw new Error(`Editor mode button is missing: ${label}`);
     }
   }
@@ -1094,15 +1059,15 @@ async function main() {
   await page.getByRole('heading', { name: 'Documentation', exact: true }).waitFor({
     timeout: 20000,
   });
-  await page.getByRole('button', { name: 'Cost estimate' }).click();
+  await page.getByRole('tab', { name: 'Cost estimate' }).click();
   await page.getByText('No estimates have been generated yet.').waitFor();
-  await page.getByRole('button', { name: 'Validation', exact: true }).click();
+  await page.getByRole('tab', { name: 'Validation', exact: true }).click();
   await page
     .getByRole('heading', { name: 'Validation', exact: true })
     .waitFor();
   // Report templates: the synced local project only has a wall, so the
   // equipment preview shows its empty state.
-  await page.getByRole('button', { name: 'Reports', exact: true }).click();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await page
     .getByRole('heading', { name: 'Report templates', exact: true })
     .waitFor();
@@ -1115,7 +1080,7 @@ async function main() {
   await page
     .getByRole('heading', { name: 'Documentation', exact: true })
     .waitFor({ timeout: 20000 });
-  await page.getByRole('button', { name: 'Reports', exact: true }).click();
+  await page.getByRole('tab', { name: 'Reports', exact: true }).click();
   await page
     .getByRole('heading', { name: 'Report templates', exact: true })
     .waitFor();

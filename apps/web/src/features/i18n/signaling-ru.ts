@@ -112,6 +112,13 @@ export const signalingRu: Record<string, string> = {
   'local.dropFile': 'Перетащите JSON-проект сюда',
   'editor.section.position': 'Позиция и монтаж',
   'editor.resizeSidebar': 'Изменить ширину панели',
+  'editor.contextMenu': 'Действия с объектом',
+  'editor.context.point': 'Устройство',
+  'editor.context.route': 'Кабельная трасса',
+  'editor.context.wall': 'Стена',
+  'editor.context.room': 'Комната',
+  'editor.context.opening': 'Проём',
+  'editor.context.dimension': 'Размер',
   'signaling.title': 'Сигнализация и слаботочка',
   'signaling.hint':
     'Шлейфы охранной, пожарной сигнализации, видео, доступа, оповещения и СКС с проверкой устройств, кабеля, АКБ и покрытия.',

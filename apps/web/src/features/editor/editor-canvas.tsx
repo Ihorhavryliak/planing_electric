@@ -19,6 +19,7 @@ import {
   Box,
   BrickWall,
   Cable,
+  Copy,
   CornerDownRight,
   Crosshair,
   Download,
@@ -35,6 +36,7 @@ import {
   Shapes,
   SquareDashed,
   ToggleRight,
+  Trash2,
   Undo2,
   Zap,
   ZoomIn,
@@ -256,6 +258,7 @@ interface EditorCanvasProps {
   ) => void;
   onMovePoint: (id: string, at: Vec2) => void;
   onDeletePoint: (id: string) => void;
+  onDuplicatePoint?: (id: string) => void;
   onSelectRoute: (id: string | null) => void;
   onCreateRoute: (geometry: Vec2[]) => void;
   onMoveRouteVertex: (routeId: string, index: number, at: Vec2) => void;
@@ -270,6 +273,7 @@ interface EditorCanvasProps {
   onCreateRoom: (boundary: Vec2[]) => void;
   onMoveRoom: (id: string, boundary: Vec2[]) => void;
   onDeleteRoom: (id: string) => void;
+  onDeleteOpening: (id: string) => void;
   onSelectDimension: (id: string | null) => void;
   onCreateDimension: (pointA: Vec2, pointB: Vec2, offset: number) => void;
   onMoveDimensionOffset: (id: string, offset: number) => void;
@@ -447,6 +451,7 @@ export function EditorCanvas({
   onCreatePoint,
   onMovePoint,
   onDeletePoint,
+  onDuplicatePoint,
   onSelectRoute,
   onCreateRoute,
   onMoveRouteVertex,
@@ -461,6 +466,7 @@ export function EditorCanvas({
   onCreateRoom,
   onMoveRoom,
   onDeleteRoom,
+  onDeleteOpening,
   onSelectDimension,
   onCreateDimension,
   onMoveDimensionOffset,
@@ -501,6 +507,11 @@ export function EditorCanvas({
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
   const coordinateRef = useRef<HTMLSpanElement>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    target: CanvasHoverTarget;
+    x: number;
+    y: number;
+  } | null>(null);
   const [hoverTooltip, setHoverTooltip] = useState<{
     target: CanvasHoverTarget;
     x: number;
@@ -722,6 +733,17 @@ export function EditorCanvas({
     },
     [dimensions, openings, rooms, walls],
   );
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', close);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', close);
+    };
+  }, [contextMenu]);
+
   const snapRef = useRef(snapEnabled);
   const orthoRef = useRef(orthoEnabled);
   const readOnlyRef = useRef(readOnly);
@@ -2795,6 +2817,42 @@ export function EditorCanvas({
           ? 'move'
           : 'crosshair';
 
+  function handleContextMenu(event: React.MouseEvent<HTMLCanvasElement>) {
+    event.preventDefault();
+    if (readOnly) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const screen = {
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
+    };
+    const target = findHoverTarget(screen);
+
+    if (!target) {
+      setContextMenu(null);
+      return;
+    }
+
+    if (target.kind === 'point') onSelectPoint(target.id);
+    else if (target.kind === 'route') onSelectRoute(target.id);
+    else if (target.kind === 'wall') onSelectWall(target.id);
+    else if (target.kind === 'room') onSelectRoom(target.id);
+    else if (target.kind === 'dimension') onSelectDimension(target.id);
+
+    setContextMenu({ target, x: screen.x, y: screen.y });
+  }
+
+  function deleteContextTarget() {
+    if (!contextMenu) return;
+    const { kind, id } = contextMenu.target;
+    if (kind === 'point') onDeletePoint(id);
+    else if (kind === 'route') onDeleteRoute(id);
+    else if (kind === 'wall') onDeleteWall(id);
+    else if (kind === 'room') onDeleteRoom(id);
+    else if (kind === 'opening') onDeleteOpening(id);
+    else if (kind === 'dimension') onDeleteDimension(id);
+    setContextMenu(null);
+  }
+
   return (
     <div
       ref={containerRef}
@@ -2819,11 +2877,60 @@ export function EditorCanvas({
           if (coordinateRef.current) coordinateRef.current.textContent = '—';
         }}
         onAuxClick={(event) => event.preventDefault()}
-        onContextMenu={(event) => event.preventDefault()}
+        onContextMenu={handleContextMenu}
       />
 
+      {contextMenu ? (
+        <>
+          <div
+            className="absolute inset-0 z-40"
+            onPointerDown={() => setContextMenu(null)}
+          />
+          <div
+            className="absolute z-50 min-w-44 rounded-xl border border-white/10 bg-slate-900 p-1 text-xs text-slate-200 shadow-xl shadow-black/40"
+            style={{
+              left: Math.min(contextMenu.x, Math.max(8, size.width - 190)),
+              top: Math.min(contextMenu.y, Math.max(8, size.height - 110)),
+            }}
+            role="menu"
+            aria-label={t('editor.contextMenu')}
+          >
+            <p className="px-2 py-1 text-[10px] uppercase tracking-wide text-slate-500">
+              {t(`editor.context.${contextMenu.target.kind}`)}
+            </p>
+            {contextMenu.target.kind === 'point' && onDuplicatePoint ? (
+              <button
+                type="button"
+                role="menuitem"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => {
+                  if (contextMenu.target.kind === 'point') {
+                    onDuplicatePoint(contextMenu.target.id);
+                  }
+                  setContextMenu(null);
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {t('editor.duplicate')}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={deleteContextTarget}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-200 hover:bg-rose-400/10"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {t('editor.delete')}
+            </button>
+          </div>
+        </>
+      ) : null}
+
       {readOnly ? null : (
-      <div data-tour="editor-toolbar" className="editor-toolbar absolute top-3 left-3 flex flex-wrap items-center gap-1 rounded-xl p-1">
+      <div data-tour="editor-toolbar" className="editor-toolbar absolute bottom-20 left-3 flex flex-wrap items-center gap-1 rounded-xl p-1">
         <button
           type="button"
           title={t('editor.select')}
@@ -3166,7 +3273,7 @@ export function EditorCanvas({
         </div>
       </div>
 
-      <div className="pointer-events-none absolute right-3 bottom-14 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
+      <div className="pointer-events-none absolute right-3 bottom-20 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
         {tool === 'calibrate'
           ? calibrationDraft.length === 0
             ? t('editor.hint.calibrateFirst')

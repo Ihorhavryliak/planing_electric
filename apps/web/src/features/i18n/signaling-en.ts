@@ -112,6 +112,13 @@ export const signalingEn: Record<string, string> = {
   'local.dropFile': 'Drop a JSON project here',
   'editor.section.position': 'Position & mounting',
   'editor.resizeSidebar': 'Resize sidebar',
+  'editor.contextMenu': 'Object actions',
+  'editor.context.point': 'Device',
+  'editor.context.route': 'Cable route',
+  'editor.context.wall': 'Wall',
+  'editor.context.room': 'Room',
+  'editor.context.opening': 'Opening',
+  'editor.context.dimension': 'Dimension',
   'signaling.title': 'Signaling & low current',
   'signaling.hint':
     'Security, fire, CCTV, access, PA and data loops with devices, cable, battery and coverage checks.',

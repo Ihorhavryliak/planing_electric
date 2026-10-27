@@ -1225,6 +1225,22 @@ export function LocalEditorPage() {
                 })),
               }));
             }}
+            onDuplicatePoint={(pointId) => {
+              const point = drawing.points.find((item) => item.id === pointId);
+              if (!point) return;
+              const copy = {
+                ...point,
+                id: id(),
+                x: point.x + 40,
+                y: point.y + 40,
+                updatedAt: now(),
+              };
+              setSelectedPointId(copy.id);
+              update((current) => ({
+                ...current,
+                points: [...current.points, copy],
+              }));
+            }}
             onSelectRoute={(next) => {
               setSelectedRouteId(next);
               if (next) {
@@ -1349,6 +1365,14 @@ export function LocalEditorPage() {
                 walls: current.walls.filter((wall) => wall.id !== wallId),
                 openings: current.openings.filter(
                   (opening) => opening.wallId !== wallId,
+                ),
+              }))
+            }
+            onDeleteOpening={(openingId) =>
+              update((current) => ({
+                ...current,
+                openings: current.openings.filter(
+                  (opening) => opening.id !== openingId,
                 ),
               }))
             }
