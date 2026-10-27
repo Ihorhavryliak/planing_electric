@@ -574,6 +574,8 @@ export function PlanEditor({
   } = useTakeoffSettings();
   const [remoteUpdate, setRemoteUpdate] = useState(false);
   const [collaborators, setCollaborators] = useState(0);
+  const planVersionRef = useRef(plan.version);
+  planVersionRef.current = plan.version;
   const [dropDrafts, setDropDrafts] = useState<Record<string, string>>({});
   const [dropError, setDropError] = useState<string | null>(null);
   const [maxCircuit, setMaxCircuit] = useState('');
@@ -768,10 +770,14 @@ export function PlanEditor({
         const payload = JSON.parse(event.data) as {
           channel?: string;
           count?: number;
+          version?: number;
         };
         if (payload.channel === 'presence') {
           setCollaborators(payload.count ?? 0);
-        } else {
+        } else if (
+          typeof payload.version !== 'number' ||
+          payload.version > planVersionRef.current
+        ) {
           setRemoteUpdate(true);
         }
       } catch {
