@@ -1036,6 +1036,20 @@ export function LocalEditorPage() {
             selectedPointId={selectedPointId}
             routes={drawing.routes}
             selectedRouteId={selectedRouteId}
+            saveStatus={{
+              label:
+                saveState === 'saving'
+                  ? t('local.savingLocally')
+                  : saveState === 'conflict'
+                    ? t('local.conflict')
+                    : t('local.savedLocally'),
+              tone:
+                saveState === 'conflict'
+                  ? 'error'
+                  : saveState === 'saving'
+                    ? 'pending'
+                    : 'ok',
+            }}
             circuits={drawing.circuits}
             layers={layers}
             metersPerUnit={metersPerUnit}

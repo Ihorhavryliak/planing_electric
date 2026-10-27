@@ -749,3 +749,10 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
 - Issues/blockers: the DIN rail is a read-only overview; module drag-and-drop/reordering is not part of the schema yet. KPI sparklines/circuit distribution bars remain for a later pass.
 - Next action: app shell/page headers (19.2), editor status bar/toolbar groups (19.4) or remaining Phase 19 polish.
+
+### 2026-10-27 — session 47: CAD-style canvas status bar (19.4.3)
+- Completed: the canvas now has a bottom status bar with live cursor coordinates (metres when calibrated, drawing units otherwise), zoom percentage, unit label, grid/snap/ortho indicators and the current save state (saved/pending/error). Coordinates update via a DOM ref so pointer movement does not re-render the editor.
+- Completed: the existing contextual hint moved above the status bar; the top mini-toolbar already provides zoom, fit, grid, snap and ortho controls.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`.
+- Issues/blockers: the status bar is read-only; clickable zoom presets and a unit switcher remain for a later pass (19.4.3 polish).
+- Next action: app shell/page headers (19.2), landing refresh (19.3) or remaining Phase 19 accessibility/local cards.

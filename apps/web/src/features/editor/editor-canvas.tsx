@@ -18,6 +18,7 @@ import {
   BrickWall,
   Cable,
   CornerDownRight,
+  Crosshair,
   Download,
   Grid3x3,
   Hand,
@@ -234,6 +235,7 @@ interface EditorCanvasProps {
   selectedPointId: string | null;
   routes: readonly PublicRoute[];
   selectedRouteId: string | null;
+  saveStatus?: { label: string; tone: 'ok' | 'pending' | 'error' } | null;
   circuits?: readonly Circuit[];
   layers?: EditorLayers;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
@@ -419,6 +421,7 @@ export function EditorCanvas({
   selectedPointId,
   routes,
   selectedRouteId,
+  saveStatus = null,
   circuits = [],
   layers,
   onCalibrationPoints,
@@ -476,6 +479,7 @@ export function EditorCanvas({
   const [gridEnabled, setGridEnabled] = useState(true);
   const [orthoEnabled, setOrthoEnabled] = useState(false);
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
+  const coordinateRef = useRef<HTMLSpanElement>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
   const [hoverTooltip, setHoverTooltip] = useState<{
     target: CanvasHoverTarget;
@@ -1920,6 +1924,16 @@ export function EditorCanvas({
     const point = localPoint(event);
     const drag = dragRef.current;
 
+    if (coordinateRef.current) {
+      const world = toWorld(point);
+      const metersPerUnit = calibration?.metersPerUnit ?? null;
+      const format = (value: number) =>
+        metersPerUnit === null
+          ? value.toFixed(0)
+          : (value * metersPerUnit).toFixed(2);
+      coordinateRef.current.textContent = `${format(world.x)}, ${format(world.y)}`;
+    }
+
     if (drag) {
       clearHoverTimers();
       hideHoverTooltip(true);
@@ -2679,6 +2693,7 @@ export function EditorCanvas({
           setHoverWorld(null);
           hoverPointerRef.current = null;
           hideHoverTooltip(true);
+          if (coordinateRef.current) coordinateRef.current.textContent = '—';
         }}
         onAuxClick={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
@@ -2986,7 +3001,49 @@ export function EditorCanvas({
       </div>
       )}
 
-      <div className="pointer-events-none absolute right-3 bottom-3 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
+      <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
+          <Crosshair className="h-3 w-3 text-amber-300" />
+          <span
+            ref={coordinateRef}
+            className="min-w-[4.5rem] font-mono tabular-nums text-slate-300"
+          >
+            —
+          </span>
+          <span className="text-slate-700">|</span>
+          <span className={gridEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+            {t('editor.statusGrid')}
+          </span>
+          <span className={snapEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+            {t('editor.statusSnap')}
+          </span>
+          <span className={orthoEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+            {t('editor.statusOrtho')}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
+          {saveStatus ? (
+            <span
+              className={
+                saveStatus.tone === 'ok'
+                  ? 'text-emerald-300'
+                  : saveStatus.tone === 'error'
+                    ? 'text-rose-300'
+                    : 'text-amber-200'
+              }
+            >
+              {saveStatus.label}
+            </span>
+          ) : null}
+          <span className="text-slate-700">|</span>
+          <span className="font-mono tabular-nums text-slate-300">
+            {Math.round(viewport.zoom * 100)}%
+          </span>
+          <span>{calibration ? t('editor.statusMeters') : t('editor.statusUnits')}</span>
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute right-3 bottom-14 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[11px] text-slate-400 backdrop-blur">
         {tool === 'calibrate'
           ? calibrationDraft.length === 0
             ? t('editor.hint.calibrateFirst')

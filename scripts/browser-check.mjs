@@ -988,7 +988,7 @@ async function main() {
     localCanvas.y + localCanvas.height * 0.5,
   );
   await page.keyboard.press('Enter');
-  await page.getByText('Saved locally').waitFor({ timeout: 10000 });
+  await page.getByText('Saved locally').first().waitFor({ timeout: 10000 });
   await page.reload();
   await page.waitForURL('**/local/*');
   await page.locator('canvas').waitFor();

@@ -1403,6 +1403,11 @@ const en: Dictionary = {
   'editor.threeViewHint': '3D view · drag to orbit, scroll to zoom',
   'editor.ceiling': 'Ceiling',
   'editor.clashes': 'Clashes',
+  'editor.statusGrid': 'Grid',
+  'editor.statusSnap': 'Snap',
+  'editor.statusOrtho': 'Ortho',
+  'editor.statusMeters': 'm',
+  'editor.statusUnits': 'units',
   'editor.exportFailed': 'Export failed',
   'editor.calibrationTitle': 'Set the plan scale',
 
@@ -2816,6 +2821,11 @@ const ua: Dictionary = {
     '3D-вигляд · перетягніть, щоб обертати, прокрутіть, щоб масштабувати',
   'editor.ceiling': 'Стеля',
   'editor.clashes': 'Колізії',
+  'editor.statusGrid': 'Сітка',
+  'editor.statusSnap': 'Прив’язка',
+  'editor.statusOrtho': 'Орто',
+  'editor.statusMeters': 'м',
+  'editor.statusUnits': 'од.',
   'editor.exportFailed': 'Не вдалося експортувати',
   'editor.calibrationTitle': 'Задайте масштаб плану',
 

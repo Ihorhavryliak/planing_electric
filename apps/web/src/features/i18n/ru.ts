@@ -1383,6 +1383,11 @@ export const ru: Dictionary = {
     '3D-вид · перетащите, чтобы вращать, прокрутите, чтобы масштабировать',
   'editor.ceiling': 'Потолок',
   'editor.clashes': 'Коллизии',
+  'editor.statusGrid': 'Сетка',
+  'editor.statusSnap': 'Привязка',
+  'editor.statusOrtho': 'Орто',
+  'editor.statusMeters': 'м',
+  'editor.statusUnits': 'ед.',
   'editor.exportFailed': 'Не удалось экспортировать',
   'editor.calibrationTitle': 'Задайте масштаб плана',
   'editor.calibrationIntro':

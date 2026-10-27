@@ -2834,6 +2834,15 @@ export function PlanEditor({
             selectedPointId={selectedPointId}
             routes={routes}
             selectedRouteId={selectedRouteId}
+            saveStatus={{
+              label: t(saveLabelKeys[status]),
+              tone:
+                status === 'saved'
+                  ? 'ok'
+                  : status === 'error'
+                    ? 'error'
+                    : 'pending',
+            }}
             circuits={circuits}
             layers={layers}
             walls={walls}
