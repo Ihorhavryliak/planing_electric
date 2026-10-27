@@ -275,3 +275,22 @@ body {
     color: #0f172a !important;
   }
 }
+
+/* Sidebar tabs: keep every panel mounted but show only the active group. */
+.editor-sidebar[data-active-tab='properties']
+  [data-sidebar-tab]:not([data-sidebar-tab='properties']),
+.editor-sidebar[data-active-tab='layers']
+  [data-sidebar-tab]:not([data-sidebar-tab='layers']),
+.editor-sidebar[data-active-tab='circuits']
+  [data-sidebar-tab]:not([data-sidebar-tab='circuits']),
+.editor-sidebar[data-active-tab='validation']
+  [data-sidebar-tab]:not([data-sidebar-tab='validation']),
+.editor-sidebar[data-active-tab='calculation']
+  [data-sidebar-tab]:not([data-sidebar-tab='calculation']) {
+  display: none;
+}
+
+.editor-sidebar [data-sidebar-tab] {
+  animation: editor-panel-in var(--dmp-duration-base, 180ms)
+    var(--dmp-ease-standard, ease) both;
+}

@@ -134,7 +134,7 @@ async function main() {
   const fileInput = page.locator('input[type=file]');
   await fileInput.setInputFiles(pngPath);
   try {
-    await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+    await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
   } catch (underlayError) {
     await page.screenshot({ path: path.join(dir, 'underlay-failure.png') });
     console.error('Underlay diagnostics', {
@@ -189,7 +189,7 @@ async function main() {
   }
   await page.reload();
   await page.waitForURL('**/editor');
-  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
   if (await page.getByTestId('editor-tour').isVisible().catch(() => false)) {
     throw new Error('Completed tour was shown again after reload.');
   }
@@ -197,7 +197,7 @@ async function main() {
   // `?tour=editor` replays the tour for demos and the `?tour=off` switch is
   // covered by the same provider; skipping keeps it dismissed for this load.
   await page.goto(`${page.url().split('?')[0]}?tour=editor`);
-  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
   const replayTour = page.getByTestId('editor-tour');
   await replayTour.waitFor({ timeout: 10000 });
   await replayTour.getByRole('button', { name: 'Skip tour', exact: true }).click();
@@ -242,6 +242,7 @@ async function main() {
   await page.getByRole('button', { name: 'Fullscreen editor' }).waitFor();
   await page.locator('canvas').first().waitFor();
 
+  await page.getByTestId('sidebar-tab-circuits').click();
   const circuitsSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Circuits', exact: true }),
   });
@@ -253,6 +254,7 @@ async function main() {
     .getByRole('combobox')
     .filter({ has: page.locator('option[value="L1"]') });
 
+  await page.getByTestId('sidebar-tab-layers').click();
   const visibleButton = page.getByRole('button', { name: 'Visible' });
   await visibleButton.click();
   await page.getByRole('button', { name: 'Hidden' }).click();
@@ -266,7 +268,7 @@ async function main() {
   await page.reload();
   await page.waitForURL('**/editor');
   const serverEditorUrl = page.url();
-  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
 
   // Draw a wall and add a door + window, so the 3D scene has real geometry.
   const planCanvas = page.locator('canvas').first();
@@ -329,10 +331,26 @@ async function main() {
   await page.mouse.click(at(0.5, 0.57).x, at(0.5, 0.57).y);
   await page.mouse.click(at(0.65, 0.6).x, at(0.65, 0.6).y);
   await page.keyboard.press('Enter');
+  await page
+    .getByRole('heading', { name: 'Cable route', exact: true })
+    .waitFor({ timeout: 10000 });
+  await page.getByTestId('sidebar-tab-calculation').click();
   const routeSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Cable routes', exact: true }),
   });
-  await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
+  try {
+    await routeSection.getByText('1', { exact: true }).first().waitFor({ timeout: 10000 });
+  } catch (routeCountError) {
+    console.error('ROUTE DIAG', JSON.stringify({
+      active: await page.locator('.editor-sidebar').getAttribute('data-active-tab'),
+      routeVisible: await routeSection.isVisible().catch(() => false),
+      routeText: await routeSection.innerText().catch((error) => String(error)),
+      tabs: await page.getByRole('tab').allTextContents(),
+    }));
+    await page.screenshot({ path: path.join(dir, 'route-count-failure.png') });
+    throw routeCountError;
+  }
+  await page.getByTestId('sidebar-tab-properties').click();
 
   // Room outline and a dimension. Keep clicks inside the visible viewport.
   await page.getByRole('button', { name: 'Draw room outline tool' }).click();
@@ -397,6 +415,7 @@ async function main() {
     { timeout: 3000 },
   );
 
+  await page.getByTestId('sidebar-tab-layers').click();
   const hoverToggle = page.getByRole('button', { name: 'Disable hover hints' });
   await hoverToggle.click();
   if ((await page.evaluate(() => localStorage.getItem('dmp:editor:hoverHints'))) !== 'false') {
@@ -483,12 +502,15 @@ async function main() {
   await pointsSection.getByText('2', { exact: true }).first().waitFor({ timeout: 10000 });
 
   // Select the cable route from the panel, then drag its end bend.
+  await page.getByTestId('sidebar-tab-calculation').click();
   await routeSection.getByRole('button', { name: /Route 1/ }).click();
   await page.getByRole('heading', { name: 'Cable route', exact: true }).waitFor();
   await circuitSelect.selectOption('L1');
+  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection
     .getByText('1 devices · 1 routes', { exact: true })
     .waitFor();
+  await page.getByTestId('sidebar-tab-properties').click();
   // The route end snapped to the socket is explicitly pinned; detaching and
   // reattaching must keep the endpoint in place and only change the link.
   const pinStart = page.getByTestId('route-pin-status-start');
@@ -516,6 +538,7 @@ async function main() {
   );
 
   // Live takeoff reflects calibrated walls, rooms, devices and cable.
+  await page.getByTestId('sidebar-tab-calculation').click();
   const takeoffSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Live takeoff', exact: true }),
   });
@@ -541,6 +564,7 @@ async function main() {
   }
 
   // Engineering calculation runs live for every circuit.
+  await page.getByTestId('sidebar-tab-circuits').click();
   const electricalSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Electrical calculation', exact: true }),
   });
@@ -568,12 +592,15 @@ async function main() {
   await cableSelect.selectOption('1.5');
   await breakerSelect.selectOption('20');
   await electricalSection.getByText('Errors 1', { exact: true }).waitFor();
+  await page.getByTestId('sidebar-tab-calculation').click();
   if (!(await page.getByRole('button', { name: 'Generate estimate' }).isDisabled())) {
     throw new Error('Critical electrical error did not block the estimate.');
   }
+  await page.getByTestId('sidebar-tab-circuits').click();
   await cableSelect.selectOption('2.5');
   await breakerSelect.selectOption('16');
   await electricalSection.getByText('Coordinated', { exact: true }).waitFor();
+  await page.getByTestId('sidebar-tab-calculation').click();
   if (await page.getByRole('button', { name: 'Generate estimate' }).isDisabled()) {
     throw new Error('Estimate stayed blocked after fixing the protection.');
   }
@@ -604,6 +631,7 @@ async function main() {
   );
 
   // Switch the route to a wall chase and change its width.
+  await page.getByTestId('sidebar-tab-properties').click();
   await page
     .getByRole('heading', { name: 'Cable route', exact: true })
     .waitFor({ timeout: 15000 });
@@ -728,6 +756,7 @@ async function main() {
 
   // Select the whole route and delete it, then undo the deletion.
   await page.getByRole('button', { name: 'Select tool' }).click();
+  await page.getByTestId('sidebar-tab-calculation').click();
   await routeSection.getByRole('button').first().click();
   await routeSection.getByText('1', { exact: true }).first().waitFor();
   await page.keyboard.press('Delete');
@@ -748,6 +777,7 @@ async function main() {
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Exit preview' }).waitFor();
   await page.getByRole('button', { name: 'Exit preview' }).click();
+  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   await page.keyboard.press('?');
@@ -757,13 +787,16 @@ async function main() {
 
   await page.getByRole('button', { name: 'Hide panels' }).click();
   await page.getByRole('button', { name: 'Show panels' }).click();
+  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
+  await page.getByTestId('sidebar-tab-layers').click();
   await page.getByRole('button', { name: '110%', exact: true }).click();
   if ((await page.locator('[style*="zoom: 1.1"]').count()) === 0) {
     throw new Error('Interface scale was not applied.');
   }
   await page.getByRole('button', { name: '100%', exact: true }).click();
+  await page.getByTestId('sidebar-tab-properties').click();
 
   const roomNav = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Room navigation', exact: true }),
@@ -786,6 +819,7 @@ async function main() {
   await orthoToggle.click();
 
   // SVG plan, schematic and full project JSON exports.
+  await page.getByTestId('sidebar-tab-calculation').click();
   const exportSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Export', exact: true }),
   });
@@ -839,6 +873,7 @@ async function main() {
   }
 
   // Validation aggregates plan issues and jumps to the affected device.
+  await page.getByTestId('sidebar-tab-validation').click();
   const validationSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Validation', exact: true }),
   });
@@ -850,6 +885,7 @@ async function main() {
   await page.getByRole('button', { name: 'Duplicate' }).waitFor();
 
   // Hide the devices layer; it must survive a reload and be restorable.
+  await page.getByTestId('sidebar-tab-layers').click();
   const layersSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Layers', exact: true }),
   });
@@ -864,13 +900,16 @@ async function main() {
 
   await page.reload();
   await page.waitForURL('**/editor');
-  await page.getByText('Underlay', { exact: true }).waitFor({ timeout: 20000 });
+  await page.getByTestId('sidebar-tab-properties').waitFor({ timeout: 20000 });
+  await page.getByTestId('sidebar-tab-circuits').click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
+  await page.getByTestId('sidebar-tab-calculation').click();
   const reloadedRouteSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Cable routes', exact: true }),
   });
   await reloadedRouteSection.getByRole('button').first().click();
+  await page.getByTestId('sidebar-tab-properties').click();
   const persistedPin = page.getByTestId('route-pin-status-start');
   await persistedPin.waitFor();
   if ((await persistedPin.innerText()).trim() === 'Free end') {
@@ -923,6 +962,7 @@ async function main() {
     { timeout: 15000 },
   );
 
+  await page.getByTestId('sidebar-tab-layers').click();
   const reloadedDevicesToggle = page
     .locator('section')
     .filter({

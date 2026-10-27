@@ -30,7 +30,9 @@ import type {
   UpdateWallInput,
 } from '@drawmyplace/contracts';
 import {
+  Calculator,
   Check,
+  CircuitBoard,
   Clock3,
   Eye,
   EyeOff,
@@ -38,6 +40,7 @@ import {
   FileText,
   HelpCircle,
   ImagePlus,
+  Layers3,
   LoaderCircle,
   Lock,
   Maximize2,
@@ -47,6 +50,8 @@ import {
   RotateCcw,
   Ruler,
   Save,
+  ShieldCheck,
+  SlidersHorizontal,
   TriangleAlert,
   Unlock,
   Upload,
@@ -317,6 +322,16 @@ function calibrationInput(
   };
 }
 
+const SIDEBAR_TABS = [
+  { id: 'properties', labelKey: 'editor.tab.properties', icon: SlidersHorizontal },
+  { id: 'layers', labelKey: 'editor.tab.layers', icon: Layers3 },
+  { id: 'circuits', labelKey: 'editor.tab.circuits', icon: CircuitBoard },
+  { id: 'validation', labelKey: 'editor.tab.validation', icon: ShieldCheck },
+  { id: 'calculation', labelKey: 'editor.tab.calculation', icon: Calculator },
+] as const;
+
+type EditorSidebarTab = (typeof SIDEBAR_TABS)[number]['id'];
+
 const saveLabelKeys: Record<AutosaveStatus, string> = {
   saved: 'editor.allSaved',
   pending: 'editor.unsavedChanges',
@@ -488,6 +503,7 @@ export function PlanEditor({
   const [fitRequest, setFitRequest] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<EditorSidebarTab>('properties');
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
@@ -2170,6 +2186,26 @@ export function PlanEditor({
   }
 
   const pointCounts = countByType(points);
+  useEffect(() => {
+    if (
+      selectedWallId ||
+      selectedOpeningId ||
+      selectedRoomId ||
+      selectedPointId ||
+      selectedRouteId ||
+      selectedDimensionId
+    ) {
+      setSidebarTab('properties');
+    }
+  }, [
+    selectedWallId,
+    selectedOpeningId,
+    selectedRoomId,
+    selectedPointId,
+    selectedRouteId,
+    selectedDimensionId,
+  ]);
+
   const selectedPoint =
     points.find((point) => point.id === selectedPointId) ?? null;
   const selectedRoute =
@@ -3071,20 +3107,71 @@ export function PlanEditor({
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside className="editor-sidebar space-y-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
+        <aside data-active-tab={sidebarTab} className="editor-sidebar flex flex-col gap-4 lg:max-h-[calc(100vh-12rem)] lg:overflow-y-auto lg:pr-1">
           <NextStepHint steps={nextSteps} />
+
+          <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
+            <div
+              role="tablist"
+              aria-label={t('editor.tabs')}
+              className="grid grid-cols-5 gap-0.5"
+            >
+              {SIDEBAR_TABS.map(({ id, labelKey, icon: Icon }) => {
+                const active = sidebarTab === id;
+                const count =
+                  id === 'validation'
+                    ? validationIssues.filter(
+                        (issue) => issue.severity !== 'info',
+                      ).length
+                    : id === 'circuits'
+                      ? circuits.length
+                      : 0;
+
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    data-testid={`sidebar-tab-${id}`}
+                    onClick={() => setSidebarTab(id)}
+                    className={
+                      active
+                        ? 'flex flex-col items-center gap-0.5 rounded-lg bg-amber-400/15 px-1 py-1.5 text-amber-100'
+                        : 'flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-200'
+                    }
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="text-[9px] leading-none">
+                      {t(labelKey)}
+                    </span>
+                    {count > 0 ? (
+                      <span className="text-[8px] leading-none tabular-nums opacity-70">
+                        {count}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+<div data-sidebar-tab="properties">
           <RoomNavigator
             rooms={rooms}
             selectedRoomId={selectedRoomId}
             onSelect={focusRoom}
           />
+</div>
 
+<div data-sidebar-tab="properties">
           <EditorGuide
             onOpenShortcuts={() => setHotkeysOpen(true)}
             onOpenGuide={openGuide}
           />
+</div>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="properties" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.dropDefaults')}
             </h2>
@@ -3122,7 +3209,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="validation" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.validationRules')}
             </h2>
@@ -3153,7 +3240,7 @@ export function PlanEditor({
             </label>
           </section>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="properties" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.saveState')}
             </h2>
@@ -3235,6 +3322,7 @@ export function PlanEditor({
 
           <section
             id="scale-section"
+            data-sidebar-tab="properties"
             className="editor-panel p-4"
           >
             <div className="flex items-center justify-between gap-2">
@@ -3299,7 +3387,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="properties" className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.points')}
@@ -3348,7 +3436,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="properties" className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.layout')}
@@ -3389,6 +3477,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
+<div data-sidebar-tab="properties">
           <DevicePalette
             onSelect={(type, subtype) =>
               setPlacementRequest({
@@ -3398,7 +3487,9 @@ export function PlanEditor({
               })
             }
           />
+</div>
 
+<div data-sidebar-tab="properties">
           <SymbolLibraryPanel
             selectedPoint={selectedPoint}
             onPlace={(type, subtype, productId) =>
@@ -3412,7 +3503,9 @@ export function PlanEditor({
             onAssign={assignPointProduct}
             onClearProduct={() => assignPointProduct(null)}
           />
+</div>
 
+<div data-sidebar-tab="circuits">
           <CircuitsPanel
             circuits={circuits}
             points={points}
@@ -3421,7 +3514,9 @@ export function PlanEditor({
             onUpdate={handleUpdateCircuit}
             onDelete={handleDeleteCircuit}
           />
+</div>
 
+<div data-sidebar-tab="circuits">
           <PanelSchedulePanel
             schedule={panelSchedule}
             fileName={`${floorName}-panel`}
@@ -3445,7 +3540,9 @@ export function PlanEditor({
               if (point) selectPoint(point.id);
             }}
           />
+</div>
 
+<div data-sidebar-tab="circuits">
           <ElectricalPanel
             result={electrical}
             onSettingsChange={handleElectricalSettingsChange}
@@ -3463,7 +3560,9 @@ export function PlanEditor({
               if (point) selectPoint(point.id);
             }}
           />
+</div>
 
+<div data-sidebar-tab="calculation">
           <TakeoffPanel
             summary={takeoff}
             wallHeightMeters={takeoffSettings.wallHeightMeters}
@@ -3483,12 +3582,16 @@ export function PlanEditor({
               if (route) selectRoute(route.id);
             }}
           />
+</div>
 
+<div data-sidebar-tab="validation">
           <ValidationPanel
             issues={validationIssues}
             onSelectTarget={focusValidationTarget}
           />
+</div>
 
+<div data-sidebar-tab="calculation">
           <ExportPanel
             drawing={exportDrawing}
             calculation={calculation}
@@ -3500,13 +3603,17 @@ export function PlanEditor({
             title={`${floorName} plan`}
             subtitle={floorName}
           />
+</div>
 
+<div data-sidebar-tab="layers">
           <LayersPanel
             layers={layers}
             onToggle={toggleLayer}
             onShowAll={showAllLayers}
           />
+</div>
 
+<div data-sidebar-tab="properties">
           {selectedWall ? (
             <WallPropertiesPanel
               key={selectedWall.id}
@@ -3517,8 +3624,9 @@ export function PlanEditor({
               onDelete={() => void handleDeleteWall(selectedWall.id)}
             />
           ) : null}
+</div>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="properties" className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.openings')}
@@ -3666,6 +3774,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
+<div data-sidebar-tab="properties">
           {selectedRoom ? (
             <RoomPropertiesPanel
               key={selectedRoom.id}
@@ -3676,7 +3785,9 @@ export function PlanEditor({
               onDelete={() => void handleDeleteRoom(selectedRoom.id)}
             />
           ) : null}
+</div>
 
+<div data-sidebar-tab="properties">
           {selectedDimension ? (
             <DimensionPropertiesPanel
               key={selectedDimension.id}
@@ -3688,7 +3799,9 @@ export function PlanEditor({
               onDelete={() => void handleDeleteDimension(selectedDimension.id)}
             />
           ) : null}
+</div>
 
+<div data-sidebar-tab="properties">
           {selectedPoint ? (
             <PointPropertiesPanel
               key={selectedPoint.id}
@@ -3699,7 +3812,9 @@ export function PlanEditor({
               onDelete={() => void handleDeletePoint(selectedPoint.id)}
             />
           ) : null}
+</div>
 
+<div data-sidebar-tab="calculation">
           <CalculationPanel
             routes={routes}
             calculation={calculation}
@@ -3709,7 +3824,9 @@ export function PlanEditor({
             selectedRouteId={selectedRouteId}
             onSelectRoute={selectRoute}
           />
+</div>
 
+<div data-sidebar-tab="properties">
           {selectedRoute ? (
             <RoutePropertiesPanel
               key={selectedRoute.id}
@@ -3731,8 +3848,9 @@ export function PlanEditor({
               }
             />
           ) : null}
+</div>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="layers" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.view')}
             </h2>
@@ -3794,7 +3912,7 @@ export function PlanEditor({
             </p>
           </section>
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="layers" className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.underlay')}
@@ -3931,7 +4049,7 @@ export function PlanEditor({
           </section>
 
           {isPdf ? (
-            <section className="editor-panel p-4">
+            <section data-sidebar-tab="layers" className="editor-panel p-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-amber-300" />
                 <h2 className="text-sm font-semibold text-white">
@@ -4016,7 +4134,7 @@ export function PlanEditor({
             </section>
           ) : null}
 
-          <section className="editor-panel p-4">
+          <section data-sidebar-tab="calculation" className="editor-panel p-4">
             <h2 className="text-sm font-semibold text-white">
               {t('editor.estimate')}
             </h2>
