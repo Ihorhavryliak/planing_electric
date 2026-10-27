@@ -769,10 +769,11 @@ export function PlanEditor({
       try {
         const payload = JSON.parse(event.data) as {
           channel?: string;
+          kind?: string;
           count?: number;
           version?: number;
         };
-        if (payload.channel === 'presence') {
+        if (payload.channel === 'presence' || payload.kind === 'presence') {
           setCollaborators(payload.count ?? 0);
         } else if (
           typeof payload.version !== 'number' ||

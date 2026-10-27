@@ -513,6 +513,9 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       `text/javascript`, щоб PDF-підкладка працювала в Docker/nginx.
 - [x] 21.11.9 Зробити ключі однакових route-clash issues унікальними
       та оновити застарілі селектори browser-check.
+- [x] 21.11.10 Перенести Quick guide у нижню частину правої панелі,
+      додати кнопку повторного запуску туру та підсвічувати в турі
+      видиму вкладку Validation.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -793,7 +796,7 @@ MVP готовий до початкового тестування корист
 - Completed: cable routes now honour floor / wall / ceiling mounting with default and explicit elevations, render at the right height in 3D, and can be created with the level selected in the new bottom dock or the 3D draw panel. The route properties panel gained an elevation field in millimetres.
 - Completed: the device palette moved into a fixed bottom component dock with device types, a subtype popover, door/window width, height and sill inputs (m/cm/mm), add-to-selected-wall and a cable-level switch; the right panel keeps the standards library. Left sidebar gained a change-history panel with undo/redo, click-to-jump and an eye toggle that shows/hides the list.
 - Completed: 3D hover tooltips for devices, walls, rooms and cable routes; doors/windows can now be drawn by dragging a rectangle on a 3D wall, deriving width, height and sill from the drag. Fixed the default 3D wall height for uncalibrated plans (2.7 m) and made the 3D bottom bar click-through outside its controls.
-- Completed: Electrical calculation and panel schedule are reachable under Calculation; the PDF.js worker is served as JavaScript in nginx (production PDF underlays); duplicate route-clash issue IDs were made unique; browser-check selectors were refreshed for the left Circuits panel, role-based editor tabs, dock socket placement and the new documentation tabs.
+- Completed: Electrical calculation and panel schedule are reachable under Calculation; the PDF.js worker is served as JavaScript in nginx (production PDF underlays); duplicate route-clash issue IDs were made unique; browser-check selectors were refreshed for the left Circuits panel, role-based editor tabs, dock socket placement and the new documentation tabs. The Quick guide moved to the bottom of the right Properties panel and gained a Start the tour action; the first-run tour now highlights the visible Validation tab. Stale plan-update events for the already-loaded version are ignored, so a local save no longer triggers a false “another collaborator changed this plan” banner.
 - Tests run: Playwright checks of dock door sizing, history eye/jump, dock device placement, ceiling route creation, route elevation persistence at 1500 mm, 3D point/wall tooltips and drag-created window size; `pnpm typecheck`, `pnpm lint`, `pnpm test`, `node scripts/browser-check.mjs`, `node scripts/signaling-check.mjs`, `node scripts/responsive-check.mjs`, `node scripts/screenshots.mjs` against Docker at <http://localhost:8090>.
 - Issues/blockers: none; the Docker images still need a rebuild for this batch.
 - Next action: rebuild the Docker web/api images and repeat the browser checks on <http://localhost:8090>.
