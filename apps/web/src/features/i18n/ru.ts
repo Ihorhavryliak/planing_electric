@@ -1,4 +1,5 @@
 import type { Dictionary } from './i18n';
+import { signalingRu } from './signaling-ru';
 
 export const ru: Dictionary = {
   'nav.organizations': 'Организации',
@@ -1319,6 +1320,11 @@ export const ru: Dictionary = {
   'devices.category.control': 'Управление',
   'devices.category.lighting': 'Освещение',
   'devices.category.lowVoltage': 'Низкое напряжение',
+  'devices.category.detection': 'Обнаружение',
+  'devices.category.alarm': 'Оповещение',
+  'devices.category.communication': 'Связь',
+  'devices.category.network': 'Сети',
+  'devices.category.video': 'Видео',
   'devices.subtype.main-board': 'Главный распределительный щит',
   'devices.subtype.sub-board': 'Подщит',
   'devices.subtype.circuit-origin': 'Начало цепи',
@@ -1356,6 +1362,31 @@ export const ru: Dictionary = {
   'devices.subtype.data-camera': 'Точка камеры',
   'devices.subtype.data-speaker': 'Точка динамика',
   'devices.subtype.data-smart-home': 'Точка умного дома',
+  'devices.subtype.smoke-detector': 'Дымовой датчик',
+  'devices.subtype.heat-detector': 'Тепловой датчик',
+  'devices.subtype.smoke-heat-detector': 'Комбинированный дым/тепло',
+  'devices.subtype.door-contact': 'Магнитоконтактный датчик',
+  'devices.subtype.glass-break': 'Датчик разбития стекла',
+  'devices.subtype.water-leak': 'Датчик протечки',
+  'devices.subtype.vibration-detector': 'Вибрационный датчик',
+  'devices.subtype.loop-expander': 'Расширитель шлейфа',
+  'devices.subtype.siren-internal': 'Внутренняя сирена',
+  'devices.subtype.siren-external': 'Наружная сирена',
+  'devices.subtype.strobe': 'Стробоскоп',
+  'devices.subtype.exit-sign': 'Указатель «Выход»',
+  'devices.subtype.voice-alarm': 'Речевое оповещение',
+  'devices.subtype.fire-panel': 'ППКП',
+  'devices.subtype.keypad': 'Клавиатура',
+  'devices.subtype.card-reader': 'Считыватель карт',
+  'devices.subtype.relay-module': 'Релейный модуль',
+  'devices.subtype.power-supply': 'Блок питания',
+  'devices.subtype.battery': 'АКБ',
+  'devices.subtype.gsm-communicator': 'GSM/IP-коммуникатор',
+  'devices.subtype.dialer': 'Дозвонщик',
+  'devices.subtype.patch-panel': 'Патч-панель',
+  'devices.subtype.network-switch': 'Коммутатор',
+  'devices.subtype.ip-camera': 'IP-камера',
+  'devices.subtype.nvr': 'Видеорегистратор',
 
 
   'editor.bends': 'изгибов: {count}',
@@ -1448,3 +1479,5 @@ export const ru: Dictionary = {
   'units.unit': 'ед.',
   'editor.scaleValue': '1 {unit} = {value} {lengthUnit}',
 };
+
+Object.assign(ru, signalingRu);

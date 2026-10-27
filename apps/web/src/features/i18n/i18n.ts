@@ -1,4 +1,6 @@
 import { ru } from './ru';
+import { signalingEn } from './signaling-en';
+import { signalingUa } from './signaling-ua';
 
 export type Locale = 'ua' | 'ru' | 'en';
 
@@ -1340,6 +1342,11 @@ const en: Dictionary = {
   'devices.category.control': 'Control',
   'devices.category.lighting': 'Lighting',
   'devices.category.lowVoltage': 'Low voltage',
+  'devices.category.detection': 'Detection',
+  'devices.category.alarm': 'Alarm',
+  'devices.category.communication': 'Communication',
+  'devices.category.network': 'Network',
+  'devices.category.video': 'Video',
   'devices.subtype.main-board': 'Main distribution board',
   'devices.subtype.sub-board': 'Sub distribution board',
   'devices.subtype.circuit-origin': 'Circuit origin',
@@ -1377,6 +1384,31 @@ const en: Dictionary = {
   'devices.subtype.data-camera': 'Camera point',
   'devices.subtype.data-speaker': 'Speaker point',
   'devices.subtype.data-smart-home': 'Smart-home point',
+  'devices.subtype.smoke-detector': 'Smoke detector',
+  'devices.subtype.heat-detector': 'Heat detector',
+  'devices.subtype.smoke-heat-detector': 'Combined smoke/heat detector',
+  'devices.subtype.door-contact': 'Door/window contact',
+  'devices.subtype.glass-break': 'Glass break detector',
+  'devices.subtype.water-leak': 'Water leak detector',
+  'devices.subtype.vibration-detector': 'Vibration detector',
+  'devices.subtype.loop-expander': 'Loop expander',
+  'devices.subtype.siren-internal': 'Internal siren',
+  'devices.subtype.siren-external': 'External siren',
+  'devices.subtype.strobe': 'Strobe',
+  'devices.subtype.exit-sign': 'Exit sign',
+  'devices.subtype.voice-alarm': 'Voice alarm',
+  'devices.subtype.fire-panel': 'Fire panel',
+  'devices.subtype.keypad': 'Keypad',
+  'devices.subtype.card-reader': 'Card reader',
+  'devices.subtype.relay-module': 'Relay module',
+  'devices.subtype.power-supply': 'Power supply',
+  'devices.subtype.battery': 'Battery',
+  'devices.subtype.gsm-communicator': 'GSM/IP communicator',
+  'devices.subtype.dialer': 'Dialer',
+  'devices.subtype.patch-panel': 'Patch panel',
+  'devices.subtype.network-switch': 'Network switch',
+  'devices.subtype.ip-camera': 'IP camera',
+  'devices.subtype.nvr': 'NVR',
 
 
   'editor.bends': '{count} bends',
@@ -2804,6 +2836,11 @@ const ua: Dictionary = {
   'devices.category.control': 'Керування',
   'devices.category.lighting': 'Освітлення',
   'devices.category.lowVoltage': 'Низька напруга',
+  'devices.category.detection': 'Виявлення',
+  'devices.category.alarm': 'Оповіщення',
+  'devices.category.communication': 'Зв’язок',
+  'devices.category.network': 'Мережі',
+  'devices.category.video': 'Відео',
   'devices.subtype.main-board': 'Головний розподільний щит',
   'devices.subtype.sub-board': 'Підщит',
   'devices.subtype.circuit-origin': 'Початок кола',
@@ -2841,6 +2878,31 @@ const ua: Dictionary = {
   'devices.subtype.data-camera': 'Точка камери',
   'devices.subtype.data-speaker': 'Точка динаміка',
   'devices.subtype.data-smart-home': 'Точка розумного дому',
+  'devices.subtype.smoke-detector': 'Димовий датчик',
+  'devices.subtype.heat-detector': 'Тепловий датчик',
+  'devices.subtype.smoke-heat-detector': 'Комбінований дим/тепло',
+  'devices.subtype.door-contact': 'Магнітоконтактний датчик',
+  'devices.subtype.glass-break': 'Датчик розбиття скла',
+  'devices.subtype.water-leak': 'Датчик протікання',
+  'devices.subtype.vibration-detector': 'Вібраційний датчик',
+  'devices.subtype.loop-expander': 'Розширювач шлейфу',
+  'devices.subtype.siren-internal': 'Внутрішня сирена',
+  'devices.subtype.siren-external': 'Зовнішня сирена',
+  'devices.subtype.strobe': 'Стробоскоп',
+  'devices.subtype.exit-sign': 'Покажчик «Вихід»',
+  'devices.subtype.voice-alarm': 'Мовне оповіщення',
+  'devices.subtype.fire-panel': 'ППКП',
+  'devices.subtype.keypad': 'Клавіатура',
+  'devices.subtype.card-reader': 'Зчитувач карток',
+  'devices.subtype.relay-module': 'Релейний модуль',
+  'devices.subtype.power-supply': 'Блок живлення',
+  'devices.subtype.battery': 'АКБ',
+  'devices.subtype.gsm-communicator': 'GSM/IP-комунікатор',
+  'devices.subtype.dialer': 'Діалер',
+  'devices.subtype.patch-panel': 'Патч-панель',
+  'devices.subtype.network-switch': 'Комутатор',
+  'devices.subtype.ip-camera': 'IP-камера',
+  'devices.subtype.nvr': 'Відеореєстратор',
 
 
   'editor.bends': 'згинів: {count}',
@@ -2935,6 +2997,9 @@ const ua: Dictionary = {
   'editor.calibrationIntro':
     'Між двома точками {distance} одиниць креслення. Яка відстань насправді?',
 };
+
+Object.assign(en, signalingEn);
+Object.assign(ua, signalingUa);
 
 const dictionaries: Record<Locale, Dictionary> = {
   en,

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { signalingSettingsSchema } from './signaling';
 
 const dropDefault = z.number().min(0).max(100).optional();
 
@@ -103,6 +104,7 @@ export const calculationSettingsSchema = z.object({
   validation: validationRulesSchema.optional(),
   circuits: circuitsSchema.optional(),
   electrical: electricalSettingsSchema.optional(),
+  signaling: signalingSettingsSchema.optional(),
 });
 
 export const floorNameSchema = z

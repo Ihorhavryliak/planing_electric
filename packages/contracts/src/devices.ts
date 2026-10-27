@@ -8,6 +8,11 @@ export const deviceCategorySchema = z.enum([
   'control',
   'lighting',
   'lowVoltage',
+  'detection',
+  'alarm',
+  'communication',
+  'network',
+  'video',
 ]);
 
 export type DeviceCategory = z.infer<typeof deviceCategorySchema>;
@@ -50,6 +55,31 @@ export const DEVICE_SUBTYPE_IDS = [
   'data-camera',
   'data-speaker',
   'data-smart-home',
+  'smoke-detector',
+  'heat-detector',
+  'smoke-heat-detector',
+  'door-contact',
+  'glass-break',
+  'water-leak',
+  'vibration-detector',
+  'loop-expander',
+  'siren-internal',
+  'siren-external',
+  'strobe',
+  'exit-sign',
+  'voice-alarm',
+  'fire-panel',
+  'keypad',
+  'card-reader',
+  'relay-module',
+  'power-supply',
+  'battery',
+  'gsm-communicator',
+  'dialer',
+  'patch-panel',
+  'network-switch',
+  'ip-camera',
+  'nvr',
 ] as const;
 
 export const deviceSubtypeSchema = z.enum(DEVICE_SUBTYPE_IDS);
@@ -108,6 +138,37 @@ export const DEVICE_SUBTYPE_DEFINITIONS: Readonly<
   'data-camera': { category: 'lowVoltage', type: 'custom' },
   'data-speaker': { category: 'lowVoltage', type: 'custom' },
   'data-smart-home': { category: 'lowVoltage', type: 'custom' },
+
+  'smoke-detector': { category: 'detection', type: 'custom' },
+  'heat-detector': { category: 'detection', type: 'custom' },
+  'smoke-heat-detector': { category: 'detection', type: 'custom' },
+  'door-contact': { category: 'detection', type: 'custom' },
+  'glass-break': { category: 'detection', type: 'custom' },
+  'water-leak': { category: 'detection', type: 'custom' },
+  'vibration-detector': { category: 'detection', type: 'custom' },
+  'loop-expander': { category: 'detection', type: 'custom' },
+
+  'siren-internal': { category: 'alarm', type: 'custom' },
+  'siren-external': { category: 'alarm', type: 'custom' },
+  strobe: { category: 'alarm', type: 'custom' },
+  'exit-sign': { category: 'alarm', type: 'custom' },
+  'voice-alarm': { category: 'alarm', type: 'custom' },
+
+  'fire-panel': { category: 'control', type: 'panel' },
+  keypad: { category: 'control', type: 'custom' },
+  'card-reader': { category: 'control', type: 'custom' },
+  'relay-module': { category: 'control', type: 'custom' },
+  'power-supply': { category: 'control', type: 'custom' },
+  battery: { category: 'control', type: 'custom' },
+
+  'gsm-communicator': { category: 'communication', type: 'custom' },
+  dialer: { category: 'communication', type: 'custom' },
+
+  'patch-panel': { category: 'network', type: 'custom' },
+  'network-switch': { category: 'network', type: 'custom' },
+
+  'ip-camera': { category: 'video', type: 'custom' },
+  nvr: { category: 'video', type: 'custom' },
 };
 
 /** Catalog in palette order. */
@@ -124,6 +185,11 @@ export const DEVICE_CATEGORY_ORDER: readonly DeviceCategory[] = [
   'control',
   'lighting',
   'lowVoltage',
+  'detection',
+  'alarm',
+  'communication',
+  'network',
+  'video',
 ];
 
 export function deviceSubtype(id: string): DeviceSubtypeDefinition | null {

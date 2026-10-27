@@ -1,5 +1,6 @@
 import type { DeviceCategory, DeviceSubtype } from './devices';
 import { DEVICE_SUBTYPE_DEFINITIONS } from './devices';
+import { SIGNALING_DEVICE_LIBRARY } from './device-library-signaling';
 
 /**
  * Curated catalog of standard devices with manufacturer articles. Symbols are
@@ -24,6 +25,38 @@ export interface DeviceProduct {
   /** Optional code of a matching material catalog entry. */
   materialCode?: string;
   notes?: string;
+
+  /** Discipline this article belongs to. */
+  system?: 'security' | 'fire' | 'access' | 'cctv' | 'pa' | 'data';
+  /** Supply voltage label, e.g. "12 V DC". */
+  voltage?: string;
+  /** Quiescent current in amperes (signaling). */
+  currentStandbyA?: number;
+  /** Alarm current in amperes (signaling). */
+  currentAlarmA?: number;
+  /** Rated power in watts (sirens, cameras, network gear). */
+  powerW?: number;
+  /** Detection coverage for smoke/heat detectors, m². */
+  coverageAreaM2?: number;
+  /** Visual coverage radius for PIR/CCTV/sirens, m. */
+  coverageRadiusM?: number;
+  /** Supports addressed loops. */
+  loopAddressable?: boolean;
+  /** Optional catalog grouping code. */
+  catalogCode?: string;
+  /** Compatible control panel product ids. */
+  compatibility?: string[];
+  /** Canvas glyph hint for signaling devices. */
+  symbol?:
+    | 'smoke'
+    | 'heat'
+    | 'pir'
+    | 'door'
+    | 'siren'
+    | 'camera'
+    | 'panel'
+    | 'strobe'
+    | 'default';
 }
 
 export const DEVICE_LIBRARY: readonly DeviceProduct[] = [
@@ -398,6 +431,7 @@ export const DEVICE_LIBRARY: readonly DeviceProduct[] = [
     unitPrice: 96,
     unit: 'pcs',
   },
+  ...SIGNALING_DEVICE_LIBRARY,
 ];
 
 const PRODUCTS_BY_ID = new Map(
@@ -431,7 +465,11 @@ export function libraryManufacturers(): string[] {
 /** Case-insensitive search across name, series, article, manufacturer and rating. */
 export function searchDeviceProducts(
   query: string,
-  options: { category?: DeviceCategory | null; subtype?: DeviceSubtype | null } = {},
+  options: {
+    category?: DeviceCategory | null;
+    subtype?: DeviceSubtype | null;
+    system?: DeviceProduct['system'] | null;
+  } = {},
 ): DeviceProduct[] {
   const needle = query.trim().toLowerCase();
 
@@ -442,6 +480,7 @@ export function searchDeviceProducts(
       }
     }
     if (options.subtype && product.subtype !== options.subtype) return false;
+    if (options.system && product.system !== options.system) return false;
     if (!needle) return true;
 
     return [

@@ -6,6 +6,7 @@ import {
   type DeviceSubtype,
   type ElectricalPointType,
   type PublicPoint,
+  type SignalingLoop,
   type UpdatePointInput,
 } from '@drawmyplace/contracts';
 import { Copy, Trash2 } from 'lucide-react';
@@ -14,10 +15,12 @@ import { useI18n } from '@/features/i18n/i18n-context';
 import { CommitField } from './commit-field';
 import { formatFieldNumber, parseOptionalNumber } from './point-fields';
 import { POINT_SYMBOL_LIST, POINT_SYMBOLS } from './point-symbols';
+import { SIGNALING_SUBTYPES } from './signaling';
 
 interface PointPropertiesPanelProps {
   point: PublicPoint;
   circuits?: readonly Circuit[];
+  signalingLoops?: readonly SignalingLoop[];
   onChange: (patch: UpdatePointInput) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -26,6 +29,7 @@ interface PointPropertiesPanelProps {
 export function PointPropertiesPanel({
   point,
   circuits = [],
+  signalingLoops = [],
   onChange,
   onDuplicate,
   onDelete,
@@ -197,6 +201,93 @@ export function PointPropertiesPanel({
             </span>
           ) : null}
         </label>
+
+        {signalingLoops.length > 0 ||
+        (point.properties.subtype &&
+          SIGNALING_SUBTYPES.has(point.properties.subtype)) ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--dmp-color-brand)]">
+              {t('signaling.loop')}
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="col-span-2 block text-xs text-slate-400">
+                {t('signaling.loop')}
+                <select
+                  className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100"
+                  value={point.properties.loopId ?? ''}
+                  onChange={(event) => {
+                    const { loopId: _previous, ...rest } = point.properties;
+                    onChange({
+                      properties: event.target.value
+                        ? { ...rest, loopId: event.target.value }
+                        : rest,
+                    });
+                  }}
+                >
+                  <option value="">{t('signaling.noLoop')}</option>
+                  {signalingLoops.map((loop) => (
+                    <option key={loop.id} value={loop.id}>
+                      {loop.code} · {loop.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-slate-400">
+                {t('signaling.address')}
+                <input
+                  type="number"
+                  min="0"
+                  max="9999"
+                  defaultValue={point.properties.address ?? ''}
+                  className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100"
+                  onBlur={(event) => {
+                    const value =
+                      event.target.value === ''
+                        ? null
+                        : Math.max(0, Math.min(9999, Number(event.target.value) || 0));
+                    const { address: _previous, ...rest } = point.properties;
+                    onChange({
+                      properties:
+                        value === null ? rest : { ...rest, address: value },
+                    });
+                  }}
+                />
+              </label>
+              <label className="block text-xs text-slate-400">
+                {t('signaling.point.zone')}
+                <input
+                  type="number"
+                  min="0"
+                  max="999"
+                  defaultValue={point.properties.zone ?? ''}
+                  className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 text-sm text-slate-100"
+                  onBlur={(event) => {
+                    const value =
+                      event.target.value === ''
+                        ? null
+                        : Math.max(0, Math.min(999, Number(event.target.value) || 0));
+                    const { zone: _previous, ...rest } = point.properties;
+                    onChange({
+                      properties:
+                        value === null ? rest : { ...rest, zone: value },
+                    });
+                  }}
+                />
+              </label>
+            </div>
+            {currentProduct && point.properties.loopId ? (
+              <p className="mt-2 text-[10px] text-slate-500">
+                {t('signaling.compatibility', {
+                  status: t(
+                    currentProduct.loopAddressable
+                      ? 'signaling.compatible'
+                      : 'signaling.incompatible',
+                  ),
+                })}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <label className="block">
           <span className="text-xs text-slate-400">

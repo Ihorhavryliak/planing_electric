@@ -65,6 +65,12 @@ export const pointPropertiesSchema = z
     subtype: deviceSubtypeSchema.nullable().optional(),
     /** Selected article from the standard device library. */
     productId: z.string().trim().min(1).max(120).nullable().optional(),
+    /** Signaling loop this point belongs to. */
+    loopId: z.string().trim().min(1).max(40).nullable().optional(),
+    /** Addressable-system address (1–254 typical). */
+    address: z.number().int().min(0).max(9999).nullable().optional(),
+    /** Fire/security zone number. */
+    zone: z.number().int().min(0).max(999).nullable().optional(),
   })
   .strict();
 
@@ -133,6 +139,12 @@ export const routeSettingsSchema = z
     chaseWidthMm: z.number().min(10).max(400).optional(),
     /** Chase depth in millimetres; only used with mounting = chase. */
     chaseDepthMm: z.number().min(5).max(150).optional(),
+    /** Discipline: power, security, fire, CCTV, PA or data. */
+    system: z
+      .enum(['power', 'security', 'fire', 'cctv', 'pa', 'data'])
+      .optional(),
+    /** Logical signaling loop served by this cable segment. */
+    loopId: z.string().trim().min(1).max(40).optional(),
   })
   .strict();
 

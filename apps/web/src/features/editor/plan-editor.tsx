@@ -21,6 +21,7 @@ import type {
   PublicRoute,
   PublicWall,
   SetCalibrationInput,
+  SignalingSettings,
   UnderlaySettings,
   UpdateDimensionInput,
   UpdateOpeningInput,
@@ -47,6 +48,7 @@ import {
   Minimize2,
   PanelRightClose,
   PanelRightOpen,
+  RadioTower,
   RotateCcw,
   Ruler,
   Save,
@@ -163,6 +165,11 @@ import {
 import { PdfPageDialog } from './pdf-page-dialog';
 import { PointPropertiesPanel } from './point-properties-panel';
 import { SymbolLibraryPanel } from './symbol-library-panel';
+import { SignalingPanel } from './signaling-panel';
+import {
+  buildSignalingModel,
+  signalingSettings as selectSignalingSettings,
+} from './signaling';
 import { EditorTour } from '@/features/onboarding/editor-tour';
 import { NextStepHint, type NextStep } from '@/features/onboarding/next-step-hint';
 import { useOnboarding } from '@/features/onboarding/onboarding-context';
@@ -328,6 +335,7 @@ const SIDEBAR_TABS = [
   { id: 'circuits', labelKey: 'editor.tab.circuits', icon: CircuitBoard },
   { id: 'validation', labelKey: 'editor.tab.validation', icon: ShieldCheck },
   { id: 'calculation', labelKey: 'editor.tab.calculation', icon: Calculator },
+  { id: 'signaling', labelKey: 'editor.tab.signaling', icon: RadioTower },
 ] as const;
 
 type EditorSidebarTab = (typeof SIDEBAR_TABS)[number]['id'];
@@ -2262,6 +2270,56 @@ export function PlanEditor({
     () => buildPanelSchedule(electrical),
     [electrical],
   );
+  const signaling = selectSignalingSettings(plan);
+  const signalingTakeoff = useMemo(
+    () =>
+      buildSignalingModel({
+        loops: signaling.loops,
+        points,
+        routes,
+        rooms,
+        metersPerUnit,
+        calculation,
+      }),
+    [signaling.loops, points, routes, rooms, metersPerUnit, calculation],
+  );
+  const signalingSaveRef = useRef<{
+    busy: boolean;
+    queued: SignalingSettings | null;
+  }>({ busy: false, queued: null });
+
+  function handleSignalingChange(next: SignalingSettings) {
+    const state = signalingSaveRef.current;
+    state.queued = next;
+
+    if (state.busy) return;
+
+    state.busy = true;
+    void (async () => {
+      let base = plan;
+
+      try {
+        while (state.queued) {
+          const settings = state.queued;
+          state.queued = null;
+          const updated = await updatePlan(plan.id, {
+            calculationSettings: {
+              ...base.calculationSettings,
+              signaling: settings,
+            },
+          });
+          base = updated;
+          onPlanChange(updated);
+        }
+      } catch (error) {
+        state.queued = null;
+        setLayoutError(getErrorMessage(error));
+      } finally {
+        state.busy = false;
+      }
+    })();
+  }
+
   const clashes = useMemo(
     () =>
       findClashes({
@@ -2374,7 +2432,8 @@ export function PlanEditor({
   );
   const electricalBlocked =
     electrical.issues.some((issue) => issue.severity === 'error') ||
-    panelSchedule.issues.some((issue) => issue.severity === 'error');
+    panelSchedule.issues.some((issue) => issue.severity === 'error') ||
+    signalingTakeoff.issues.some((issue) => issue.severity === 'error');
 
   async function saveCircuits(next: Circuit[]) {
     try {
@@ -3125,7 +3184,9 @@ export function PlanEditor({
                       ).length
                     : id === 'circuits'
                       ? circuits.length
-                      : 0;
+                      : id === 'signaling'
+                        ? signaling.loops.length
+                        : 0;
 
                 return (
                   <button
@@ -3575,6 +3636,7 @@ export function PlanEditor({
               currentA: electrical.maxPhaseCurrentA,
               calibrated: electrical.calibrated,
             }}
+            signaling={signalingTakeoff}
             onSelectCircuit={(circuitId) => {
               const route = routes.find(
                 (item) => item.circuitId === circuitId,
@@ -3584,7 +3646,44 @@ export function PlanEditor({
           />
 </div>
 
-<div data-sidebar-tab="validation">
+<div data-sidebar-tab="signaling">
+            <SignalingPanel
+              loops={signaling.loops}
+              takeoff={signalingTakeoff}
+              materials={materials}
+              onAdd={() => {
+                const index = signaling.loops.length + 1;
+                const loop = {
+                  id: crypto.randomUUID(),
+                  code: `SL${index}`,
+                  name: `${t('signaling.type.fire')} ${index}`,
+                  type: 'fire' as const,
+                  topology: 'radial' as const,
+                  color: '#2f6bd8',
+                  maxDevices: 128,
+                  maxLength: 500,
+                  voltageV: 24,
+                };
+                handleSignalingChange({
+                  loops: [...signaling.loops, loop],
+                });
+              }}
+              onUpdate={(id, patch) =>
+                handleSignalingChange({
+                  loops: signaling.loops.map((loop) =>
+                    loop.id === id ? { ...loop, ...patch } : loop,
+                  ),
+                })
+              }
+              onDelete={(id) =>
+                handleSignalingChange({
+                  loops: signaling.loops.filter((loop) => loop.id !== id),
+                })
+              }
+            />
+          </div>
+
+          <div data-sidebar-tab="validation">
           <ValidationPanel
             issues={validationIssues}
             onSelectTarget={focusValidationTarget}
@@ -3807,6 +3906,7 @@ export function PlanEditor({
               key={selectedPoint.id}
               point={selectedPoint}
               circuits={circuits}
+              signalingLoops={signaling.loops}
               onChange={(patch) => void handlePatchPoint(selectedPoint.id, patch)}
               onDuplicate={() => handleDuplicatePoint(selectedPoint)}
               onDelete={() => void handleDeletePoint(selectedPoint.id)}
@@ -3833,6 +3933,7 @@ export function PlanEditor({
               route={selectedRoute}
               materials={materials}
               circuits={circuits}
+              signalingLoops={signaling.loops}
               points={points}
               calculation={calculation?.routes.find(
                 (item) => item.routeId === selectedRoute.id,

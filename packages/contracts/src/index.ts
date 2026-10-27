@@ -10,6 +10,7 @@ export * from './invitation';
 export * from './material';
 export * from './onboarding';
 export * from './opening';
+export * from './signaling';
 export * from './organization';
 export * from './project';
 export * from './structure';

@@ -297,7 +297,9 @@ body {
 .editor-sidebar[data-active-tab='validation']
   [data-sidebar-tab]:not([data-sidebar-tab='validation']),
 .editor-sidebar[data-active-tab='calculation']
-  [data-sidebar-tab]:not([data-sidebar-tab='calculation']) {
+  [data-sidebar-tab]:not([data-sidebar-tab='calculation']),
+.editor-sidebar[data-active-tab='signaling']
+  [data-sidebar-tab]:not([data-sidebar-tab='signaling']) {
   display: none;
 }
 

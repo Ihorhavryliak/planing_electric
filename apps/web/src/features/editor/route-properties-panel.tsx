@@ -5,6 +5,7 @@ import type {
   PublicRoute,
   RouteCalculation,
   RouteMounting,
+  SignalingLoop,
   UpdateRouteInput,
 } from '@drawmyplace/contracts';
 import { Magnet, Trash2, Unlink } from 'lucide-react';
@@ -18,6 +19,7 @@ interface RoutePropertiesPanelProps {
   calculation: RouteCalculation | undefined;
   materials: PublicMaterial[];
   circuits?: readonly Circuit[];
+  signalingLoops?: readonly SignalingLoop[];
   points?: readonly PublicPoint[];
   penetrationCount?: number;
   onChange: (patch: UpdateRouteInput) => void;
@@ -40,6 +42,7 @@ export function RoutePropertiesPanel({
   calculation,
   materials,
   circuits = [],
+  signalingLoops = [],
   points = [],
   penetrationCount = 0,
   onChange,
@@ -96,6 +99,72 @@ export function RoutePropertiesPanel({
             <option value="chase">{t('mounting.chase')}</option>
           </select>
         </label>
+        <label className="block text-xs">
+          <span className="text-slate-400">{t('signaling.system')}</span>
+          <select
+            value={route.settings.system ?? 'power'}
+            onChange={(event) => {
+              const system = event.target.value as
+                | 'power'
+                | 'security'
+                | 'fire'
+                | 'cctv'
+                | 'pa'
+                | 'data';
+              const loop =
+                system === 'power'
+                  ? null
+                  : signalingLoops.find((item) => item.type === system) ?? null;
+              onChange({
+                settings: {
+                  ...route.settings,
+                  system,
+                  ...(loop ? { loopId: loop.id } : { loopId: undefined }),
+                },
+              });
+            }}
+            className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+          >
+            {(['power', 'security', 'fire', 'cctv', 'pa', 'data'] as const).map(
+              (system) => (
+                <option key={system} value={system}>
+                  {t(`signaling.system.${system}`)}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        {(route.settings.system ?? 'power') !== 'power' ? (
+          <label className="block text-xs">
+            <span className="text-slate-400">{t('signaling.loop')}</span>
+            <select
+              value={route.settings.loopId ?? ''}
+              onChange={(event) =>
+                onChange({
+                  settings: {
+                    ...route.settings,
+                    loopId: event.target.value || undefined,
+                  },
+                })
+              }
+              className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1.5 text-xs text-slate-100"
+            >
+              <option value="">{t('signaling.noLoop')}</option>
+              {signalingLoops
+                .filter(
+                  (loop) =>
+                    loop.type === route.settings.system ||
+                    (route.settings.system === 'security' &&
+                      loop.type === 'combined'),
+                )
+                .map((loop) => (
+                  <option key={loop.id} value={loop.id}>
+                    {loop.code} · {loop.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+        ) : null}
         <label className="block text-xs">
           <span className="text-slate-400">{t('editor.cableType')}</span>
           <select

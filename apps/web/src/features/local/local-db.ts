@@ -8,6 +8,7 @@ import type {
   PublicRoom,
   PublicRoute,
   PublicWall,
+  SignalingSettings,
 } from '@drawmyplace/contracts';
 
 const DB_NAME = 'drawmyplace-local';
@@ -23,6 +24,8 @@ export interface LocalDrawing {
   calibration: PublicCalibration | null;
   circuits: Circuit[];
   electrical: ElectricalSettings;
+  /** Signaling loops and zones (Phase 20). */
+  signaling?: SignalingSettings;
   walls: PublicWall[];
   rooms: PublicRoom[];
   openings: PublicOpening[];
@@ -67,6 +70,7 @@ export function emptyDrawing(): LocalDrawing {
     calibration: null,
     circuits: [],
     electrical: {},
+    signaling: { loops: [] },
     walls: [],
     rooms: [],
     openings: [],
@@ -101,6 +105,11 @@ function normalizeDrawing(drawing: Partial<LocalDrawing>): LocalDrawing {
       drawing.electrical && typeof drawing.electrical === 'object'
         ? drawing.electrical
         : {},
+    signaling: {
+      loops: Array.isArray(drawing.signaling?.loops)
+        ? drawing.signaling.loops
+        : [],
+    },
     walls: array(drawing.walls),
     rooms: array(drawing.rooms),
     openings: array(drawing.openings),

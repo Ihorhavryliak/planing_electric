@@ -29,6 +29,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalibrationDialog } from '@/features/editor/calibration-dialog';
 import { CircuitsPanel } from '@/features/editor/circuits-panel';
+import { SignalingPanel } from '@/features/editor/signaling-panel';
+import { buildSignalingModel } from '@/features/editor/signaling';
 import { ElectricalPanel } from '@/features/editor/electrical-panel';
 import { PanelSchedulePanel } from '@/features/editor/panel-schedule-panel';
 import { buildElectricalPlan } from '@/features/editor/electrical';
@@ -341,6 +343,22 @@ export function LocalEditorPage() {
     () => buildPanelSchedule(electrical),
     [electrical],
   );
+  const signalingLoops = drawing?.signaling?.loops ?? [];
+  const signalingTakeoff = useMemo(
+    () =>
+      buildSignalingModel({
+        loops: drawing?.signaling?.loops ?? [],
+        points: drawing?.points ?? [],
+        routes: drawing?.routes ?? [],
+        rooms: drawing?.rooms ?? [],
+        metersPerUnit,
+      }),
+    [drawing, metersPerUnit],
+  );
+
+  function updateSignaling(next: NonNullable<LocalDrawing['signaling']>) {
+    update((current) => ({ ...current, signaling: next }));
+  }
 
   const validationIssues = useMemo(
     () =>
@@ -1633,6 +1651,7 @@ export function LocalEditorPage() {
               currentA: electrical.maxPhaseCurrentA,
               calibrated: electrical.calibrated,
             }}
+            signaling={signalingTakeoff}
             onSelectCircuit={(circuitId) => {
               const route = drawing?.routes.find(
                 (item) => item.circuitId === circuitId,
@@ -1683,6 +1702,43 @@ export function LocalEditorPage() {
                   (circuit) => circuit.id !== id,
                 ),
               }))
+            }
+          />
+
+          <SignalingPanel
+            loops={signalingLoops}
+            takeoff={signalingTakeoff}
+            materials={[]}
+            onAdd={() => {
+              const index = signalingLoops.length + 1;
+              updateSignaling({
+                loops: [
+                  ...signalingLoops,
+                  {
+                    id: crypto.randomUUID(),
+                    code: `SL${index}`,
+                    name: `${t('signaling.type.fire')} ${index}`,
+                    type: 'fire',
+                    topology: 'radial',
+                    color: '#2f6bd8',
+                    maxDevices: 128,
+                    maxLength: 500,
+                    voltageV: 24,
+                  },
+                ],
+              });
+            }}
+            onUpdate={(id, patch) =>
+              updateSignaling({
+                loops: signalingLoops.map((loop) =>
+                  loop.id === id ? { ...loop, ...patch } : loop,
+                ),
+              })
+            }
+            onDelete={(id) =>
+              updateSignaling({
+                loops: signalingLoops.filter((loop) => loop.id !== id),
+              })
             }
           />
 

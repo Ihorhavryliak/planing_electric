@@ -1,11 +1,17 @@
-import type { TakeoffSummary } from '@drawmyplace/calculations';
+import type {
+  SignalingTakeoff,
+  TakeoffSummary,
+} from '@drawmyplace/calculations';
 import {
   Cable,
+  BatteryCharging,
   CheckCircle2,
   CircleSlash,
   Layers3,
   Plug,
+  RadioTower,
   Ruler,
+  ShieldCheck,
 } from 'lucide-react';
 import { useI18n } from '@/features/i18n/i18n-context';
 
@@ -23,6 +29,7 @@ interface TakeoffPanelProps {
     currentA: number;
     calibrated: boolean;
   } | null;
+  signaling?: SignalingTakeoff | null;
 }
 
 function Row({
@@ -79,6 +86,7 @@ export function TakeoffPanel({
   onDefaultThicknessChange,
   onSelectCircuit,
   electrical,
+  signaling = null,
 }: TakeoffPanelProps) {
   const { t, formatMeters, formatNumber, formatCurrency } = useI18n();
   const area = (value: number) =>
@@ -167,6 +175,50 @@ export function TakeoffPanel({
           </div>
         ))}
       </div>
+
+      {signaling ? (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {[
+            {
+              label: t('takeoff.signalingLoops'),
+              value: formatNumber(signaling.loops.length),
+              icon: RadioTower,
+              tone: 'text-[var(--dmp-color-brand)]',
+            },
+            {
+              label: t('takeoff.signalDevices'),
+              value: formatNumber(signaling.totalDevices),
+              icon: ShieldCheck,
+              tone: 'text-sky-300',
+            },
+            {
+              label: t('takeoff.signalCable'),
+              value: formatMeters(signaling.totalCableMeters),
+              icon: Cable,
+              tone: 'text-orange-300',
+            },
+            {
+              label: t('takeoff.battery'),
+              value: `${formatNumber(signaling.battery.recommendedAh)} Ah`,
+              icon: BatteryCharging,
+              tone: 'text-emerald-300',
+            },
+          ].map(({ label, value, icon: Icon, tone }) => (
+            <div
+              key={label}
+              className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5"
+            >
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-slate-500">
+                <Icon className={`h-3 w-3 ${tone}`} />
+                <span className="truncate">{label}</span>
+              </div>
+              <p className="mt-1 truncate text-lg font-semibold tabular-nums text-white">
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <label className="block text-xs">
