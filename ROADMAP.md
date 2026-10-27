@@ -4,7 +4,7 @@
 >
 > **Правило статусу:** Позначайте завдання `[x]` лише після перевірки репозиторію та підтвердження реалізації. Не робіть висновків про статус реалізації лише на основі специфікації.
 >
-> **Останнє оновлення:** 2026-10-26 (сесія 14)
+> **Останнє оновлення:** 2026-10-28 (сесія 28)
 
 ## 1. Поточний стан
 
@@ -856,8 +856,8 @@ MVP готовий до початкового тестування корист
 - Completed: wall/chase levels no longer fall back to the floor when a click misses a wall — previously that produced a cable floating at wall height in front of the wall, which looked attached but sat metres away. The stroke must start on a wall, and the first click determines the height for the whole run.
 - Completed: “Fit plan” now uses the real geometry bounds (walls, rooms, points, routes, dimensions) when a plan has no raster underlay, instead of the default blank sheet, so the drawing is centred and fills the canvas. The landing editor preview was regenerated with the modern glyphs and the new fit.
 - Tests run: `pnpm --filter @drawmyplace/web typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), `node scripts/browser-check.mjs` (dev), Playwright visual check of the wall drag preview/final route (geometry stayed at the wall face, `elevationMm` = 1900), API read-back of the created route.
-- Issues/blockers: temporary test wall and wall routes were removed from the demo project; the Docker web image still needs a rebuild for this batch.
-- Next action: rerun the full web test suite and `scripts/browser-check.mjs`, rebuild only the Docker web image, verify <http://localhost:8090>, then refresh screenshots.
+- Issues/blockers: none. The Docker web image was rebuilt with the final commit; temporary test walls/routes and automated test projects/users were removed from the Docker database.
+- Next action: none for this batch; continue with the next editor polish item.
 
 ### 2026-10-27 — session 27: reference editor alignment and dark palette
 - Completed: aligned the editor with <https://drawmyplace.com/editor> — room cards with area/device/circuit summaries in the left rail, a “No element selected” Properties default with ceiling height and wall thickness, the canvas tool row at the top, and a labeled workspace rail plus mobile menu. Project cards now show real SVG thumbnails and floor/device/route/circuit counts from a new `/projects/summary` endpoint with a unit-tested contract. The Local page and all workspace pages use the same 6xl width and card language, the landing uses a light editor preview and blue accents, and the dark theme uses the new neutral navy/blue palette. 3D cable drawing now previews the run as a dashed line while the mouse is held and commits a wall-mounted route on release.
