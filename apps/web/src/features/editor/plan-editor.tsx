@@ -35,7 +35,6 @@ import {
   Box,
   Calculator,
   Check,
-  CircuitBoard,
   Clock3,
   Columns2,
   Eye,
@@ -60,6 +59,8 @@ import {
   Square,
   TriangleAlert,
   Unlock,
+  ZoomIn,
+  ZoomOut,
   Upload,
 } from 'lucide-react';
 import {
@@ -336,7 +337,6 @@ function calibrationInput(
 const SIDEBAR_TABS = [
   { id: 'properties', labelKey: 'editor.tab.properties', icon: SlidersHorizontal },
   { id: 'layers', labelKey: 'editor.tab.layers', icon: Layers3 },
-  { id: 'circuits', labelKey: 'editor.tab.circuits', icon: CircuitBoard },
   { id: 'validation', labelKey: 'editor.tab.validation', icon: ShieldCheck },
   { id: 'calculation', labelKey: 'editor.tab.calculation', icon: Calculator },
   { id: 'signaling', labelKey: 'editor.tab.signaling', icon: RadioTower },
@@ -2837,6 +2837,69 @@ export function PlanEditor({
     </Suspense>
   );
 
+  function zoomBy(factor: number) {
+    setViewport((current) => ({
+      ...current,
+      zoom: Math.min(4, Math.max(0.1, current.zoom * factor)),
+    }));
+  }
+
+  const viewModeBar = (
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-2 py-1.5 backdrop-blur">
+      <Tabs
+        ariaLabel={t('editor.viewMode')}
+        value={viewMode}
+        onChange={setViewMode}
+        items={[
+          {
+            id: '2d',
+            label: t('editor.view2d'),
+            icon: <Square className="h-3.5 w-3.5" />,
+          },
+          {
+            id: '3d',
+            label: t('editor.view3d'),
+            icon: <Box className="h-3.5 w-3.5" />,
+          },
+          {
+            id: 'split',
+            label: t('editor.splitView'),
+            icon: <Columns2 className="h-3.5 w-3.5" />,
+          },
+        ]}
+      />
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('editor.zoomOut')}
+          onClick={() => zoomBy(1 / 1.2)}
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <span className="min-w-12 text-center text-xs tabular-nums text-slate-300">
+          {Math.round(viewport.zoom * 100)}%
+        </span>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('editor.zoomIn')}
+          onClick={() => zoomBy(1.2)}
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('editor.fit')}
+          onClick={() => setFitRequest(Date.now())}
+        >
+          <Maximize2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <EditorTour />
@@ -2869,6 +2932,7 @@ export function PlanEditor({
           </div>
         </div>
       ) : null}
+      {viewModeBar}
       <div
         ref={fullscreen.containerRef}
         data-editor-tooltips
@@ -2877,7 +2941,7 @@ export function PlanEditor({
         className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
-            : 'flex flex-col gap-3'
+            : 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_20rem]'
         }`}
         style={
           {
@@ -2885,14 +2949,38 @@ export function PlanEditor({
           } as React.CSSProperties
         }
       >
+        {previewMode || preferences.sidebarCollapsed ? null : (
+          <aside className="editor-sidebar order-1 flex flex-col gap-3 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
+            <RoomNavigator
+              rooms={rooms}
+              selectedRoomId={selectedRoomId}
+              onSelect={focusRoom}
+            />
+            <CircuitsPanel
+              circuits={circuits}
+              points={points}
+              routes={routes}
+              onAdd={(circuit) => void saveCircuits([...circuits, circuit])}
+              onUpdate={(id, patch) =>
+                void saveCircuits(
+                  circuits.map((circuit) =>
+                    circuit.id === id ? { ...circuit, ...patch } : circuit,
+                  ),
+                )
+              }
+              onDelete={handleDeleteCircuit}
+            />
+          </aside>
+        )}
+
         <div
           data-tour="editor-canvas"
-          className={`editor-canvas-frame relative order-2 min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
+          className={`editor-canvas-frame relative order-2 min-h-[420px] lg:order-none overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
             fullscreen.isFullscreen
               ? 'h-[calc(100vh-1rem)]'
               : previewMode
                 ? 'h-[calc(100vh-6rem)]'
-                : 'h-[62vh] lg:h-[calc(100vh-34rem)]'
+                : 'h-[62vh] lg:h-[calc(100vh-22rem)]'
           }`}
         >
           {viewMode === '2d' || viewMode === 'split' ? (
@@ -3160,12 +3248,12 @@ export function PlanEditor({
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
-        <aside data-active-tab={sidebarTab} className="editor-sidebar order-1 relative flex w-full flex-col gap-2 lg:max-h-[30vh] lg:overflow-y-auto lg:pr-1">
+        <aside data-active-tab={sidebarTab} className="editor-sidebar relative order-3 flex w-full flex-col gap-2 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
           <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
             <div
               role="tablist"
               aria-label={t('editor.tabs')}
-              className="grid grid-cols-6 gap-0.5"
+              className="grid grid-cols-5 gap-0.5"
             >
               {SIDEBAR_TABS.map(({ id, labelKey, icon: Icon }) => {
                 const active = sidebarTab === id;
@@ -3174,9 +3262,7 @@ export function PlanEditor({
                     ? validationIssues.filter(
                         (issue) => issue.severity !== 'info',
                       ).length
-                    : id === 'circuits'
-                      ? circuits.length
-                      : id === 'signaling'
+                    : id === 'signaling'
                         ? signaling.loops.length
                         : 0;
 
@@ -3208,42 +3294,6 @@ export function PlanEditor({
               })}
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-1.5">
-            <span className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-              {t('editor.viewMode')}
-            </span>
-            <Tabs
-              ariaLabel={t('editor.viewMode')}
-              value={viewMode}
-              onChange={setViewMode}
-              items={[
-                {
-                  id: '2d',
-                  label: t('editor.view2d'),
-                  icon: <Square className="h-3.5 w-3.5" />,
-                },
-                {
-                  id: '3d',
-                  label: t('editor.view3d'),
-                  icon: <Box className="h-3.5 w-3.5" />,
-                },
-                {
-                  id: 'split',
-                  label: t('editor.splitView'),
-                  icon: <Columns2 className="h-3.5 w-3.5" />,
-                },
-              ]}
-            />
-          </div>
-
-<div data-sidebar-tab="properties">
-          <RoomNavigator
-            rooms={rooms}
-            selectedRoomId={selectedRoomId}
-            onSelect={focusRoom}
-          />
-</div>
-
 <div data-sidebar-tab="properties">
           <EditorGuide
             onOpenShortcuts={() => setHotkeysOpen(true)}
