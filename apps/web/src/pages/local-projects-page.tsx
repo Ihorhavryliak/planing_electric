@@ -119,6 +119,9 @@ export function LocalProjectsPage() {
         livingSwitches: t('demo.livingSwitches'),
         kitchenSwitches: t('demo.kitchenSwitches'),
         lowVoltage: t('demo.lowVoltage'),
+        securityLoop: t('demo.securityLoop'),
+        fireLoop: t('demo.fireLoop'),
+        firePanel: t('demo.firePanel'),
       });
       await saveLocalProject(project);
       navigate(`/local/${project.id}`);

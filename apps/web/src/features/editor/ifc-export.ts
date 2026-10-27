@@ -195,6 +195,56 @@ function pointHeight(point: PublicPoint): number {
 }
 
 function pointEntityType(point: PublicPoint): string {
+  const subtype = point.properties.subtype ?? null;
+
+  if (
+    subtype === 'smoke-detector' ||
+    subtype === 'heat-detector' ||
+    subtype === 'smoke-heat-detector' ||
+    subtype === 'door-contact' ||
+    subtype === 'glass-break' ||
+    subtype === 'water-leak' ||
+    subtype === 'vibration-detector' ||
+    subtype === 'motion-sensor'
+  ) {
+    return 'IFCSENSOR';
+  }
+
+  if (
+    subtype === 'siren-internal' ||
+    subtype === 'siren-external' ||
+    subtype === 'strobe' ||
+    subtype === 'exit-sign' ||
+    subtype === 'voice-alarm' ||
+    subtype === 'manual-call-point'
+  ) {
+    return 'IFCALARM';
+  }
+
+  if (
+    subtype === 'keypad' ||
+    subtype === 'card-reader' ||
+    subtype === 'relay-module' ||
+    subtype === 'loop-expander' ||
+    subtype === 'power-supply' ||
+    subtype === 'battery'
+  ) {
+    return 'IFCCONTROLLER';
+  }
+
+  if (
+    subtype === 'gsm-communicator' ||
+    subtype === 'dialer' ||
+    subtype === 'patch-panel' ||
+    subtype === 'network-switch'
+  ) {
+    return 'IFCCOMMUNICATIONSAPPLIANCE';
+  }
+
+  if (subtype === 'ip-camera' || subtype === 'nvr') {
+    return 'IFCAUDIOVISUALAPPLIANCE';
+  }
+
   switch (point.type) {
     case 'socket':
       return 'IFCOUTLET';
@@ -611,6 +661,9 @@ export function buildIfc(input: IfcExportInput): IfcExportResult {
     );
 
     contained.push(element);
+    const loopId = point.properties.loopId ?? null;
+    const address = point.properties.address ?? null;
+    const zone = point.properties.zone ?? null;
     addProperties(
       element,
       'Pset_DrawMyPlace_Device',
@@ -618,6 +671,9 @@ export function buildIfc(input: IfcExportInput): IfcExportResult {
         { name: 'PointType', value: point.type },
         ...(subtype ? [{ name: 'Subtype', value: subtype }] : []),
         ...(circuit ? [{ name: 'Circuit', value: circuit }] : []),
+        ...(loopId ? [{ name: 'LoopId', value: loopId }] : []),
+        ...(address !== null ? [{ name: 'Address', value: address }] : []),
+        ...(zone !== null ? [{ name: 'Zone', value: zone }] : []),
         { name: 'MountingHeight', value: height },
       ],
       `point:${point.id}`,
@@ -656,6 +712,8 @@ export function buildIfc(input: IfcExportInput): IfcExportResult {
     );
 
     contained.push(element);
+    const system = route.settings.system ?? 'power';
+    const loopId = route.settings.loopId ?? null;
     addProperties(
       element,
       'Pset_DrawMyPlace_Cable',
@@ -666,9 +724,24 @@ export function buildIfc(input: IfcExportInput): IfcExportResult {
           value: route.settings.mounting ?? 'unspecified',
         },
         { name: 'PlanLength', value: lengthM },
+        { name: 'System', value: system },
+        ...(loopId ? [{ name: 'LoopId', value: loopId }] : []),
       ],
       `route:${route.id}`,
     );
+
+    if (system !== 'power') {
+      addProperties(
+        element,
+        'Pset_CableSegmentType',
+        [
+          { name: 'CableSegmentType', value: 'SIGNALING' },
+          { name: 'System', value: system },
+          ...(loopId ? [{ name: 'LoopId', value: loopId }] : []),
+        ],
+        `route-cable-type:${route.id}`,
+      );
+    }
   }
 
   if (contained.length > 0) {

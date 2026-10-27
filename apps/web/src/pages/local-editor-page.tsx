@@ -10,6 +10,7 @@ import type {
   PublicWall,
   UnderlaySettings,
 } from '@drawmyplace/contracts';
+import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
 import {
   ArrowLeft,
   ChevronDown,
@@ -372,8 +373,12 @@ export function LocalEditorPage() {
         rooms: drawing?.rooms ?? [],
         electrical,
         panelSchedule,
+        signaling: signalingTakeoff,
+        signalingLoops: drawing?.signaling?.loops ?? [],
+        materials: [],
+        deviceProducts: DEVICE_LIBRARY,
       }),
-    [drawing, electrical, panelSchedule],
+    [drawing, electrical, panelSchedule, signalingTakeoff],
   );
 
   useEffect(() => {
@@ -429,6 +434,18 @@ export function LocalEditorPage() {
         clearSelections();
         if (route) setSelectedRouteId(route.id);
         else if (point) setSelectedPointId(point.id);
+        break;
+      }
+      case 'loop': {
+        const point = drawing?.points.find(
+          (item) => item.properties.loopId === target.id,
+        );
+        const route = drawing?.routes.find(
+          (item) => item.settings.loopId === target.id,
+        );
+        clearSelections();
+        if (point) setSelectedPointId(point.id);
+        else if (route) setSelectedRouteId(route.id);
         break;
       }
       case 'panel':
@@ -1084,6 +1101,7 @@ export function LocalEditorPage() {
                     : 'ok',
             }}
             circuits={drawing.circuits}
+            signalingLoops={drawing.signaling?.loops ?? []}
             layers={layers}
             metersPerUnit={metersPerUnit}
             hoverHints={hoverHints}

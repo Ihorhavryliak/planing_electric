@@ -135,7 +135,10 @@ export function ValidationPanel({
                 >
                   <SeverityIcon severity={issue.severity} />
                   <span className="min-w-0 flex-1 text-[11px] leading-relaxed text-slate-300">
-                    {t(`validation.${issue.code}`, issue.params)}
+                    {t(`validation.${issue.code}`, {
+                      count: issue.count,
+                      ...issue.params,
+                    })}
                     {issue.norm ? (
                       <span className="mt-0.5 block text-[10px] text-slate-500">
                         {t('validation.norm', { norm: issue.norm })}

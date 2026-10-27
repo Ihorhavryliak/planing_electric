@@ -21,6 +21,9 @@ export interface DemoLabels {
   livingSwitches: string;
   kitchenSwitches: string;
   lowVoltage: string;
+  securityLoop: string;
+  fireLoop: string;
+  firePanel: string;
 }
 
 const CHASE: RouteSettings = {
@@ -58,6 +61,7 @@ export function createDemoLocalProject(
     y: number,
     circuitId: string | null,
     subtype: NonNullable<PublicPoint['properties']['subtype']>,
+    extra: Partial<PublicPoint['properties']> = {},
   ): PublicPoint => ({
     id: id(),
     floorId,
@@ -67,7 +71,7 @@ export function createDemoLocalProject(
     rotation: 0,
     label: null,
     mountingHeight: null,
-    properties: { circuitId, subtype },
+    properties: { circuitId, subtype, ...extra },
     updatedAt: now,
   });
 
@@ -86,6 +90,84 @@ export function createDemoLocalProject(
   const bathSwitch = point('switch', 750, 420, 'S2', 'switch-single');
   const lan = point('custom', 450, 300, 'LV1', 'data-lan');
   const camera = point('custom', 900, 600, 'LV1', 'data-camera');
+
+  // Phase 20 demo: security and fire signaling on the same apartment plan.
+  const firePanel = point('panel', 120, 380, null, 'fire-panel', {
+    productId: 'hochiki-firenet-panel',
+    loopId: 'FIRE1',
+  });
+  const securityPanel = point('panel', 80, 160, null, 'keypad', {
+    productId: 'dsc-keypad',
+    loopId: 'SEC1',
+  });
+  const smokeLiving = point('custom', 300, 220, null, 'smoke-detector', {
+    productId: 'hochiki-soc-e-smoke',
+    loopId: 'FIRE1',
+    address: 1,
+    zone: 1,
+  });
+  const smokeKitchen = point('custom', 780, 220, null, 'smoke-detector', {
+    productId: 'hochiki-soc-e-smoke',
+    loopId: 'FIRE1',
+    address: 2,
+    zone: 1,
+  });
+  const smokeBedroom = point('custom', 300, 540, null, 'smoke-detector', {
+    productId: 'hochiki-soc-e-smoke',
+    loopId: 'FIRE1',
+    address: 3,
+    zone: 2,
+  });
+  const callPoint = point('custom', 660, 380, null, 'manual-call-point', {
+    productId: 'apollo-orbis-mcp',
+    loopId: 'FIRE1',
+    address: 4,
+    zone: 2,
+  });
+  const fireSiren = point('custom', 500, 380, null, 'siren-internal', {
+    productId: 'hochiki-siren-internal',
+    loopId: 'FIRE1',
+    address: 5,
+    zone: 0,
+  });
+  const motionLiving = point('custom', 450, 150, null, 'motion-sensor', {
+    loopId: 'SEC1',
+    address: 11,
+    zone: 1,
+  });
+  const motionKitchen = point('custom', 850, 150, null, 'motion-sensor', {
+    loopId: 'SEC1',
+    address: 12,
+    zone: 1,
+  });
+  const motionBedroom = point('custom', 450, 500, null, 'motion-sensor', {
+    loopId: 'SEC1',
+    address: 13,
+    zone: 2,
+  });
+  const motionBath = point('custom', 850, 500, null, 'motion-sensor', {
+    loopId: 'SEC1',
+    address: 14,
+    zone: 2,
+  });
+  const doorMain = point('custom', 100, 350, null, 'door-contact', {
+    productId: 'honeywell-958-door',
+    loopId: 'SEC1',
+    address: 15,
+    zone: 0,
+  });
+  const doorLiving = point('custom', 600, 380, null, 'door-contact', {
+    productId: 'honeywell-958-door',
+    loopId: 'SEC1',
+    address: 16,
+    zone: 1,
+  });
+  const securitySiren = point('custom', 900, 380, null, 'siren-external', {
+    productId: 'hochiki-siren-external',
+    loopId: 'SEC1',
+    address: 17,
+    zone: 0,
+  });
 
   const wallTop: PublicWall = {
     id: id(),
@@ -202,7 +284,7 @@ export function createDemoLocalProject(
 
   const route = (
     geometry: PublicRoute['geometry'],
-    circuitId: string,
+    circuitId: string | null,
     settings: RouteSettings,
   ): PublicRoute => ({
     id: id(),
@@ -227,6 +309,34 @@ export function createDemoLocalProject(
   project.drawing = {
     calibration,
     circuits: CIRCUITS,
+    signaling: {
+      loops: [
+        {
+          id: 'SEC1',
+          code: 'SEC1',
+          name: labels.securityLoop,
+          type: 'security',
+          topology: 'radial',
+          color: '#7c3aed',
+          panelId: securityPanel.id,
+          maxDevices: 32,
+          maxLength: 300,
+          voltageV: 12,
+        },
+        {
+          id: 'FIRE1',
+          code: 'FIRE1',
+          name: labels.fireLoop,
+          type: 'fire',
+          topology: 'loop',
+          color: '#dc2626',
+          panelId: firePanel.id,
+          maxDevices: 128,
+          maxLength: 500,
+          voltageV: 24,
+        },
+      ],
+    },
     electrical: {
       supply: 'single-phase',
       defaultCable: { material: 'copper', sectionMm2: 2.5 },
@@ -298,6 +408,20 @@ export function createDemoLocalProject(
       bathSwitch,
       lan,
       camera,
+      firePanel,
+      securityPanel,
+      smokeLiving,
+      smokeKitchen,
+      smokeBedroom,
+      callPoint,
+      fireSiren,
+      motionLiving,
+      motionKitchen,
+      motionBedroom,
+      motionBath,
+      doorMain,
+      doorLiving,
+      securitySiren,
     ],
     routes: [
       route(
@@ -422,6 +546,24 @@ export function createDemoLocalProject(
         ],
         'LV1',
         CHASE,
+      ),
+      route(
+        [
+          { x: 120, y: 380 },
+          { x: 200, y: 380 },
+          { x: 300, y: 220 },
+        ],
+        null,
+        { ...CEILING, system: 'fire', loopId: 'FIRE1' },
+      ),
+      route(
+        [
+          { x: 80, y: 160 },
+          { x: 300, y: 160 },
+          { x: 450, y: 150 },
+        ],
+        null,
+        { ...CEILING, system: 'security', loopId: 'SEC1' },
       ),
     ],
   };

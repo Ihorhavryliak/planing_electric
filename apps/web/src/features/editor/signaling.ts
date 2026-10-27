@@ -161,6 +161,8 @@ export function buildSignalingModel(
       alarmA: product?.currentAlarmA ?? fallback?.alarmA ?? 0,
       coverageAreaM2: product?.coverageAreaM2 ?? fallback?.coverageAreaM2,
       coverageRadiusM: product?.coverageRadiusM ?? fallback?.radiusM,
+      coverageAngleDeg: product?.coverageAngleDeg ?? null,
+      rotation: point.rotation,
       loopAddressable: product?.loopAddressable ?? false,
       productId: point.properties.productId ?? null,
     };

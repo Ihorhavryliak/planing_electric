@@ -256,3 +256,92 @@ describe('IFC export', () => {
     expect(build().fileName).toBe('Квартира-Поверх-1.ifc');
   });
 });
+
+describe('IFC signaling mapping', () => {
+  it('maps detectors, alarms, communications and signaling cables', () => {
+    const signaling = build({
+      drawing: {
+        ...drawing,
+        points: [
+          {
+            id: 'smoke',
+            floorId: 'f1',
+            type: 'custom',
+            x: 150,
+            y: 150,
+            rotation: 0,
+            label: 'Smoke',
+            mountingHeight: null,
+            properties: {
+              subtype: 'smoke-detector',
+              loopId: 'F1',
+              address: 12,
+              zone: 2,
+            },
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'siren',
+            floorId: 'f1',
+            type: 'custom',
+            x: 250,
+            y: 150,
+            rotation: 0,
+            label: 'Siren',
+            mountingHeight: null,
+            properties: { subtype: 'siren-internal', loopId: 'F1', address: 13 },
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'camera',
+            floorId: 'f1',
+            type: 'custom',
+            x: 350,
+            y: 150,
+            rotation: 0,
+            label: 'Camera',
+            mountingHeight: null,
+            properties: { subtype: 'ip-camera', loopId: 'C1', address: 1 },
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          {
+            id: 'switch',
+            floorId: 'f1',
+            type: 'custom',
+            x: 450,
+            y: 150,
+            rotation: 0,
+            label: 'Switch',
+            mountingHeight: null,
+            properties: { subtype: 'network-switch' },
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        routes: [
+          {
+            id: 'signal-route',
+            floorId: 'f1',
+            circuitId: null,
+            materialId: null,
+            geometry: [
+              { x: 100, y: 100 },
+              { x: 400, y: 100 },
+            ],
+            settings: { mounting: 'ceiling', system: 'fire', loopId: 'F1' },
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      } as unknown as PlanDrawing,
+    });
+    const text = signaling.text;
+
+    expect(text).toContain('IFCSENSOR(');
+    expect(text).toContain('IFCALARM(');
+    expect(text).toContain('IFCAUDIOVISUALAPPLIANCE(');
+    expect(text).toContain('IFCCOMMUNICATIONSAPPLIANCE(');
+    expect(text).toContain("IFCPROPERTYSINGLEVALUE('CableSegmentType',$");
+    expect(text).toContain("IFCLABEL('SIGNALING')");
+    expect(text).toContain("IFCPROPERTYSINGLEVALUE('LoopId',$");
+    expect(text).toContain("IFCPROPERTYSINGLEVALUE('Address',$");
+  });
+});

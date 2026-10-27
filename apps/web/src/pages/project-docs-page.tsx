@@ -25,8 +25,10 @@ import { ValidationPanel } from '@/features/editor/validation-panel';
 import { ExportPanel } from '@/features/editor/export-panel';
 import { ReportsPanel } from '@/features/editor/reports-panel';
 import { buildElectricalPlan } from '@/features/editor/electrical';
+import { buildSignalingModel } from '@/features/editor/signaling';
 import { validatePlan } from '@/features/editor/validation';
 import { buildPanelSchedule, buildTakeoff } from '@drawmyplace/calculations';
+import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
 import { getPlanCalculation, getPlanDrawing } from '@/features/editor/drawing-api';
 import { listFloors } from '@/features/editor/editor-api';
 import {
@@ -146,6 +148,20 @@ export function ProjectDocsPage() {
     return () => controller.abort();
   }, [plan]);
 
+  const signalingLoops = plan?.calculationSettings.signaling?.loops ?? [];
+  const signaling = useMemo(() => {
+    if (!drawing) return null;
+
+    return buildSignalingModel({
+      loops: signalingLoops,
+      points: drawing.points,
+      routes: drawing.routes,
+      rooms: drawing.rooms,
+      metersPerUnit: drawing.calibration?.metersPerUnit ?? null,
+      calculation,
+    });
+  }, [drawing, signalingLoops, calculation]);
+
   const validationIssues = useMemo(() => {
     if (!drawing) return [];
 
@@ -157,8 +173,12 @@ export function ProjectDocsPage() {
       walls: drawing.walls,
       openings: drawing.openings,
       materialIds: materials.map((material) => material.id),
+      signaling,
+      signalingLoops,
+      materials,
+      deviceProducts: DEVICE_LIBRARY,
     });
-  }, [drawing, plan, materials]);
+  }, [drawing, plan, materials, signaling, signalingLoops]);
 
   const electrical = useMemo(() => {
     if (!drawing || !plan) return null;
@@ -521,6 +541,8 @@ export function ProjectDocsPage() {
               electrical={electrical}
               panelSchedule={panelSchedule}
               materials={materials}
+              signalingLoops={signalingLoops}
+              signaling={signaling}
             />
           ) : null}
 

@@ -30,6 +30,7 @@ import type {
   UpdateRouteInput,
   UpdateWallInput,
 } from '@drawmyplace/contracts';
+import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
 import {
   Calculator,
   Check,
@@ -511,7 +512,25 @@ export function PlanEditor({
   const [fitRequest, setFitRequest] = useState(0);
   const [previewMode, setPreviewMode] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<EditorSidebarTab>('properties');
+  const [sidebarTab, setSidebarTab] = useState<EditorSidebarTab>(() => {
+    try {
+      const stored = window.localStorage.getItem('dmp:editor:sidebarTab');
+      if (stored && SIDEBAR_TABS.some((tab) => tab.id === stored)) {
+        return stored as EditorSidebarTab;
+      }
+    } catch {
+      // Private mode or blocked storage falls back to properties.
+    }
+    return 'properties';
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dmp:editor:sidebarTab', sidebarTab);
+    } catch {
+      // Persisting the tab is a convenience, not a requirement.
+    }
+  }, [sidebarTab]);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const { layers, toggleLayer, showAllLayers } = useEditorLayers();
@@ -2416,6 +2435,10 @@ export function PlanEditor({
             : undefined,
         electrical,
         panelSchedule,
+        signaling: signalingTakeoff,
+        signalingLoops: signaling.loops,
+        materials,
+        deviceProducts: DEVICE_LIBRARY,
       }),
     [
       calibration,
@@ -2428,6 +2451,8 @@ export function PlanEditor({
       materials,
       electrical,
       panelSchedule,
+      signalingTakeoff,
+      signaling.loops,
     ],
   );
   const electricalBlocked =
@@ -2803,6 +2828,18 @@ export function PlanEditor({
         else if (point) selectPoint(point.id);
         break;
       }
+      case 'loop': {
+        const point = points.find(
+          (item) => item.properties.loopId === target.id,
+        );
+        const route = routes.find(
+          (item) => item.settings.loopId === target.id,
+        );
+        setSidebarTab('signaling');
+        if (point) selectPoint(point.id);
+        else if (route) selectRoute(route.id);
+        break;
+      }
       case 'panel':
         document
           .querySelector('[data-testid="panel-schedule"]')
@@ -2939,6 +2976,7 @@ export function PlanEditor({
                     : 'pending',
             }}
             circuits={circuits}
+            signalingLoops={signaling.loops}
             layers={layers}
             walls={walls}
             selectedWallId={selectedWallId}
@@ -3173,7 +3211,7 @@ export function PlanEditor({
             <div
               role="tablist"
               aria-label={t('editor.tabs')}
-              className="grid grid-cols-5 gap-0.5"
+              className="grid grid-cols-6 gap-0.5"
             >
               {SIDEBAR_TABS.map(({ id, labelKey, icon: Icon }) => {
                 const active = sidebarTab === id;
@@ -3698,6 +3736,9 @@ export function PlanEditor({
             points={points}
             routes={routes}
             electrical={electrical}
+            signalingLoops={signaling.loops}
+            signaling={signalingTakeoff}
+            materials={materials}
             projectId={projectId}
             title={`${floorName} plan`}
             subtitle={floorName}

@@ -38,6 +38,8 @@ export interface DeviceProduct {
   powerW?: number;
   /** Detection coverage for smoke/heat detectors, m². */
   coverageAreaM2?: number;
+  /** Camera / PIR field of view, degrees. */
+  coverageAngleDeg?: number;
   /** Visual coverage radius for PIR/CCTV/sirens, m. */
   coverageRadiusM?: number;
   /** Supports addressed loops. */

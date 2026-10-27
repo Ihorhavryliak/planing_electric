@@ -4,18 +4,27 @@ import type {
   PublicMaterial,
   PublicPoint,
   PublicRoute,
+  SignalingLoop,
 } from '@drawmyplace/contracts';
 import {
   buildPanelSchedule,
   type ElectricalPlanResult,
   type PanelSchedule,
+  type SignalingTakeoff,
 } from '@drawmyplace/calculations';
 import { deviceProduct } from '@drawmyplace/contracts';
 import { buildCableJournal, type CableJournalRow } from './cable-journal';
 import { buildCircuitNumbering } from './circuit-numbering';
 import { buildXlsx, type XlsxSheet } from './xlsx';
 
-export type ReportId = 'equipment' | 'cable-journal' | 'panel-schedule';
+export type ReportId =
+  | 'equipment'
+  | 'cable-journal'
+  | 'panel-schedule'
+  | 'signaling-equipment'
+  | 'signaling-cable'
+  | 'ppkp-schedule'
+  | 'battery-report';
 
 export interface ReportFieldDefinition {
   key: string;
@@ -70,6 +79,9 @@ export interface ReportSource {
   materials?: readonly PublicMaterial[];
   /** Required cable length by circuit, meters. Overrides calculation routes. */
   cableLengths?: Readonly<Record<string, number>>;
+  /** Signaling loops and their computed takeoff (Phase 20). */
+  signalingLoops?: readonly SignalingLoop[];
+  signaling?: SignalingTakeoff | null;
 }
 
 const equipmentFields: readonly ReportFieldDefinition[] = [
@@ -116,7 +128,93 @@ const panelFields: readonly ReportFieldDefinition[] = [
   { key: 'status', labelKey: 'panel.status' },
 ];
 
+
+const signalingEquipmentFields: readonly ReportFieldDefinition[] = [
+  { key: 'loop', labelKey: 'report.field.loop' },
+  { key: 'loopName', labelKey: 'report.field.loopName' },
+  { key: 'system', labelKey: 'report.field.system' },
+  { key: 'address', labelKey: 'report.field.address' },
+  { key: 'manufacturer', labelKey: 'report.field.manufacturer' },
+  { key: 'article', labelKey: 'report.field.article' },
+  { key: 'name', labelKey: 'report.field.name' },
+  { key: 'quantity', labelKey: 'report.field.quantity', numeric: true },
+  { key: 'unit', labelKey: 'report.field.unit' },
+  { key: 'standby', labelKey: 'report.field.standby', numeric: true },
+  { key: 'alarm', labelKey: 'report.field.alarm', numeric: true },
+];
+
+const signalingCableFields: readonly ReportFieldDefinition[] = [
+  { key: 'loop', labelKey: 'report.field.loop' },
+  { key: 'system', labelKey: 'report.field.system' },
+  { key: 'cable', labelKey: 'report.field.cable' },
+  { key: 'length', labelKey: 'report.field.length', numeric: true },
+  { key: 'devices', labelKey: 'report.field.devices', numeric: true },
+  { key: 'addresses', labelKey: 'report.field.addresses' },
+  { key: 'status', labelKey: 'panel.status' },
+];
+
+const ppkpFields: readonly ReportFieldDefinition[] = [
+  { key: 'loop', labelKey: 'report.field.loop' },
+  { key: 'system', labelKey: 'report.field.system' },
+  { key: 'topology', labelKey: 'signaling.field.topology' },
+  { key: 'devices', labelKey: 'report.field.devices', numeric: true },
+  { key: 'used', labelKey: 'report.field.addressesUsed', numeric: true },
+  { key: 'free', labelKey: 'report.field.addressesFree', numeric: true },
+  { key: 'standby', labelKey: 'report.field.standby', numeric: true },
+  { key: 'alarm', labelKey: 'report.field.alarm', numeric: true },
+  { key: 'voltage', labelKey: 'report.field.voltage', numeric: true },
+  { key: 'drop', labelKey: 'report.field.voltageDrop', numeric: true },
+  { key: 'status', labelKey: 'panel.status' },
+];
+
+const batteryFields: readonly ReportFieldDefinition[] = [
+  { key: 'item', labelKey: 'report.field.item' },
+  { key: 'formula', labelKey: 'report.field.formula' },
+  { key: 'value', labelKey: 'report.field.value', numeric: true },
+  { key: 'unit', labelKey: 'report.field.unit' },
+  { key: 'note', labelKey: 'report.field.norm' },
+];
+
 export const REPORT_DEFINITIONS: readonly ReportDefinition[] = [
+  {
+    id: 'signaling-equipment',
+    titleKey: 'report.signalingEquipment.title',
+    hintKey: 'report.signalingEquipment.hint',
+    fields: signalingEquipmentFields,
+    defaultFields: [
+      'loop',
+      'system',
+      'address',
+      'manufacturer',
+      'article',
+      'name',
+      'quantity',
+      'unit',
+      'standby',
+      'alarm',
+    ],
+  },
+  {
+    id: 'signaling-cable',
+    titleKey: 'report.signalingCable.title',
+    hintKey: 'report.signalingCable.hint',
+    fields: signalingCableFields,
+    defaultFields: signalingCableFields.map((field) => field.key),
+  },
+  {
+    id: 'ppkp-schedule',
+    titleKey: 'report.ppkp.title',
+    hintKey: 'report.ppkp.hint',
+    fields: ppkpFields,
+    defaultFields: ppkpFields.map((field) => field.key),
+  },
+  {
+    id: 'battery-report',
+    titleKey: 'report.battery.title',
+    hintKey: 'report.battery.hint',
+    fields: batteryFields,
+    defaultFields: batteryFields.map((field) => field.key),
+  },
   {
     id: 'equipment',
     titleKey: 'report.equipment.title',
@@ -437,6 +535,15 @@ export function buildReportTable(
     };
   }
 
+  if (
+    id === 'signaling-equipment' ||
+    id === 'signaling-cable' ||
+    id === 'ppkp-schedule' ||
+    id === 'battery-report'
+  ) {
+    return buildSignalingReportTable(id, source, activeFields, pick, columns);
+  }
+
   const rows = panelRows(source);
   const totalLoad = panelScheduleOf(source)?.rows.reduce(
     (sum, row) => sum + row.currentA,
@@ -454,6 +561,186 @@ export function buildReportTable(
         : undefined,
   };
 }
+
+function buildSignalingReportTable(
+  id: ReportId,
+  source: ReportSource,
+  activeFields: readonly ReportFieldDefinition[],
+  pick: (values: Record<string, ReportCell>) => ReportCell[],
+  columns: ReportColumn[],
+): ReportTable {
+  const loops = source.signalingLoops ?? [];
+  const takeoff = source.signaling ?? null;
+  const points = source.points ?? source.drawing?.points ?? [];
+  const loopById = new Map(loops.map((loop) => [loop.id, loop]));
+  const materialById = new Map(
+    (source.materials ?? []).map((material) => [material.id, material]),
+  );
+
+  if (id === 'signaling-equipment') {
+    const groups = new Map<
+      string,
+      { loopId: string | null; productId: string | null; points: PublicPoint[] }
+    >();
+    for (const point of points) {
+      const loopId = point.properties.loopId ?? null;
+      if (!loopId) continue;
+      const productId = point.properties.productId ?? null;
+      const key = `${loopId}:${productId ?? point.properties.subtype ?? point.type}`;
+      const group = groups.get(key);
+      if (group) group.points.push(point);
+      else groups.set(key, { loopId, productId, points: [point] });
+    }
+
+    const rows = [...groups.values()].map((group) => {
+      const first = group.points[0]!;
+      const product = deviceProduct(group.productId);
+      const loop = group.loopId ? loopById.get(group.loopId) : null;
+      const addresses = group.points
+        .map((point) => point.properties.address)
+        .filter((address): address is number => typeof address === 'number')
+        .sort((a, b) => a - b);
+      const result = takeoff?.loops.find((item) => item.id === group.loopId);
+      const share = result
+        ? group.points.length / Math.max(1, result.deviceCount)
+        : 0;
+
+      return pick({
+        loop: loop?.code ?? '—',
+        loopName: loop?.name ?? '—',
+        system: loop ? source.t(`signaling.type.${loop.type}`) : '—',
+        address: addresses.length > 0 ? addresses.join(', ') : '—',
+        manufacturer: product?.manufacturer ?? '—',
+        article: product?.article ?? first.properties.subtype ?? '—',
+        name:
+          product?.name ??
+          source.t(
+            `devices.subtype.${first.properties.subtype ?? first.type}`,
+          ),
+        quantity: group.points.length,
+        unit: product?.unit ?? 'pcs',
+        standby: Number(
+          ((product?.currentStandbyA ?? 0) * group.points.length).toFixed(4),
+        ),
+        alarm: Number(
+          ((product?.currentAlarmA ?? 0) * group.points.length).toFixed(4),
+        ),
+        notes: share > 0 ? `${Math.round(share * 100)}%` : '',
+      });
+    });
+
+    const quantityIndex = activeFields.findIndex(
+      (field) => field.key === 'quantity',
+    );
+    const quantity = rows.reduce(
+      (sum, row) =>
+        sum + (quantityIndex >= 0 ? Number(row[quantityIndex] ?? 0) : 0),
+      0,
+    );
+
+    return {
+      columns,
+      rows,
+      total:
+        rows.length > 0
+          ? numericTotals(columns, source.t('report.total'), { quantity })
+          : undefined,
+    };
+  }
+
+  if (id === 'signaling-cable') {
+    const rows = (takeoff?.loops ?? []).map((result) => {
+      const loop = loopById.get(result.id);
+      const material = loop?.cableMaterialId
+        ? materialById.get(loop.cableMaterialId)
+        : null;
+
+      return pick({
+        loop: result.code,
+        system: source.t(`signaling.type.${result.type}`),
+        cable: material ? `${material.code} · ${material.name}` : '—',
+        length: result.cableMeters,
+        devices: result.deviceCount,
+        addresses:
+          result.addresses.length > 0 ? result.addresses.join(', ') : '—',
+        status: source.t(`signaling.status.${result.status}`),
+      });
+    });
+
+    return {
+      columns,
+      rows,
+      total:
+        rows.length > 0
+          ? numericTotals(columns, source.t('report.total'), {
+              length: takeoff?.totalCableMeters ?? 0,
+              devices: takeoff?.totalDevices ?? 0,
+            })
+          : undefined,
+    };
+  }
+
+  if (id === 'ppkp-schedule') {
+    const rows = (takeoff?.loops ?? []).map((result) => {
+      const loop = loopById.get(result.id);
+      const used = result.addresses.length;
+      const free = Math.max(0, (result.maxDevices ?? 0) - used);
+
+      return pick({
+        loop: result.code,
+        system: source.t(`signaling.type.${result.type}`),
+        topology: source.t(
+          `signaling.topology.${loop?.topology ?? 'radial'}`,
+        ),
+        devices: result.deviceCount,
+        used,
+        free,
+        standby: Number(result.standbyA.toFixed(4)),
+        alarm: Number(result.alarmA.toFixed(4)),
+        voltage: result.voltageV,
+        drop: result.voltageDropPercent,
+        status: source.t(`signaling.status.${result.status}`),
+      });
+    });
+
+    return { columns, rows };
+  }
+
+  const battery = takeoff?.battery;
+  const rows: ReportCell[][] = [
+    pick({
+      item: source.t('report.battery.standbyCurrent'),
+      formula: `I_standby = ${(takeoff?.standbyA ?? 0).toFixed(4)} A`,
+      value: Number((takeoff?.standbyA ?? 0).toFixed(4)),
+      unit: 'A',
+      note: 'EN 54-4',
+    }),
+    pick({
+      item: source.t('report.battery.alarmCurrent'),
+      formula: `I_alarm = ${(takeoff?.alarmA ?? 0).toFixed(4)} A`,
+      value: Number((takeoff?.alarmA ?? 0).toFixed(4)),
+      unit: 'A',
+      note: 'EN 54-4',
+    }),
+    pick({
+      item: source.t('report.battery.required'),
+      formula: `C = (I_standby × ${battery?.standbyHours ?? 24} + I_alarm × ${((battery?.alarmMinutes ?? 5) / 60).toFixed(2)}) × 1.25`,
+      value: battery?.requiredAh ?? 0,
+      unit: 'Ah',
+      note: 'EN 54-4, п. 6.3; ДБН В.2.5-56:2014, п. 6.5',
+    }),
+    pick({
+      item: source.t('report.battery.recommended'),
+      formula: `${battery?.recommendedAh ?? 0} Ah × ${battery?.batteries ?? 1}`,
+      value: battery?.recommendedAh ?? 0,
+      unit: 'Ah',
+      note: source.t('report.battery.reserve'),
+    }),
+  ];
+
+  return { columns, rows };
+}
+
 
 function mapRow(
   definition: ReportDefinition,
@@ -516,6 +803,10 @@ const DEFAULT_SHEET_NAMES: Record<ReportId, string> = {
   equipment: 'Equipment',
   'cable-journal': 'Cable journal',
   'panel-schedule': 'Panel schedule',
+  'signaling-equipment': 'Signaling equipment',
+  'signaling-cable': 'Signaling cables',
+  'ppkp-schedule': 'Fire panel schedule',
+  'battery-report': 'Battery calculation',
 };
 
 /** Builds a multi-sheet workbook with one sheet per requested report. */

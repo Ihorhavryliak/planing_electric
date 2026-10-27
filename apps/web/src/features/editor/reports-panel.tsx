@@ -3,12 +3,15 @@ import type {
   PlanCalculation,
   PlanDrawing,
   PublicMaterial,
+  SignalingLoop,
 } from '@drawmyplace/contracts';
 import type {
   ElectricalPlanResult,
   PanelSchedule,
+  SignalingTakeoff,
 } from '@drawmyplace/calculations';
 import {
+  BatteryCharging,
   Cable,
   Check,
   FileSpreadsheet,
@@ -16,6 +19,7 @@ import {
   LayoutGrid,
   Package,
   Printer,
+  RadioTower,
   RotateCcw,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -46,6 +50,10 @@ interface ReportsPanelProps {
   electrical?: ElectricalPlanResult | null;
   panelSchedule?: PanelSchedule | null;
   materials?: readonly PublicMaterial[];
+  signalingLoops?: readonly SignalingLoop[];
+  signaling?: SignalingTakeoff | null;
+  points?: PlanDrawing['points'];
+  routes?: PlanDrawing['routes'];
 }
 
 const STORAGE_KEY = 'dmp:report-fields';
@@ -53,6 +61,10 @@ const REPORT_ICONS: Record<ReportId, typeof Package> = {
   equipment: Package,
   'cable-journal': Cable,
   'panel-schedule': LayoutGrid,
+  'signaling-equipment': RadioTower,
+  'signaling-cable': Cable,
+  'ppkp-schedule': LayoutGrid,
+  'battery-report': BatteryCharging,
 };
 
 type FieldSelection = Record<ReportId, string[]>;
@@ -62,6 +74,10 @@ function initialSelection(): FieldSelection {
     equipment: defaultReportFields('equipment'),
     'cable-journal': defaultReportFields('cable-journal'),
     'panel-schedule': defaultReportFields('panel-schedule'),
+    'signaling-equipment': defaultReportFields('signaling-equipment'),
+    'signaling-cable': defaultReportFields('signaling-cable'),
+    'ppkp-schedule': defaultReportFields('ppkp-schedule'),
+    'battery-report': defaultReportFields('battery-report'),
   };
 }
 
@@ -108,6 +124,10 @@ export function ReportsPanel({
   electrical = null,
   panelSchedule = null,
   materials = [],
+  signalingLoops = [],
+  signaling = null,
+  points,
+  routes,
 }: ReportsPanelProps) {
   const { t, formatDate, formatNumber } = useI18n();
   const [active, setActive] = useState<ReportId>('equipment');
@@ -126,8 +146,24 @@ export function ReportsPanel({
       electrical,
       panelSchedule,
       materials,
+      signalingLoops,
+      signaling,
+      points,
+      routes,
     }),
-    [t, drawing, circuits, calculation, electrical, panelSchedule, materials],
+    [
+      t,
+      drawing,
+      circuits,
+      calculation,
+      electrical,
+      panelSchedule,
+      materials,
+      signalingLoops,
+      signaling,
+      points,
+      routes,
+    ],
   );
 
   const table = useMemo(

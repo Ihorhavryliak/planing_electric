@@ -5,9 +5,12 @@ import {
   type ElectricalIssueCode,
   type ElectricalPlanResult,
   type Point2D,
+  type SignalingIssueCode,
+  type SignalingTakeoff,
 } from '@drawmyplace/calculations';
 import {
   NORM_REFERENCES,
+  SIGNALING_NORM_REFERENCES,
   isWetRoomName,
   pointInPolygon,
 } from './normative';
@@ -38,11 +41,36 @@ export type ValidationCode =
   | 'mainBreakerUndersized'
   | 'normWetZoneRcd'
   | 'normJunctionWetZone'
+  | 'signalingPointWithoutLoop'
+  | 'signalingUnknownLoop'
+  | 'signalingDuplicateAddress'
+  | 'signalingAddressOutOfRange'
+  | 'signalingLoopDeviceOverflow'
+  | 'signalingLoopLengthOverflow'
+  | 'signalingVoltageDropHigh'
+  | 'signalingIncompatiblePanel'
+  | 'signalingFireCoverage'
+  | 'signalingSirenCoverage'
+  | 'signalingCameraBlindSpot'
+  | 'signalingFireDetectorSpacing'
+  | 'signalingFireDetectorWallDistance'
+  | 'signalingSharedChase'
+  | 'signalingFireCableNotFr'
+  | 'signalingBatteryUndersized'
+  | 'signalingPatchPanelOverflow'
+  | 'signalingManualCallHeight'
   | ElectricalIssueCode;
 
 export type ValidationTarget =
   | {
-      kind: 'point' | 'route' | 'wall' | 'opening' | 'room' | 'circuit';
+      kind:
+        | 'point'
+        | 'route'
+        | 'wall'
+        | 'opening'
+        | 'room'
+        | 'circuit'
+        | 'loop';
       id: string;
     }
   | { kind: 'calibration' }
@@ -78,7 +106,15 @@ export interface ValidationPoint {
   label?: string | null;
   x: number;
   y: number;
-  properties: { circuitId?: string | null };
+  mountingHeight?: number | null;
+  properties: {
+    circuitId?: string | null;
+    subtype?: string | null;
+    productId?: string | null;
+    loopId?: string | null;
+    address?: number | null;
+    zone?: number | null;
+  };
 }
 
 export interface ValidationRoute {
@@ -88,7 +124,7 @@ export interface ValidationRoute {
   startPointId?: string | null;
   endPointId?: string | null;
   geometry: readonly Point2D[];
-  settings: { mounting?: string };
+  settings: { mounting?: string; system?: string; loopId?: string | null };
 }
 
 export interface ValidationInput {
@@ -104,6 +140,24 @@ export interface ValidationInput {
   /** Load, voltage-drop and protection results for the electrical rules. */
   electrical?: ElectricalPlanResult | null;
   panelSchedule?: import('@drawmyplace/calculations').PanelSchedule | null;
+  /** Signaling takeoff computed from the same plan; loop/coverage rules reuse it. */
+  signaling?: SignalingTakeoff | null;
+  signalingLoops?: readonly {
+    id: string;
+    code: string;
+    type: string;
+    panelId?: string | null;
+    maxDevices?: number | null;
+    maxLength?: number | null;
+  }[];
+  materials?: readonly { id: string; code: string; name: string }[];
+  deviceProducts?: readonly {
+    id: string;
+    subtype: string;
+    system?: string | null;
+    compatibility?: string[];
+    loopAddressable?: boolean;
+  }[];
 }
 
 const ENDPOINT_TOLERANCE = 1e-6;
@@ -143,6 +197,312 @@ function unique(values: readonly (string | null | undefined)[]): string[] {
  * aggregated row with the affected objects, so a plan with 40 unconnected
  * sockets stays readable while still allowing jump-to-object.
  */
+const SIGNALING_CODES: Record<SignalingIssueCode, ValidationCode> = {
+  loopDeviceOverflow: 'signalingLoopDeviceOverflow',
+  loopLengthOverflow: 'signalingLoopLengthOverflow',
+  duplicateAddress: 'signalingDuplicateAddress',
+  voltageDropHigh: 'signalingVoltageDropHigh',
+  batteryUndersized: 'signalingBatteryUndersized',
+  smokeCoverageMissing: 'signalingFireCoverage',
+  sirenCoverageMissing: 'signalingSirenCoverage',
+  cameraBlindSpot: 'signalingCameraBlindSpot',
+  fireDetectorSpacing: 'signalingFireDetectorSpacing',
+  fireDetectorWallDistance: 'signalingFireDetectorWallDistance',
+  patchPanelOverflow: 'signalingPatchPanelOverflow',
+  sharedChase: 'signalingSharedChase',
+};
+
+function segmentDistance(a: Point2D, b: Point2D, c: Point2D, d: Point2D) {
+  const pointSegment = (p: Point2D, s: Point2D, e: Point2D) => {
+    const dx = e.x - s.x;
+    const dy = e.y - s.y;
+    const length = dx * dx + dy * dy;
+    if (length < 1e-12) return Math.hypot(p.x - s.x, p.y - s.y);
+    const t = Math.max(
+      0,
+      Math.min(1, ((p.x - s.x) * dx + (p.y - s.y) * dy) / length),
+    );
+    return Math.hypot(p.x - (s.x + t * dx), p.y - (s.y + t * dy));
+  };
+
+  return Math.min(
+    pointSegment(a, c, d),
+    pointSegment(b, c, d),
+    pointSegment(c, a, b),
+    pointSegment(d, a, b),
+  );
+}
+
+function polylinesNear(
+  first: readonly Point2D[],
+  second: readonly Point2D[],
+  threshold: number,
+): boolean {
+  for (let i = 1; i < first.length; i += 1) {
+    const a = first[i - 1];
+    const b = first[i];
+    if (!a || !b) continue;
+    for (let j = 1; j < second.length; j += 1) {
+      const c = second[j - 1];
+      const d = second[j];
+      if (!c || !d) continue;
+      if (segmentDistance(a, b, c, d) <= threshold) return true;
+    }
+  }
+  return false;
+}
+
+/** Fire/safety, loop, compatibility and separation rules for signaling. */
+function signalingValidationIssues(input: ValidationInput): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const loops = input.signalingLoops ?? [];
+  const loopById = new Map(loops.map((loop) => [loop.id, loop]));
+  const productById = new Map(
+    (input.deviceProducts ?? []).map((product) => [product.id, product]),
+  );
+  const materialById = new Map(
+    (input.materials ?? []).map((material) => [material.id, material]),
+  );
+  const signalingSubtypes = new Set(
+    (input.deviceProducts ?? [])
+      .filter((product) => product.system && product.system !== 'power')
+      .map((product) => product.subtype),
+  );
+  const missingLoop: ValidationTarget[] = [];
+  const unknownLoop: ValidationTarget[] = [];
+  const addressOutOfRange: ValidationTarget[] = [];
+  const manualCallHeight: ValidationTarget[] = [];
+  const addressesByLoop = new Map<string, { address: number; points: string[] }>();
+
+  for (const point of input.points) {
+    const properties = point.properties;
+    const product = properties.productId
+      ? productById.get(properties.productId)
+      : undefined;
+    const isSignaling =
+      Boolean(properties.loopId) ||
+      Boolean(
+        properties.subtype && signalingSubtypes.has(properties.subtype),
+      ) ||
+      Boolean(product?.system && product.system !== 'power');
+
+    if (isSignaling && !properties.loopId) {
+      missingLoop.push({ kind: 'point', id: point.id });
+    }
+    if (properties.loopId && !loopById.has(properties.loopId)) {
+      unknownLoop.push({ kind: 'point', id: point.id });
+    }
+    if (
+      typeof properties.address === 'number' &&
+      (properties.address < 0 || properties.address > 254)
+    ) {
+      addressOutOfRange.push({ kind: 'point', id: point.id });
+    }
+    if (
+      properties.loopId &&
+      typeof properties.address === 'number' &&
+      properties.address >= 0 &&
+      properties.address <= 254
+    ) {
+      const key = `${properties.loopId}:${properties.address}`;
+      const entry = addressesByLoop.get(key) ?? {
+        address: properties.address,
+        points: [],
+      };
+      entry.points.push(point.id);
+      addressesByLoop.set(key, entry);
+    }
+    if (
+      properties.subtype === 'manual-call-point' &&
+      typeof point.mountingHeight === 'number' &&
+      (point.mountingHeight < 0.8 || point.mountingHeight > 1.5)
+    ) {
+      manualCallHeight.push({ kind: 'point', id: point.id });
+    }
+  }
+
+  if (missingLoop.length > 0) {
+    issues.push(
+      issue(
+        'signalingPointWithoutLoop',
+        'warning',
+        missingLoop,
+        undefined,
+        SIGNALING_NORM_REFERENCES.pointWithoutLoop,
+      ),
+    );
+  }
+  if (unknownLoop.length > 0) {
+    issues.push(
+      issue(
+        'signalingUnknownLoop',
+        'error',
+        unknownLoop,
+        undefined,
+        SIGNALING_NORM_REFERENCES.unknownLoop,
+      ),
+    );
+  }
+  if (addressOutOfRange.length > 0) {
+    issues.push(
+      issue(
+        'signalingAddressOutOfRange',
+        'error',
+        addressOutOfRange,
+        undefined,
+        SIGNALING_NORM_REFERENCES.addressOutOfRange,
+      ),
+    );
+  }
+  for (const entry of addressesByLoop.values()) {
+    if (entry.points.length > 1) {
+      issues.push(
+        issue(
+          'signalingDuplicateAddress',
+          'error',
+          entry.points.map((id) => ({ kind: 'point', id })),
+          { address: entry.address },
+          SIGNALING_NORM_REFERENCES.duplicateAddress,
+        ),
+      );
+    }
+  }
+  if (manualCallHeight.length > 0) {
+    issues.push(
+      issue(
+        'signalingManualCallHeight',
+        'warning',
+        manualCallHeight,
+        undefined,
+        SIGNALING_NORM_REFERENCES.manualCallHeight,
+      ),
+    );
+  }
+
+  const panelByLoop = new Map<string, string>();
+  for (const loop of loops) {
+    if (loop.panelId) panelByLoop.set(loop.id, loop.panelId);
+  }
+  const incompatible: ValidationTarget[] = [];
+
+  for (const point of input.points) {
+    const loopId = point.properties.loopId;
+    const productId = point.properties.productId;
+    if (!loopId || !productId) continue;
+    const product = productById.get(productId);
+    if (!product?.compatibility || product.compatibility.length === 0) continue;
+    const panelPointId = panelByLoop.get(loopId);
+    const panelProductId = panelPointId
+      ? input.points.find((item) => item.id === panelPointId)?.properties
+          .productId
+      : null;
+    if (!panelProductId) continue;
+    if (!product.compatibility.includes(panelProductId)) {
+      incompatible.push({ kind: 'point', id: point.id });
+    }
+  }
+  if (incompatible.length > 0) {
+    issues.push(
+      issue(
+        'signalingIncompatiblePanel',
+        'error',
+        incompatible,
+        undefined,
+        SIGNALING_NORM_REFERENCES.incompatiblePanel,
+      ),
+    );
+  }
+
+  const fireLoopIds = new Set(
+    loops
+      .filter((loop) => loop.type === 'fire' || loop.type === 'combined')
+      .map((loop) => loop.id),
+  );
+  const nonFrRoutes: ValidationTarget[] = [];
+  for (const route of input.routes) {
+    const loopId = route.settings.loopId;
+    if (!loopId || !fireLoopIds.has(loopId)) continue;
+    if (!route.materialId) continue;
+    const material = materialById.get(route.materialId);
+    const label = `${material?.code ?? ''} ${material?.name ?? ''}`.toLowerCase();
+    if (!/(^|\b)(fr|fire|нг|вогне)/i.test(label)) {
+      nonFrRoutes.push({ kind: 'route', id: route.id });
+    }
+  }
+  if (nonFrRoutes.length > 0) {
+    issues.push(
+      issue(
+        'signalingFireCableNotFr',
+        'error',
+        nonFrRoutes,
+        undefined,
+        SIGNALING_NORM_REFERENCES.fireCableNotFr,
+      ),
+    );
+  }
+
+  const threshold = input.calibration?.metersPerUnit
+    ? 0.05 / input.calibration.metersPerUnit
+    : 0.1;
+  const powerChases = input.routes.filter(
+    (route) =>
+      route.settings.mounting === 'chase' &&
+      (route.settings.system ?? 'power') === 'power',
+  );
+  const sharedChase: ValidationTarget[] = [];
+  if (powerChases.length > 0) {
+    for (const route of input.routes) {
+      const system = route.settings.system ?? 'power';
+      if (system === 'power' || route.settings.mounting !== 'chase') continue;
+      if (
+        powerChases.some(
+          (power) =>
+            power.id !== route.id &&
+            polylinesNear(route.geometry, power.geometry, threshold),
+        )
+      ) {
+        sharedChase.push({ kind: 'route', id: route.id });
+      }
+    }
+  }
+  if (sharedChase.length > 0) {
+    issues.push(
+      issue(
+        'signalingSharedChase',
+        'warning',
+        sharedChase,
+        undefined,
+        SIGNALING_NORM_REFERENCES.sharedChase,
+      ),
+    );
+  }
+
+  for (const takeoffIssue of input.signaling?.issues ?? []) {
+    if (takeoffIssue.code === 'duplicateAddress') continue;
+    const code = SIGNALING_CODES[takeoffIssue.code];
+    if (!code) continue;
+    const target: ValidationTarget = takeoffIssue.pointId
+      ? { kind: 'point', id: takeoffIssue.pointId }
+      : takeoffIssue.loopId
+          ? { kind: 'loop', id: takeoffIssue.loopId }
+          : takeoffIssue.roomId
+            ? { kind: 'room', id: takeoffIssue.roomId }
+            : { kind: 'panel' };
+
+    issues.push(
+      issue(
+        code,
+        takeoffIssue.severity,
+        [target],
+        takeoffIssue.params,
+        SIGNALING_NORM_REFERENCES[takeoffIssue.code],
+      ),
+    );
+  }
+
+  return issues;
+}
+
 export function validatePlan(input: ValidationInput): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const circuitIds = new Set(input.circuits.map((circuit) => circuit.id));
@@ -511,6 +871,8 @@ export function validatePlan(input: ValidationInput): ValidationIssue[] {
       ),
     );
   }
+
+  issues.push(...signalingValidationIssues(input));
 
   for (const electricalIssue of input.electrical?.issues ?? []) {
     const target: ValidationTarget = electricalIssue.circuitId

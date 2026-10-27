@@ -9,6 +9,12 @@ export interface PointRenderItem {
   y: number;
   rotation: number;
   label: string | null;
+  /** Signaling loop colour override. */
+  color?: string | null;
+  /** Loop address / loop code badge. */
+  badge?: string | null;
+  /** Device subtype drives EN 54 / security glyphs. */
+  subtype?: string | null;
 }
 
 export interface PointGhost {
@@ -93,20 +99,181 @@ const PAINTERS: Readonly<Record<ElectricalPointType, Painter>> = {
   },
 };
 
+
+function signalingGlyph(
+  context: CanvasRenderingContext2D,
+  subtype: string,
+  color: string,
+): boolean {
+  const r = RADIUS;
+
+  switch (subtype) {
+    case 'smoke-detector':
+      circle(context, color);
+      context.beginPath();
+      context.arc(0, 0, 2.5, 0, Math.PI * 2);
+      context.fillStyle = color;
+      context.fill();
+      return true;
+    case 'heat-detector':
+      context.beginPath();
+      context.moveTo(0, -r - 1);
+      context.lineTo(r + 1, 0);
+      context.lineTo(0, r + 1);
+      context.lineTo(-r - 1, 0);
+      context.closePath();
+      context.fillStyle = pointLight ? '#ffffff' : BACKGROUND;
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = color;
+      context.stroke();
+      context.beginPath();
+      context.arc(0, 0, 2.4, 0, Math.PI * 2);
+      context.fillStyle = color;
+      context.fill();
+      return true;
+    case 'smoke-heat-detector':
+      circle(context, color);
+      context.beginPath();
+      context.moveTo(0, -4.5);
+      context.lineTo(4.5, 0);
+      context.lineTo(0, 4.5);
+      context.lineTo(-4.5, 0);
+      context.closePath();
+      context.strokeStyle = color;
+      context.lineWidth = 1.5;
+      context.stroke();
+      return true;
+    case 'motion-sensor':
+      context.beginPath();
+      context.moveTo(0, -r - 1);
+      context.lineTo(r + 1, r - 1);
+      context.lineTo(-r - 1, r - 1);
+      context.closePath();
+      context.fillStyle = pointLight ? '#ffffff' : BACKGROUND;
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = color;
+      context.stroke();
+      context.beginPath();
+      context.arc(0, 1, 2.2, 0, Math.PI * 2);
+      context.fillStyle = color;
+      context.fill();
+      return true;
+    case 'door-contact':
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.strokeRect(-r, -5, r * 2, 10);
+      context.fillStyle = color;
+      context.fillRect(-r + 2, -3, 5, 6);
+      return true;
+    case 'manual-call-point':
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.strokeRect(-r, -r, r * 2, r * 2);
+      context.beginPath();
+      context.arc(0, 0, 3, 0, Math.PI * 2);
+      context.fillStyle = color;
+      context.fill();
+      return true;
+    case 'siren-internal':
+    case 'siren-external':
+    case 'voice-alarm':
+      context.beginPath();
+      context.moveTo(-r, -5);
+      context.lineTo(0, -5);
+      context.lineTo(r + 2, -r);
+      context.lineTo(r + 2, r);
+      context.lineTo(0, 5);
+      context.lineTo(-r, 5);
+      context.closePath();
+      context.fillStyle = pointLight ? '#ffffff' : BACKGROUND;
+      context.fill();
+      context.lineWidth = 1.8;
+      context.strokeStyle = color;
+      context.stroke();
+      return true;
+    case 'strobe':
+      context.beginPath();
+      context.arc(0, 0, r, 0, Math.PI * 2);
+      context.fillStyle = pointLight ? '#ffffff' : BACKGROUND;
+      context.fill();
+      context.lineWidth = 2;
+      context.strokeStyle = color;
+      context.stroke();
+      line(context, -4, 0, 4, 0);
+      line(context, 0, -4, 0, 4);
+      return true;
+    case 'ip-camera':
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.strokeRect(-r, -5, 11, 10);
+      context.beginPath();
+      context.moveTo(2, -4);
+      context.lineTo(r + 2, -7);
+      context.lineTo(r + 2, 7);
+      context.lineTo(2, 4);
+      context.closePath();
+      context.stroke();
+      return true;
+    case 'nvr':
+      context.strokeStyle = color;
+      context.lineWidth = 1.8;
+      context.strokeRect(-r, -6, r * 2, 12);
+      context.beginPath();
+      context.arc(-4, 0, 1.5, 0, Math.PI * 2);
+      context.fillStyle = color;
+      context.fill();
+      return true;
+    default:
+      return false;
+  }
+}
+
 function drawSymbol(
   context: CanvasRenderingContext2D,
   type: ElectricalPointType,
   at: Vec2,
   rotation: number,
   alpha: number,
+  color?: string | null,
+  subtype?: string | null,
 ): void {
   context.save();
   context.globalAlpha = alpha;
   context.translate(at.x, at.y);
   context.rotate((rotation * Math.PI) / 180);
   context.lineCap = 'round';
-  PAINTERS[type](context, POINT_SYMBOLS[type].color);
+  const resolved = color ?? POINT_SYMBOLS[type].color;
+  if (!(subtype && signalingGlyph(context, subtype, resolved))) {
+    PAINTERS[type](context, resolved);
+  }
   context.restore();
+}
+
+function drawAddressBadge(
+  context: CanvasRenderingContext2D,
+  text: string,
+  at: Vec2,
+  color: string,
+): void {
+  context.font = '700 9px ui-monospace, SFMono-Regular, monospace';
+  context.textAlign = 'left';
+  context.textBaseline = 'middle';
+
+  const paddingX = 4;
+  const height = 13;
+  const width = context.measureText(text).width + paddingX * 2;
+  const left = at.x + RADIUS + 1;
+  const top = at.y - RADIUS - height;
+
+  context.fillStyle = pointLight ? '#ffffff' : '#020617';
+  context.fillRect(left, top, width, height);
+  context.lineWidth = 1;
+  context.strokeStyle = color;
+  context.strokeRect(left + 0.5, top + 0.5, width - 1, height - 1);
+  context.fillStyle = color;
+  context.fillText(text, left + paddingX, top + height / 2 + 0.5);
 }
 
 function drawPointLabel(
@@ -168,7 +335,19 @@ export function drawPointsOverlay(
       context.setLineDash([]);
     }
 
-    drawSymbol(context, point.type, at, point.rotation, 1);
+    drawSymbol(
+      context,
+      point.type,
+      at,
+      point.rotation,
+      1,
+      point.color ?? null,
+      point.subtype ?? null,
+    );
+
+    if (showLabels && point.badge) {
+      drawAddressBadge(context, point.badge, at, point.color ?? '#2f6bd8');
+    }
 
     if (showLabels && point.label) {
       drawPointLabel(context, point.label, at);

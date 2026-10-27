@@ -1094,4 +1094,98 @@ describe('Drawing API', () => {
       .set('Cookie', viewer.cookie)
       .expect(404);
   });
+
+  it('stores signaling loops, point bindings and route systems', async () => {
+    const fixture = await createFixture();
+
+    const panel = await addPoint(fixture, {
+      type: 'panel',
+      x: 0,
+      y: 0,
+      properties: {
+        subtype: 'fire-panel',
+        productId: 'hochiki-firenet-panel',
+      },
+    });
+
+    const updated = await server()
+      .patch(`${API}/plans/${fixture.plan.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({
+        calculationSettings: {
+          signaling: {
+            loops: [
+              {
+                id: 'F1',
+                code: 'F1',
+                name: 'Fire loop',
+                type: 'fire',
+                topology: 'loop',
+                color: '#dc2626',
+                panelId: panel.id,
+                maxDevices: 128,
+                maxLength: 500,
+                voltageV: 24,
+              },
+            ],
+          },
+        },
+      })
+      .expect(200);
+
+    expect(updated.body.calculationSettings.signaling.loops[0]).toMatchObject({
+      id: 'F1',
+      type: 'fire',
+      panelId: panel.id,
+    });
+
+    const detector = await addPoint(fixture, {
+      type: 'custom',
+      x: 100,
+      y: 0,
+      properties: {
+        subtype: 'smoke-detector',
+        productId: 'hochiki-soc-e-smoke',
+        loopId: 'F1',
+        address: 1,
+        zone: 3,
+      },
+    });
+    expect(detector.properties).toMatchObject({
+      loopId: 'F1',
+      address: 1,
+      zone: 3,
+    });
+
+    const route = await addRoute(fixture, {
+      geometry: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      settings: { mounting: 'ceiling', system: 'fire', loopId: 'F1' },
+    });
+    expect(route.settings).toMatchObject({ system: 'fire', loopId: 'F1' });
+
+    const patched = await server()
+      .patch(`${API}/points/${detector.id}`)
+      .set('Cookie', fixture.cookie)
+      .send({ properties: { ...detector.properties, address: 2 } })
+      .expect(200);
+    expect((patched.body as PublicPoint).properties.address).toBe(2);
+
+    const drawing = (
+      await server()
+        .get(`${API}/plans/${fixture.plan.id}/drawing`)
+        .set('Cookie', fixture.cookie)
+        .expect(200)
+    ).body as PlanDrawing;
+
+    expect(
+      drawing.points.find((point) => point.id === detector.id)?.properties,
+    ).toMatchObject({ loopId: 'F1', address: 2, zone: 3 });
+    expect(
+      drawing.routes.find((item) => item.id === route.id)?.settings,
+    ).toMatchObject({ system: 'fire', loopId: 'F1' });
+  });
+
 });

@@ -12,6 +12,10 @@ export interface RouteRenderItem {
   geometry: readonly Vec2[];
   circuitId?: string | null;
   mounting?: RouteMounting | null;
+  /** Signaling loop colour override. */
+  color?: string | null;
+  /** Loop code / system chip instead of the circuit id. */
+  label?: string | null;
   startPinned?: boolean;
   endPinned?: boolean;
 }
@@ -172,6 +176,8 @@ export function drawRoutesOverlay(
     const path = route.geometry.map((v) => worldToScreen(v, viewport, size));
     const selected = route.id === selectedId;
 
+    const routeColor = route.color ?? ROUTE_COLOR;
+
     if (route.mounting === 'chase') {
       // A chase is drawn as a wide translucent band with a dashed centreline.
       tracePath(context, path);
@@ -182,25 +188,29 @@ export function drawRoutesOverlay(
       tracePath(context, path);
       context.setLineDash([9, 6]);
       context.lineWidth = selected ? 3 : 2;
-      context.strokeStyle = selected ? SELECTED_COLOR : ROUTE_COLOR;
+      context.strokeStyle = selected ? SELECTED_COLOR : routeColor;
       context.stroke();
       context.setLineDash([]);
     } else {
       tracePath(context, path);
       context.lineWidth = selected ? 4 : 2.5;
-      context.strokeStyle = selected ? SELECTED_COLOR : ROUTE_COLOR;
+      context.strokeStyle = selected ? SELECTED_COLOR : routeColor;
       context.stroke();
     }
 
-    if (options.showLabels !== false && route.circuitId) {
+    const label = route.label ?? route.circuitId;
+    if (options.showLabels !== false && label) {
       const midpoint = pathMidpoint(path);
 
       if (midpoint) {
         drawCircuitChip(
           context,
           midpoint,
-          route.circuitId,
-          circuitColors.get(route.circuitId) ?? ROUTE_COLOR,
+          label,
+          route.color ??
+            (route.circuitId
+              ? (circuitColors.get(route.circuitId) ?? ROUTE_COLOR)
+              : ROUTE_COLOR),
         );
       }
     }

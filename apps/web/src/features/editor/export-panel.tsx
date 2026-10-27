@@ -4,8 +4,13 @@ import type {
   PlanDrawing,
   PublicPoint,
   PublicRoute,
+  PublicMaterial,
+  SignalingLoop,
 } from '@drawmyplace/contracts';
-import type { ElectricalPlanResult } from '@drawmyplace/calculations';
+import type {
+  ElectricalPlanResult,
+  SignalingTakeoff,
+} from '@drawmyplace/calculations';
 import {
   Box,
   Download,
@@ -30,12 +35,15 @@ import { buildSchematicSvg } from './schematic-export';
 import { buildCircuitNumbering } from './circuit-numbering';
 import { buildCableJournal, buildCableJournalCsv } from './cable-journal';
 import {
+  buildReportCsv,
   buildReportTable,
   buildReportsWorkbook,
+  getReportDefinition,
   REPORT_DEFINITIONS,
 } from './reports';
 import { XLSX_MIME } from './xlsx';
 import { buildIfc } from './ifc-export';
+import { buildSignalingSchematicSvg } from './signaling-schematic';
 
 interface ExportPanelProps {
   drawing: PlanDrawing | null;
@@ -44,6 +52,9 @@ interface ExportPanelProps {
   points?: readonly PublicPoint[];
   routes?: readonly PublicRoute[];
   electrical?: ElectricalPlanResult | null;
+  signalingLoops?: readonly SignalingLoop[];
+  signaling?: SignalingTakeoff | null;
+  materials?: readonly PublicMaterial[];
   projectId?: string;
   title?: string;
   subtitle?: string;
@@ -69,6 +80,9 @@ export function ExportPanel({
   points = [],
   routes = [],
   electrical = null,
+  signalingLoops = [],
+  signaling = null,
+  materials = [],
   projectId,
   title,
   subtitle,
@@ -151,6 +165,86 @@ export function ExportPanel({
 
     downloadBytes(
       `${planName}-reports.xlsx`,
+      buildReportsWorkbook(reports, { title: planName }),
+      XLSX_MIME,
+    );
+  }
+
+  function exportSignalingSchematic() {
+    if (!drawing || signalingLoops.length === 0) return;
+    downloadSvg(
+      `${planName}-signaling-schematic.svg`,
+      buildSignalingSchematicSvg({
+        loops: signalingLoops,
+        points: points.length > 0 ? points : drawing.points,
+        takeoff: signaling,
+        title: t('export.signalingSchematicTitle'),
+        subtitle: subtitle ?? title ?? '',
+        labels: {
+          panel: t('signaling.panel'),
+          devices: t('report.field.devices'),
+          address: t('signaling.address'),
+        },
+      }),
+    );
+  }
+
+  function signalingReportCsv(
+    id: 'signaling-cable' | 'ppkp-schedule' | 'battery-report',
+    suffix: string,
+  ) {
+    if (!drawing || signalingLoops.length === 0) return;
+    const table = buildReportTable(id, {
+      t,
+      drawing,
+      circuits,
+      points,
+      routes,
+      calculation,
+      electrical,
+      signalingLoops,
+      signaling,
+      materials,
+    });
+    if (table.rows.length === 0) return;
+    downloadTextFile(
+      `${planName}-${suffix}.csv`,
+      buildReportCsv(table),
+      'text/csv',
+    );
+  }
+
+  function exportSignalingWorkbook() {
+    if (!drawing || signalingLoops.length === 0) return;
+    const source = {
+      t,
+      drawing,
+      circuits,
+      points,
+      routes,
+      calculation,
+      electrical,
+      signalingLoops,
+      signaling,
+      materials,
+    };
+    const ids = [
+      'signaling-equipment',
+      'signaling-cable',
+      'ppkp-schedule',
+      'battery-report',
+    ] as const;
+    const reports = ids
+      .map((id) => ({
+        id,
+        table: buildReportTable(id, source),
+        name: t(getReportDefinition(id).titleKey),
+      }))
+      .filter((report) => report.table.rows.length > 0);
+    if (reports.length === 0) return;
+
+    downloadBytes(
+      `${planName}-signaling.xlsx`,
       buildReportsWorkbook(reports, { title: planName }),
       XLSX_MIME,
     );
@@ -247,6 +341,50 @@ export function ExportPanel({
           <p className="px-1 text-[10px] leading-relaxed text-amber-300/80">
             {t('export.ifcUncalibrated')}
           </p>
+        ) : null}
+        {signalingLoops.length > 0 ? (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start"
+              disabled={!drawing}
+              onClick={exportSignalingSchematic}
+            >
+              <FileCode2 className="h-4 w-4" />
+              {t('export.signalingSchematic')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start"
+              disabled={!drawing}
+              onClick={exportSignalingWorkbook}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {t('export.signalingWorkbook')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start"
+              disabled={!drawing}
+              onClick={() => signalingReportCsv('signaling-cable', 'signal-cables')}
+            >
+              <Download className="h-4 w-4" />
+              {t('export.signalingCableJournal')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="justify-start"
+              disabled={!drawing}
+              onClick={() => signalingReportCsv('battery-report', 'battery')}
+            >
+              <Download className="h-4 w-4" />
+              {t('export.batteryReport')}
+            </Button>
+          </>
         ) : null}
         <Button
           variant="outline"

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { calculateElectrical } from '@drawmyplace/calculations';
+import {
+  buildSignalingTakeoff,
+  calculateElectrical,
+} from '@drawmyplace/calculations';
 import { validatePlan, type ValidationInput } from './validation';
 
 function baseInput(): ValidationInput {
@@ -376,5 +379,220 @@ describe('plan validation', () => {
     );
     expect(issue?.severity).toBe('error');
     expect(issue?.params).toEqual({ route: 'Sockets' });
+  });
+});
+
+describe('signaling validation', () => {
+  const loop = {
+    id: 'F1',
+    code: 'F1',
+    name: 'Fire loop',
+    type: 'fire' as const,
+    topology: 'loop' as const,
+    maxDevices: 2,
+    maxLength: 500,
+    panelId: 'panel',
+  };
+
+  function signalingInput(address: number) {
+    const input = baseInput();
+    input.signalingLoops = [loop];
+    input.deviceProducts = [
+      { id: 'panel-a', subtype: 'fire-panel', system: 'fire' },
+      {
+        id: 'smoke-a',
+        subtype: 'smoke-detector',
+        system: 'fire',
+        compatibility: ['panel-a'],
+        loopAddressable: true,
+      },
+      { id: 'panel-b', subtype: 'fire-panel', system: 'fire' },
+    ];
+    input.points = [
+      {
+        id: 'panel',
+        type: 'panel',
+        x: 0,
+        y: 0,
+        properties: { circuitId: 'C1', productId: 'panel-a', loopId: 'F1' },
+      },
+      {
+        id: 'smoke',
+        type: 'custom',
+        x: 100,
+        y: 0,
+        properties: {
+          circuitId: 'C1',
+          productId: 'smoke-a',
+          subtype: 'smoke-detector',
+          loopId: 'F1',
+          address,
+        },
+      },
+      {
+        id: 'orphan',
+        type: 'custom',
+        x: 150,
+        y: 0,
+        properties: {
+          circuitId: 'C1',
+          productId: 'smoke-a',
+          subtype: 'smoke-detector',
+        },
+      },
+      {
+        id: 'bad-loop',
+        type: 'custom',
+        x: 200,
+        y: 0,
+        properties: {
+          circuitId: 'C1',
+          productId: 'smoke-a',
+          subtype: 'smoke-detector',
+          loopId: 'missing',
+        },
+      },
+    ];
+    input.routes = [
+      {
+        id: 'r1',
+        circuitId: 'C1',
+        materialId: 'm1',
+        geometry: [
+          { x: 0, y: 0 },
+          { x: 200, y: 0 },
+        ],
+        settings: { mounting: 'chase', system: 'fire', loopId: 'F1' },
+      },
+      {
+        id: 'r2',
+        circuitId: 'C1',
+        materialId: 'm2',
+        geometry: [
+          { x: 0, y: 2 },
+          { x: 200, y: 2 },
+        ],
+        settings: { mounting: 'chase', system: 'power' },
+      },
+    ];
+    input.rooms = [
+      {
+        id: 'room-1',
+        name: 'Hall',
+        boundary: [
+          { x: 0, y: -50 },
+          { x: 300, y: -50 },
+          { x: 300, y: 100 },
+          { x: 0, y: 100 },
+        ],
+      },
+      {
+        id: 'room-2',
+        name: 'Store',
+        boundary: [
+          { x: 400, y: 0 },
+          { x: 700, y: 0 },
+          { x: 700, y: 300 },
+          { x: 400, y: 300 },
+        ],
+      },
+    ];
+    input.materialIds = ['m1', 'm2'];
+    input.materials = [
+      { id: 'm1', code: 'FR-CABLE', name: 'Fire resistant cable' },
+      { id: 'm2', code: 'NYM', name: 'Power cable' },
+    ];
+    input.signaling = buildSignalingTakeoff({
+      loops: [loop],
+      points: input.points.map((point) => ({
+        id: point.id,
+        subtype: point.properties.subtype,
+        loopId: point.properties.loopId,
+        address: point.properties.address,
+        x: point.x,
+        y: point.y,
+        coverageAreaM2: 85,
+      })),
+      routes: input.routes.map((route) => ({
+        id: route.id,
+        system: route.settings.system as
+          | 'power'
+          | 'security'
+          | 'fire'
+          | 'cctv'
+          | 'pa'
+          | 'data'
+          | undefined,
+        loopId: route.settings.loopId,
+        mounting: route.settings.mounting,
+        geometry: route.geometry,
+      })),
+      rooms: input.rooms,
+      metersPerUnit: 0.01,
+    });
+
+    return input;
+  }
+
+  it('flags missing/unknown loops, bad addresses and panel mismatches', () => {
+    const input = signalingInput(300);
+    input.points[0]!.properties.productId = 'panel-b';
+    const issues = validatePlan(input);
+    const codes = issues.map((issue) => issue.code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        'signalingPointWithoutLoop',
+        'signalingUnknownLoop',
+        'signalingAddressOutOfRange',
+        'signalingIncompatiblePanel',
+        'signalingFireCoverage',
+      ]),
+    );
+    expect(
+      issues.find((issue) => issue.code === 'signalingPointWithoutLoop')
+        ?.targets,
+    ).toEqual([{ kind: 'point', id: 'orphan' }]);
+  });
+
+  it('reports duplicate addresses and shared chases with norm clauses', () => {
+    const input = signalingInput(1);
+    input.points = [...input.points, {
+      id: 'smoke-2',
+      type: 'custom',
+      x: 120,
+      y: 0,
+      properties: {
+        circuitId: 'C1',
+        productId: 'smoke-a',
+        subtype: 'smoke-detector',
+        loopId: 'F1',
+        address: 1,
+      },
+    }];
+    input.points = input.points.filter((point) => point.id !== 'bad-loop');
+    const issues = validatePlan(input);
+
+    const duplicate = issues.find(
+      (issue) => issue.code === 'signalingDuplicateAddress',
+    );
+    const chase = issues.find(
+      (issue) => issue.code === 'signalingSharedChase',
+    );
+    expect(duplicate).toBeDefined();
+    expect(duplicate?.norm).toContain('EN 54-2');
+    expect(chase).toBeDefined();
+    expect(chase?.norm).toContain('ДБН');
+  });
+
+  it('requires FR cable on fire loops', () => {
+    const input = signalingInput(1);
+    input.routes[0]!.materialId = 'm2';
+    const issue = validatePlan(input).find(
+      (item) => item.code === 'signalingFireCableNotFr',
+    );
+
+    expect(issue?.severity).toBe('error');
+    expect(issue?.targets).toEqual([{ kind: 'route', id: 'r1' }]);
   });
 });

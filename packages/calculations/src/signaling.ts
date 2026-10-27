@@ -34,6 +34,10 @@ export interface SignalingPointInput {
   alarmA?: number | null;
   coverageAreaM2?: number | null;
   coverageRadiusM?: number | null;
+  /** Camera field of view, degrees. */
+  coverageAngleDeg?: number | null;
+  /** Point rotation, degrees (camera direction). */
+  rotation?: number | null;
   loopAddressable?: boolean | null;
   productId?: string | null;
 }
@@ -81,6 +85,8 @@ export type SignalingIssueCode =
   | 'smokeCoverageMissing'
   | 'sirenCoverageMissing'
   | 'cameraBlindSpot'
+  | 'fireDetectorSpacing'
+  | 'fireDetectorWallDistance'
   | 'patchPanelOverflow'
   | 'sharedChase';
 
@@ -142,6 +148,9 @@ const BATTERY_ALARM_MINUTES = 5;
 const LOOP_RESISTANCE_OHM_PER_M = 0.024;
 const BATTERY_SIZES_AH = [2, 7, 12, 18, 26, 40, 65, 100];
 const SMOKE_COVERAGE_M2 = 85;
+const MAX_DETECTOR_SPACING_M = 9;
+const MAX_DETECTOR_WALL_DISTANCE_M = 4.5;
+const MAX_CAMERA_BLIND_PERCENT = 20;
 const CCTV_ARCHIVE_GB_PER_DAY = 42;
 const PATCH_PANEL_PORTS = 24;
 
@@ -215,6 +224,82 @@ function isSirenSubtype(subtype: string | null | undefined): boolean {
 
 function isCameraSubtype(subtype: string | null | undefined): boolean {
   return subtype === 'ip-camera';
+}
+
+
+function pointToSegmentDistance(
+  point: { x: number; y: number },
+  a: Point2D,
+  b: Point2D,
+): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const length = dx * dx + dy * dy;
+  if (length < 1e-12) return Math.hypot(point.x - a.x, point.y - a.y);
+  const t = Math.max(
+    0,
+    Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / length),
+  );
+  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
+}
+
+function distanceToBoundary(
+  point: { x: number; y: number },
+  boundary: readonly Point2D[],
+): number {
+  let nearest = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < boundary.length; index += 1) {
+    const a = boundary[index];
+    const b = boundary[(index + 1) % boundary.length];
+    if (!a || !b) continue;
+    nearest = Math.min(nearest, pointToSegmentDistance(point, a, b));
+  }
+  return nearest;
+}
+
+/** Union of camera field-of-view intervals, as a percentage of 360°. */
+function cameraCoveragePercent(
+  cameras: readonly SignalingPointInput[],
+): number {
+  const intervals: Array<[number, number]> = [];
+
+  for (const camera of cameras) {
+    const angle = Math.min(
+      360,
+      Math.max(1, camera.coverageAngleDeg ?? 90),
+    );
+    const center = camera.rotation ?? 0;
+    const start = center - angle / 2;
+    const end = center + angle / 2;
+    if (end - start >= 360) return 100;
+
+    const normalize = (value: number) => ((value % 360) + 360) % 360;
+    const s = normalize(start);
+    const e = normalize(end);
+    if (s <= e) intervals.push([s, e]);
+    else {
+      intervals.push([s, 360]);
+      intervals.push([0, e]);
+    }
+  }
+
+  if (intervals.length === 0) return 0;
+  intervals.sort((a, b) => a[0] - b[0]);
+  let covered = 0;
+  let currentStart = intervals[0]![0];
+  let currentEnd = intervals[0]![1];
+
+  for (const [start, end] of intervals.slice(1)) {
+    if (start <= currentEnd) currentEnd = Math.max(currentEnd, end);
+    else {
+      covered += currentEnd - currentStart;
+      currentStart = start;
+      currentEnd = end;
+    }
+  }
+  covered += currentEnd - currentStart;
+
+  return Math.min(100, (covered / 360) * 100);
 }
 
 /**
@@ -398,6 +483,65 @@ export function buildSignalingTakeoff(
       });
     }
 
+    if (metersPerUnit && detectors.length > 0) {
+      const maxSpacing = detectors.reduce((maximum, detector, index) => {
+        return detectors.slice(index + 1).reduce((inner, other) => {
+          if (
+            typeof detector.x !== 'number' ||
+            typeof detector.y !== 'number' ||
+            typeof other.x !== 'number' ||
+            typeof other.y !== 'number'
+          ) {
+            return inner;
+          }
+          const distance =
+            Math.hypot(detector.x - other.x, detector.y - other.y) *
+            metersPerUnit;
+          return Math.max(inner, distance);
+        }, maximum);
+      }, 0);
+
+      if (maxSpacing > MAX_DETECTOR_SPACING_M) {
+        issues.push({
+          code: 'fireDetectorSpacing',
+          severity: 'warning',
+          roomId: room.id,
+          params: {
+            room: room.name,
+            spacing: Math.round(maxSpacing * 10) / 10,
+            max: MAX_DETECTOR_SPACING_M,
+          },
+        });
+      }
+
+      const nearWall = Math.min(
+        ...detectors.map((detector) =>
+          typeof detector.x === 'number' && typeof detector.y === 'number'
+            ? distanceToBoundary(
+                { x: detector.x, y: detector.y },
+                room.boundary,
+              ) * metersPerUnit
+            : Number.POSITIVE_INFINITY,
+        ),
+      );
+
+      if (
+        Number.isFinite(nearWall) &&
+        nearWall > MAX_DETECTOR_WALL_DISTANCE_M
+      ) {
+        issues.push({
+          code: 'fireDetectorWallDistance',
+          severity: 'warning',
+          roomId: room.id,
+          params: {
+            room: room.name,
+            distance: Math.round(nearWall * 10) / 10,
+            max: MAX_DETECTOR_WALL_DISTANCE_M,
+          },
+        });
+      }
+    }
+
     const sirens = input.points.filter(
       (point) =>
         isSirenSubtype(point.subtype) &&
@@ -426,20 +570,27 @@ export function buildSignalingTakeoff(
       ? polygonArea(room.boundary) * metersPerUnit * metersPerUnit
       : 0;
     if (area <= 20) continue;
-    const covered = cameras.some(
+    const roomCameras = cameras.filter(
       (camera) =>
         typeof camera.x === 'number' &&
         typeof camera.y === 'number' &&
         pointInPolygon({ x: camera.x, y: camera.y }, room.boundary),
     );
+    const coverage = cameraCoveragePercent(roomCameras);
+    const blind = 100 - coverage;
 
-    if (!covered) {
+    if (blind > MAX_CAMERA_BLIND_PERCENT) {
       blindSpotRooms.push(room.name);
       issues.push({
         code: 'cameraBlindSpot',
         severity: 'warning',
         roomId: room.id,
-        params: { room: room.name },
+        params: {
+          room: room.name,
+          blind: Math.round(blind * 10) / 10,
+          max: MAX_CAMERA_BLIND_PERCENT,
+          cameras: roomCameras.length,
+        },
       });
     }
   }

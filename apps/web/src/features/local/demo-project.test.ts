@@ -12,6 +12,9 @@ describe('demo project', () => {
     livingSwitches: 'Living switches',
     kitchenSwitches: 'Kitchen switches',
     lowVoltage: 'Low voltage',
+  securityLoop: 'Security loop',
+  fireLoop: 'Fire loop',
+  firePanel: 'Fire panel',
   });
 
   it('contains a complete calibrated apartment plan', () => {
@@ -40,7 +43,13 @@ describe('demo project', () => {
       }
     }
     for (const route of drawing.routes) {
-      expect(route.circuitId && circuitIds.has(route.circuitId)).toBe(true);
+      const system = route.settings.system ?? 'power';
+      if (system === 'power') {
+        expect(route.circuitId && circuitIds.has(route.circuitId)).toBe(true);
+      } else {
+        expect(route.circuitId).toBeNull();
+        expect(route.settings.loopId).toBeDefined();
+      }
       expect(route.geometry.length).toBeGreaterThanOrEqual(2);
     }
   });
@@ -57,5 +66,42 @@ describe('demo project', () => {
       expect(points.has(`${start.x}:${start.y}`)).toBe(true);
       expect(points.has(`${end.x}:${end.y}`)).toBe(true);
     }
+  });
+});
+
+describe('demo signaling', () => {
+  it('includes security and fire loops with assigned devices', () => {
+    const project = createDemoLocalProject('Demo', {
+      livingRoom: 'Living room',
+      kitchen: 'Kitchen',
+      bedroom: 'Bedroom',
+      bathroom: 'Bathroom',
+      lighting: 'Lighting',
+      power: 'Power',
+      livingSwitches: 'Living switches',
+      kitchenSwitches: 'Kitchen switches',
+      lowVoltage: 'Low voltage',
+      securityLoop: 'Security loop',
+      fireLoop: 'Fire loop',
+      firePanel: 'Fire panel',
+    });
+    const loops = project.drawing.signaling?.loops ?? [];
+
+    expect(loops.map((loop) => loop.type)).toEqual(['security', 'fire']);
+    expect(
+      project.drawing.points.filter(
+        (point) => point.properties.loopId === 'FIRE1',
+      ),
+    ).toHaveLength(6);
+    expect(
+      project.drawing.points.filter(
+        (point) => point.properties.loopId === 'SEC1',
+      ),
+    ).toHaveLength(8);
+    expect(
+      project.drawing.routes.filter(
+        (route) => route.settings.system === 'fire',
+      ),
+    ).toHaveLength(1);
   });
 });

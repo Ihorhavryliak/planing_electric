@@ -11,8 +11,10 @@ import type {
   PublicRoom,
   PublicRoute,
   PublicWall,
+  SignalingLoop,
   UnderlaySettings,
 } from '@drawmyplace/contracts';
+import { deviceProduct } from '@drawmyplace/contracts';
 import {
   Box,
   BrickWall,
@@ -71,6 +73,10 @@ import {
 } from './opening-overlay';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
 import { drawRoutesOverlay, type RouteRenderItem } from './route-overlay';
+import {
+  drawSignalingCoverage,
+  type SignalingCoverageItem,
+} from './signaling-overlay';
 import type { EditorLayers } from './editor-layers';
 import {
   drawStructureOverlay,
@@ -238,6 +244,7 @@ interface EditorCanvasProps {
   selectedRouteId: string | null;
   saveStatus?: { label: string; tone: 'ok' | 'pending' | 'error' } | null;
   circuits?: readonly Circuit[];
+  signalingLoops?: readonly SignalingLoop[];
   layers?: EditorLayers;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
   onSelectPoint: (id: string | null) => void;
@@ -433,6 +440,7 @@ export function EditorCanvas({
   selectedRouteId,
   saveStatus = null,
   circuits = [],
+  signalingLoops = [],
   layers,
   onCalibrationPoints,
   onSelectPoint,
@@ -815,6 +823,16 @@ export function EditorCanvas({
     [viewport, size],
   );
 
+  const loopById = useMemo(
+    () => new Map(signalingLoops.map((loop) => [loop.id, loop])),
+    [signalingLoops],
+  );
+  const loopForPoint = (point: PublicPoint) => {
+    if (point.properties.loopId) {
+      return loopById.get(point.properties.loopId) ?? null;
+    }
+    return null;
+  };
   const renderRoutes = useMemo<RouteRenderItem[]>(() => {
     const draggedPoint = pointDrag
       ? points.find((point) => point.id === pointDrag.id)
@@ -835,12 +853,25 @@ export function EditorCanvas({
 
     return routes
       .filter((route) => geometryIntersectsBounds(route.geometry, worldBounds))
-      .map((route) => ({
-        id: route.id,
-        circuitId: route.circuitId,
-        mounting: route.settings.mounting ?? null,
-        startPinned: Boolean(route.startPointId),
-        endPinned: Boolean(route.endPointId),
+      .map((route) => {
+        const system = route.settings.system ?? 'power';
+        const loop = route.settings.loopId
+          ? (loopById.get(route.settings.loopId) ?? null)
+          : system === 'power'
+            ? null
+            : (signalingLoops.find((item) => item.type === system) ?? null);
+
+        return {
+          id: route.id,
+          circuitId: route.circuitId,
+          mounting: route.settings.mounting ?? null,
+          startPinned: Boolean(route.startPointId),
+          endPinned: Boolean(route.endPointId),
+          color: system === 'power' ? null : (loop?.color ?? null),
+          label:
+            system === 'power'
+              ? null
+              : (loop?.code ?? system.toUpperCase()),
         geometry:
           attached.get(route.id) ??
           (vertexDrag?.routeId === route.id
@@ -848,8 +879,17 @@ export function EditorCanvas({
                 index === vertexDrag.index ? vertexDrag.at : vertex,
               )
             : route.geometry),
-      }));
-  }, [routes, vertexDrag, pointDrag, points, worldBounds]);
+        };
+      });
+  }, [
+    routes,
+    vertexDrag,
+    pointDrag,
+    points,
+    worldBounds,
+    loopById,
+    signalingLoops,
+  ]);
 
   const routeAttachHint = useMemo(() => {
     if (!vertexDrag) return null;
@@ -889,13 +929,67 @@ export function EditorCanvas({
               : { x: point.x, y: point.y };
           return pointInBounds(at, worldBounds);
         })
-        .map((point) =>
-          pointDrag?.id === point.id
-            ? { ...point, x: pointDrag.at.x, y: pointDrag.at.y }
-            : point,
-        ),
-    [points, pointDrag, worldBounds],
+        .map((point) => {
+          const at =
+            pointDrag?.id === point.id ? pointDrag.at : point;
+          const loop = loopForPoint(point);
+
+          return {
+            ...point,
+            x: at.x,
+            y: at.y,
+            color: loop?.color ?? null,
+            subtype: point.properties.subtype ?? null,
+            badge:
+              typeof point.properties.address === 'number'
+                ? `${loop?.code ?? 'L'}·${point.properties.address}`
+                : (loop?.code ?? null),
+          };
+        }),
+    // loopById is stable per signaling change; points are the drawing source.
+    [points, pointDrag, worldBounds, loopById],
   );
+
+  const signalingCoverage = useMemo<SignalingCoverageItem[]>(() => {
+    const items: SignalingCoverageItem[] = [];
+
+    for (const point of points) {
+      const product = deviceProduct(point.properties.productId ?? null);
+      const radius = product?.coverageRadiusM;
+      if (!radius || radius <= 0) continue;
+      const loop = loopForPoint(point);
+      const subtype = point.properties.subtype ?? '';
+      const kind: SignalingCoverageItem['kind'] = subtype.includes('camera')
+        ? 'camera'
+        : subtype.includes('siren') ||
+            subtype === 'strobe' ||
+            subtype === 'voice-alarm'
+          ? 'siren'
+          : subtype.includes('smoke') ||
+              subtype.includes('heat') ||
+              subtype === 'manual-call-point'
+            ? 'fire'
+            : 'security';
+      const fallback =
+        kind === 'camera'
+          ? '#0284c7'
+          : kind === 'siren'
+            ? '#e11d48'
+            : kind === 'fire'
+              ? '#dc2626'
+              : '#7c3aed';
+      items.push({
+        id: point.id,
+        x: point.x,
+        y: point.y,
+        radiusM: radius,
+        color: loop?.color ?? fallback,
+        kind,
+      });
+    }
+
+    return items;
+  }, [points, loopById]);
 
   const renderWalls = useMemo<WallRenderItem[]>(
     () =>
@@ -1125,6 +1219,16 @@ export function EditorCanvas({
       cursorWorld,
       canvasLight,
     );
+    if (layers?.points !== false) {
+      drawSignalingCoverage(
+        context,
+        size,
+        viewport,
+        signalingCoverage,
+        metersPerUnit,
+        canvasLight,
+      );
+    }
     drawRoutesOverlay(
       context,
       size,
@@ -1175,6 +1279,7 @@ export function EditorCanvas({
     renderRooms,
     renderDimensions,
     circuits,
+    signalingCoverage,
     layers,
     penetrationMarkers,
     routeAttachHint,

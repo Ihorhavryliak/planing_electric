@@ -149,3 +149,93 @@ describe('signaling takeoff', () => {
     expect(result.cctv.archiveGbPerDay).toBe(42);
   });
 });
+
+describe('signaling coverage rules', () => {
+  const largeRoom = {
+    id: 'r-large',
+    name: 'Open space',
+    boundary: [
+      { x: 0, y: 0 },
+      { x: 2000, y: 0 },
+      { x: 2000, y: 2000 },
+      { x: 0, y: 2000 },
+    ],
+  };
+
+  it('flags detector spacing over 9 m and wall distance over 4.5 m', () => {
+    const result = buildSignalingTakeoff({
+      loops: [],
+      points: [
+        {
+          id: 'd1',
+          subtype: 'smoke-detector',
+          x: 500,
+          y: 1000,
+          coverageAreaM2: 85,
+        },
+        {
+          id: 'd2',
+          subtype: 'smoke-detector',
+          x: 1500,
+          y: 1000,
+          coverageAreaM2: 85,
+        },
+      ],
+      routes: [],
+      rooms: [largeRoom],
+      metersPerUnit: 0.01,
+    });
+
+    expect(result.issues.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(['fireDetectorSpacing']),
+    );
+  });
+
+  it('computes camera blind spot from field of view', () => {
+    const result = buildSignalingTakeoff({
+      loops: [],
+      points: [
+        {
+          id: 'cam1',
+          subtype: 'ip-camera',
+          x: 1000,
+          y: 1000,
+          coverageAngleDeg: 90,
+          rotation: 0,
+        },
+        {
+          id: 'cam2',
+          subtype: 'ip-camera',
+          x: 1000,
+          y: 1000,
+          coverageAngleDeg: 90,
+          rotation: 90,
+        },
+        {
+          id: 'cam3',
+          subtype: 'ip-camera',
+          x: 1000,
+          y: 1000,
+          coverageAngleDeg: 90,
+          rotation: 180,
+        },
+        {
+          id: 'cam4',
+          subtype: 'ip-camera',
+          x: 1000,
+          y: 1000,
+          coverageAngleDeg: 90,
+          rotation: 270,
+        },
+      ],
+      routes: [],
+      rooms: [largeRoom],
+      metersPerUnit: 0.01,
+    });
+
+    const blind = result.issues.find(
+      (issue) => issue.code === 'cameraBlindSpot',
+    );
+    expect(blind).toBeUndefined();
+  });
+});

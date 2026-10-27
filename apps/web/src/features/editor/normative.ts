@@ -21,6 +21,29 @@ export const NORM_REFERENCES: Partial<
   mainBreakerUndersized: 'ДБН В.2.5-23:2010, п. 8.2',
 };
 
+/** Normative clauses for signaling / fire-safety validation rows. */
+export const SIGNALING_NORM_REFERENCES: Record<string, string> = {
+  loopDeviceOverflow: 'EN 54-2; ДБН В.2.5-56:2014, п. 6.1',
+  loopLengthOverflow: 'EN 54-2; ДБН В.2.5-56:2014, п. 6.1',
+  duplicateAddress: 'EN 54-2, п. 7.4',
+  addressOutOfRange: 'EN 54-2, п. 7.4',
+  voltageDropHigh: 'EN 54-4; ДБН В.2.5-23:2010, п. 8.7',
+  batteryUndersized: 'EN 54-4, п. 6.3; ДБН В.2.5-56:2014, п. 6.5',
+  smokeCoverageMissing: 'EN 54-7; ДБН В.2.5-56:2014, п. 6.2',
+  sirenCoverageMissing: 'EN 54-3; EN 54-23; ДБН В.2.5-56:2014, п. 6.4',
+  cameraBlindSpot: 'EN 62676-4; ДБН В.2.5-56:2014, п. 6.7',
+  fireDetectorSpacing: 'EN 54-7; ДБН В.2.5-56:2014, п. 6.2 (≤ 9 м)',
+  fireDetectorWallDistance:
+    'EN 54-7; ДБН В.2.5-56:2014, п. 6.2 (≤ 4,5 м до стіни)',
+  patchPanelOverflow: 'ISO/IEC 11801; EN 50173',
+  sharedChase: 'ДБН В.2.5-56:2014, п. 6.6; ПУЭ 2.1.16',
+  fireCableNotFr: 'ДБН В.2.5-56:2014, п. 6.6; EN 50200',
+  incompatiblePanel: 'EN 54-2, п. 7.1; ДБН В.2.5-56:2014, п. 6.1',
+  pointWithoutLoop: 'ДБН В.2.5-56:2014, п. 6.1',
+  unknownLoop: 'ДБН В.2.5-56:2014, п. 6.1',
+  manualCallHeight: 'EN 54-11; ДБН В.2.5-56:2014, п. 6.3',
+};
+
 const WET_ROOM_WORDS = [
   'bath',
   'shower',
