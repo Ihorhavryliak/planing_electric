@@ -41,6 +41,20 @@
   body:has(.workspace-rail) #main-content {
     padding-left: 3.5rem;
   }
+
+  [data-full-editor] .editor-shell {
+    height: calc(100vh - 9rem);
+    min-height: 0;
+  }
+
+  [data-full-editor] .editor-canvas-frame {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  [data-full-editor] .editor-sidebar {
+    max-height: 100% !important;
+  }
 }
 
 html,

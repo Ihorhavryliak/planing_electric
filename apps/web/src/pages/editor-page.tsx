@@ -215,6 +215,102 @@ export function EditorPage() {
 
   const archived = project.status === 'archived';
 
+  // Reference-style full-screen editor: compact project bar + canvas that fills
+  // the viewport, without the global workspace header.
+  if (selectedFloor?.plan) {
+    return (
+      <div className="flex h-screen flex-col overflow-hidden bg-slate-950" data-full-editor>
+        <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-slate-900/90 px-3 py-1.5 text-xs backdrop-blur-xl">
+          <Link to="/app" className="flex items-center gap-2 font-semibold text-white">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--dmp-color-brand)]">
+              <Layers className="h-3.5 w-3.5" />
+            </span>
+            <span className="hidden sm:inline">DrawMyPlace</span>
+          </Link>
+          <span className="text-slate-700">/</span>
+          <Link
+            to={`/app/projects/${projectId}`}
+            className="max-w-40 truncate text-slate-300 hover:text-white"
+          >
+            {project.name}
+          </Link>
+          <span className="text-slate-700">/</span>
+          <label className="inline-flex items-center gap-1 text-slate-400">
+            <span className="sr-only">{t('docs.floor')}</span>
+            <select
+              value={selectedFloorId ?? ''}
+              onChange={(event) => setSelectedFloorId(event.target.value)}
+              className="h-7 rounded-md border border-white/10 bg-slate-950/70 px-2 text-xs text-slate-200"
+            >
+              {floors.map((floor) => (
+                <option key={floor.id} value={floor.id}>
+                  {floor.name}
+                  {floor.plan ? '' : ` · ${t('editorPage.noPlan')}`}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Link
+            to={`/app/projects/${projectId}`}
+            aria-label={t('editorPage.addFloor')}
+            title={t('editorPage.addFloor')}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-white/10 hover:text-white"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Link>
+
+          <nav
+            aria-label={t('editorPage.tabs')}
+            className="ml-4 flex items-center gap-1"
+          >
+            <Link
+              to={`/app/projects/${projectId}`}
+              className="rounded-md px-2 py-1 text-slate-400 hover:bg-white/5 hover:text-white"
+            >
+              {t('editorPage.tab.project')}
+            </Link>
+            <span className="rounded-md bg-[var(--dmp-color-brand)]/12 px-2 py-1 font-medium text-[var(--dmp-color-brand)]">
+              {t('editorPage.tab.installation')}
+            </span>
+            <Link
+              to={`/app/projects/${projectId}/documentation`}
+              className="rounded-md px-2 py-1 text-slate-400 hover:bg-white/5 hover:text-white"
+            >
+              {t('editorPage.tab.documentation')}
+            </Link>
+            <Link
+              to={`/app/projects/${projectId}/estimates`}
+              className="rounded-md px-2 py-1 text-slate-400 hover:bg-white/5 hover:text-white"
+            >
+              {t('editorPage.tab.estimates')}
+            </Link>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <span className="hidden rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-slate-400 sm:inline">
+              {t('editorPage.planEditor')}
+            </span>
+            <Link
+              to="/app"
+              className="rounded-md px-2 py-1 text-slate-400 hover:bg-white/5 hover:text-white"
+            >
+              {t('editorPage.back')}
+            </Link>
+          </div>
+        </header>
+        <main className="min-h-0 flex-1 overflow-y-auto px-2 py-2 lg:overflow-hidden">
+          <PlanEditor
+            key={selectedFloor.plan.id}
+            plan={selectedFloor.plan}
+            projectId={projectId}
+            floorName={selectedFloor.name}
+            onPlanChange={handlePlanChange}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="app-grid pointer-events-none absolute inset-0 opacity-30" />
