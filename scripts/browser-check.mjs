@@ -146,6 +146,9 @@ async function main() {
     throw underlayError;
   }
 
+  await page.getByTestId('component-dock').waitFor({ timeout: 10000 });
+  await page.getByTestId('editor-history').waitFor({ timeout: 10000 });
+
   // Design-token and data-tour contracts stay stable across the refresh.
   const designContract = await page.evaluate(() => {
     const styles = window.getComputedStyle(document.documentElement);
@@ -323,9 +326,12 @@ async function main() {
   await page.getByLabel('Real distance').fill('4');
   await page.getByRole('button', { name: 'Set scale' }).click();
 
-  // Place a double socket from the device palette and draw a cable route.
+  // Place a double socket from the bottom component dock and draw a route.
   await syncCanvas();
-  await page.locator('summary').filter({ hasText: 'Power' }).click();
+  await page
+    .getByTestId('component-dock')
+    .getByRole('button', { name: 'Socket', exact: true })
+    .click();
   await page.getByRole('button', { name: 'Double socket' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
   await page.getByRole('button', { name: 'Draw cable route tool' }).click();
