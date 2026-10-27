@@ -124,6 +124,8 @@ export const signalingEn: Record<string, string> = {
   'editor.threeClickFloor': 'Choose a device, then click the floor',
   'editor.threeDistance': 'Distance to board',
   'editor.threeCoordinates': 'Coordinates',
+  'editor.threeClickWall': 'Click a wall to place it',
+  'editor.heightFromFloor': 'Height from floor',
   'signaling.title': 'Signaling & low current',
   'signaling.hint':
     'Security, fire, CCTV, access, PA and data loops with devices, cable, battery and coverage checks.',

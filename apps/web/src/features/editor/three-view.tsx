@@ -14,6 +14,7 @@ import {
   LoaderCircle,
   Plug,
   Shapes,
+  Square,
   ToggleRight,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -50,6 +51,16 @@ interface ThreeViewProps {
   onCreatePoint?: (
     type: ElectricalPointType,
     at: { x: number; y: number },
+    options?: { mountingHeight?: number | null },
+  ) => void;
+  onUpdatePoint?: (
+    id: string,
+    patch: { mountingHeight?: number | null },
+  ) => void;
+  onCreateOpening?: (
+    wallId: string,
+    type: 'door' | 'window',
+    offset: number,
   ) => void;
 }
 
@@ -137,6 +148,41 @@ function pointGlyph(
   return group;
 }
 
+function offsetAlongWall(
+  wall: PublicWall,
+  at: { x: number; y: number },
+): number {
+  let best = 0;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let travelled = 0;
+
+  for (let index = 1; index < wall.geometry.length; index += 1) {
+    const a = wall.geometry[index - 1];
+    const b = wall.geometry[index];
+    if (!a || !b) continue;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSquared = dx * dx + dy * dy;
+    const length = Math.sqrt(lengthSquared);
+    if (length <= 1e-9) continue;
+    const t = Math.max(
+      0,
+      Math.min(1, ((at.x - a.x) * dx + (at.y - a.y) * dy) / lengthSquared),
+    );
+    const px = a.x + dx * t;
+    const py = a.y + dy * t;
+    const distance = Math.hypot(at.x - px, at.y - py);
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = travelled + length * t;
+    }
+    travelled += length;
+  }
+
+  return best;
+}
+
 function formatUnitLength(
   planUnits: number,
   metersPerUnit: number | null,
@@ -188,9 +234,17 @@ export function ThreeView({
   onSelect,
   lengthUnit = 'm',
   onCreatePoint,
+  onUpdatePoint,
+  onCreateOpening,
 }: ThreeViewProps) {
   const [placementType, setPlacementType] =
     useState<ElectricalPointType | null>(null);
+  const [placementOpening, setPlacementOpening] = useState<
+    'door' | 'window' | null
+  >(null);
+  const [mountMode, setMountMode] = useState<'floor' | 'wall' | 'ceiling'>(
+    'wall',
+  );
   const { t } = useI18n();
   const { resolved } = useTheme();
   const lightScene = resolved === 'light';
@@ -235,6 +289,16 @@ export function ThreeView({
   onCreatePointRef.current = onCreatePoint;
   const placementRef = useRef<ElectricalPointType | null>(placementType);
   placementRef.current = placementType;
+  const placementOpeningRef = useRef<'door' | 'window' | null>(
+    placementOpening,
+  );
+  placementOpeningRef.current = placementOpening;
+  const mountModeRef = useRef<'floor' | 'wall' | 'ceiling'>(mountMode);
+  mountModeRef.current = mountMode;
+  const onUpdatePointRef = useRef(onUpdatePoint);
+  onUpdatePointRef.current = onUpdatePoint;
+  const onCreateOpeningRef = useRef(onCreateOpening);
+  onCreateOpeningRef.current = onCreateOpening;
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -307,16 +371,70 @@ export function ThreeView({
         Math.hypot(event.clientX - start.x, event.clientY - start.y) < 5
       ) {
         const placement = placementRef.current;
-        if (placement && onCreatePointRef.current) {
+        const opening = placementOpeningRef.current;
+        if (
+          (placement || opening) &&
+          (onCreatePointRef.current || onCreateOpeningRef.current)
+        ) {
           const rect = renderer.domElement.getBoundingClientRect();
           const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-          const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-          const hit = new THREE.Vector3();
-          if (raycaster.ray.intersectPlane(plane, hit)) {
-            onCreatePointRef.current(placement, { x: hit.x, y: hit.z });
+          const wallHit = raycaster
+            .intersectObjects(contentRef.current.children, true)
+            .find((entry) => entry.object.userData?.kind === 'wall');
+
+          if (opening && onCreateOpeningRef.current) {
+            if (wallHit) {
+              const wall = walls.find(
+                (item) => item.id === wallHit.object.userData.id,
+              );
+              if (wall) {
+                onCreateOpeningRef.current(
+                  wall.id,
+                  opening,
+                  offsetAlongWall(wall, {
+                    x: wallHit.point.x,
+                    y: wallHit.point.z,
+                  }),
+                );
+              }
+            }
+            return;
+          }
+
+          if (placement && onCreatePointRef.current) {
+            const mode = mountModeRef.current;
+            if (mode === 'wall' && wallHit) {
+              onCreatePointRef.current(
+                placement,
+                { x: wallHit.point.x, y: wallHit.point.z },
+                {
+                  mountingHeight: metersPerUnitRef.current
+                    ? wallHit.point.y * metersPerUnitRef.current
+                    : null,
+                },
+              );
+              return;
+            }
+
+            const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const hit = new THREE.Vector3();
+            if (raycaster.ray.intersectPlane(plane, hit)) {
+              onCreatePointRef.current(
+                placement,
+                { x: hit.x, y: hit.z },
+                {
+                  mountingHeight:
+                    mode === 'ceiling'
+                      ? 2.4
+                      : mode === 'floor' && placement === 'socket'
+                        ? 0.3
+                        : undefined,
+                },
+              );
+            }
           }
           return;
         }
@@ -836,13 +954,17 @@ export function ThreeView({
 
   useEffect(() => {
     if (rendererRef.current) {
-      rendererRef.current.domElement.style.cursor = placementType
-        ? 'crosshair'
-        : 'grab';
+      rendererRef.current.domElement.style.cursor =
+        placementType || placementOpening ? 'crosshair' : 'grab';
     }
-  }, [placementType]);
+  }, [placementType, placementOpening]);
 
   const selectedPoint = points.find((point) => point.id === selectedPointId);
+  const selectedHeightPlanUnits = selectedPoint
+    ? typeof selectedPoint.mountingHeight === 'number' && metersPerUnit
+      ? selectedPoint.mountingHeight / metersPerUnit
+      : defaultMountingHeight(selectedPoint)
+    : null;
   const nearestBoard = selectedPoint
     ? points
         .filter(
@@ -921,6 +1043,23 @@ export function ThreeView({
         <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
           {t('editor.threeAdd')}
         </p>
+        <div className="grid grid-cols-3 gap-1 px-1 pb-1">
+          {(['floor', 'wall', 'ceiling'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={mountMode === mode}
+              onClick={() => setMountMode(mode)}
+              className={`rounded-md px-1 py-1 text-[10px] transition ${
+                mountMode === mode
+                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  : 'bg-white/5 text-slate-400 hover:text-white'
+              }`}
+            >
+              {t(`mounting.${mode}`)}
+            </button>
+          ))}
+        </div>
         {(
           [
             ['socket', t('editor.point.socket'), Plug],
@@ -948,9 +1087,38 @@ export function ThreeView({
             {label}
           </button>
         ))}
-        {placementType ? (
+        <div className="my-1 border-t border-white/10" />
+        {(
+          [
+            ['door', t('editor.addDoor')],
+            ['window', t('editor.addWindow')],
+          ] as const
+        ).map(([type, label]) => (
+          <button
+            key={type}
+            type="button"
+            aria-pressed={placementOpening === type}
+            onClick={() => {
+              setPlacementOpening((current) =>
+                current === type ? null : type,
+              );
+              setPlacementType(null);
+            }}
+            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
+              placementOpening === type
+                ? 'bg-[var(--dmp-color-brand)] text-white'
+                : 'hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Square className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+        {placementType || placementOpening ? (
           <p className="px-1 pt-1 text-[10px] leading-snug text-amber-200">
-            {t('editor.threeClickFloor')}
+            {placementOpening || mountMode === 'wall'
+              ? t('editor.threeClickWall')
+              : t('editor.threeClickFloor')}
           </p>
         ) : null}
       </div>
@@ -965,6 +1133,16 @@ export function ThreeView({
             {formatUnitLength(selectedPoint.x, metersPerUnit, lengthUnit)} /{' '}
             {formatUnitLength(selectedPoint.y, metersPerUnit, lengthUnit)}
           </p>
+          {selectedHeightPlanUnits !== null ? (
+            <p>
+              {t('editor.heightFromFloor')}:{' '}
+              {formatUnitLength(
+                selectedHeightPlanUnits,
+                metersPerUnit,
+                lengthUnit,
+              )}
+            </p>
+          ) : null}
           {nearestBoard ? (
             <p>
               {t('editor.threeDistance')}:{' '}
@@ -974,6 +1152,30 @@ export function ThreeView({
                 lengthUnit,
               )}
             </p>
+          ) : null}
+          {onUpdatePoint ? (
+            <div className="mt-1 grid grid-cols-3 gap-1">
+              {(
+                [
+                  [0.3, t('mounting.floor')],
+                  [1.1, t('mounting.wall')],
+                  [2.4, t('mounting.ceiling')],
+                ] as const
+              ).map(([heightMeters, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() =>
+                    onUpdatePointRef.current?.(selectedPoint.id, {
+                      mountingHeight: heightMeters,
+                    })
+                  }
+                  className="rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-[var(--dmp-color-brand)]/50 hover:text-white"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           ) : null}
         </div>
       ) : null}

@@ -124,6 +124,8 @@ export const signalingRu: Record<string, string> = {
   'editor.threeClickFloor': 'Выберите устройство и щёлкните пол',
   'editor.threeDistance': 'Расстояние до щита',
   'editor.threeCoordinates': 'Координаты',
+  'editor.threeClickWall': 'Щёлкните стену, чтобы разместить',
+  'editor.heightFromFloor': 'Высота от пола',
   'signaling.title': 'Сигнализация и слаботочка',
   'signaling.hint':
     'Шлейфы охранной, пожарной сигнализации, видео, доступа, оповещения и СКС с проверкой устройств, кабеля, АКБ и покрытия.',

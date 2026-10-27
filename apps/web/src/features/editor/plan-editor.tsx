@@ -1354,11 +1354,18 @@ export function PlanEditor({
     }
   }
 
-  async function handleAddOpening(wall: PublicWall, type: 'door' | 'window') {
+  async function handleAddOpening(
+    wall: PublicWall,
+    type: 'door' | 'window',
+    offsetOverride?: number,
+  ) {
     setLayoutError(null);
     const length = wallLength(wall.geometry);
     const width = Math.max(1, Math.min(length * 0.25, 1000));
-    const offset = Math.max(0, (length - width) / 2);
+    const offset = Math.max(
+      0,
+      Math.min(length - width, offsetOverride ?? (length - width) / 2),
+    );
 
     try {
       const created = await createOpening(plan.id, {
@@ -2873,9 +2880,16 @@ export function PlanEditor({
         selectedRouteId={selectedRouteId}
         clashes={clashes}
         onSelect={handleThreeSelect}
-        onCreatePoint={(type, at) =>
-          void handleCreatePoint(type, at, {})
+        onCreatePoint={(type: ElectricalPointType, at: { x: number; y: number }, options?: { mountingHeight?: number | null }) =>
+          void handleCreatePoint(type, at, {
+            mountingHeight: options?.mountingHeight ?? null,
+          })
         }
+        onUpdatePoint={(id: string, patch: { mountingHeight?: number | null }) => void handlePatchPoint(id, patch)}
+        onCreateOpening={(wallId: string, type: 'door' | 'window', offset: number) => {
+          const wall = walls.find((item) => item.id === wallId);
+          if (wall) void handleAddOpening(wall, type, offset);
+        }}
       />
     </Suspense>
   );
