@@ -37,6 +37,7 @@ import {
   SquareDashed,
   ToggleRight,
   Trash2,
+  Unlink,
   Undo2,
   Zap,
   ZoomIn,
@@ -247,6 +248,7 @@ interface EditorCanvasProps {
   saveStatus?: { label: string; tone: 'ok' | 'pending' | 'error' } | null;
   circuits?: readonly Circuit[];
   signalingLoops?: readonly SignalingLoop[];
+  lengthUnit?: 'm' | 'cm' | 'mm';
   layers?: EditorLayers;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
   onSelectPoint: (id: string | null) => void;
@@ -265,6 +267,8 @@ interface EditorCanvasProps {
   onInsertRouteVertex: (routeId: string, index: number, at: Vec2) => void;
   onRemoveRouteVertex: (routeId: string, index: number) => void;
   onDeleteRoute: (id: string) => void;
+  onAttachRouteEnd?: (id: string, end: 'start' | 'end') => void;
+  onDetachRouteEnd?: (id: string, end: 'start' | 'end') => void;
   onSelectWall: (id: string | null) => void;
   onCreateWall: (geometry: Vec2[]) => void;
   onMoveWall: (id: string, geometry: Vec2[]) => void;
@@ -445,6 +449,7 @@ export function EditorCanvas({
   saveStatus = null,
   circuits = [],
   signalingLoops = [],
+  lengthUnit = 'm',
   layers,
   onCalibrationPoints,
   onSelectPoint,
@@ -458,6 +463,8 @@ export function EditorCanvas({
   onInsertRouteVertex,
   onRemoveRouteVertex,
   onDeleteRoute,
+  onAttachRouteEnd,
+  onDetachRouteEnd,
   onSelectWall,
   onCreateWall,
   onMoveWall,
@@ -2607,30 +2614,6 @@ export function EditorCanvas({
         return;
       }
 
-      const modifier = event.ctrlKey || event.metaKey;
-
-      if (modifier && !event.altKey) {
-        const key = event.key.toLowerCase();
-
-        if (key === 'z') {
-          event.preventDefault();
-
-          if (event.shiftKey) {
-            onRedoRef.current();
-          } else {
-            onUndoRef.current();
-          }
-
-          return;
-        }
-
-        if (key === 'y') {
-          event.preventDefault();
-          onRedoRef.current();
-          return;
-        }
-      }
-
       if (event.ctrlKey || event.metaKey || event.altKey) {
         return;
       }
@@ -2915,6 +2898,77 @@ export function EditorCanvas({
                 {t('editor.duplicate')}
               </button>
             ) : null}
+            {contextMenu.target.kind === 'route' ? (() => {
+              const route = routes.find(
+                (item) => item.id === contextMenu.target.id,
+              );
+              if (!route) return null;
+
+              return (
+                <>
+                  {!route.startPointId && onAttachRouteEnd ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => {
+                        onAttachRouteEnd(route.id, 'start');
+                        setContextMenu(null);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                    >
+                      <Magnet className="h-3.5 w-3.5" />
+                      {t('routePins.attachStart')}
+                    </button>
+                  ) : null}
+                  {!route.endPointId && onAttachRouteEnd ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => {
+                        onAttachRouteEnd(route.id, 'end');
+                        setContextMenu(null);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                    >
+                      <Magnet className="h-3.5 w-3.5" />
+                      {t('routePins.attachEnd')}
+                    </button>
+                  ) : null}
+                  {route.startPointId && onDetachRouteEnd ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => {
+                        onDetachRouteEnd(route.id, 'start');
+                        setContextMenu(null);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                    >
+                      <Unlink className="h-3.5 w-3.5" />
+                      {t('routePins.detachStart')}
+                    </button>
+                  ) : null}
+                  {route.endPointId && onDetachRouteEnd ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => {
+                        onDetachRouteEnd(route.id, 'end');
+                        setContextMenu(null);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                    >
+                      <Unlink className="h-3.5 w-3.5" />
+                      {t('routePins.detachEndShort')}
+                    </button>
+                  ) : null}
+                </>
+              );
+            })() : null}
             <button
               type="button"
               role="menuitem"
@@ -3269,7 +3323,7 @@ export function EditorCanvas({
           <span className="font-mono tabular-nums text-slate-300">
             {Math.round(viewport.zoom * 100)}%
           </span>
-          <span>{calibration ? t('editor.statusMeters') : t('editor.statusUnits')}</span>
+          <span>{calibration ? t(`units.${lengthUnit}`) : t('editor.statusUnits')}</span>
         </div>
       </div>
 

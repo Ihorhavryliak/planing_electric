@@ -119,6 +119,11 @@ export const signalingUa: Record<string, string> = {
   'editor.context.room': 'Кімната',
   'editor.context.opening': 'Отвір',
   'editor.context.dimension': 'Розмір',
+  'editor.lengthUnit': 'Одиниці виміру',
+  'editor.threeAdd': 'Додати в 3D',
+  'editor.threeClickFloor': 'Виберіть пристрій і клацніть підлогу',
+  'editor.threeDistance': 'Відстань до щита',
+  'editor.threeCoordinates': 'Координати',
   'signaling.title': 'Сигналізація та слабкострум',
   'signaling.hint':
     'Шлейфи охоронної, пожежної сигналізації, відео, доступу, оповіщення й СКС з перевіркою пристроїв, кабелю, АКБ та покриття.',

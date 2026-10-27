@@ -1,11 +1,21 @@
 import type {
+  ElectricalPointType,
   PublicOpening,
   PublicPoint,
   PublicRoom,
   PublicRoute,
   PublicWall,
 } from '@drawmyplace/contracts';
-import { Box, Download, LoaderCircle } from 'lucide-react';
+import {
+  Box,
+  CircleDot,
+  Download,
+  Lightbulb,
+  LoaderCircle,
+  Plug,
+  Shapes,
+  ToggleRight,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -36,11 +46,111 @@ interface ThreeViewProps {
     kind: 'wall' | 'room' | 'point' | 'route';
     id: string;
   }) => void;
+  lengthUnit?: 'm' | 'cm' | 'mm';
+  onCreatePoint?: (
+    type: ElectricalPointType,
+    at: { x: number; y: number },
+  ) => void;
+}
+
+const POINT_COLORS: Record<ElectricalPointType, number> = {
+  socket: 0x0ea5e9,
+  switch: 0x8b5cf6,
+  light: 0xf59e0b,
+  panel: 0xf43f5e,
+  junction: 0x10b981,
+  custom: 0x64748b,
+};
+
+function defaultMountingHeight(point: PublicPoint): number {
+  if (point.type === 'socket') return 30;
+  if (point.type === 'switch') return 110;
+  if (point.type === 'light') return 240;
+  if (point.type === 'panel') return 150;
+  if (point.type === 'junction') return 30;
+  return 100;
+}
+
+function pointGlyph(
+  point: PublicPoint,
+  selected: boolean,
+  metersPerUnit: number | null,
+): THREE.Group {
+  const group = new THREE.Group();
+  const color = selected ? 0xf472b6 : POINT_COLORS[point.type];
+  const plate = new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.55,
+    metalness: 0.15,
+    emissive: selected ? 0xf472b6 : color,
+    emissiveIntensity: selected ? 0.35 : 0.12,
+  });
+  const dark = new THREE.MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.9,
+  });
+  const add = (
+    geometry: THREE.BufferGeometry,
+    material: THREE.Material,
+    y: number,
+    z = 0,
+  ) => {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = y;
+    mesh.position.z = z;
+    mesh.userData = { kind: 'point', id: point.id };
+    group.add(mesh);
+  };
+
+  if (point.type === 'socket') {
+    add(new THREE.BoxGeometry(18, 5, 11), plate, 2.5);
+    add(new THREE.CylinderGeometry(1.8, 1.8, 1, 16), dark, 5.3, 2.5);
+    add(new THREE.CylinderGeometry(1.8, 1.8, 1, 16), dark, 5.3, -2.5);
+  } else if (point.type === 'switch') {
+    add(new THREE.BoxGeometry(18, 5, 11), plate, 2.5);
+    add(new THREE.BoxGeometry(9, 2, 6), dark, 5.5);
+  } else if (point.type === 'light') {
+    const bulb = new THREE.MeshStandardMaterial({
+      color: selected ? 0xf472b6 : 0xfde68a,
+      emissive: selected ? 0xf472b6 : 0xfacc15,
+      emissiveIntensity: 0.9,
+    });
+    add(new THREE.SphereGeometry(8, 18, 14), bulb, 10);
+    add(new THREE.CylinderGeometry(3, 5, 5, 12), plate, 4);
+  } else if (point.type === 'panel') {
+    add(new THREE.BoxGeometry(30, 42, 9), plate, 21);
+    add(new THREE.BoxGeometry(22, 3, 1), dark, 30, 5);
+    add(new THREE.BoxGeometry(22, 3, 1), dark, 22, 5);
+    add(new THREE.BoxGeometry(22, 3, 1), dark, 14, 5);
+  } else if (point.type === 'junction') {
+    add(new THREE.CylinderGeometry(7, 7, 12, 16), plate, 6);
+    add(new THREE.TorusGeometry(5, 1.2, 8, 20), dark, 6);
+  } else {
+    add(new THREE.ConeGeometry(8, 15, 8), plate, 7.5);
+  }
+
+  const height =
+    typeof point.mountingHeight === 'number' && metersPerUnit
+      ? point.mountingHeight / metersPerUnit
+      : defaultMountingHeight(point);
+  group.position.set(point.x, height, point.y);
+  return group;
+}
+
+function formatUnitLength(
+  planUnits: number,
+  metersPerUnit: number | null,
+  unit: 'm' | 'cm' | 'mm',
+): string {
+  if (!metersPerUnit) return `${Math.round(planUnits)} u`;
+  const metres = planUnits * metersPerUnit;
+  const value =
+    unit === 'm' ? metres : unit === 'cm' ? metres * 100 : metres * 1000;
+  return `${value.toFixed(unit === 'm' ? 2 : 0)} ${unit}`;
 }
 
 const WALL_COLOR = 0xe2e8f0;
 const FLOOR_COLOR = 0x0f172a;
-const POINT_COLOR = 0xfbbf24;
 const ROUTE_COLOR = 0xfb923c;
 
 function disposeGroup(group: THREE.Group): void {
@@ -76,7 +186,11 @@ export function ThreeView({
   selectedRouteId,
   clashes = [],
   onSelect,
+  lengthUnit = 'm',
+  onCreatePoint,
 }: ThreeViewProps) {
+  const [placementType, setPlacementType] =
+    useState<ElectricalPointType | null>(null);
   const { t } = useI18n();
   const { resolved } = useTheme();
   const lightScene = resolved === 'light';
@@ -117,6 +231,10 @@ export function ThreeView({
   const [error, setError] = useState<string | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onCreatePointRef = useRef(onCreatePoint);
+  onCreatePointRef.current = onCreatePoint;
+  const placementRef = useRef<ElectricalPointType | null>(placementType);
+  placementRef.current = placementType;
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -188,6 +306,20 @@ export function ThreeView({
         start &&
         Math.hypot(event.clientX - start.x, event.clientY - start.y) < 5
       ) {
+        const placement = placementRef.current;
+        if (placement && onCreatePointRef.current) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+          const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+          const hit = new THREE.Vector3();
+          if (raycaster.ray.intersectPlane(plane, hit)) {
+            onCreatePointRef.current(placement, { x: hit.x, y: hit.z });
+          }
+          return;
+        }
         pick(event);
       }
     };
@@ -543,22 +675,9 @@ export function ThreeView({
 
     if (showPoints) {
       for (const point of visiblePoints) {
-        const selected = point.id === selectedPointId;
-        const geometry = new THREE.CylinderGeometry(
-          selected ? 16 : 10,
-          selected ? 16 : 10,
-          selected ? 26 : 18,
-          16,
+        group.add(
+          pointGlyph(point, point.id === selectedPointId, metersPerUnit),
         );
-        const material = new THREE.MeshStandardMaterial({
-          color: selected ? 0xf472b6 : POINT_COLOR,
-          emissive: selected ? 0xf472b6 : POINT_COLOR,
-          emissiveIntensity: 0.3,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.userData = { kind: 'point', id: point.id };
-        mesh.position.set(point.x, 10, point.y);
-        group.add(mesh);
       }
     }
 
@@ -715,6 +834,30 @@ export function ThreeView({
     selectedWallId || selectedRoomId || selectedPointId || selectedRouteId,
   );
 
+  useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.domElement.style.cursor = placementType
+        ? 'crosshair'
+        : 'grab';
+    }
+  }, [placementType]);
+
+  const selectedPoint = points.find((point) => point.id === selectedPointId);
+  const nearestBoard = selectedPoint
+    ? points
+        .filter(
+          (point) => point.type === 'panel' && point.id !== selectedPoint.id,
+        )
+        .map((point) => ({
+          point,
+          distance: Math.hypot(
+            point.x - selectedPoint.x,
+            point.y - selectedPoint.y,
+          ),
+        }))
+        .sort((a, b) => a.distance - b.distance)[0]
+    : undefined;
+
   return (
     <div className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950">
       <div ref={containerRef} className="absolute inset-0" />
@@ -774,6 +917,67 @@ export function ThreeView({
           </label>
         ) : null}
       </div>
+      <div className="absolute top-16 right-3 flex w-40 flex-col gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-2 text-[11px] text-slate-300 backdrop-blur">
+        <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+          {t('editor.threeAdd')}
+        </p>
+        {(
+          [
+            ['socket', t('editor.point.socket'), Plug],
+            ['switch', t('editor.point.switch'), ToggleRight],
+            ['light', t('editor.point.light'), Lightbulb],
+            ['panel', t('editor.point.panel'), Box],
+            ['junction', t('editor.point.junction'), CircleDot],
+            ['custom', t('editor.point.custom'), Shapes],
+          ] as const
+        ).map(([type, label, Icon]) => (
+          <button
+            key={type}
+            type="button"
+            aria-pressed={placementType === type}
+            onClick={() =>
+              setPlacementType((current) => (current === type ? null : type))
+            }
+            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
+              placementType === type
+                ? 'bg-[var(--dmp-color-brand)] text-white'
+                : 'hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+        {placementType ? (
+          <p className="px-1 pt-1 text-[10px] leading-snug text-amber-200">
+            {t('editor.threeClickFloor')}
+          </p>
+        ) : null}
+      </div>
+
+      {selectedPoint ? (
+        <div className="absolute right-3 bottom-16 rounded-xl border border-white/10 bg-slate-950/90 px-3 py-2 text-[10px] leading-relaxed text-slate-300 backdrop-blur">
+          <p className="font-medium text-white">
+            {t(`editor.point.${selectedPoint.type}`)}
+          </p>
+          <p>
+            {t('editor.threeCoordinates')}:{' '}
+            {formatUnitLength(selectedPoint.x, metersPerUnit, lengthUnit)} /{' '}
+            {formatUnitLength(selectedPoint.y, metersPerUnit, lengthUnit)}
+          </p>
+          {nearestBoard ? (
+            <p>
+              {t('editor.threeDistance')}:{' '}
+              {formatUnitLength(
+                nearestBoard.distance,
+                metersPerUnit,
+                lengthUnit,
+              )}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <button
         type="button"
         onClick={() => void exportGlb()}

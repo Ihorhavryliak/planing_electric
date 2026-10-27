@@ -119,6 +119,11 @@ export const signalingRu: Record<string, string> = {
   'editor.context.room': 'Комната',
   'editor.context.opening': 'Проём',
   'editor.context.dimension': 'Размер',
+  'editor.lengthUnit': 'Единицы измерения',
+  'editor.threeAdd': 'Добавить в 3D',
+  'editor.threeClickFloor': 'Выберите устройство и щёлкните пол',
+  'editor.threeDistance': 'Расстояние до щита',
+  'editor.threeCoordinates': 'Координаты',
   'signaling.title': 'Сигнализация и слаботочка',
   'signaling.hint':
     'Шлейфы охранной, пожарной сигнализации, видео, доступа, оповещения и СКС с проверкой устройств, кабеля, АКБ и покрытия.',

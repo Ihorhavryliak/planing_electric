@@ -509,6 +509,22 @@ export function PlanEditor({
   const routeRequestRef = useRef(new Map<string, number>());
 
   const [viewMode, setViewMode] = useState<'2d' | '3d' | 'split'>('2d');
+  const [lengthUnit, setLengthUnit] = useState<'m' | 'cm' | 'mm'>(() => {
+    try {
+      const stored = window.localStorage.getItem('dmp:editor:lengthUnit');
+      return stored === 'cm' || stored === 'mm' ? stored : 'm';
+    } catch {
+      return 'm';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dmp:editor:lengthUnit', lengthUnit);
+    } catch {
+      // Unit preference is a convenience only.
+    }
+  }, [lengthUnit]);
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
   const [toolRequest, setToolRequest] = useState<ToolRequest | null>(null);
@@ -2529,6 +2545,13 @@ export function PlanEditor({
     })();
   }
 
+  const historyShortcutRef = useRef<(direction: 'undo' | 'redo') => void>(
+    () => {},
+  );
+  historyShortcutRef.current = (direction) => {
+    void applyHistory(direction);
+  };
+
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -2540,6 +2563,22 @@ export function PlanEditor({
           target.isContentEditable);
 
       if (typing) return;
+
+      if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+        const key = event.key.toLowerCase();
+
+        if (key === 'z') {
+          event.preventDefault();
+          historyShortcutRef.current(event.shiftKey ? 'redo' : 'undo');
+          return;
+        }
+
+        if (key === 'y') {
+          event.preventDefault();
+          historyShortcutRef.current('redo');
+          return;
+        }
+      }
 
       if (
         (event.ctrlKey || event.metaKey) &&
@@ -2826,6 +2865,7 @@ export function PlanEditor({
         points={points}
         routes={routes}
         metersPerUnit={metersPerUnit}
+        lengthUnit={lengthUnit}
         viewport={viewport}
         selectedWallId={selectedWallId}
         selectedRoomId={selectedRoomId}
@@ -2833,6 +2873,9 @@ export function PlanEditor({
         selectedRouteId={selectedRouteId}
         clashes={clashes}
         onSelect={handleThreeSelect}
+        onCreatePoint={(type, at) =>
+          void handleCreatePoint(type, at, {})
+        }
       />
     </Suspense>
   );
@@ -2868,7 +2911,22 @@ export function PlanEditor({
           },
         ]}
       />
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <label className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+          <Ruler className="h-3.5 w-3.5" />
+          <span className="sr-only">{t('editor.lengthUnit')}</span>
+          <select
+            value={lengthUnit}
+            onChange={(event) =>
+              setLengthUnit(event.target.value as 'm' | 'cm' | 'mm')
+            }
+            className="h-7 rounded-md border border-white/10 bg-slate-950/70 px-1.5 text-xs text-slate-200"
+          >
+            <option value="m">{t('units.m')}</option>
+            <option value="cm">{t('units.cm')}</option>
+            <option value="mm">{t('units.mm')}</option>
+          </select>
+        </label>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -3016,6 +3074,7 @@ export function PlanEditor({
             }}
             circuits={circuits}
             signalingLoops={signaling.loops}
+            lengthUnit={lengthUnit}
             layers={layers}
             walls={walls}
             selectedWallId={selectedWallId}
@@ -3054,6 +3113,8 @@ export function PlanEditor({
             onInsertRouteVertex={handleInsertRouteVertex}
             onRemoveRouteVertex={handleRemoveRouteVertex}
             onDeleteRoute={(id) => void handleDeleteRoute(id)}
+            onAttachRouteEnd={handleAttachRouteEnd}
+            onDetachRouteEnd={handleDetachRouteEnd}
             onCreatePoint={(type, at, subtype, productId) =>
               void handleCreatePoint(type, at, {
                 properties: {

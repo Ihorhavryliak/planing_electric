@@ -119,6 +119,11 @@ export const signalingEn: Record<string, string> = {
   'editor.context.room': 'Room',
   'editor.context.opening': 'Opening',
   'editor.context.dimension': 'Dimension',
+  'editor.lengthUnit': 'Measurement units',
+  'editor.threeAdd': 'Add in 3D',
+  'editor.threeClickFloor': 'Choose a device, then click the floor',
+  'editor.threeDistance': 'Distance to board',
+  'editor.threeCoordinates': 'Coordinates',
   'signaling.title': 'Signaling & low current',
   'signaling.hint':
     'Security, fire, CCTV, access, PA and data loops with devices, cable, battery and coverage checks.',
