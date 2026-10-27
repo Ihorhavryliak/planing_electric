@@ -527,7 +527,7 @@ export function PlanEditor({
       // Unit preference is a convenience only.
     }
   }, [lengthUnit]);
-  const [routeMounting, setRouteMounting] = useState<RouteMounting>('floor');
+  const [routeMounting, setRouteMounting] = useState<RouteMounting>('wall');
   const [openingSizes, setOpeningSizes] = useState<
     Record<'door' | 'window', OpeningSizeMeters>
   >({
@@ -3002,7 +3002,7 @@ export function PlanEditor({
   }
 
   const viewModeBar = (
-    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-2 py-1.5 backdrop-blur">
+    <div className="col-span-full flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-2 py-1.5 backdrop-blur">
       <Tabs
         ariaLabel={t('editor.viewMode')}
         value={viewMode}
@@ -3049,9 +3049,14 @@ export function PlanEditor({
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
-        <span className="min-w-12 text-center text-xs tabular-nums text-slate-300">
+        <button
+          type="button"
+          title={t('editor.resetZoom')}
+          onClick={() => zoomBy(1 / viewport.zoom)}
+          className="min-w-12 rounded-lg px-1 py-1 text-center text-xs font-medium text-slate-300 tabular-nums transition-colors hover:bg-white/10 hover:text-white"
+        >
           {Math.round(viewport.zoom * 100)}%
-        </span>
+        </button>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -3068,6 +3073,95 @@ export function PlanEditor({
         >
           <Maximize2 className="h-4 w-4" />
         </Button>
+
+        <span className="mx-1 h-5 w-px bg-white/10" />
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            title={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            aria-label={
+              fullscreen.isFullscreen
+                ? t('editor.fullscreen.exit')
+                : t('editor.fullscreen.enter')
+            }
+            data-tooltip-hint={t('tooltip.fullscreen')}
+            data-testid="editor-fullscreen"
+            aria-pressed={fullscreen.isFullscreen}
+            onClick={() => void fullscreen.toggle()}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+              fullscreen.isFullscreen
+                ? 'bg-[var(--dmp-color-brand)] text-white'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+            )}
+          >
+            {fullscreen.isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            type="button"
+            title={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            aria-label={previewMode ? t('editor.exitPreview') : t('editor.preview')}
+            data-tooltip-hint={t('tooltip.preview')}
+            aria-pressed={previewMode}
+            onClick={() => setPreviewMode((value) => !value)}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+              previewMode
+                ? 'bg-[var(--dmp-color-brand)] text-white'
+                : 'text-slate-300 hover:bg-white/10 hover:text-white',
+            )}
+          >
+            {previewMode ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+          {previewMode ? null : (
+            <button
+              type="button"
+              title={
+                preferences.sidebarCollapsed
+                  ? t('editor.showPanels')
+                  : t('editor.hidePanels')
+              }
+              aria-label={
+                preferences.sidebarCollapsed
+                  ? t('editor.showPanels')
+                  : t('editor.hidePanels')
+              }
+              aria-pressed={preferences.sidebarCollapsed}
+              data-tooltip-hint={t('tooltip.panels')}
+              onClick={toggleSidebar}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              {preferences.sidebarCollapsed ? (
+                <PanelRightOpen className="h-4 w-4" />
+              ) : (
+                <PanelRightClose className="h-4 w-4" />
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            title={t('guide.title')}
+            aria-label={t('guide.title')}
+            data-tooltip-hint={t('tooltip.help')}
+            onClick={openGuide}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -3104,7 +3198,6 @@ export function PlanEditor({
           </div>
         </div>
       ) : null}
-      {viewModeBar}
       <div
         ref={fullscreen.containerRef}
         data-editor-tooltips
@@ -3113,7 +3206,7 @@ export function PlanEditor({
         className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
           previewMode || preferences.sidebarCollapsed
             ? 'relative'
-            : 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_20rem]'
+            : 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_20rem] xl:grid-cols-[17rem_minmax(0,1fr)_22rem]'
         }`}
         style={
           {
@@ -3121,6 +3214,8 @@ export function PlanEditor({
           } as React.CSSProperties
         }
       >
+        {viewModeBar}
+
         {previewMode || preferences.sidebarCollapsed ? null : (
           <aside className="editor-sidebar order-1 flex flex-col gap-3 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
             <RoomNavigator
@@ -3356,93 +3451,6 @@ export function PlanEditor({
               </Button>
             </OverlayCard>
           ) : null}
-        <div className="editor-toolbar absolute right-3 bottom-20 z-20 flex items-center gap-1 rounded-xl p-1">
-          <button
-            type="button"
-            title={
-              fullscreen.isFullscreen
-                ? t('editor.fullscreen.exit')
-                : t('editor.fullscreen.enter')
-            }
-            aria-label={
-              fullscreen.isFullscreen
-                ? t('editor.fullscreen.exit')
-                : t('editor.fullscreen.enter')
-            }
-            data-tooltip-hint={t('tooltip.fullscreen')}
-            data-testid="editor-fullscreen"
-            aria-pressed={fullscreen.isFullscreen}
-            onClick={() => void fullscreen.toggle()}
-            className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-              fullscreen.isFullscreen
-                ? 'bg-[var(--dmp-color-brand)] text-white'
-                : 'text-slate-300 hover:bg-white/10 hover:text-white',
-            )}
-          >
-            {fullscreen.isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
-          </button>
-          <button
-            type="button"
-            title={previewMode ? t('editor.exitPreview') : t('editor.preview')}
-            aria-label={previewMode ? t('editor.exitPreview') : t('editor.preview')}
-            data-tooltip-hint={t('tooltip.preview')}
-            aria-pressed={previewMode}
-            onClick={() => setPreviewMode((value) => !value)}
-            className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-              previewMode
-                ? 'bg-[var(--dmp-color-brand)] text-white'
-                : 'text-slate-300 hover:bg-white/10 hover:text-white',
-            )}
-          >
-            {previewMode ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </button>
-          {previewMode ? null : (
-            <button
-              type="button"
-              title={
-                preferences.sidebarCollapsed
-                  ? t('editor.showPanels')
-                  : t('editor.hidePanels')
-              }
-              aria-label={
-                preferences.sidebarCollapsed
-                  ? t('editor.showPanels')
-                  : t('editor.hidePanels')
-              }
-              aria-pressed={preferences.sidebarCollapsed}
-              data-tooltip-hint={t('tooltip.panels')}
-              onClick={toggleSidebar}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {preferences.sidebarCollapsed ? (
-                <PanelRightOpen className="h-4 w-4" />
-              ) : (
-                <PanelRightClose className="h-4 w-4" />
-              )}
-            </button>
-          )}
-          <button
-            type="button"
-            title={t('guide.title')}
-            aria-label={t('guide.title')}
-            data-tooltip-hint={t('tooltip.help')}
-            onClick={openGuide}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </button>
-        </div>
-
           </div>
 
           {previewMode ? null : (
@@ -3476,7 +3484,7 @@ export function PlanEditor({
 
         {previewMode || preferences.sidebarCollapsed ? null : (
         <aside data-active-tab={sidebarTab} className="editor-sidebar relative order-3 flex w-full flex-col gap-2 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
-          <div className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
+          <div data-sidebar-tab-header className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
             <div
               role="tablist"
               aria-label={t('editor.tabs')}
@@ -3507,12 +3515,12 @@ export function PlanEditor({
                         : 'flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-slate-400 transition hover:bg-white/5 hover:text-slate-200'
                     }
                   >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="text-[9px] leading-none">
+                    <Icon className="h-4 w-4" />
+                    <span className="text-[10px] leading-none">
                       {t(labelKey)}
                     </span>
                     {count > 0 ? (
-                      <span className="text-[8px] leading-none tabular-nums opacity-70">
+                      <span className="text-[9px] leading-none tabular-nums opacity-70">
                         {count}
                       </span>
                     ) : null}
@@ -3958,7 +3966,7 @@ export function PlanEditor({
           />
 </div>
 
-<div data-sidebar-tab="properties">
+<div data-object-panel data-sidebar-tab="properties">
           {selectedWall ? (
             <WallPropertiesPanel
               key={selectedWall.id}
@@ -3971,7 +3979,7 @@ export function PlanEditor({
           ) : null}
 </div>
 
-          <section data-sidebar-tab="properties" className="editor-panel p-4">
+          <section data-opening-panel data-sidebar-tab="properties" className="editor-panel p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {t('editor.openings')}
@@ -4119,7 +4127,7 @@ export function PlanEditor({
             ) : null}
           </section>
 
-<div data-sidebar-tab="properties">
+<div data-object-panel data-sidebar-tab="properties">
           {selectedRoom ? (
             <RoomPropertiesPanel
               key={selectedRoom.id}
@@ -4132,7 +4140,7 @@ export function PlanEditor({
           ) : null}
 </div>
 
-<div data-sidebar-tab="properties">
+<div data-object-panel data-sidebar-tab="properties">
           {selectedDimension ? (
             <DimensionPropertiesPanel
               key={selectedDimension.id}
@@ -4146,7 +4154,7 @@ export function PlanEditor({
           ) : null}
 </div>
 
-<div data-sidebar-tab="properties">
+<div data-object-panel data-sidebar-tab="properties">
           {selectedPoint ? (
             <PointPropertiesPanel
               key={selectedPoint.id}
@@ -4172,7 +4180,7 @@ export function PlanEditor({
           />
 </div>
 
-<div data-sidebar-tab="properties">
+<div data-object-panel data-sidebar-tab="properties">
           {selectedRoute ? (
             <RoutePropertiesPanel
               key={selectedRoute.id}

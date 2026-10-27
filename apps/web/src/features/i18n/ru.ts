@@ -233,7 +233,8 @@ export const ru: Dictionary = {
   'local.emptyTitle': 'Локальных проектов ещё нет',
   'local.emptyCta': 'Создать первый локальный проект',
   'local.emptyDemo': 'Загрузить демо-квартиру',
-  'local.empty': 'Локальных проектов пока нет.',
+  'local.empty':
+    'Создайте проект или загрузите демо-квартиру, чтобы начать планирование прямо в браузере.',
   'local.localOnly': 'Только локально',
   'local.storageBanner':
     'Эти проекты хранятся в этом браузере. Экспортируйте JSON или синхронизируйте их с аккаунтом, чтобы открывать на других устройствах.',
@@ -367,6 +368,15 @@ export const ru: Dictionary = {
   'landing.direction': 'Направление продукта',
   'landing.cap.read': 'Прочитать план',
   'landing.previewAlt': 'Редактор DrawMyPlace с демонстрационным планом квартиры',
+  'landing.valueTitle': 'Создано для реальных монтажей',
+  'landing.valueHint':
+    'Всё необходимое от первого плана до рассчитанного и задокументированного проекта.',
+  'landing.value.one':
+    '2D/3D-редактор со стенами, комнатами, дверями, окнами, устройствами и кабельными трассами.',
+  'landing.value.two':
+    'Живой расчёт кабеля, цепи, проверка нагрузок и валидация по плану.',
+  'landing.value.three':
+    'Сметы и экспорт PDF, XLSX и IFC для передачи проекта.',
   'landing.previewHint':
     'Стены, комнаты, цепи, кабельные трассы и устройства в одном редакторе — с отчётами и BIM-экспортом.',
   'landing.workflow.eyebrow': 'Как это работает',
@@ -431,6 +441,13 @@ export const ru: Dictionary = {
   'project.restoreShort': 'Восстановить',
   'project.archiveShort': 'Архивировать',
 
+  'app.overview': 'Обзор рабочего пространства',
+  'app.overviewHint': 'Краткий срез вашего рабочего пространства.',
+  'app.overviewActive': 'Активные проекты',
+  'app.overviewArchived': 'Архивные',
+  'app.quickLinks': 'Быстрые ссылки',
+  'app.tip': 'Совет',
+  'app.tipBody': 'Начните с плана этажа, задайте масштаб, затем нарисуйте стены и устройства. Краткое руководство в редакторе проведёт по шагам.',
   'app.projects': 'Проекты',
   'app.title': 'Ваши электропланы',
   'app.subtitle':
@@ -692,6 +709,7 @@ export const ru: Dictionary = {
   'editor.point.socket': 'Розетка',
   'editor.point.switch': 'Выключатель',
   'editor.point.light': 'Свет',
+  'editor.point.board': 'Щит',
   'editor.point.panel': 'Распределительный щит',
   'editor.point.junction': 'Соединительная коробка',
   'editor.point.custom': 'Произвольная точка',

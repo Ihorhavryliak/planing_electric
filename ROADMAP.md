@@ -516,6 +516,22 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 21.11.10 Перенести Quick guide у нижню частину правої панелі,
       додати кнопку повторного запуску туру та підсвічувати в турі
       видиму вкладку Validation.
+- [x] 21.12.1 Перенести керування виглядом (fullscreen, preview,
+      панелі, довідка) у верхню панель, а Grid/Snap/Ortho — у
+      статус-бар; прибрати дублювання zoom/fit.
+- [x] 21.12.2 Показувати властивості вибраного об’єкта першими в
+      правій панелі, розширити бічні панелі та збільшити вкладки,
+      кнопки й елементи нижнього доку.
+- [x] 21.12.3 Зробити типовим рівнем кабелю стіну (1,10 м), показати
+      типову висоту в доку та висоту траси в 3D-підказці.
+- [x] 21.12.4 Ущільнити 3D-панель інструментів, прибрати перекриття
+      з карткою вибраного пристрою та зробити всі інструменти
+      доступними.
+- [x] 21.12.5 Оновити оглядову панель робочого простору, картку
+      проєкту, таби Active/Archived і порожній стан Local; прибрати
+      службовий бейдж фази з хедера.
+- [x] 21.12.6 Замінити System check на лендінгу користувацькою
+      карткою можливостей і прибрати «Last live check».
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -791,6 +807,14 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-27 — session 26: UX, visual hierarchy and convenience pass
+- Completed: moved view controls (fullscreen / preview / panels / help) into the top mode bar so they remain reachable in fullscreen, removed duplicate zoom/fit from the canvas toolbar, and moved Grid / Snap / Ortho into the clickable status bar. Raised the canvas toolbar button size and kept it on one row.
+- Completed: selected object properties now appear first under the right-panel tabs, sidebars are wider on large screens, and the right-panel tabs/dock controls are larger. The 3D tools panel was regrouped into two columns, widened and height-constrained so it no longer collides with the selected-point card; all tools are visible. New cable routes default to the wall level at 1.10 m with a visible height hint and tooltip height.
+- Completed: the app dashboard gained a workspace overview with quick links and a tip; project cards got a visual icon tile and clearer actions; the Active/Archived count contrast was fixed; the developer phase badge was removed. The Local empty state no longer repeats its title, and the landing replaced the API/PostgreSQL diagnostics card with a user-facing capabilities card.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), `node scripts/browser-check.mjs` (dev), fullscreen and 360/768/1024/1440 layout checks with no horizontal overflow or page scroll.
+- Issues/blockers: none in the visual pass; the Docker web image still needs a rebuild for these changes.
+- Next action: rebuild the Docker web image, rerun browser/signaling/responsive/screenshot checks on <http://localhost:8090>, and review the landing copy with the product owner.
 
 ### 2026-10-27 — session 25: cable levels, component dock, history and 3D tooltips
 - Completed: cable routes now honour floor / wall / ceiling mounting with default and explicit elevations, render at the right height in 3D, and can be created with the level selected in the new bottom dock or the 3D draw panel. The route properties panel gained an elevation field in millimetres.

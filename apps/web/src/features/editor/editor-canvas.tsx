@@ -20,14 +20,11 @@ import {
   BrickWall,
   Cable,
   Copy,
-  CornerDownRight,
   Crosshair,
   Download,
-  Grid3x3,
   Hand,
   Lightbulb,
   Magnet,
-  Maximize2,
   MousePointer2,
   Plug,
   Redo2,
@@ -42,8 +39,6 @@ import {
   Unlink,
   Undo2,
   Zap,
-  ZoomIn,
-  ZoomOut,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -3021,7 +3016,7 @@ export function EditorCanvas({
       ) : null}
 
       {readOnly ? null : (
-      <div data-tour="editor-toolbar" className="editor-toolbar absolute bottom-24 left-3 flex flex-wrap items-center gap-1 rounded-xl p-1">
+      <div data-tour="editor-toolbar" className="editor-toolbar absolute bottom-24 left-3 flex max-w-[calc(100%-1.5rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-xl p-1">
         <button
           type="button"
           title={t('editor.select')}
@@ -3030,7 +3025,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'select'}
           onClick={() => setTool('select')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'select'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3046,7 +3041,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'pan'}
           onClick={() => setTool('pan')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'pan'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3062,7 +3057,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'calibrate'}
           onClick={() => setTool('calibrate')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'calibrate'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3095,7 +3090,7 @@ export function EditorCanvas({
                 setTool('place');
               }}
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+                'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
                 active
                   ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3114,7 +3109,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'route'}
           onClick={() => setTool('route')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'route'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3131,7 +3126,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'wall'}
           onClick={() => setTool('wall')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'wall'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3148,7 +3143,7 @@ export function EditorCanvas({
           aria-pressed={tool === 'room'}
           onClick={() => setTool('room')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'room'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
@@ -3165,64 +3160,13 @@ export function EditorCanvas({
           aria-pressed={tool === 'dimension'}
           onClick={() => setTool('dimension')}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'dimension'
               ? 'bg-[var(--dmp-color-brand)] text-white'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
           <RulerDimensionLine className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          title={t('editor.snapShortcut')}
-          aria-label={t('editor.snap')}
-          data-tooltip-hint={t('tooltip.snap')}
-          aria-pressed={snapEnabled}
-          onClick={() => setSnapEnabled((value) => !value)}
-          className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-            snapEnabled
-              ? 'bg-[var(--dmp-color-brand)] text-white'
-              : 'text-slate-300 hover:bg-white/10 hover:text-white',
-          )}
-        >
-          <Magnet className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          title={t('editor.orthoShortcut')}
-          aria-label={t('editor.ortho')}
-          data-tooltip-hint={t('tooltip.ortho')}
-          aria-pressed={orthoEnabled}
-          onClick={() => setOrthoEnabled((value) => !value)}
-          className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-            orthoEnabled
-              ? 'bg-[var(--dmp-color-brand)] text-white'
-              : 'text-slate-300 hover:bg-white/10 hover:text-white',
-          )}
-        >
-          <CornerDownRight className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          title={t('editor.gridShortcut')}
-          aria-label={t('editor.grid')}
-          data-tooltip-hint={t('tooltip.grid')}
-          aria-pressed={gridEnabled}
-          onClick={() => setGridEnabled((value) => !value)}
-          className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
-            gridEnabled
-              ? 'bg-[var(--dmp-color-brand)] text-white'
-              : 'text-slate-300 hover:bg-white/10 hover:text-white',
-          )}
-        >
-          <Grid3x3 className="h-4 w-4" />
         </button>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
@@ -3234,7 +3178,7 @@ export function EditorCanvas({
           data-tooltip-hint={t('tooltip.undo')}
           onClick={onUndo}
           disabled={!canUndo || historyBusy}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
         >
           <Undo2 className="h-4 w-4" />
         </button>
@@ -3245,59 +3189,9 @@ export function EditorCanvas({
           data-tooltip-hint={t('tooltip.redo')}
           onClick={onRedo}
           disabled={!canRedo || historyBusy}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-300"
         >
           <Redo2 className="h-4 w-4" />
-        </button>
-
-        <span className="mx-1 h-5 w-px bg-white/10" />
-
-        <button
-          type="button"
-          title={t('editor.zoomOutShortcut')}
-          aria-label={t('editor.zoomOut')}
-          data-tooltip-hint={t('tooltip.zoomOut')}
-          onClick={() =>
-            zoomAt(size.width / 2, size.height / 2, 0.8)
-          }
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          title={t('editor.resetZoom')}
-          onClick={() =>
-            zoomAt(size.width / 2, size.height / 2, 1 / viewport.zoom)
-          }
-          className="min-w-14 rounded-lg px-2 py-1 text-xs font-medium text-slate-300 tabular-nums hover:bg-white/10 hover:text-white"
-        >
-          {Math.round(viewport.zoom * 100)}%
-        </button>
-        <button
-          type="button"
-          title={t('editor.zoomInShortcut')}
-          aria-label={t('editor.zoomIn')}
-          data-tooltip-hint={t('tooltip.zoomIn')}
-          onClick={() =>
-            zoomAt(size.width / 2, size.height / 2, 1.25)
-          }
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <ZoomIn className="h-4 w-4" />
-        </button>
-
-        <span className="mx-1 h-5 w-px bg-white/10" />
-
-        <button
-          type="button"
-          title={t('editor.fitShortcut')}
-          aria-label={t('editor.fit')}
-          data-tooltip-hint={t('tooltip.fit')}
-          onClick={fitToPlan}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <Maximize2 className="h-4 w-4" />
         </button>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
@@ -3315,7 +3209,7 @@ export function EditorCanvas({
             link.href = canvas.toDataURL('image/png');
             link.click();
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Download className="h-4 w-4" />
         </button>
@@ -3323,7 +3217,7 @@ export function EditorCanvas({
       )}
 
       <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
-        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
           <Crosshair className="h-3 w-3 text-amber-300" />
           <span
             ref={coordinateRef}
@@ -3332,15 +3226,42 @@ export function EditorCanvas({
             —
           </span>
           <span className="text-slate-700">|</span>
-          <span className={gridEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+          <button
+            type="button"
+            title={t('editor.gridShortcut')}
+            aria-label={t('editor.grid')}
+            aria-pressed={gridEnabled}
+            onClick={() => setGridEnabled((value) => !value)}
+            className={`rounded px-1 py-0.5 transition hover:bg-white/10 ${
+              gridEnabled ? 'text-emerald-300' : 'text-slate-600'
+            }`}
+          >
             {t('editor.statusGrid')}
-          </span>
-          <span className={snapEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+          </button>
+          <button
+            type="button"
+            title={t('editor.snapShortcut')}
+            aria-label={t('editor.snap')}
+            aria-pressed={snapEnabled}
+            onClick={() => setSnapEnabled((value) => !value)}
+            className={`rounded px-1 py-0.5 transition hover:bg-white/10 ${
+              snapEnabled ? 'text-emerald-300' : 'text-slate-600'
+            }`}
+          >
             {t('editor.statusSnap')}
-          </span>
-          <span className={orthoEnabled ? 'text-emerald-300' : 'text-slate-600'}>
+          </button>
+          <button
+            type="button"
+            title={t('editor.orthoShortcut')}
+            aria-label={t('editor.ortho')}
+            aria-pressed={orthoEnabled}
+            onClick={() => setOrthoEnabled((value) => !value)}
+            className={`rounded px-1 py-0.5 transition hover:bg-white/10 ${
+              orthoEnabled ? 'text-emerald-300' : 'text-slate-600'
+            }`}
+          >
             {t('editor.statusOrtho')}
-          </span>
+          </button>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
           {saveStatus ? (

@@ -61,10 +61,7 @@ function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
 
-export function WorkspaceHeader({
-  badge = 'Phase 2 · Projects',
-  children,
-}: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
   const { user } = useAuth();
   const { preference, resolved, toggle } = useTheme();
   const { locale, setLocale, t } = useI18n();
@@ -368,9 +365,11 @@ export function WorkspaceHeader({
               {user.name}
             </Link>
           ) : null}
-          <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 md:block">
-            {badge}
-          </span>
+          {badge ? (
+            <span className="hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 md:block">
+              {badge}
+            </span>
+          ) : null}
           <Button
             variant="outline"
             size="sm"

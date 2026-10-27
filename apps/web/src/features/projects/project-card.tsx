@@ -3,6 +3,7 @@ import {
   Archive,
   ArchiveRestore,
   ArrowUpRight,
+  FolderKanban,
   LoaderCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -32,19 +33,24 @@ export function ProjectCard({
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3
-            className={cn(
-              'truncate text-base font-semibold text-white',
-              archived && 'text-slate-300',
-            )}
-            title={project.name}
-          >
-            {project.name}
-          </h3>
-          <p className="mt-1 text-xs text-slate-500">
-            {t('project.updated', { date: formatDate(project.updatedAt) })}
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--dmp-color-brand)]/20 bg-[var(--dmp-color-brand)]/10 text-[var(--dmp-color-brand)]">
+            <FolderKanban className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <h3
+              className={cn(
+                'truncate text-base font-semibold text-white',
+                archived && 'text-slate-300',
+              )}
+              title={project.name}
+            >
+              {project.name}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('project.updated', { date: formatDate(project.updatedAt) })}
+            </p>
+          </div>
         </div>
         <span
           className={cn(
@@ -65,7 +71,7 @@ export function ProjectCard({
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-5">
         <Link
           to={`/app/projects/${project.id}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-300 hover:text-amber-200"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--dmp-color-brand)] hover:underline"
         >
           {t('project.open')}
           <ArrowUpRight className="h-4 w-4" />

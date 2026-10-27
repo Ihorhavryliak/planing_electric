@@ -109,7 +109,7 @@ body {
   --color-slate-800: #f5f7fa;
   --color-slate-700: #e9edf2;
   --color-slate-600: #dfe4ea;
-  --color-slate-500: #8a949e;
+  --color-slate-500: #6b7785;
   --color-slate-400: #5a636c;
   --color-slate-300: #434c55;
   --color-slate-200: #2d353d;
@@ -236,7 +236,7 @@ body {
 
 [data-theme='light'] .editor-panel:hover,
 [data-theme='light'] .app-panel:hover {
-  border-color: #cfd6de;
+  border-color: color-mix(in srgb, var(--dmp-color-brand) 28%, #cfd6de);
   box-shadow: 0 8px 20px -16px rgb(28 34 41 / 0.22);
 }
 
@@ -342,6 +342,19 @@ body {
   .report-print-title {
     color: #0f172a !important;
   }
+}
+
+/* Selected object properties should be the first thing under the tabs. */
+.editor-sidebar > [data-sidebar-tab-header] {
+  order: -3;
+}
+
+.editor-sidebar > [data-object-panel] {
+  order: -2;
+}
+
+.editor-sidebar > [data-opening-panel] {
+  order: -1;
 }
 
 /* Sidebar tabs: keep every panel mounted but show only the active group. */

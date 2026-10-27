@@ -151,6 +151,7 @@ export const signalingRu: Record<string, string> = {
   'editor.threeHover.length': 'Длина: {value}',
   'editor.threeHover.height': 'Высота: {value}',
   'editor.threeHover.mounting': 'Монтаж: {value}',
+  'editor.dock.routeHeight': 'Типовая высота: {value}',
   'signaling.title': 'Сигнализация и слаботочка',
   'signaling.hint':
     'Шлейфы охранной, пожарной сигнализации, видео, доступа, оповещения и СКС с проверкой устройств, кабеля, АКБ и покрытия.',

@@ -117,8 +117,11 @@ function mountingElevation(
 ): number {
   const scale = planUnitsPerMeter(metersPerUnit);
   if (mounting === 'ceiling') return Math.max(0, wallHeight - 0.05 * scale);
-  if (mounting === 'wall' || mounting === 'chase') return 0.3 * scale;
-  return 0.04 * scale;
+  if (mounting === 'chase') return 0.3 * scale;
+  if (mounting === 'floor') return 0.04 * scale;
+  // Wall is the default: put the cable clearly on the wall instead of at the
+  // floor, and keep legacy routes without a mounting level visible.
+  return 1.1 * scale;
 }
 
 function routeElevation(
@@ -288,7 +291,7 @@ export function ThreeView({
   onCreatePoint,
   onUpdatePoint,
   onDeletePoint,
-  routeMounting = 'floor',
+  routeMounting = 'wall',
   onRouteMountingChange,
   onCreateOpening,
   onCreateWall,
@@ -1552,9 +1555,17 @@ export function ThreeView({
           : sum;
       }, 0);
       title = t('editor.cableRoute');
+      const elevation = routeElevation(
+        route,
+        wallHeightPlanUnits(metersPerUnit),
+        metersPerUnit,
+      );
       lines = [
         t('editor.threeHover.mounting', {
           value: t(`mounting.${route.settings.mounting ?? 'none'}`),
+        }),
+        t('editor.threeHover.height', {
+          value: formatMeters(elevation * scale),
         }),
         t('editor.threeHover.length', {
           value: formatMeters(length * scale),
@@ -1634,7 +1645,7 @@ export function ThreeView({
           </label>
         ) : null}
       </div>
-      <div className="absolute top-16 right-3 flex w-40 flex-col gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-2 text-[11px] text-slate-300 backdrop-blur">
+      <div className="absolute top-16 right-3 flex max-h-[calc(100%-14rem)] w-52 flex-col gap-1 overflow-y-auto rounded-xl border border-white/10 bg-slate-950/90 p-2 text-[11px] text-slate-300 backdrop-blur">
         <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
           {t('editor.threeAdd')}
         </p>
@@ -1655,92 +1666,100 @@ export function ThreeView({
             </button>
           ))}
         </div>
-        {(
-          [
-            ['socket', t('editor.point.socket'), Plug],
-            ['switch', t('editor.point.switch'), ToggleRight],
-            ['light', t('editor.point.light'), Lightbulb],
-            ['panel', t('editor.point.panel'), Box],
-            ['junction', t('editor.point.junction'), CircleDot],
-            ['custom', t('editor.point.custom'), Shapes],
-          ] as const
-        ).map(([type, label, Icon]) => (
-          <button
-            key={type}
-            type="button"
-            aria-pressed={placementType === type}
-            onClick={() =>
-              setPlacementType((current) => (current === type ? null : type))
-            }
-            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
-              placementType === type
-                ? 'bg-[var(--dmp-color-brand)] text-white'
-                : 'hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+        <div className="grid grid-cols-2 gap-1">
+          {(
+            [
+              ['socket', t('editor.point.socket'), Plug],
+              ['switch', t('editor.point.switch'), ToggleRight],
+              ['light', t('editor.point.light'), Lightbulb],
+              ['panel', t('editor.point.board'), Box],
+              ['junction', t('editor.point.junction'), CircleDot],
+              ['custom', t('editor.point.custom'), Shapes],
+            ] as const
+          ).map(([type, label, Icon]) => (
+            <button
+              key={type}
+              type="button"
+              title={label}
+              aria-pressed={placementType === type}
+              onClick={() =>
+                setPlacementType((current) => (current === type ? null : type))
+              }
+              className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[9px] leading-tight transition ${
+                placementType === type
+                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  : 'hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span className="w-full truncate text-center">{label}</span>
+            </button>
+          ))}
+        </div>
         <div className="my-1 border-t border-white/10" />
-        {(
-          [
-            ['door', t('editor.addDoor')],
-            ['window', t('editor.addWindow')],
-          ] as const
-        ).map(([type, label]) => (
-          <button
-            key={type}
-            type="button"
-            aria-pressed={placementOpening === type}
-            onClick={() => {
-              setPlacementOpening((current) =>
-                current === type ? null : type,
-              );
-              setPlacementType(null);
-            }}
-            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
-              placementOpening === type
-                ? 'bg-[var(--dmp-color-brand)] text-white'
-                : 'hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Square className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+        <div className="grid grid-cols-2 gap-1">
+          {(
+            [
+              ['door', t('editor.addDoor')],
+              ['window', t('editor.addWindow')],
+            ] as const
+          ).map(([type, label]) => (
+            <button
+              key={type}
+              type="button"
+              aria-pressed={placementOpening === type}
+              onClick={() => {
+                setPlacementOpening((current) =>
+                  current === type ? null : type,
+                );
+                setPlacementType(null);
+              }}
+              className={`flex items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] transition ${
+                placementOpening === type
+                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  : 'hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Square className="h-3.5 w-3.5" />
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
+        </div>
         <div className="my-1 border-t border-white/10" />
         <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
           {t('editor.threeDraw')}
         </p>
-        {(
-          [
-            ['wall', t('editor.wall'), BrickWall],
-            ['room', t('editor.room'), SquareDashed],
-            ['route', t('editor.cableRoute'), Cable],
-            ['dimension', t('editor.dimension'), RulerDimensionLine],
-          ] as const
-        ).map(([mode, label, Icon]) => (
-          <button
-            key={mode}
-            type="button"
-            aria-pressed={draftMode === mode}
-            onClick={() => {
-              setDraftMode((current) => (current === mode ? null : mode));
-              setDraftPoints([]);
-              setPlacementType(null);
-              setPlacementOpening(null);
-            }}
-            className={`flex items-center gap-2 rounded-md px-2 py-1 text-left transition ${
-              draftMode === mode
-                ? 'bg-[var(--dmp-color-brand)] text-white'
-                : 'hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+        <div className="grid grid-cols-2 gap-1">
+          {(
+            [
+              ['wall', t('editor.walls'), BrickWall],
+              ['room', t('editor.rooms'), SquareDashed],
+              ['route', t('editor.cableRoute'), Cable],
+              ['dimension', t('editor.dimensions'), RulerDimensionLine],
+            ] as const
+          ).map(([mode, label, Icon]) => (
+            <button
+              key={mode}
+              type="button"
+              title={label}
+              aria-pressed={draftMode === mode}
+              onClick={() => {
+                setDraftMode((current) => (current === mode ? null : mode));
+                setDraftPoints([]);
+                setPlacementType(null);
+                setPlacementOpening(null);
+              }}
+              className={`flex min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] transition ${
+                draftMode === mode
+                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  : 'hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{label}</span>
+            </button>
+          ))}
+        </div>
         {draftMode === 'route' ? (
           <div className="mt-1 rounded-md border border-white/10 bg-white/[0.02] p-1">
             <p className="px-1 pb-1 text-[10px] uppercase tracking-wide text-slate-500">

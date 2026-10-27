@@ -74,6 +74,20 @@ export function ComponentDock({
   const factor = lengthUnit === 'm' ? 1 : lengthUnit === 'cm' ? 100 : 1000;
   const step = lengthUnit === 'm' ? 0.01 : lengthUnit === 'cm' ? 1 : 10;
   const size = openingSizes[openingTab];
+  const routeHeightMeters =
+    routeMounting === 'ceiling'
+      ? 2.65
+      : routeMounting === 'chase'
+        ? 0.3
+        : routeMounting === 'wall'
+          ? 1.1
+          : 0.04;
+  const routeHeightLabel =
+    lengthUnit === 'm'
+      ? `${routeHeightMeters.toFixed(2)} m`
+      : lengthUnit === 'cm'
+        ? `${Math.round(routeHeightMeters * 100)} cm`
+        : `${Math.round(routeHeightMeters * 1000)} mm`;
   const round = (value: number) =>
     lengthUnit === 'm'
       ? Number(value.toFixed(2))
@@ -117,7 +131,7 @@ export function ComponentDock({
                 }
                 setOpenType(type);
               }}
-              className={`flex h-8 items-center gap-1 rounded-md px-2 text-[11px] transition ${
+              className={`flex h-9 items-center gap-1 rounded-md px-2 text-xs transition ${
                 openType === type
                   ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
@@ -142,7 +156,7 @@ export function ComponentDock({
                     onSelectDevice(openType, item.id);
                     setOpenType(null);
                   }}
-                  className="rounded-md px-2 py-1 text-left text-[11px] text-slate-300 transition hover:bg-white/10 hover:text-white"
+                  className="rounded-md px-2 py-1 text-left text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
                 >
                   {t(`devices.subtype.${item.id}`)}
                 </button>
@@ -165,7 +179,7 @@ export function ComponentDock({
               type="button"
               aria-pressed={openingTab === type}
               onClick={() => setOpeningTab(type)}
-              className={`flex h-6 items-center gap-1 rounded px-2 text-[11px] transition ${
+              className={`flex h-7 items-center gap-1 rounded px-2 text-xs transition ${
                 openingTab === type
                   ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-400 hover:text-white'
@@ -223,7 +237,7 @@ export function ComponentDock({
               : t('editor.dock.selectWall')
           }
           onClick={() => onAddOpening(openingTab)}
-          className="h-7 gap-1 px-2 text-[11px]"
+          className="h-8 gap-1 px-2 text-xs"
         >
           <Plus className="h-3.5 w-3.5" />
           {t('editor.dock.addOpening')}
@@ -244,7 +258,7 @@ export function ComponentDock({
               type="button"
               aria-pressed={routeMounting === mounting}
               onClick={() => onRouteMountingChange(mounting)}
-              className={`h-6 rounded px-2 text-[11px] transition ${
+              className={`h-7 rounded px-2 text-xs transition ${
                 routeMounting === mounting
                   ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-400 hover:text-white'
@@ -254,6 +268,9 @@ export function ComponentDock({
             </button>
           ))}
         </div>
+        <span className="text-[10px] text-slate-500">
+          {t('editor.dock.routeHeight', { value: routeHeightLabel })}
+        </span>
       </div>
     </div>
   );
@@ -286,7 +303,7 @@ function DockNumber({
             if (Number.isFinite(parsed) && parsed > 0) onCommit(parsed);
             else event.target.value = String(value);
           }}
-          className="h-6 w-16 rounded-md border border-white/10 bg-slate-950/60 pr-6 pl-1.5 text-[11px] text-slate-100 tabular-nums"
+          className="h-7 w-[4.5rem] rounded-md border border-white/10 bg-slate-950/60 pr-6 pl-1.5 text-xs text-slate-100 tabular-nums"
         />
         <span className="pointer-events-none absolute top-1/2 right-1.5 -translate-y-1/2 text-[9px] text-slate-500">
           {unit}

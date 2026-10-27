@@ -252,7 +252,8 @@ const en: Dictionary = {
   'local.emptyTitle': 'No local projects yet',
   'local.emptyCta': 'Create your first local project',
   'local.emptyDemo': 'Load the demo apartment',
-  'local.empty': 'No local projects yet.',
+  'local.empty':
+    'Create a project or load the demo apartment to start planning right in this browser.',
   'local.localOnly': 'Local only',
   'local.storageBanner':
     'These projects are stored in this browser. Export JSON or sync them to your account to open them elsewhere.',
@@ -384,6 +385,15 @@ const en: Dictionary = {
   'landing.direction': 'Product direction',
   'landing.cap.read': 'Read the plan',
   'landing.previewAlt': 'DrawMyPlace editor with a demo apartment plan',
+  'landing.valueTitle': 'Built for real installations',
+  'landing.valueHint':
+    'Everything you need from the first plan to a priced, documented project.',
+  'landing.value.one':
+    '2D/3D editor with walls, rooms, doors, windows, devices and cable routes.',
+  'landing.value.two':
+    'Live cable takeoff, circuits, load checks and validation against the plan.',
+  'landing.value.three':
+    'Estimates plus PDF, XLSX and IFC exports for handover.',
   'landing.previewHint':
     'Walls, rooms, circuits, cable routes and devices in one editor — with reports and BIM export built in.',
   'landing.workflow.eyebrow': 'How it works',
@@ -455,6 +465,13 @@ const en: Dictionary = {
   'project.restoreShort': 'Restore',
   'project.archiveShort': 'Archive',
 
+  'app.overview': 'Workspace overview',
+  'app.overviewHint': 'A quick snapshot of your workspace.',
+  'app.overviewActive': 'Active projects',
+  'app.overviewArchived': 'Archived',
+  'app.quickLinks': 'Quick links',
+  'app.tip': 'Tip',
+  'app.tipBody': 'Start with a floor plan, set the scale, then draw walls and devices. The quick guide in the editor walks through each step.',
   'app.projects': 'Projects',
   'app.title': 'Your electrical plans',
   'app.subtitle':
@@ -713,6 +730,7 @@ const en: Dictionary = {
   'editor.point.socket': 'Socket',
   'editor.point.switch': 'Switch',
   'editor.point.light': 'Light',
+  'editor.point.board': 'Board',
   'editor.point.panel': 'Distribution board',
   'editor.point.junction': 'Junction box',
   'editor.point.custom': 'Custom point',
@@ -1741,7 +1759,8 @@ const ua: Dictionary = {
   'local.emptyTitle': 'Локальних проєктів ще немає',
   'local.emptyCta': 'Створити перший локальний проєкт',
   'local.emptyDemo': 'Завантажити демо-квартиру',
-  'local.empty': 'Локальних проєктів ще немає.',
+  'local.empty':
+    'Створіть проєкт або завантажте демо-квартиру, щоб почати планування просто в браузері.',
   'local.localOnly': 'Лише локально',
   'local.storageBanner':
     'Ці проєкти зберігаються в цьому браузері. Експортуйте JSON або синхронізуйте їх з акаунтом, щоб відкривати на інших пристроях.',
@@ -1875,6 +1894,15 @@ const ua: Dictionary = {
   'landing.direction': 'Напрям продукту',
   'landing.cap.read': 'Прочитати план',
   'landing.previewAlt': 'Редактор DrawMyPlace із демонстраційним планом квартири',
+  'landing.valueTitle': 'Створено для реальних монтажів',
+  'landing.valueHint':
+    'Усе необхідне від першого плану до прорахованого й задокументованого проєкту.',
+  'landing.value.one':
+    '2D/3D-редактор зі стінами, кімнатами, дверима, вікнами, пристроями та кабельними трасами.',
+  'landing.value.two':
+    'Живий розрахунок кабелю, кола, перевірка навантажень і валідація за планом.',
+  'landing.value.three':
+    'Кошториси та експорт PDF, XLSX і IFC для передачі проєкту.',
   'landing.previewHint':
     'Стіни, кімнати, кола, кабельні траси й пристрої в одному редакторі — зі звітами та BIM-експортом.',
   'landing.workflow.eyebrow': 'Як це працює',
@@ -1946,6 +1974,13 @@ const ua: Dictionary = {
   'project.restoreShort': 'Відновити',
   'project.archiveShort': 'Архівувати',
 
+  'app.overview': 'Огляд робочого простору',
+  'app.overviewHint': 'Короткий зріз вашого робочого простору.',
+  'app.overviewActive': 'Активні проєкти',
+  'app.overviewArchived': 'Архівовані',
+  'app.quickLinks': 'Швидкі посилання',
+  'app.tip': 'Порада',
+  'app.tipBody': 'Почніть із плану поверху, задайте масштаб, потім намалюйте стіни й пристрої. Швидкий посібник у редакторі проведе покроково.',
   'app.projects': 'Проєкти',
   'app.title': 'Ваші електроплани',
   'app.subtitle':
@@ -2208,6 +2243,7 @@ const ua: Dictionary = {
   'editor.point.socket': 'Розетка',
   'editor.point.switch': 'Вимикач',
   'editor.point.light': 'Світло',
+  'editor.point.board': 'Щит',
   'editor.point.panel': 'Розподільний щит',
   'editor.point.junction': 'З’єднувальна коробка',
   'editor.point.custom': 'Довільна точка',

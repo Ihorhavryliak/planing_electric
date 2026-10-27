@@ -151,6 +151,7 @@ export const signalingEn: Record<string, string> = {
   'editor.threeHover.length': 'Length: {value}',
   'editor.threeHover.height': 'Height: {value}',
   'editor.threeHover.mounting': 'Mounting: {value}',
+  'editor.dock.routeHeight': 'Default height: {value}',
   'signaling.title': 'Signaling & low current',
   'signaling.hint':
     'Security, fire, CCTV, access, PA and data loops with devices, cable, battery and coverage checks.',

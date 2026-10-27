@@ -1,38 +1,15 @@
 import {
   ArrowRight,
   CheckCircle2,
-  CircleAlert,
-  CircleX,
-  LoaderCircle,
-  RefreshCw,
   Sparkles,
   Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useI18n } from '@/features/i18n/i18n-context';
-import { type CheckState, useSystemHealth } from '@/hooks/use-system-health';
 import { cn } from '@/lib/utils';
 import editorPreview from '@/assets/editor-preview.png';
-
-const statusKeys: Record<CheckState, string> = {
-  checking: 'landing.status.checking',
-  up: 'landing.status.up',
-  down: 'landing.status.down',
-};
-
-function StatusIcon({ state }: { state: CheckState }) {
-  if (state === 'checking') {
-    return <LoaderCircle className="h-4 w-4 animate-spin text-slate-400" />;
-  }
-
-  if (state === 'up') {
-    return <CheckCircle2 className="h-4 w-4 text-emerald-400" />;
-  }
-
-  return <CircleX className="h-4 w-4 text-rose-400" />;
-}
 
 const capabilities = [
   { titleKey: 'landing.cap.read', hintKey: 'landing.cap.readHint' },
@@ -53,15 +30,7 @@ const features = [
 
 export function LandingPage() {
   const { t } = useI18n();
-  const health = useSystemHealth();
   const { status } = useAuth();
-  const checkedAt = health.checkedAt
-    ? new Intl.DateTimeFormat(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }).format(new Date(health.checkedAt))
-    : t('landing.notChecked');
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -149,10 +118,6 @@ export function LandingPage() {
                   {t('landing.whatWorks')}
                 </a>
               </div>
-
-              <p className="mt-4 text-xs text-slate-500">
-                {t('landing.lastCheck', { time: checkedAt })}
-              </p>
             </div>
 
             <aside className="space-y-4">
@@ -181,81 +146,34 @@ export function LandingPage() {
               </figure>
 
               <div className="app-panel p-6 shadow-2xl shadow-black/40 backdrop-blur">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-sm font-semibold text-white">
-                    {t('landing.systemCheck')}
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-400">
-                    {t('landing.systemCheckHint')}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t('landing.refresh')}
-                  onClick={health.refresh}
+                <h2 className="text-sm font-semibold text-white">
+                  {t('landing.valueTitle')}
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  {t('landing.valueHint')}
+                </p>
+                <ul className="mt-5 space-y-2.5">
+                  {[
+                    t('landing.value.one'),
+                    t('landing.value.two'),
+                    t('landing.value.three'),
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className="flex gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm leading-relaxed text-slate-200"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#foundation"
+                  className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-[var(--dmp-color-brand)] hover:underline"
                 >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <StatusIcon state={health.api} />
-                    <span className="text-sm text-slate-200">API</span>
-                  </div>
-                  <span
-                    className={cn(
-                      'text-xs font-medium',
-                      health.api === 'up' && 'text-emerald-300',
-                      health.api === 'down' && 'text-rose-300',
-                      health.api === 'checking' && 'text-slate-400',
-                    )}
-                  >
-                    {t(statusKeys[health.api])}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <StatusIcon state={health.database} />
-                    <span className="text-sm text-slate-200">PostgreSQL</span>
-                  </div>
-                  <span
-                    className={cn(
-                      'text-xs font-medium',
-                      health.database === 'up' && 'text-emerald-300',
-                      health.database === 'down' && 'text-rose-300',
-                      health.database === 'checking' && 'text-slate-400',
-                    )}
-                  >
-                    {t(statusKeys[health.database])}
-                  </span>
-                </div>
-              </div>
-
-              {health.database === 'down' && health.api === 'up' ? (
-                <div className="mt-4 flex gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-100">
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p>
-                    {t('landing.dbDown')}{' '}
-                    <code className="font-mono">pnpm db:up</code>{' '}
-                    <code className="font-mono">pnpm db:migrate</code>
-                  </p>
-                </div>
-              ) : null}
-
-              {health.api === 'down' ? (
-                <div className="mt-4 flex gap-2.5 rounded-xl border border-rose-400/20 bg-rose-400/10 p-3 text-xs leading-relaxed text-rose-100">
-                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p>
-                    {t('landing.apiDown')}{' '}
-                    <code className="font-mono">pnpm dev</code>
-                  </p>
-                </div>
-              ) : null}
+                  {t('landing.whatWorks')}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
               </div>
             </aside>
           </section>

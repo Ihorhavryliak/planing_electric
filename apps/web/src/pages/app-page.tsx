@@ -1,9 +1,13 @@
 import type { PublicProject } from '@drawmyplace/contracts';
 import {
+  ArrowUpRight,
   FolderKanban,
   FolderOpen,
   FolderPlus,
+  Lightbulb,
   LoaderCircle,
+  Package,
+  ReceiptText,
   RefreshCw,
   Sparkles,
   TriangleAlert,
@@ -235,7 +239,9 @@ export function AppPage() {
             ) : null}
           </section>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div
               className="inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1"
               role="tablist"
@@ -264,9 +270,9 @@ export function AppPage() {
                     {t(item.labelKey)}
                     <span
                       className={cn(
-                        'rounded-full px-1.5 py-0.5 text-[11px]',
+                        'rounded-full px-1.5 py-0.5 text-xs',
                         tab === item.value
-                          ? 'bg-slate-950/15 text-slate-900'
+                          ? 'bg-white/20 text-white'
                           : 'bg-white/10 text-slate-400',
                       )}
                     >
@@ -370,7 +376,7 @@ export function AppPage() {
           ) : null}
 
           {visibleProjects.length > 0 ? (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {visibleProjects.map((project) => (
                 <ProjectCard
                   key={project.id}
@@ -381,6 +387,80 @@ export function AppPage() {
               ))}
             </div>
           ) : null}
+            </div>
+
+            <aside className="hidden flex-col gap-4 xl:flex">
+              <section className="app-panel p-5">
+                <div className="flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4 text-[var(--dmp-color-brand)]" />
+                  <h2 className="text-sm font-semibold text-white">
+                    {t('app.overview')}
+                  </h2>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  {t('app.overviewHint')}
+                </p>
+                <dl className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
+                    <dt className="text-slate-400">{t('app.overviewActive')}</dt>
+                    <dd className="font-semibold text-white tabular-nums">
+                      {activeProjects.length}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
+                    <dt className="text-slate-400">
+                      {t('app.overviewArchived')}
+                    </dt>
+                    <dd className="font-semibold text-white tabular-nums">
+                      {archivedProjects.length}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="mt-5">
+                  <p className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+                    {t('app.quickLinks')}
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { to: '/local', label: t('local.badge'), icon: FolderOpen },
+                      {
+                        to: '/app/materials',
+                        label: t('nav.materials'),
+                        icon: Package,
+                      },
+                      {
+                        to: '/app/estimates',
+                        label: t('nav.estimates'),
+                        icon: ReceiptText,
+                      },
+                    ].map(({ to, label, icon: Icon }) => (
+                      <Link
+                        key={to}
+                        to={to}
+                        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
+                      >
+                        <Icon className="h-4 w-4 text-slate-500" />
+                        <span className="flex-1">{label}</span>
+                        <ArrowUpRight className="h-3.5 w-3.5 text-slate-600" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="app-panel p-5">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-amber-400" />
+                  <h2 className="text-sm font-semibold text-white">
+                    {t('app.tip')}
+                  </h2>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                  {t('app.tipBody')}
+                </p>
+              </section>
+            </aside>
+          </div>
         </main>
       </div>
     </div>
