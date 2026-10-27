@@ -137,6 +137,8 @@ export const routeSettingsSchema = z
     wastePercent: z.number().min(0).max(100).optional(),
     /** How the cable is installed along this route. */
     mounting: routeMountingSchema.optional(),
+    /** Route centreline height above the floor in millimetres. */
+    elevationMm: z.number().min(0).max(10_000).optional(),
     /** Chase (штроба) width in millimetres; only used with mounting = chase. */
     chaseWidthMm: z.number().min(10).max(400).optional(),
     /** Chase depth in millimetres; only used with mounting = chase. */

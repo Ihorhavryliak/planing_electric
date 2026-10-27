@@ -5,6 +5,7 @@ import type {
   PublicRoom,
   PublicRoute,
   PublicWall,
+  RouteMounting,
 } from '@drawmyplace/contracts';
 import {
   Box,
@@ -30,7 +31,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { useI18n } from '@/features/i18n/i18n-context';
 import { useTheme } from '@/features/theme/theme-context';
-import { computeWallBoxes } from './three-geometry';
+import { computeWallBoxes, pointAlongWall } from './three-geometry';
+import { polygonArea } from './structure-geometry';
 
 interface ThreeViewProps {
   walls: readonly PublicWall[];
@@ -65,10 +67,17 @@ interface ThreeViewProps {
     patch: { mountingHeight?: number | null; locked?: boolean },
   ) => void;
   onDeletePoint?: (id: string) => void;
+  openingSizes?: Record<
+    'door' | 'window',
+    { width: number; height: number; sill: number }
+  >;
+  routeMounting?: RouteMounting;
+  onRouteMountingChange?: (mounting: RouteMounting) => void;
   onCreateOpening?: (
     wallId: string,
     type: 'door' | 'window',
     offset: number,
+    size?: { widthM?: number; heightM?: number; sillM?: number },
   ) => void;
   onCreateWall?: (geometry: { x: number; y: number }[]) => void;
   onCreateRoom?: (boundary: { x: number; y: number }[]) => void;
@@ -95,6 +104,38 @@ function defaultMountingHeight(point: PublicPoint): number {
   if (point.type === 'panel') return 150;
   if (point.type === 'junction') return 30;
   return 100;
+}
+
+function planUnitsPerMeter(metersPerUnit: number | null): number {
+  return metersPerUnit ? 1 / metersPerUnit : 100;
+}
+
+function wallHeightPlanUnits(metersPerUnit: number | null): number {
+  return 2.7 * planUnitsPerMeter(metersPerUnit);
+}
+
+function mountingElevation(
+  mounting: RouteMounting | undefined,
+  wallHeight: number,
+  metersPerUnit: number | null,
+): number {
+  const scale = planUnitsPerMeter(metersPerUnit);
+  if (mounting === 'ceiling') return Math.max(0, wallHeight - 0.05 * scale);
+  if (mounting === 'wall' || mounting === 'chase') return 0.3 * scale;
+  return 0.04 * scale;
+}
+
+function routeElevation(
+  route: PublicRoute,
+  wallHeight: number,
+  metersPerUnit: number | null,
+): number {
+  if (typeof route.settings.elevationMm === 'number') {
+    return (
+      (route.settings.elevationMm / 1000) * planUnitsPerMeter(metersPerUnit)
+    );
+  }
+  return mountingElevation(route.settings.mounting, wallHeight, metersPerUnit);
 }
 
 function pointGlyph(
@@ -251,6 +292,12 @@ export function ThreeView({
   onCreatePoint,
   onUpdatePoint,
   onDeletePoint,
+  openingSizes = {
+    door: { width: 0.9, height: 2.1, sill: 0 },
+    window: { width: 1.3, height: 1.3, sill: 0.9 },
+  },
+  routeMounting = 'floor',
+  onRouteMountingChange,
   onCreateOpening,
   onCreateWall,
   onCreateRoom,
@@ -274,7 +321,20 @@ export function ThreeView({
     x: number;
     y: number;
   } | null>(null);
-  const { t } = useI18n();
+  const [hover, setHover] = useState<{
+    kind: 'point' | 'wall' | 'room' | 'route';
+    id: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [openingDraft, setOpeningDraft] = useState<{
+    wallId: string;
+    startOffset: number;
+    endOffset: number;
+    bottom: number;
+    top: number;
+  } | null>(null);
+  const { t, formatMeters } = useI18n();
   const { resolved } = useTheme();
   const lightScene = resolved === 'light';
   const [showPoints, setShowPoints] = useState(true);
@@ -346,6 +406,20 @@ export function ThreeView({
   const finishDraftRef = useRef<() => void>(() => {});
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const wallsRef = useRef(walls);
+  wallsRef.current = walls;
+  const openingSizesRef = useRef(openingSizes);
+  openingSizesRef.current = openingSizes;
+  const routeMountingRef = useRef(routeMounting);
+  routeMountingRef.current = routeMounting;
+  const openingDragRef = useRef<{
+    wallId: string;
+    startClientX: number;
+    startClientY: number;
+    startOffset: number;
+    startY: number;
+  } | null>(null);
+  const openingDraftGroupRef = useRef(new THREE.Group());
 
   useEffect(() => {
     const container = containerRef.current;
@@ -386,6 +460,7 @@ export function ThreeView({
     scene.add(fill);
     scene.add(contentRef.current);
     scene.add(draftGroupRef.current);
+    scene.add(openingDraftGroupRef.current);
 
     const pick = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -405,12 +480,149 @@ export function ThreeView({
 
       if (kind && id) onSelectRef.current?.({ kind, id });
     };
+    const wallAt = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+      return raycaster
+        .intersectObjects(contentRef.current.children, true)
+        .find((entry) => entry.object.userData?.kind === 'wall');
+    };
+
     const handlePointerDown = (event: PointerEvent) => {
       pointerStartRef.current = { x: event.clientX, y: event.clientY };
+      openingDragRef.current = null;
+
+      if (!placementOpeningRef.current) return;
+      const wallHit = wallAt(event);
+      if (!wallHit) return;
+      const wall = wallsRef.current.find(
+        (item) => item.id === wallHit.object.userData.id,
+      );
+      if (!wall) return;
+
+      openingDragRef.current = {
+        wallId: wall.id,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startOffset: offsetAlongWall(wall, {
+          x: wallHit.point.x,
+          y: wallHit.point.z,
+        }),
+        startY: wallHit.point.y,
+      };
+      controls.enabled = false;
     };
+    const handleDragMove = (event: PointerEvent) => {
+      const drag = openingDragRef.current;
+      if (!drag) return;
+      const wallHit = wallAt(event);
+      if (!wallHit || wallHit.object.userData.id !== drag.wallId) return;
+      const wall = wallsRef.current.find((item) => item.id === drag.wallId);
+      if (!wall) return;
+
+      const type = placementOpeningRef.current;
+      const endOffset = offsetAlongWall(wall, {
+        x: wallHit.point.x,
+        y: wallHit.point.z,
+      });
+      const maxHeight = wallHeightPlanUnits(metersPerUnitRef.current);
+      const y1 = Math.max(0, Math.min(maxHeight, drag.startY));
+      const y2 = Math.max(0, Math.min(maxHeight, wallHit.point.y));
+      const top = Math.max(y1, y2);
+      const bottom = type === 'door' ? 0 : Math.min(y1, y2);
+
+      setOpeningDraft({
+        wallId: drag.wallId,
+        startOffset: drag.startOffset,
+        endOffset,
+        bottom,
+        top,
+      });
+    };
+
     const handlePointerUp = (event: PointerEvent) => {
       const start = pointerStartRef.current;
       pointerStartRef.current = null;
+
+      const openingDrag = openingDragRef.current;
+      if (openingDrag) {
+        const distance = start
+          ? Math.hypot(
+              event.clientX - openingDrag.startClientX,
+              event.clientY - openingDrag.startClientY,
+            )
+          : 0;
+        openingDragRef.current = null;
+        controls.enabled = true;
+        setOpeningDraft(null);
+
+        if (distance >= 5) {
+          const type = placementOpeningRef.current;
+          const wallHit = wallAt(event);
+          const wall = wallsRef.current.find(
+            (item) => item.id === openingDrag.wallId,
+          );
+          if (type && wall && wallHit) {
+            const endOffset = offsetAlongWall(wall, {
+              x: wallHit.point.x,
+              y: wallHit.point.z,
+            });
+            const wallLength = wall.geometry.reduce((sum, vertex, index) => {
+              const previous = wall.geometry[index - 1];
+              return previous
+                ? sum +
+                    Math.hypot(vertex.x - previous.x, vertex.y - previous.y)
+                : sum;
+            }, 0);
+            const scale = planUnitsPerMeter(metersPerUnitRef.current);
+            const maxHeight = wallHeightPlanUnits(
+              metersPerUnitRef.current,
+            );
+            const y1 = Math.max(0, Math.min(maxHeight, openingDrag.startY));
+            const y2 = Math.max(0, Math.min(maxHeight, wallHit.point.y));
+            const top = Math.max(y1, y2);
+            const bottom = Math.min(y1, y2);
+            const vertical = top - bottom;
+            const startOffset = Math.min(
+              openingDrag.startOffset,
+              endOffset,
+            );
+            const finishOffset = Math.max(
+              openingDrag.startOffset,
+              endOffset,
+            );
+            const width = Math.max(
+              1,
+              Math.min(
+                Math.max(1, wallLength - 1),
+                Math.max(10, finishOffset - startOffset),
+              ),
+            );
+            const height =
+              vertical > 20
+                ? type === 'door'
+                  ? Math.max(top, 0.5 * scale)
+                  : vertical
+                : (type === 'door' ? 2.1 : 1.3) * scale;
+            const sill =
+              type === 'door'
+                ? 0
+                : vertical > 20
+                  ? bottom
+                  : 0.9 * scale;
+
+            onCreateOpeningRef.current?.(wall.id, type, startOffset, {
+              widthM: width / scale,
+              heightM: height / scale,
+              sillM: sill / scale,
+            });
+          }
+          return;
+        }
+      }
 
       if (
         start &&
@@ -515,8 +727,17 @@ export function ThreeView({
         pick(event);
       }
     };
+    const handlePointerCancel = () => {
+      if (!openingDragRef.current) return;
+      openingDragRef.current = null;
+      setOpeningDraft(null);
+      controls.enabled = true;
+    };
+
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointermove', handleDragMove);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
+    renderer.domElement.addEventListener('pointerleave', handlePointerCancel);
 
     const resize = () => {
       const width = container.clientWidth;
@@ -572,7 +793,12 @@ export function ThreeView({
       cancelAnimationFrame(frame);
       observer.disconnect();
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointermove', handleDragMove);
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
+      renderer.domElement.removeEventListener(
+        'pointerleave',
+        handlePointerCancel,
+      );
       controls.dispose();
       disposeGroup(contentRef.current);
       renderer.dispose();
@@ -712,7 +938,7 @@ export function ThreeView({
     const group = contentRef.current;
     disposeGroup(group);
 
-    const wallHeight = metersPerUnit ? 2.7 / metersPerUnit : 100;
+    const wallHeight = wallHeightPlanUnits(metersPerUnit);
     const thickness = Math.max(
       1,
       walls.reduce((sum, wall) => sum + (wall.thickness ?? 0), 0) /
@@ -875,9 +1101,10 @@ export function ThreeView({
 
     if (showRoutes) {
       for (const route of visibleRoutes) {
+        const elevation = routeElevation(route, wallHeight, metersPerUnit);
         const geometry = new THREE.BufferGeometry().setFromPoints(
           route.geometry.map(
-            (point) => new THREE.Vector3(point.x, 4, point.y),
+            (point) => new THREE.Vector3(point.x, elevation, point.y),
           ),
         );
         const material = new THREE.LineBasicMaterial({
@@ -907,7 +1134,7 @@ export function ThreeView({
             }),
           );
           marker.userData = { kind: 'route', id: route.id };
-          marker.position.set(at.x, 4, at.y);
+          marker.position.set(at.x, elevation, at.y);
           group.add(marker);
         }
       }
@@ -1081,9 +1308,17 @@ export function ThreeView({
       }
     }
     if (draftPoints.length === 0) return;
+    const draftHeight =
+      draftMode === 'route'
+        ? mountingElevation(
+            routeMounting,
+            wallHeightPlanUnits(metersPerUnit),
+            metersPerUnit,
+          )
+        : 2;
     const material = new THREE.LineBasicMaterial({ color: 0x2f6bd8 });
     const linePoints = draftPoints.map(
-      (point) => new THREE.Vector3(point.x, 2, point.y),
+      (point) => new THREE.Vector3(point.x, draftHeight, point.y),
     );
     if (linePoints.length >= 2) {
       group.add(
@@ -1098,10 +1333,54 @@ export function ThreeView({
         new THREE.SphereGeometry(5, 10, 10),
         new THREE.MeshStandardMaterial({ color: 0x2f6bd8 }),
       );
-      dot.position.set(point.x, 2, point.y);
+      dot.position.set(point.x, draftHeight, point.y);
       group.add(dot);
     }
-  }, [draftPoints]);
+  }, [draftPoints, draftMode, routeMounting, metersPerUnit]);
+
+  useEffect(() => {
+    const group = openingDraftGroupRef.current;
+    for (const child of [...group.children]) {
+      group.remove(child);
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) material.forEach((item) => item.dispose());
+        else material.dispose();
+      }
+    }
+
+    if (!openingDraft) return;
+    const wall = walls.find((item) => item.id === openingDraft.wallId);
+    if (!wall) return;
+    const start = pointAlongWall(wall.geometry, openingDraft.startOffset);
+    const end = pointAlongWall(wall.geometry, openingDraft.endOffset);
+    if (!start || !end) return;
+    const length = Math.hypot(end.x - start.x, end.y - start.y);
+    const height = Math.max(0.1, openingDraft.top - openingDraft.bottom);
+    if (length <= 0) return;
+
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        Math.max(0.1, length),
+        height,
+        Math.max(2, (wall.thickness ?? 8) + 2),
+      ),
+      new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        transparent: true,
+        opacity: 0.45,
+        depthWrite: false,
+      }),
+    );
+    mesh.position.set(
+      (start.x + end.x) / 2,
+      openingDraft.bottom + height / 2,
+      (start.y + end.y) / 2,
+    );
+    mesh.rotation.y = -Math.atan2(end.y - start.y, end.x - start.x);
+    group.add(mesh);
+  }, [openingDraft, walls]);
 
   useEffect(() => {
     if (!draftMode) return;
@@ -1124,6 +1403,77 @@ export function ThreeView({
     window.addEventListener('pointerdown', close);
     return () => window.removeEventListener('pointerdown', close);
   }, [pointMenu]);
+
+  useEffect(() => {
+    const renderer = rendererRef.current;
+    const container = containerRef.current;
+    if (!renderer || !container) return;
+    const canvas = renderer.domElement;
+    let last = 0;
+
+    const clear = () => setHover(null);
+    const handleHover = (event: PointerEvent) => {
+      if (
+        event.buttons !== 0 ||
+        placementRef.current ||
+        placementOpeningRef.current ||
+        draftModeRef.current ||
+        openingDragRef.current
+      ) {
+        clear();
+        return;
+      }
+      const now = performance.now();
+      if (now - last < 45) return;
+      last = now;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(x, y), cameraRef.current!);
+      const hit = raycaster
+        .intersectObjects(contentRef.current.children, true)
+        .find((entry) =>
+          ['point', 'wall', 'room', 'route'].includes(
+            entry.object.userData?.kind,
+          ),
+        );
+      if (!hit) {
+        clear();
+        return;
+      }
+      const kind = hit.object.userData.kind as
+        | 'point'
+        | 'wall'
+        | 'room'
+        | 'route';
+      const id = hit.object.userData.id as string | undefined;
+      if (!id) {
+        clear();
+        return;
+      }
+      const containerRect = container.getBoundingClientRect();
+      const left = event.clientX - containerRect.left;
+      const top = event.clientY - containerRect.top;
+      setHover((current) =>
+        current &&
+        current.kind === kind &&
+        current.id === id &&
+        Math.abs(current.x - left) < 2 &&
+        Math.abs(current.y - top) < 2
+          ? current
+          : { kind, id, x: left, y: top },
+      );
+    };
+
+    canvas.addEventListener('pointermove', handleHover);
+    canvas.addEventListener('pointerleave', clear);
+    return () => {
+      canvas.removeEventListener('pointermove', handleHover);
+      canvas.removeEventListener('pointerleave', clear);
+    };
+  }, []);
 
   const handleContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -1154,6 +1504,84 @@ export function ThreeView({
   const menuPoint = pointMenu
     ? points.find((point) => point.id === pointMenu.id)
     : undefined;
+
+  const hoverTooltip = (() => {
+    if (!hover) return null;
+    const scale = metersPerUnit ?? 0.01;
+    let title: string;
+    let lines: string[];
+
+    if (hover.kind === 'point') {
+      const point = points.find((item) => item.id === hover.id);
+      if (!point) return null;
+      const heightMeters =
+        typeof point.mountingHeight === 'number'
+          ? point.mountingHeight
+          : defaultMountingHeight(point) * scale;
+      title = t(`editor.point.${point.type}`);
+      lines = [
+        ...(point.label?.trim() ? [point.label.trim()] : []),
+        t('editor.threeHover.height', {
+          value: formatMeters(heightMeters),
+        }),
+      ];
+      if ((point.properties as { locked?: boolean }).locked) {
+        lines.push(t('editor.threeHover.pinned'));
+      }
+    } else if (hover.kind === 'wall') {
+      const wall = walls.find((item) => item.id === hover.id);
+      if (!wall) return null;
+      const length = wall.geometry.reduce((sum, vertex, index) => {
+        const previous = wall.geometry[index - 1];
+        return previous
+          ? sum + Math.hypot(vertex.x - previous.x, vertex.y - previous.y)
+          : sum;
+      }, 0);
+      title = t('editor.threeHover.wall');
+      lines = [
+        t('editor.threeHover.length', {
+          value: formatMeters(length * scale),
+        }),
+      ];
+    } else if (hover.kind === 'room') {
+      const room = rooms.find((item) => item.id === hover.id);
+      if (!room) return null;
+      title = room.name?.trim() || t('editor.threeHover.room');
+      const area = polygonArea(room.boundary) * scale * scale;
+      lines = [
+        t('editor.threeHover.area', {
+          value: `${area.toFixed(1)} m²`,
+        }),
+      ];
+    } else {
+      const route = routes.find((item) => item.id === hover.id);
+      if (!route) return null;
+      const length = route.geometry.reduce((sum, vertex, index) => {
+        const previous = route.geometry[index - 1];
+        return previous
+          ? sum + Math.hypot(vertex.x - previous.x, vertex.y - previous.y)
+          : sum;
+      }, 0);
+      title = t('editor.cableRoute');
+      lines = [
+        t('editor.threeHover.mounting', {
+          value: t(`mounting.${route.settings.mounting ?? 'none'}`),
+        }),
+        t('editor.threeHover.length', {
+          value: formatMeters(length * scale),
+        }),
+      ];
+    }
+
+    const width = rendererRef.current?.domElement.clientWidth ?? 300;
+    const height = rendererRef.current?.domElement.clientHeight ?? 300;
+    return {
+      title,
+      lines,
+      left: Math.max(8, Math.min(hover.x + 14, Math.max(8, width - 210))),
+      top: Math.max(8, Math.min(hover.y + 14, Math.max(8, height - 110))),
+    };
+  })();
 
   return (
     <div
@@ -1324,6 +1752,30 @@ export function ThreeView({
             {label}
           </button>
         ))}
+        {draftMode === 'route' ? (
+          <div className="mt-1 rounded-md border border-white/10 bg-white/[0.02] p-1">
+            <p className="px-1 pb-1 text-[10px] uppercase tracking-wide text-slate-500">
+              {t('editor.dock.routeLevel')}
+            </p>
+            <div className="flex gap-0.5">
+              {(['floor', 'wall', 'ceiling'] as const).map((mounting) => (
+                <button
+                  key={mounting}
+                  type="button"
+                  aria-pressed={routeMounting === mounting}
+                  onClick={() => onRouteMountingChange?.(mounting)}
+                  className={`flex-1 rounded px-1 py-1 text-[10px] transition ${
+                    routeMounting === mounting
+                      ? 'bg-[var(--dmp-color-brand)] text-white'
+                      : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {t(`mounting.${mounting}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {placementType || placementOpening || draftMode ? (
           <p className="px-1 pt-1 text-[10px] leading-snug text-amber-200">
             {draftMode
@@ -1405,7 +1857,7 @@ export function ThreeView({
         )}
         GLB
       </button>
-      <div className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1.5 text-[11px] text-slate-300 backdrop-blur">
+      <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1.5 text-[11px] text-slate-300 backdrop-blur">
         {(
           [
             ['orbit', t('editor.viewOrbit')],
@@ -1418,7 +1870,7 @@ export function ThreeView({
             type="button"
             aria-pressed={mode === value}
             onClick={() => setMode(value)}
-            className={`rounded-lg px-2 py-1 transition ${
+            className={`pointer-events-auto rounded-lg px-2 py-1 transition ${
               mode === value
                 ? 'bg-[var(--dmp-color-brand)] text-white'
                 : 'hover:bg-white/10 hover:text-white'
@@ -1432,7 +1884,7 @@ export function ThreeView({
           type="button"
           aria-pressed={xray}
           onClick={() => setXray((value) => !value)}
-          className={`rounded-lg px-2 py-1 transition ${
+          className={`pointer-events-auto rounded-lg px-2 py-1 transition ${
             xray ? 'bg-sky-400/20 text-sky-200' : 'hover:bg-white/10'
           }`}
         >
@@ -1442,7 +1894,7 @@ export function ThreeView({
           type="button"
           aria-pressed={daylight}
           onClick={() => setDaylight((value) => !value)}
-          className={`rounded-lg px-2 py-1 transition ${
+          className={`pointer-events-auto rounded-lg px-2 py-1 transition ${
             daylight ? 'bg-amber-300 text-slate-950' : 'hover:bg-white/10'
           }`}
         >
@@ -1453,14 +1905,14 @@ export function ThreeView({
           aria-pressed={isolate}
           disabled={!hasSelection}
           onClick={() => setIsolate((value) => !value)}
-          className={`rounded-lg px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`pointer-events-auto rounded-lg px-2 py-1 transition disabled:cursor-not-allowed disabled:opacity-40 ${
             isolate ? 'bg-emerald-400/20 text-emerald-200' : 'hover:bg-white/10'
           }`}
           title={t('editor.isolateHint')}
         >
           {t('editor.isolate')}
         </button>
-        <label className="flex items-center gap-1.5 rounded-lg px-1.5 py-1">
+        <label className="pointer-events-auto flex items-center gap-1.5 rounded-lg px-1.5 py-1">
           <input
             type="checkbox"
             checked={sectionEnabled}
@@ -1491,6 +1943,21 @@ export function ThreeView({
         <p className="pointer-events-none absolute right-3 bottom-20 rounded-lg border border-white/10 bg-slate-950/90 px-2.5 py-1 text-[11px] text-slate-300 backdrop-blur">
           {t('editor.walkHint')}
         </p>
+      ) : null}
+
+      {hoverTooltip ? (
+        <div
+          role="tooltip"
+          className="pointer-events-none absolute z-30 w-52 rounded-lg border border-white/10 bg-slate-950/95 px-2.5 py-2 text-[11px] text-slate-300 shadow-xl shadow-black/40 backdrop-blur"
+          style={{ left: hoverTooltip.left, top: hoverTooltip.top }}
+        >
+          <p className="font-semibold text-white">{hoverTooltip.title}</p>
+          {hoverTooltip.lines.map((line) => (
+            <p key={line} className="mt-0.5 text-slate-400">
+              {line}
+            </p>
+          ))}
+        </div>
       ) : null}
 
       {pointMenu && menuPoint ? (

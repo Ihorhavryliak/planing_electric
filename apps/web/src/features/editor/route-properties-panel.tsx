@@ -56,6 +56,8 @@ export function RoutePropertiesPanel({
   );
   const mounting: RouteMounting | '' = route.settings.mounting ?? '';
   const isChase = mounting === 'chase';
+  const hasElevation =
+    mounting === 'wall' || mounting === 'ceiling' || mounting === 'chase';
 
   return (
     <section className="editor-panel p-4">
@@ -99,6 +101,36 @@ export function RoutePropertiesPanel({
             <option value="chase">{t('mounting.chase')}</option>
           </select>
         </label>
+        {hasElevation ? (
+          <CommitField
+            key={`${route.id}-elevation-${route.settings.elevationMm ?? ''}`}
+            label={t('editor.heightFromFloor')}
+            hint="mm"
+            inputMode="decimal"
+            initial={formatFieldNumber(route.settings.elevationMm)}
+            placeholder={mounting === 'ceiling' ? '2650' : '300'}
+            onCommit={(raw) => {
+              const parsed = parseOptionalNumber(raw, {
+                label: t('editor.heightFromFloor'),
+                min: 0,
+                max: 10_000,
+              });
+
+              if (!parsed.ok) return parsed.error;
+
+              const { elevationMm: _previous, ...rest } = route.settings;
+
+              onChange({
+                settings:
+                  parsed.value === null
+                    ? rest
+                    : { ...rest, elevationMm: parsed.value },
+              });
+
+              return null;
+            }}
+          />
+        ) : null}
         <label className="block text-xs">
           <span className="text-slate-400">{t('signaling.system')}</span>
           <select

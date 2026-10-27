@@ -492,6 +492,20 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       `Esc` — скасувати.
 - [x] 21.10.3 Додати контекстне меню точки в 3D: закріплення та
       видалення без переходу в 2D.
+- [x] 21.11.1 Кабельні траси: рівень монтажу (підлога / стіна / стеля),
+      висота за замовчуванням, явна висота в мм і рендеринг у 3D на
+      відповідній висоті.
+- [x] 21.11.2 Винести палітру пристроїв у нижню зафіксовану панель:
+      типи, підтипи, двері/вікна з розмірами в m/cm/mm, додавання до
+      вибраної стіни та вибір рівня кабелю.
+- [x] 21.11.3 Додати зліва панель історії змін із перемиканням
+      видимості іконкою ока та переходом до будь-якого кроку.
+- [x] 21.11.4 Додати в 3D підказки при наведенні на пристрій, стіну,
+      кімнату або кабельну трасу.
+- [x] 21.11.5 Дозволити створювати двері/вікна в 3D розтягуванням
+      прямокутника по стіні з шириною, висотою та підвіконням.
+- [x] 21.11.6 Виправити типову висоту стін для некаліброваних планів
+      (2,7 м замість 1 м), щоб отвори й траси мали коректну висоту.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -767,6 +781,14 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-27 — session 25: cable levels, component dock, history and 3D tooltips
+- Completed: cable routes now honour floor / wall / ceiling mounting with default and explicit elevations, render at the right height in 3D, and can be created with the level selected in the new bottom dock or the 3D draw panel. The route properties panel gained an elevation field in millimetres.
+- Completed: the device palette moved into a fixed bottom component dock with device types, a subtype popover, door/window width, height and sill inputs (m/cm/mm), add-to-selected-wall and a cable-level switch; the right panel keeps the standards library. Left sidebar gained a change-history panel with undo/redo, click-to-jump and an eye toggle that shows/hides the list.
+- Completed: 3D hover tooltips for devices, walls, rooms and cable routes; doors/windows can now be drawn by dragging a rectangle on a 3D wall, deriving width, height and sill from the drag. Fixed the default 3D wall height for uncalibrated plans (2.7 m) and made the 3D bottom bar click-through outside its controls.
+- Tests run: Playwright checks of dock door sizing, history eye/jump, dock device placement, ceiling route creation, route elevation persistence at 1500 mm, 3D point/wall tooltips and drag-created window size; `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149).
+- Issues/blockers: none; the Docker images still need a rebuild for this batch.
+- Next action: rebuild the Docker web/api images and repeat the browser checks on <http://localhost:8090>.
 
 ### 2026-10-27 — session 24: 3D drawing tools and element locking
 - Completed: point context menus in 2D and 3D now offer Pin in place / Unpin and persist `point.properties.locked`; locked points cannot be dragged on the 2D canvas. 3D gained wall, room, cable-route and dimension drawing with floor raycasting, Enter to finish and Esc to cancel; 3D points have their own right-click menu with Pin/Unpin and Delete.

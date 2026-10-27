@@ -20,6 +20,7 @@ import type {
   PublicRoom,
   PublicRoute,
   PublicWall,
+  RouteMounting,
   SetCalibrationInput,
   SignalingSettings,
   UnderlaySettings,
@@ -98,7 +99,8 @@ import {
   findClashes,
 } from '@drawmyplace/calculations';
 import { useEditorLayers } from './editor-layers';
-import { DevicePalette } from './device-palette';
+import { ComponentDock, type OpeningSizeMeters } from './component-dock';
+import { HistoryPanel } from './history-panel';
 import {
   createDimension,
   createOpening,
@@ -525,6 +527,13 @@ export function PlanEditor({
       // Unit preference is a convenience only.
     }
   }, [lengthUnit]);
+  const [routeMounting, setRouteMounting] = useState<RouteMounting>('floor');
+  const [openingSizes, setOpeningSizes] = useState<
+    Record<'door' | 'window', OpeningSizeMeters>
+  >({
+    door: { width: 0.9, height: 2.1, sill: 0 },
+    window: { width: 1.3, height: 1.3, sill: 0.9 },
+  });
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
   const [toolRequest, setToolRequest] = useState<ToolRequest | null>(null);
@@ -619,6 +628,24 @@ export function PlanEditor({
   const [historyError, setHistoryError] = useState<string | null>(null);
   const historyBusyRef = useRef(false);
   const pendingHistoryRef = useRef<'undo' | 'redo' | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem('dmp:editor:historyOpen') !== '0';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        'dmp:editor:historyOpen',
+        historyOpen ? '1' : '0',
+      );
+    } catch {
+      // The eye toggle is a convenience, not a requirement.
+    }
+  }, [historyOpen]);
 
   routesRef.current = routes;
 
@@ -955,6 +982,37 @@ export function PlanEditor({
     }
   }
 
+  /** Applies undo/redo until the requested number of past entries remains. */
+  async function jumpHistory(target: number) {
+    if (historyBusyRef.current) return;
+    if (target === historyRef.current.past.length) return;
+
+    historyBusyRef.current = true;
+    setHistoryBusy(true);
+    setHistoryError(null);
+
+    try {
+      while (historyRef.current.past.length > target) {
+        const command = getUndoCommand(historyRef.current);
+        if (!command) break;
+        await command.undo();
+        commitHistory(markUndone(historyRef.current, command));
+      }
+      while (historyRef.current.past.length < target) {
+        const command = getRedoCommand(historyRef.current);
+        if (!command) break;
+        await command.redo();
+        commitHistory(markRedone(historyRef.current, command));
+      }
+      await reloadDrawing();
+    } catch (error) {
+      setHistoryError(getErrorMessage(error));
+    } finally {
+      historyBusyRef.current = false;
+      setHistoryBusy(false);
+    }
+  }
+
   function selectPoint(id: string | null) {
     setSelectedPointId(id);
 
@@ -1046,7 +1104,7 @@ export function PlanEditor({
         geometry,
         startPointId: pointIdAt(geometry[0]),
         endPointId: pointIdAt(geometry[geometry.length - 1]),
-        settings: {},
+        settings: { mounting: routeMounting },
       });
 
       setRoutes((current) => [...current, created]);
@@ -1358,10 +1416,23 @@ export function PlanEditor({
     wall: PublicWall,
     type: 'door' | 'window',
     offsetOverride?: number,
+    sizeOverride?: { widthM?: number; heightM?: number; sillM?: number },
   ) {
     setLayoutError(null);
     const length = wallLength(wall.geometry);
-    const width = Math.max(1, Math.min(length * 0.25, 1000));
+    const planUnitsPerMeter = metersPerUnit ?? 100;
+    const defaults = openingSizes[type];
+    const widthMeters = sizeOverride?.widthM ?? defaults.width;
+    const heightMeters = sizeOverride?.heightM ?? defaults.height;
+    const sillMeters =
+      type === 'window' ? (sizeOverride?.sillM ?? defaults.sill) : 0;
+    const width = Math.max(
+      1,
+      Math.min(length > 1 ? length - 1 : length, widthMeters * planUnitsPerMeter),
+    );
+    const height = Math.max(1, heightMeters * planUnitsPerMeter);
+    const sillHeight =
+      type === 'window' ? Math.max(0, sillMeters * planUnitsPerMeter) : 0;
     const offset = Math.max(
       0,
       Math.min(length - width, offsetOverride ?? (length - width) / 2),
@@ -1373,8 +1444,8 @@ export function PlanEditor({
         type,
         offset,
         width,
-        height: type === 'door' ? 210 : 130,
-        sillHeight: type === 'window' ? 90 : 0,
+        height,
+        sillHeight,
       });
       setOpenings((current) => [...current, created]);
       selectOpening(created.id);
@@ -2903,9 +2974,17 @@ export function PlanEditor({
           }
         }}
         onDeletePoint={(id: string) => void handleDeletePoint(id)}
-        onCreateOpening={(wallId: string, type: 'door' | 'window', offset: number) => {
+        openingSizes={openingSizes}
+        routeMounting={routeMounting}
+        onRouteMountingChange={setRouteMounting}
+        onCreateOpening={(
+          wallId: string,
+          type: 'door' | 'window',
+          offset: number,
+          size?: { widthM?: number; heightM?: number; sillM?: number },
+        ) => {
           const wall = walls.find((item) => item.id === wallId);
-          if (wall) void handleAddOpening(wall, type, offset);
+          if (wall) void handleAddOpening(wall, type, offset, size);
         }}
         onCreateWall={(geometry: { x: number; y: number }[]) =>
           void handleCreateWall(geometry)
@@ -3072,19 +3151,34 @@ export function PlanEditor({
               }
               onDelete={handleDeleteCircuit}
             />
+            <HistoryPanel
+              past={history.past}
+              future={history.future}
+              open={historyOpen}
+              busy={historyBusy}
+              onToggle={() => setHistoryOpen((value) => !value)}
+              onJump={(target) => void jumpHistory(target)}
+              onUndo={() => void applyHistory('undo')}
+              onRedo={() => void applyHistory('redo')}
+            />
           </aside>
         )}
 
         <div
-          data-tour="editor-canvas"
-          className={`editor-canvas-frame relative order-2 min-h-[420px] lg:order-none overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${
+          className={`order-2 flex min-h-[420px] flex-col gap-2 lg:order-none ${
             fullscreen.isFullscreen
               ? 'h-[calc(100vh-1rem)]'
               : previewMode
                 ? 'h-[calc(100vh-6rem)]'
-                : 'h-[62vh] lg:h-[calc(100vh-22rem)]'
+                : preferences.sidebarCollapsed
+                  ? 'h-[calc(62vh+3.5rem)] lg:h-[calc(100vh-12rem)]'
+                  : 'h-[calc(62vh+3.5rem)] lg:h-auto lg:min-h-[calc(100vh-22rem)]'
           }`}
         >
+          <div
+            data-tour="editor-canvas"
+            className="editor-canvas-frame relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/10 bg-slate-950"
+          >
           {viewMode === '2d' || viewMode === 'split' ? (
             <div
               className={
@@ -3271,8 +3365,6 @@ export function PlanEditor({
               </Button>
             </OverlayCard>
           ) : null}
-        </div>
-
         <div className="editor-toolbar absolute right-3 bottom-20 z-20 flex items-center gap-1 rounded-xl p-1">
           <button
             type="button"
@@ -3358,6 +3450,37 @@ export function PlanEditor({
           >
             <HelpCircle className="h-4 w-4" />
           </button>
+        </div>
+
+          </div>
+
+          {previewMode ? null : (
+            <ComponentDock
+              lengthUnit={lengthUnit}
+              openingSizes={openingSizes}
+              canAddOpening={activeOpeningWall !== null}
+              routeMounting={routeMounting}
+              onSelectDevice={(type, subtype) =>
+                setPlacementRequest({
+                  type,
+                  subtype,
+                  nonce: Date.now(),
+                })
+              }
+              onOpeningSizeChange={(type, field, meters) =>
+                setOpeningSizes((current) => ({
+                  ...current,
+                  [type]: { ...current[type], [field]: meters },
+                }))
+              }
+              onAddOpening={(type) => {
+                if (activeOpeningWall) {
+                  void handleAddOpening(activeOpeningWall, type);
+                }
+              }}
+              onRouteMountingChange={setRouteMounting}
+            />
+          )}
         </div>
 
         {previewMode || preferences.sidebarCollapsed ? null : (
@@ -3696,18 +3819,6 @@ export function PlanEditor({
               </p>
             ) : null}
           </section>
-
-<div data-sidebar-tab="properties">
-          <DevicePalette
-            onSelect={(type, subtype) =>
-              setPlacementRequest({
-                type,
-                subtype,
-                nonce: Date.now(),
-              })
-            }
-          />
-</div>
 
 <div data-sidebar-tab="properties">
           <SymbolLibraryPanel
