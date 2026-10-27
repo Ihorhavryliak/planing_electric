@@ -148,6 +148,12 @@ async function main() {
 
   await page.getByTestId('component-dock').waitFor({ timeout: 10000 });
   await page.getByTestId('editor-history').waitFor({ timeout: 10000 });
+  await page.locator('#editor-guide').waitFor({ timeout: 10000 });
+  if (
+    (await page.getByRole('button', { name: 'Start the tour' }).count()) === 0
+  ) {
+    throw new Error('The quick guide lost its tour replay action.');
+  }
 
   // Design-token and data-tour contracts stay stable across the refresh.
   const designContract = await page.evaluate(() => {
