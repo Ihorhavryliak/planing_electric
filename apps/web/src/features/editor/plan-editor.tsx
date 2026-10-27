@@ -3363,6 +3363,7 @@ export function PlanEditor({
                 properties: locked ? { ...rest, locked: true } : rest,
               });
             }}
+            onPatchPoint={(id, patch) => void handlePatchPoint(id, patch)}
             onSelectWall={selectWall}
             onCreateWall={(geometry) => void handleCreateWall(geometry)}
             onMoveWall={handleMoveWall}

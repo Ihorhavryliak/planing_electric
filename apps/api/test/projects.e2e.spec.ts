@@ -1,4 +1,8 @@
-import type { PublicProject, PublicUser } from '@drawmyplace/contracts';
+import type {
+  PublicProject,
+  PublicProjectSummary,
+  PublicUser,
+} from '@drawmyplace/contracts';
 import { eq } from 'drizzle-orm';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -155,6 +159,29 @@ describe('Projects API', () => {
 
     expect(secondList.body).toHaveLength(1);
     expect((secondList.body as PublicProject[])[0]?.name).toBe('Second office');
+  });
+
+  it('lists project summaries with counts and optional thumbnails', async () => {
+    const { cookie } = await registerUser();
+    const project = await createProject(cookie, 'Summary flat');
+
+    const response = await server()
+      .get(`${API}/projects/summary?status=all`)
+      .set('Cookie', cookie)
+      .expect(200);
+
+    const summaries = response.body as PublicProjectSummary[];
+    expect(summaries).toHaveLength(1);
+    expect(summaries[0]).toMatchObject({
+      id: project.id,
+      name: 'Summary flat',
+      floorCount: 0,
+      pointCount: 0,
+      routeCount: 0,
+      roomCount: 0,
+      circuitCount: 0,
+      thumbnailSvg: null,
+    });
   });
 
   it('returns 404 instead of leaking another user project through ID substitution', async () => {

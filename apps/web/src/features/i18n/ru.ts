@@ -10,6 +10,9 @@ export const ru: Dictionary = {
   'nav.signingOut': 'Выход…',
   'nav.language': 'Язык',
   'nav.workspace': 'Рабочее пространство',
+  'nav.menu': 'Меню',
+  'nav.closeMenu': 'Закрыть',
+  'nav.theme': 'Тема',
   'nav.themeSystem': 'Тема: системная',
   'nav.themeLight': 'Тема: светлая',
   'nav.themeDark': 'Тема: тёмная',
@@ -208,6 +211,7 @@ export const ru: Dictionary = {
   'pricing.feature.activity': 'История активности',
 
   'local.badge': 'Локальный режим',
+  'local.newProject': 'Новый локальный проект',
   'local.title': 'Локальные проекты',
   'local.subtitle':
     'Работайте без аккаунта. Проекты остаются в этом браузере, пока вы их не экспортируете или не синхронизируете.',
@@ -435,6 +439,10 @@ export const ru: Dictionary = {
   'admin.organizations': 'Организации ({count})',
   'admin.owner': 'владелец {id}',
 
+  'project.floors': 'Этажи',
+  'project.devices': 'Устройства',
+  'project.routes': 'Трассы',
+  'project.circuits': 'Цепи',
   'project.updated': 'Обновлено {date}',
   'project.noDescription': 'Описания пока нет.',
   'project.open': 'Открыть проект',
@@ -723,6 +731,7 @@ export const ru: Dictionary = {
   'editor.totalCable': 'Требуется кабеля всего',
   'editor.calcFailed': 'Не удалось вычислить: {error}',
   'editor.type': 'Тип',
+  'editor.quickEdit': 'Быстрое редактирование',
   'editor.label': 'Обозначение',
   'editor.labelPlaceholder': 'например, S1',
   'editor.mountingHeight': 'Высота монтажа',

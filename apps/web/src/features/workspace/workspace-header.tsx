@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
+  Menu,
   Monitor,
   Moon,
   Package,
@@ -13,12 +14,12 @@ import {
   Search,
   Settings,
   Sun,
+  X,
   Zap,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth/auth-context';
 import { useLogout } from '@/features/auth/use-logout';
 import {
@@ -30,6 +31,7 @@ import { useI18n } from '@/features/i18n/i18n-context';
 import { LOCALES, type Locale } from '@/features/i18n/i18n';
 import { useTheme } from '@/features/theme/theme-context';
 import { apiRequest, getErrorMessage } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface WorkspaceHeaderProps {
   badge?: string;
@@ -74,19 +76,24 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
       : preference === 'light'
         ? t('nav.themeLight')
         : t('nav.themeDark');
+  const navItems = [
+    { to: '/app', label: t('nav.projects'), icon: LayoutDashboard },
+    { to: '/local', label: t('local.badge'), icon: FolderOpen },
+    { to: '/app/materials', label: t('nav.materials'), icon: Package },
+    { to: '/app/estimates', label: t('nav.estimates'), icon: ReceiptText },
+    {
+      to: '/app/organizations',
+      label: t('nav.organizations'),
+      icon: Building2,
+    },
+    { to: '/app/notifications', label: t('nav.notifications'), icon: Bell },
+    { to: '/app/settings', label: t('nav.settings'), icon: Settings },
+  ];
   const [unread, setUnread] = useState(0);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const railRoutes = new Set([
-    '/app',
-    '/local',
-    '/app/materials',
-    '/app/estimates',
-    '/app/notifications',
-    '/app/settings',
-    '/app/organizations',
-    '/app/team',
-  ]);
-  const showRail = railRoutes.has(location.pathname);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const showRail =
+    location.pathname.startsWith('/app') || location.pathname === '/local';
   const [verificationMessage, setVerificationMessage] = useState<
     string | null
   >(null);
@@ -271,6 +278,21 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
           {children}
           <button
             type="button"
+            aria-label={menuOpen ? t('nav.closeMenu') : t('nav.menu')}
+            aria-expanded={menuOpen}
+            aria-controls="workspace-mobile-menu"
+            onClick={() => setMenuOpen((value) => !value)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2 text-xs text-slate-300 transition-colors hover:border-white/20 hover:text-white lg:hidden"
+          >
+            {menuOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
+            <span>{menuOpen ? t('nav.closeMenu') : t('nav.menu')}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setPaletteOpen(true)}
             className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-xs text-slate-400 transition-colors hover:border-white/20 hover:text-white"
           >
@@ -303,7 +325,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
             onClick={toggle}
             title={themeLabel}
             aria-label={themeLabel}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           >
             {preference === 'system' ? (
               <Monitor className="h-4 w-4" />
@@ -312,51 +334,8 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
             ) : (
               <Sun className="h-4 w-4" />
             )}
+            <span className="hidden text-xs xl:inline">{t('nav.theme')}</span>
           </button>
-          <Link
-            to="/app/organizations"
-            aria-label={t('nav.organizations')}
-            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-          >
-            <Building2 className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/app/materials"
-            aria-label={t('nav.materials')}
-            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-          >
-            <Package className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/app/notifications"
-            aria-label={
-              unread > 0
-                ? `${t('nav.notifications')} (${unread})`
-                : t('nav.notifications')
-            }
-            className="relative inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <Bell className="h-4 w-4" />
-            {unread > 0 ? (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">
-                {unread > 9 ? '9+' : unread}
-              </span>
-            ) : null}
-          </Link>
-          <Link
-            to="/app/settings"
-            aria-label={t('nav.settings')}
-            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-          >
-            <Settings className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/app"
-            aria-label={t('nav.projects')}
-            className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-          >
-            <LayoutDashboard className="h-4 w-4" />
-          </Link>
           {user ? (
             <Link
               to="/app/settings"
@@ -385,6 +364,47 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
           </Button>
         </div>
       </div>
+
+      {menuOpen ? (
+        <div
+          id="workspace-mobile-menu"
+          className="border-t border-white/10 bg-slate-900/95 backdrop-blur-xl lg:hidden"
+        >
+          <nav
+            aria-label={t('nav.workspace')}
+            className="mx-auto grid max-w-6xl grid-cols-2 gap-1 px-4 py-3"
+          >
+            {navItems.map(({ to, label, icon: Icon }) => {
+              const active =
+                location.pathname === to ||
+                (to !== '/app' && location.pathname.startsWith(to));
+
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  aria-current={active ? 'page' : undefined}
+                  onClick={() => setMenuOpen(false)}
+                  className={cn(
+                    'flex h-10 items-center gap-2 rounded-lg px-3 text-sm transition-colors',
+                    active
+                      ? 'bg-[var(--dmp-color-brand)]/12 text-[var(--dmp-color-brand)]'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{label}</span>
+                  {to === '/app/notifications' && unread > 0 ? (
+                    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">
+                      {unread > 9 ? '9+' : unread}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      ) : null}
 
       {user && !user.emailVerified ? (
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-6 pb-3 text-xs text-amber-100">
@@ -418,26 +438,54 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
       {showRail ? (
         <nav
           aria-label={t('nav.workspace')}
-          className="workspace-rail fixed top-[6.75rem] bottom-0 left-0 z-30 hidden w-14 flex-col items-center gap-1 border-r border-white/10 bg-slate-900/80 py-3 backdrop-blur-xl lg:flex"
+          className="workspace-rail fixed top-[6.75rem] bottom-0 left-0 z-30 hidden w-52 flex-col gap-1 border-r border-white/10 bg-slate-900/80 px-2 py-4 backdrop-blur-xl lg:flex"
         >
+          <p className="px-3 pb-2 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+            {t('nav.workspace')}
+          </p>
           {[
             { to: '/app', label: t('nav.projects'), icon: LayoutDashboard },
             { to: '/local', label: t('local.badge'), icon: FolderOpen },
             { to: '/app/materials', label: t('nav.materials'), icon: Package },
             { to: '/app/estimates', label: t('nav.estimates'), icon: ReceiptText },
-            { to: '/app/notifications', label: t('nav.notifications'), icon: Bell },
+            {
+              to: '/app/organizations',
+              label: t('nav.organizations'),
+              icon: Building2,
+            },
+            {
+              to: '/app/notifications',
+              label: t('nav.notifications'),
+              icon: Bell,
+            },
             { to: '/app/settings', label: t('nav.settings'), icon: Settings },
-          ].map(({ to, label, icon: Icon }) => (
-            <Tooltip key={to} label={label} side="bottom">
+          ].map(({ to, label, icon: Icon }) => {
+            const active =
+              location.pathname === to ||
+              (to !== '/app' && location.pathname.startsWith(to));
+
+            return (
               <Link
+                key={to}
                 to={to}
-                aria-label={label}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+                  active
+                    ? 'bg-[var(--dmp-color-brand)]/12 text-[var(--dmp-color-brand)]'
+                    : 'text-slate-400 hover:bg-white/10 hover:text-white',
+                )}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+                {to === '/app/notifications' && unread > 0 ? (
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-950">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                ) : null}
               </Link>
-            </Tooltip>
-          ))}
+            );
+          })}
         </nav>
       ) : null}
 

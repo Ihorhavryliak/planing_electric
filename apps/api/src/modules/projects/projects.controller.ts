@@ -23,6 +23,7 @@ import {
   type ProjectListQuery,
   type PublicProject,
   type PublicProjectMember,
+  type PublicProjectSummary,
   type PublicUser,
   type UpdateProjectInput,
 } from '@drawmyplace/contracts';
@@ -45,6 +46,15 @@ export class ProjectsController {
     query: ProjectListQuery,
   ): Promise<PublicProject[]> {
     return this.projects.list(user.id, query.status);
+  }
+
+  @Get('summary')
+  listSummaries(
+    @CurrentUser() user: PublicUser,
+    @Query(new ZodValidationPipe(projectListQuerySchema))
+    query: ProjectListQuery,
+  ): Promise<PublicProjectSummary[]> {
+    return this.projects.listSummaries(user.id, query.status);
   }
 
   @Post()

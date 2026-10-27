@@ -39,7 +39,7 @@
 
 @media (min-width: 1024px) {
   body:has(.workspace-rail) #main-content {
-    padding-left: 3.5rem;
+    padding-left: 13rem;
   }
 
   [data-full-editor] .editor-shell {

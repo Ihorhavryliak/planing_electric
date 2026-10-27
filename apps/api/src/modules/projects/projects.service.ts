@@ -11,11 +11,15 @@ import type {
   ProjectListQuery,
   PublicProject,
   PublicProjectMember,
+  PublicProjectSummary,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { NotificationsRepository } from '../notifications/notifications.repository';
-import { toPublicProject } from './projects.mapper';
+import {
+  toPublicProject,
+  toPublicProjectSummary,
+} from './projects.mapper';
 import { ProjectsRepository, type ProjectRow } from './projects.repository';
 
 @Injectable()
@@ -36,6 +40,15 @@ export class ProjectsService {
     const projects = await this.repository.listByOwner(ownerId, status);
 
     return projects.map(toPublicProject);
+  }
+
+  async listSummaries(
+    ownerId: string,
+    status: ProjectListQuery['status'],
+  ): Promise<PublicProjectSummary[]> {
+    const rows = await this.repository.listSummariesByOwner(ownerId, status);
+
+    return rows.map(toPublicProjectSummary);
   }
 
   async create(

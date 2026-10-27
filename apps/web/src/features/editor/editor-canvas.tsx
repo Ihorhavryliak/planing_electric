@@ -13,8 +13,10 @@ import type {
   PublicWall,
   SignalingLoop,
   UnderlaySettings,
+  UpdatePointInput,
 } from '@drawmyplace/contracts';
 import { deviceProduct } from '@drawmyplace/contracts';
+import { SelectionQuickCard } from './selection-quick-card';
 import {
   Box,
   BrickWall,
@@ -259,6 +261,7 @@ interface EditorCanvasProps {
   onDeletePoint: (id: string) => void;
   onDuplicatePoint?: (id: string) => void;
   onTogglePointLock?: (id: string, locked: boolean) => void;
+  onPatchPoint?: (id: string, patch: UpdatePointInput) => void;
   onSelectRoute: (id: string | null) => void;
   onCreateRoute: (geometry: Vec2[]) => void;
   onMoveRouteVertex: (routeId: string, index: number, at: Vec2) => void;
@@ -456,6 +459,7 @@ export function EditorCanvas({
   onDeletePoint,
   onDuplicatePoint,
   onTogglePointLock,
+  onPatchPoint,
   onSelectRoute,
   onCreateRoute,
   onMoveRouteVertex,
@@ -499,6 +503,7 @@ export function EditorCanvas({
   const canvasLight = resolved === 'light';
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [tool, setTool] = useState<EditorTool>('select');
+  const [quickCardPointer, setQuickCardPointer] = useState<string | null>(null);
   const [spaceDown, setSpaceDown] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [hoveringUnderlay, setHoveringUnderlay] = useState(false);
@@ -1728,6 +1733,7 @@ export function EditorCanvas({
     }
 
     event.preventDefault();
+    setQuickCardPointer(event.pointerType);
 
     const point = localPoint(event);
     hideHoverTooltip(true);
@@ -2865,6 +2871,35 @@ export function EditorCanvas({
         onAuxClick={(event) => event.preventDefault()}
         onContextMenu={handleContextMenu}
       />
+
+      {!readOnly && tool === 'select' && selectedPointId && quickCardPointer !== 'touch'
+        ? (() => {
+            const quickPoint = points.find(
+              (item) => item.id === selectedPointId,
+            );
+            if (!quickPoint) return null;
+
+            return (
+              <SelectionQuickCard
+                key={quickPoint.id}
+                point={quickPoint}
+                lengthUnit={lengthUnit}
+                anchor={{
+                  x:
+                    (quickPoint.x - viewport.x) * viewport.zoom +
+                    size.width / 2,
+                  y:
+                    (quickPoint.y - viewport.y) * viewport.zoom +
+                    size.height / 2,
+                }}
+                bounds={size}
+                onClose={() => onSelectPoint(null)}
+                onPatchPoint={onPatchPoint}
+                onTogglePointLock={onTogglePointLock}
+              />
+            );
+          })()
+        : null}
 
       {contextMenu ? (
         <>

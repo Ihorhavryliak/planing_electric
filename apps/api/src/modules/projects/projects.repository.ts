@@ -5,11 +5,35 @@ import type {
   ProjectStatus,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
-import { and, desc, eq, or, sql, type SQL } from 'drizzle-orm';
-import { projectMembers, projects, type Database } from '@drawmyplace/database';
+import { and, count, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
+import {
+  cableRoutes,
+  electricalPoints,
+  floors,
+  plans,
+  projectMembers,
+  projects,
+  rooms,
+  walls,
+  type Database,
+} from '@drawmyplace/database';
+import {
+  renderProjectThumbnail,
+  type ProjectThumbnailData,
+} from './projects.thumbnail';
 import { DatabaseService } from '../../database/database.service';
 
 export type ProjectRow = typeof projects.$inferSelect;
+
+export interface ProjectSummaryRow {
+  project: ProjectRow;
+  floorCount: number;
+  pointCount: number;
+  routeCount: number;
+  roomCount: number;
+  circuitCount: number;
+  thumbnailSvg: string | null;
+}
 
 @Injectable()
 export class ProjectsRepository {
@@ -39,6 +63,181 @@ export class ProjectsRepository {
       .from(projects)
       .where(and(...conditions))
       .orderBy(desc(projects.updatedAt));
+  }
+
+  async listSummariesByOwner(
+    ownerId: string,
+    status: ProjectListQuery['status'],
+  ): Promise<ProjectSummaryRow[]> {
+    const list = await this.listByOwner(ownerId, status);
+    if (list.length === 0) return [];
+
+    const projectIds = list.map((project) => project.id);
+    const floorRows = await this.db
+      .select({ id: floors.id, projectId: floors.projectId })
+      .from(floors)
+      .where(inArray(floors.projectId, projectIds))
+      .orderBy(floors.sortOrder, floors.createdAt);
+    const floorToProject = new Map(
+      floorRows.map((floor) => [floor.id, floor.projectId]),
+    );
+    const floorIds = floorRows.map((floor) => floor.id);
+
+    const planRows =
+      floorIds.length > 0
+        ? await this.db
+            .select({
+              floorId: plans.floorId,
+              settings: plans.calculationSettings,
+            })
+            .from(plans)
+            .where(inArray(plans.floorId, floorIds))
+        : [];
+
+    const [pointCounts, routeCounts, roomCounts] = await Promise.all([
+      floorIds.length > 0
+        ? this.db
+            .select({ floorId: electricalPoints.floorId, value: count() })
+            .from(electricalPoints)
+            .where(inArray(electricalPoints.floorId, floorIds))
+            .groupBy(electricalPoints.floorId)
+        : Promise.resolve([]),
+      floorIds.length > 0
+        ? this.db
+            .select({ floorId: cableRoutes.floorId, value: count() })
+            .from(cableRoutes)
+            .where(inArray(cableRoutes.floorId, floorIds))
+            .groupBy(cableRoutes.floorId)
+        : Promise.resolve([]),
+      floorIds.length > 0
+        ? this.db
+            .select({ floorId: rooms.floorId, value: count() })
+            .from(rooms)
+            .where(inArray(rooms.floorId, floorIds))
+            .groupBy(rooms.floorId)
+        : Promise.resolve([]),
+    ]);
+
+    const floorCounts = new Map<string, number>();
+    for (const floor of floorRows) {
+      floorCounts.set(
+        floor.projectId,
+        (floorCounts.get(floor.projectId) ?? 0) + 1,
+      );
+    }
+
+    const countsByProject = (
+      rows: readonly { floorId: string; value: number | string }[],
+    ) => {
+      const result = new Map<string, number>();
+      for (const row of rows) {
+        const projectId = floorToProject.get(row.floorId);
+        if (!projectId) continue;
+        result.set(
+          projectId,
+          (result.get(projectId) ?? 0) + Number(row.value),
+        );
+      }
+      return result;
+    };
+
+    const pointsByProject = countsByProject(pointCounts);
+    const routesByProject = countsByProject(routeCounts);
+    const roomsByProject = countsByProject(roomCounts);
+    const circuitsByProject = new Map<string, number>();
+    for (const plan of planRows) {
+      const projectId = floorToProject.get(plan.floorId);
+      if (!projectId) continue;
+      const circuits = (
+        plan.settings as { circuits?: readonly unknown[] } | null
+      )?.circuits;
+      if (Array.isArray(circuits)) {
+        circuitsByProject.set(
+          projectId,
+          (circuitsByProject.get(projectId) ?? 0) + circuits.length,
+        );
+      }
+    }
+
+    const firstFloorByProject = new Map<string, string>();
+    for (const floor of floorRows) {
+      if (!firstFloorByProject.has(floor.projectId)) {
+        firstFloorByProject.set(floor.projectId, floor.id);
+      }
+    }
+    const previewFloorIds = [...firstFloorByProject.values()];
+    const [wallRows, roomRows, pointRows, routeRows] = await Promise.all([
+      previewFloorIds.length > 0
+        ? this.db
+            .select({ floorId: walls.floorId, geometry: walls.geometry })
+            .from(walls)
+            .where(inArray(walls.floorId, previewFloorIds))
+        : Promise.resolve([]),
+      previewFloorIds.length > 0
+        ? this.db
+            .select({ floorId: rooms.floorId, boundary: rooms.boundary })
+            .from(rooms)
+            .where(inArray(rooms.floorId, previewFloorIds))
+        : Promise.resolve([]),
+      previewFloorIds.length > 0
+        ? this.db
+            .select({
+              floorId: electricalPoints.floorId,
+              x: electricalPoints.x,
+              y: electricalPoints.y,
+              type: electricalPoints.type,
+            })
+            .from(electricalPoints)
+            .where(inArray(electricalPoints.floorId, previewFloorIds))
+        : Promise.resolve([]),
+      previewFloorIds.length > 0
+        ? this.db
+            .select({ floorId: cableRoutes.floorId, geometry: cableRoutes.geometry })
+            .from(cableRoutes)
+            .where(inArray(cableRoutes.floorId, previewFloorIds))
+        : Promise.resolve([]),
+    ]);
+
+    const geometryByProject = new Map<string, ProjectThumbnailData>();
+    const geometryFor = (floorId: string) => {
+      const projectId = floorToProject.get(floorId);
+      if (!projectId) return null;
+      let data = geometryByProject.get(projectId);
+      if (!data) {
+        data = { walls: [], rooms: [], points: [], routes: [] };
+        geometryByProject.set(projectId, data);
+      }
+      return data;
+    };
+    for (const row of wallRows) {
+      geometryFor(row.floorId)?.walls.push({ geometry: row.geometry });
+    }
+    for (const row of roomRows) {
+      geometryFor(row.floorId)?.rooms.push({ boundary: row.boundary });
+    }
+    for (const row of pointRows) {
+      geometryFor(row.floorId)?.points.push({
+        x: row.x,
+        y: row.y,
+        type: row.type,
+      });
+    }
+    for (const row of routeRows) {
+      geometryFor(row.floorId)?.routes.push({ geometry: row.geometry });
+    }
+
+    return list.map((project) => {
+      const geometry = geometryByProject.get(project.id);
+      return {
+        project,
+        floorCount: floorCounts.get(project.id) ?? 0,
+        pointCount: pointsByProject.get(project.id) ?? 0,
+        routeCount: routesByProject.get(project.id) ?? 0,
+        roomCount: roomsByProject.get(project.id) ?? 0,
+        circuitCount: circuitsByProject.get(project.id) ?? 0,
+        thumbnailSvg: geometry ? renderProjectThumbnail(geometry) : null,
+      };
+    });
   }
 
   async findById(projectId: string): Promise<ProjectRow | null> {

@@ -1,4 +1,4 @@
-import type { PublicProject } from '@drawmyplace/contracts';
+import type { PublicProjectSummary } from '@drawmyplace/contracts';
 import {
   ArrowUpRight,
   FolderKanban,
@@ -22,7 +22,7 @@ import { ProjectCard } from '@/features/projects/project-card';
 import {
   archiveProject,
   createProject,
-  listProjects,
+  listProjectSummaries,
   restoreProject,
 } from '@/features/projects/projects-api';
 import { useI18n } from '@/features/i18n/i18n-context';
@@ -39,7 +39,7 @@ const projectTabs: Array<{ value: ProjectTab; labelKey: string }> = [
 
 export function AppPage() {
   const { t } = useI18n();
-  const [projects, setProjects] = useState<PublicProject[] | null>(null);
+  const [projects, setProjects] = useState<PublicProjectSummary[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [tab, setTab] = useState<ProjectTab>('active');
@@ -60,7 +60,7 @@ export function AppPage() {
 
     void (async () => {
       try {
-        const loaded = await listProjects('all', controller.signal);
+        const loaded = await listProjectSummaries('all', controller.signal);
 
         if (!controller.signal.aborted) {
           setProjects(loaded);
@@ -92,7 +92,16 @@ export function AppPage() {
         description: description.trim() ? description : undefined,
       });
 
-      setProjects((current) => (current ? [created, ...current] : [created]));
+      const summary: PublicProjectSummary = {
+        ...created,
+        floorCount: 0,
+        pointCount: 0,
+        routeCount: 0,
+        roomCount: 0,
+        circuitCount: 0,
+        thumbnailSvg: null,
+      };
+      setProjects((current) => (current ? [summary, ...current] : [summary]));
       setName('');
       setDescription('');
       setTab('active');
@@ -103,7 +112,7 @@ export function AppPage() {
     }
   }
 
-  async function handleToggleStatus(project: PublicProject) {
+  async function handleToggleStatus(project: PublicProjectSummary) {
     setBusyProjectId(project.id);
     setActionError(null);
 
@@ -115,7 +124,9 @@ export function AppPage() {
 
       setProjects((current) =>
         current
-          ? current.map((item) => (item.id === updated.id ? updated : item))
+          ? current.map((item) =>
+              item.id === updated.id ? { ...item, ...updated } : item,
+            )
           : current,
       );
     } catch (error) {

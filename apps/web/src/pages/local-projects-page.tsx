@@ -298,18 +298,24 @@ export function LocalProjectsPage() {
   return (
     <div className="relative min-h-screen">
       <WorkspaceHeader badge={t('local.badge')} />
-      <main id="main-content" className="mx-auto max-w-4xl px-6 py-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white">
+            <p className="text-xs font-medium tracking-widest text-amber-300/80 uppercase">
+              {t('local.badge')}
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               {t('local.title')}
             </h1>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
               {t('local.subtitle')}
             </p>
           </div>
           {user ? (
-            <Link to="/app" className="text-sm text-amber-300">
+            <Link
+              to="/app"
+              className="inline-flex h-10 items-center rounded-lg border border-white/15 bg-white/5 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/10"
+            >
               {t('local.goWorkspace')}
             </Link>
           ) : (
@@ -338,7 +344,17 @@ export function LocalProjectsPage() {
           ) : null}
         </div>
 
-        <form className="mt-4 flex flex-wrap gap-2" onSubmit={handleCreate}>
+        <section className="mt-6 app-panel p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <Plus className="h-4 w-4 text-[var(--dmp-color-brand)]" />
+            <h2 className="text-sm font-semibold text-white">
+              {t('local.newProject')}
+            </h2>
+          </div>
+          <form
+            className="mt-3 flex flex-wrap gap-2"
+            onSubmit={handleCreate}
+          >
           <Input
             ref={nameInputRef}
             value={name}
@@ -378,7 +394,8 @@ export function LocalProjectsPage() {
               event.target.value = '';
             }}
           />
-        </form>
+          </form>
+        </section>
 
         <Dialog
           open={importOpen}
@@ -449,7 +466,7 @@ export function LocalProjectsPage() {
             <CardSkeleton compact />
           </div>
         ) : projects.length === 0 ? (
-          <div className="mt-8 app-panel p-8 text-center">
+          <div className="mx-auto mt-8 max-w-3xl app-panel p-8 text-center">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5">
               <Plus className="h-5 w-5 text-amber-300" />
             </span>

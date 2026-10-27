@@ -29,6 +29,9 @@ const en: Dictionary = {
   'nav.signingOut': 'Signing out…',
   'nav.language': 'Language',
   'nav.workspace': 'Workspace',
+  'nav.menu': 'Menu',
+  'nav.closeMenu': 'Close',
+  'nav.theme': 'Theme',
   'nav.themeSystem': 'Theme: system',
   'nav.themeLight': 'Theme: light',
   'nav.themeDark': 'Theme: dark',
@@ -227,6 +230,7 @@ const en: Dictionary = {
   'pricing.feature.activity': 'Activity history',
 
   'local.badge': 'Local mode',
+  'local.newProject': 'New local project',
   'local.title': 'Local projects',
   'local.subtitle':
     'Work without an account. Projects stay in this browser until you export or sync them.',
@@ -459,6 +463,10 @@ const en: Dictionary = {
   'admin.owner': 'owner {id}',
 
 
+  'project.floors': 'Floors',
+  'project.devices': 'Devices',
+  'project.routes': 'Routes',
+  'project.circuits': 'Circuits',
   'project.updated': 'Updated {date}',
   'project.noDescription': 'No description yet.',
   'project.open': 'Open project',
@@ -744,6 +752,7 @@ const en: Dictionary = {
   'editor.totalCable': 'Total cable required',
   'editor.calcFailed': 'Could not calculate: {error}',
   'editor.type': 'Type',
+  'editor.quickEdit': 'Quick edit',
   'editor.label': 'Label',
   'editor.labelPlaceholder': 'e.g. S1',
   'editor.mountingHeight': 'Mounting height',
@@ -1530,6 +1539,9 @@ const ua: Dictionary = {
   'nav.signingOut': 'Вихід…',
   'nav.language': 'Мова',
   'nav.workspace': 'Робочий простір',
+  'nav.menu': 'Меню',
+  'nav.closeMenu': 'Закрити',
+  'nav.theme': 'Тема',
   'nav.themeSystem': 'Тема: системна',
   'nav.themeLight': 'Тема: світла',
   'nav.themeDark': 'Тема: темна',
@@ -1734,6 +1746,7 @@ const ua: Dictionary = {
   'pricing.feature.activity': 'Історія активності',
 
   'local.badge': 'Локальний режим',
+  'local.newProject': 'Новий локальний проєкт',
   'local.title': 'Локальні проєкти',
   'local.subtitle':
     'Працюйте без акаунта. Проєкти залишаються в цьому браузері, доки ви їх не експортуєте чи синхронізуєте.',
@@ -1968,6 +1981,10 @@ const ua: Dictionary = {
   'admin.owner': 'власник {id}',
 
 
+  'project.floors': 'Поверхи',
+  'project.devices': 'Пристрої',
+  'project.routes': 'Траси',
+  'project.circuits': 'Кола',
   'project.updated': 'Оновлено {date}',
   'project.noDescription': 'Опису ще немає.',
   'project.open': 'Відкрити проєкт',
@@ -2257,6 +2274,7 @@ const ua: Dictionary = {
   'editor.totalCable': 'Потрібно кабелю загалом',
   'editor.calcFailed': 'Не вдалося обчислити: {error}',
   'editor.type': 'Тип',
+  'editor.quickEdit': 'Швидке редагування',
   'editor.label': 'Позначка',
   'editor.labelPlaceholder': 'напр. S1',
   'editor.mountingHeight': 'Висота монтажу',

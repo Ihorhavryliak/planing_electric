@@ -398,6 +398,17 @@ async function main() {
   // Hover hints describe plan objects and can be switched off.
   await page.getByRole('button', { name: 'Select tool' }).click();
   await syncCanvas();
+  // Close the quick-edit card left open by the last selection so it does not
+  // overlap the hover tooltip checks.
+  const quickEditCard = page
+    .getByRole('group')
+    .filter({ hasText: 'Quick edit' });
+  if (await quickEditCard.count()) {
+    await quickEditCard
+      .first()
+      .getByRole('button', { name: 'Close' })
+      .click();
+  }
   await page.mouse.move(at(0.35, 0.6).x, at(0.35, 0.6).y);
   const hoverTooltip = page.getByTestId('canvas-hover-tooltip');
   await hoverTooltip.waitFor({ timeout: 3000 });

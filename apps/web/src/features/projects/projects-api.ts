@@ -3,6 +3,7 @@ import type {
   CreateProjectInput,
   PublicProject,
   PublicProjectMember,
+  PublicProjectSummary,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { apiRequest } from '@/lib/api';
@@ -18,6 +19,18 @@ export function listProjects(
   return apiRequest<PublicProject[]>(`/projects?${query.toString()}`, {
     signal,
   });
+}
+
+export function listProjectSummaries(
+  status: ProjectFilter = 'active',
+  signal?: AbortSignal,
+): Promise<PublicProjectSummary[]> {
+  const query = new URLSearchParams({ status });
+
+  return apiRequest<PublicProjectSummary[]>(
+    `/projects/summary?${query.toString()}`,
+    { signal },
+  );
 }
 
 export function getProject(

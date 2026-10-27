@@ -47,6 +47,15 @@ export const publicProjectSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const publicProjectSummarySchema = publicProjectSchema.extend({
+  floorCount: z.number().int().nonnegative(),
+  pointCount: z.number().int().nonnegative(),
+  routeCount: z.number().int().nonnegative(),
+  roomCount: z.number().int().nonnegative(),
+  circuitCount: z.number().int().nonnegative(),
+  thumbnailSvg: z.string().nullable(),
+});
+
 export type ProjectStatus = z.infer<typeof projectStatusSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
@@ -76,3 +85,4 @@ export type PublicProjectMember = z.infer<typeof publicProjectMemberSchema>;
 export type AddProjectMemberInput = z.infer<typeof addProjectMemberSchema>;
 
 export type PublicProject = z.infer<typeof publicProjectSchema>;
+export type PublicProjectSummary = z.infer<typeof publicProjectSummarySchema>;

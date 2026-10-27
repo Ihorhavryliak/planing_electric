@@ -1,5 +1,11 @@
-import type { PublicProject } from '@drawmyplace/contracts';
-import type { ProjectRow } from './projects.repository';
+import type {
+  PublicProject,
+  PublicProjectSummary,
+} from '@drawmyplace/contracts';
+import type {
+  ProjectRow,
+  ProjectSummaryRow,
+} from './projects.repository';
 
 export function toPublicProject(project: ProjectRow): PublicProject {
   return {
@@ -10,5 +16,19 @@ export function toPublicProject(project: ProjectRow): PublicProject {
     revision: project.revision,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
+  };
+}
+
+export function toPublicProjectSummary(
+  row: ProjectSummaryRow,
+): PublicProjectSummary {
+  return {
+    ...toPublicProject(row.project),
+    floorCount: row.floorCount,
+    pointCount: row.pointCount,
+    routeCount: row.routeCount,
+    roomCount: row.roomCount,
+    circuitCount: row.circuitCount,
+    thumbnailSvg: row.thumbnailSvg,
   };
 }
