@@ -757,7 +757,14 @@ export function ThreeView({
       openingDragRef.current = null;
 
       if (draftModeRef.current) {
-        if (draftModeRef.current === 'route') lockDraftWall(event);
+        // Only the first vertex chooses the wall and cable height; later
+        // clicks stay on that plane with one consistent elevation.
+        if (
+          draftModeRef.current === 'route' &&
+          draftPointsRef.current.length === 0
+        ) {
+          lockDraftWall(event);
+        }
         const startPoint =
           draftModeRef.current === 'route'
             ? routePointAt(event)
