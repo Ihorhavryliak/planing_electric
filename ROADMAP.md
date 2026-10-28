@@ -1276,3 +1276,12 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm test` (web 152 including the new synthetic four-room mask test), manual Playwright run with a generated plan (3 rooms / 8 walls, doorways kept open, undo clears everything) and 3D verification.
 - Issues/blockers: the detector is heuristic — diagonal walls, dense furniture and low-contrast scans may need manual cleanup; room names are numbered rather than classified.
 - Next action: capture the analysis flow in `scripts/browser-check.mjs`, then calibrate-on-upload prompts and opening detection (doors/windows) from the same mask.
+
+### 2026-10-28 — session 53: cross-app audit fixes
+- Completed: estimate PDF footer no longer creates a blank extra page — the bottom margin is lifted while the page number is drawn, so a one-page estimate is one page and the footer stays on it (verified with pdfjs: 1 page, Ukrainian table intact).
+- Completed: responsive audit at 360/390/480/768/1024/1440 — the view-mode tabs and the toolbar's right cluster wrap instead of being clipped, the canvas min-height is 320 px on phones, the centre column uses `min-height` so the bottom dock no longer clips the canvas status bar and hint, and the all-devices palette fits `calc(100% - 1.5rem)`.
+- Completed: replacing walls/rooms from the analysis now snapshots openings and restores them on undo with the recreated wall ids (wall deletion cascades openings).
+- Completed: automatic analysis waits for the first-run tour (`shouldShowTour`/`loading`) instead of opening a dialog underneath it.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm test` (web 152), `node scripts/browser-check.mjs` (ok), `node scripts/responsive-check.mjs` (360/768/1024/1440), manual 360 px screenshots, estimate PDF parsed with pdfjs.
+- Issues/blockers: copy/paste only supports the whole plan and repeated pastes reuse the same 40-unit offset; single-element copy/paste and per-paste offsets remain open. The device palette groups detection devices (smoke detector) under the coarse "Custom" group. Analysis is synchronous on the main thread and heuristic (no diagonal walls, no auto openings).
+- Next action: single-element copy/paste with incremental offsets, category-based device palette, analysis as a Web Worker plus auto-created windows/doors, batch analysis endpoint.

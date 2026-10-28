@@ -903,6 +903,11 @@ export class EstimatesService {
     const range = doc.bufferedPageRange();
     for (let index = 0; index < range.count; index += 1) {
       doc.switchToPage(range.start + index);
+      // The footer sits in the bottom margin, so drop the margin while
+      // writing — otherwise PDFKit treats it as overflow and adds a blank
+      // page for every page number.
+      const bottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
       doc
         .font('Regular')
         .fontSize(8)
@@ -913,6 +918,7 @@ export class EstimatesService {
           815,
           { width: contentWidth, align: 'center', lineBreak: false },
         );
+      doc.page.margins.bottom = bottomMargin;
     }
 
     doc.end();

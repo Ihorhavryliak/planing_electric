@@ -484,7 +484,12 @@ export function PlanEditor({
   onPlanChange,
 }: PlanEditorProps) {
   const { t, formatNumber, formatScale, formatUnit } = useI18n();
-  const { markHint, restartTour } = useOnboarding();
+  const {
+    markHint,
+    restartTour,
+    shouldShowTour,
+    loading: onboardingLoading,
+  } = useOnboarding();
   const [underlay, setUnderlay] = useState<UnderlaySettings>(plan.underlay);
   const [viewport, setViewport] = useState<EditorViewport>(plan.viewport);
   const [assetNonce, setAssetNonce] = useState(0);
@@ -2254,6 +2259,10 @@ export function PlanEditor({
     const originalRooms: PublicRoom[] = replaceExisting
       ? [...roomsRef.current]
       : [];
+    // Openings are removed by the wall cascade, so keep them for undo.
+    const originalOpenings: PublicOpening[] = replaceExisting
+      ? [...openingsRef.current]
+      : [];
     let existingWalls: PublicWall[] = [...originalWalls];
     let existingRooms: PublicRoom[] = [...originalRooms];
     let addedWalls: PublicWall[] = [];
@@ -2278,6 +2287,10 @@ export function PlanEditor({
       existingRooms = [];
       addedWalls = [];
       addedRooms = [];
+
+      if (replaceExisting) {
+        setOpenings([]);
+      }
 
       for (let index = 0; index < result.rooms.length; index += 1) {
         const room = result.rooms[index];
@@ -2327,15 +2340,42 @@ export function PlanEditor({
       }
 
       existingWalls = [];
+      const wallIds = new Map<string, string>();
 
       for (const wall of originalWalls) {
-        existingWalls.push(
-          await createWall(plan.id, {
-            geometry: wall.geometry,
-            thickness: wall.thickness,
-            label: wall.label,
-          }),
-        );
+        const restored = await createWall(plan.id, {
+          geometry: wall.geometry,
+          thickness: wall.thickness,
+          label: wall.label,
+        });
+        existingWalls.push(restored);
+        wallIds.set(wall.id, restored.id);
+      }
+
+      if (replaceExisting) {
+        const restoredOpenings: PublicOpening[] = [];
+
+        for (const opening of originalOpenings) {
+          const wallId = wallIds.get(opening.wallId);
+
+          if (!wallId) continue;
+
+          restoredOpenings.push(
+            await createOpening(plan.id, {
+              wallId,
+              type: opening.type,
+              offset: opening.offset,
+              width: opening.width,
+              height: opening.height,
+              diameter: opening.diameter ?? undefined,
+              sillHeight: opening.sillHeight,
+              flipped: opening.flipped,
+              label: opening.label,
+            }),
+          );
+        }
+
+        setOpenings(restoredOpenings);
       }
 
       sync();
@@ -2646,6 +2686,8 @@ export function PlanEditor({
     }
 
     if (!drawingReady || !image || plan.sourceType !== 'upload') return;
+    // Never compete with the first-run tour; offer the analysis right after it.
+    if (onboardingLoading || shouldShowTour) return;
     if (walls.length + rooms.length + points.length + routes.length > 0) return;
 
     // Only offer the automatic analysis once per plan; the user can always
@@ -2664,11 +2706,13 @@ export function PlanEditor({
   }, [
     drawingReady,
     image,
+    onboardingLoading,
     plan.id,
     plan.sourceType,
     points.length,
     rooms.length,
     routes.length,
+    shouldShowTour,
     walls.length,
   ]);
 
@@ -3556,6 +3600,7 @@ export function PlanEditor({
         ariaLabel={t('editor.viewMode')}
         value={viewMode}
         onChange={setViewMode}
+        className="max-w-full flex-wrap"
         items={[
           {
             id: '2d',
@@ -3574,7 +3619,7 @@ export function PlanEditor({
           },
         ]}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <label className="inline-flex items-center gap-1 text-[11px] text-slate-400">
           <Ruler className="h-3.5 w-3.5" />
           <span className="sr-only">{t('editor.lengthUnit')}</span>
@@ -3868,8 +3913,8 @@ export function PlanEditor({
               : previewMode
                 ? 'h-[calc(100vh-6rem)]'
                 : bothSidebarsCollapsed
-                  ? 'h-[calc(62vh+3.5rem)] lg:h-[calc(100vh-12rem)]'
-                  : 'h-[calc(62vh+3.5rem)] lg:h-auto lg:min-h-[calc(100vh-22rem)]'
+                  ? 'min-h-[calc(62vh+3.5rem)] lg:h-[calc(100vh-12rem)]'
+                  : 'min-h-[calc(62vh+3.5rem)] lg:h-auto lg:min-h-[calc(100vh-22rem)]'
           }`}
         >
           <div

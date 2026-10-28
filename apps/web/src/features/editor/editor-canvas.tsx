@@ -3043,7 +3043,7 @@ export function EditorCanvas({
   return (
     <div
       ref={containerRef}
-      className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950"
+      className="relative h-full min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-slate-950 sm:min-h-[420px]"
     >
       <canvas
         ref={canvasRef}
@@ -3512,7 +3512,7 @@ export function EditorCanvas({
             className="absolute inset-0 z-20"
             onClick={() => setDevicePaletteOpen(false)}
           />
-          <div className="absolute top-16 left-3 z-30 max-h-[calc(100%-6rem)] w-[26rem] overflow-y-auto rounded-xl border border-border bg-card p-3 text-card-foreground shadow-xl">
+          <div className="absolute top-16 left-3 z-30 max-h-[calc(100%-6rem)] w-[min(26rem,calc(100%-1.5rem))] overflow-y-auto rounded-xl border border-border bg-card p-3 text-card-foreground shadow-xl">
             <div className="flex items-center justify-between pb-2">
               <p className="text-xs font-semibold">{t('editor.allDevices')}</p>
               <button
@@ -3566,7 +3566,7 @@ export function EditorCanvas({
         </>
       ) : null}
 
-      <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
+      <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-wrap items-end justify-between gap-2">
         <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
           <Crosshair className="h-3 w-3 text-amber-300" />
           <span
@@ -3671,7 +3671,7 @@ export function EditorCanvas({
             );
           })()}
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
+        <div className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
           {saveStatus ? (
             <span
               className={
