@@ -77,6 +77,7 @@ export function PointDetailsDialog({
       onClose={onClose}
       title={`${t(`editor.point.${point.type}`)} · ${t('editor.pointDetails.title')}`}
       description={t('editor.pointDetails.description')}
+      closeLabel={t('editor.close')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>

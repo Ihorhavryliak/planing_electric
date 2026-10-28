@@ -94,6 +94,7 @@ export function AddElementDialog({
       onClose={onClose}
       title={t('editor.addElement.title')}
       description={t('editor.addElement.description')}
+      closeLabel={t('editor.close')}
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
