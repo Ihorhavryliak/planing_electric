@@ -1272,9 +1272,9 @@ describe('Drawing API', () => {
       estimate.items.some((item) => item.description.includes('FireNET')),
     ).toBe(true);
     expect(
-      estimate.items.some((item) => item.description.includes('Signaling cable')),
+      estimate.items.some((item) => item.description.includes('Сигналізаційний кабель')),
     ).toBe(true);
-    expect(estimate.warnings.join(' ')).toContain('Signaling:');
+    expect(estimate.warnings.join(' ')).toContain('Сигналізація:');
   });
 
 });

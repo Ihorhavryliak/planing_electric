@@ -274,7 +274,7 @@ export function AppPage() {
                     className={cn(
                       'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                       tab === item.value
-                        ? 'bg-[var(--dmp-color-brand)] text-white'
+                        ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                         : 'text-slate-300 hover:bg-white/10 hover:text-white',
                     )}
                   >

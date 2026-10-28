@@ -154,6 +154,9 @@ describe('MVP workflow', () => {
       .expect(201);
     const estimate = estimateResponse.body as PublicEstimate;
     expect(estimate.items.length).toBeGreaterThan(0);
+    expect(
+      estimate.items.some((item) => item.description.includes('Розетка')),
+    ).toBe(true);
     expect(Array.isArray(estimate.warnings)).toBe(true);
     expect(estimate.warnings.length).toBeGreaterThan(0);
 

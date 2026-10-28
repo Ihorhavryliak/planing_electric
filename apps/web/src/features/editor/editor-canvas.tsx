@@ -15,7 +15,7 @@ import type {
   UnderlaySettings,
   UpdatePointInput,
 } from '@drawmyplace/contracts';
-import { deviceProduct } from '@drawmyplace/contracts';
+import { DEVICE_SUBTYPES, deviceProduct } from '@drawmyplace/contracts';
 import { SelectionQuickCard } from './selection-quick-card';
 import {
   Box,
@@ -25,6 +25,7 @@ import {
   Crosshair,
   Download,
   Hand,
+  LayoutGrid,
   Lightbulb,
   Magnet,
   MousePointer2,
@@ -40,6 +41,7 @@ import {
   Unlock,
   Unlink,
   Undo2,
+  X,
   Zap,
   type LucideIcon,
 } from 'lucide-react';
@@ -261,7 +263,10 @@ interface EditorCanvasProps {
     productId?: string | null,
   ) => void;
   /** Opens the add-element dialog from the top toolbar. */
-  onRequestAddPoint?: (type: ElectricalPointType) => void;
+  onRequestAddPoint?: (
+    type: ElectricalPointType,
+    subtype?: DeviceSubtype | null,
+  ) => void;
   /** Local pin state for walls, rooms, routes, openings and dimensions. */
   isLocked?: (kind: LockableKind, id: string | null | undefined) => boolean;
   onToggleLock?: (kind: LockableKind, id: string) => void;
@@ -381,7 +386,7 @@ function drawGrid(
 
   context.strokeStyle = light
     ? 'rgba(51, 122, 183, 0.2)'
-    : 'rgba(74, 157, 224, 0.3)';
+    : 'rgba(45, 212, 191, 0.35)';
   context.beginPath();
 
   const originX = (0 - viewport.x) * viewport.zoom + width / 2;
@@ -408,14 +413,14 @@ function drawSnapGuide(
   at: Vec2,
   light: boolean,
 ): void {
-  const color = light ? '#337ab7' : '#67adea';
+  const color = light ? '#337ab7' : '#2dd4bf';
   context.save();
 
   context.setLineDash([4, 5]);
   context.lineWidth = 1;
   context.strokeStyle = light
     ? 'rgba(51, 122, 183, 0.18)'
-    : 'rgba(74, 157, 224, 0.2)';
+    : 'rgba(45, 212, 191, 0.22)';
   context.beginPath();
   context.moveTo(Math.round(at.x) + 0.5, 0);
   context.lineTo(Math.round(at.x) + 0.5, height);
@@ -581,6 +586,7 @@ export function EditorCanvas({
   const [placeType, setPlaceType] = useState<ElectricalPointType>('socket');
   const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
   const [placeProductId, setPlaceProductId] = useState<string | null>(null);
+  const [devicePaletteOpen, setDevicePaletteOpen] = useState(false);
   const [snapEnabled, setSnapEnabled] = useState(() => {
     try {
       const stored = window.localStorage.getItem('dmp:editor:gridSnap');
@@ -3291,7 +3297,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'select'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3307,7 +3313,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'pan'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3323,7 +3329,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'calibrate'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3360,7 +3366,7 @@ export function EditorCanvas({
               className={cn(
                 'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
                 active
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white',
               )}
             >
@@ -3368,6 +3374,22 @@ export function EditorCanvas({
             </button>
           );
         })}
+
+        <button
+          type="button"
+          title={t('editor.allDevices')}
+          aria-label={t('editor.allDevices')}
+          aria-expanded={devicePaletteOpen}
+          onClick={() => setDevicePaletteOpen((open) => !open)}
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+            devicePaletteOpen
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
+              : 'text-slate-300 hover:bg-white/10 hover:text-white',
+          )}
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </button>
 
         <button
           type="button"
@@ -3379,7 +3401,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'route'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3396,7 +3418,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'wall'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3413,7 +3435,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'room'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3430,7 +3452,7 @@ export function EditorCanvas({
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             tool === 'dimension'
-              ? 'bg-[var(--dmp-color-brand)] text-white'
+              ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
               : 'text-slate-300 hover:bg-white/10 hover:text-white',
           )}
         >
@@ -3483,6 +3505,66 @@ export function EditorCanvas({
         </button>
       </div>
       )}
+
+      {devicePaletteOpen ? (
+        <>
+          <div
+            className="absolute inset-0 z-20"
+            onClick={() => setDevicePaletteOpen(false)}
+          />
+          <div className="absolute top-16 left-3 z-30 max-h-[calc(100%-6rem)] w-[26rem] overflow-y-auto rounded-xl border border-border bg-card p-3 text-card-foreground shadow-xl">
+            <div className="flex items-center justify-between pb-2">
+              <p className="text-xs font-semibold">{t('editor.allDevices')}</p>
+              <button
+                type="button"
+                aria-label={t('editor.close')}
+                onClick={() => setDevicePaletteOpen(false)}
+                className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {(['socket', 'switch', 'light', 'panel', 'junction', 'custom'] as const).map(
+              (type) => {
+                const items = DEVICE_SUBTYPES.filter(
+                  (item) => item.type === type,
+                );
+                if (items.length === 0) return null;
+
+                return (
+                  <div key={type} className="mb-2">
+                    <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {t(`editor.point.${type}`)}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1">
+                      {items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            if (onRequestAddPoint) {
+                              onRequestAddPoint(type, item.id);
+                            } else {
+                              setPlaceType(type);
+                              setPlaceSubtype(item.id);
+                              setPlaceProductId(null);
+                              setTool('place');
+                            }
+                            setDevicePaletteOpen(false);
+                          }}
+                          className="truncate rounded-md border border-border px-2 py-1 text-left text-[11px] text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        >
+                          {t(`devices.subtype.${item.id}`)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              },
+            )}
+          </div>
+        </>
+      ) : null}
 
       <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-end justify-between gap-2">
         <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">

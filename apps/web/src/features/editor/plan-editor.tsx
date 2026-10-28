@@ -3175,7 +3175,7 @@ export function PlanEditor({
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               fullscreen.isFullscreen
-                ? 'bg-[var(--dmp-color-brand)] text-white'
+                ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -3195,7 +3195,7 @@ export function PlanEditor({
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               previewMode
-                ? 'bg-[var(--dmp-color-brand)] text-white'
+                ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -3477,8 +3477,8 @@ export function PlanEditor({
             onDeleteRoute={(id) => void handleDeleteRoute(id)}
             onAttachRouteEnd={handleAttachRouteEnd}
             onDetachRouteEnd={handleDetachRouteEnd}
-            onRequestAddPoint={(type) => {
-              setAddElementDraft({ type, subtype: null });
+            onRequestAddPoint={(type, subtype) => {
+              setAddElementDraft({ type, subtype: subtype ?? null });
               setAddElementOpen(true);
             }}
             onCreatePoint={(type, at, subtype, productId) =>
@@ -4855,19 +4855,40 @@ export function PlanEditor({
                     {t('editor.downloadPdf')}
                   </a>
                 </div>
-                <ul className="space-y-1 text-[11px] text-slate-400">
-                  {estimate.items.map((item) => (
-                    <li key={item.id} className="flex justify-between gap-2">
-                      <span className="truncate">{item.description}</span>
-                      <span className="tabular-nums">
-                        {formatNumber(item.quantity, {
-                          maximumFractionDigits: 2,
-                        })}{' '}
-                        {formatUnit(item.unit)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[11px] text-muted-foreground">
+                    <thead>
+                      <tr className="border-b border-border text-left text-[9px] uppercase tracking-wide">
+                        <th className="pb-1 pr-2 font-medium">
+                          {t('estimates.description')}
+                        </th>
+                        <th className="pb-1 pr-2 text-right font-medium">
+                          {t('estimates.qty')}
+                        </th>
+                        <th className="pb-1 text-right font-medium">
+                          {t('estimates.unit')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {estimate.items.map((item) => (
+                        <tr key={item.id} className="border-b border-border/50">
+                          <td className="py-1 pr-2 text-foreground">
+                            {item.description}
+                          </td>
+                          <td className="py-1 pr-2 text-right tabular-nums text-foreground">
+                            {formatNumber(item.quantity, {
+                              maximumFractionDigits: 2,
+                            })}
+                          </td>
+                          <td className="py-1 text-right">
+                            {formatUnit(item.unit)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : null}
           </section>

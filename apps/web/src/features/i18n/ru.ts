@@ -511,6 +511,7 @@ export const ru: Dictionary = {
   'estimates.qty': 'Кол-во',
   'estimates.purchase': 'Закупка',
   'estimates.price': 'Цена',
+  'estimates.total': 'Итого',
   'estimates.subtotal': 'Итог',
   'estimates.override': 'Переопределение',
   'estimates.overridden': '(переопределено)',
@@ -575,6 +576,7 @@ export const ru: Dictionary = {
   'editor.pointDetails.mounting': 'Монтаж',
   'editor.pointDetails.save': 'Сохранить',
   'editor.pointDetails.skip': 'Пропустить',
+  'editor.allDevices': 'Все устройства',
   'editor.addElement.title': 'Добавить элемент',
   'editor.addElement.description':
     'Выберите тип, подтип, артикул и цепь перед размещением элемента на плане.',

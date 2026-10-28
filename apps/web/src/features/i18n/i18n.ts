@@ -535,6 +535,7 @@ const en: Dictionary = {
   'estimates.qty': 'Qty',
   'estimates.purchase': 'Purchase',
   'estimates.price': 'Price',
+  'estimates.total': 'Total',
   'estimates.subtotal': 'Subtotal',
   'estimates.override': 'Override',
   'estimates.overridden': '(overridden)',
@@ -599,6 +600,7 @@ const en: Dictionary = {
   'editor.pointDetails.mounting': 'Mounting',
   'editor.pointDetails.save': 'Save',
   'editor.pointDetails.skip': 'Skip',
+  'editor.allDevices': 'All devices',
   'editor.addElement.title': 'Add element',
   'editor.addElement.description':
     'Choose the type, subtype, article and circuit before placing the element on the plan.',
@@ -2096,6 +2098,7 @@ const ua: Dictionary = {
   'estimates.qty': 'К-сть',
   'estimates.purchase': 'Закупівля',
   'estimates.price': 'Ціна',
+  'estimates.total': 'Разом',
   'estimates.subtotal': 'Підсумок',
   'estimates.override': 'Перевизначення',
   'estimates.overridden': '(перевизначено)',
@@ -2160,6 +2163,7 @@ const ua: Dictionary = {
   'editor.pointDetails.mounting': 'Монтаж',
   'editor.pointDetails.save': 'Зберегти',
   'editor.pointDetails.skip': 'Пропустити',
+  'editor.allDevices': 'Усі пристрої',
   'editor.addElement.title': 'Додати елемент',
   'editor.addElement.description':
     'Виберіть тип, підтип, артикул і коло перед розміщенням елемента на плані.',

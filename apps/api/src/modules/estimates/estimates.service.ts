@@ -1,19 +1,202 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import path from 'node:path';
+import PDFDocument from 'pdfkit';
 import {
   buildPanelSchedule,
   buildSignalingTakeoff,
   calculateElectrical,
 } from '@drawmyplace/calculations';
 
-function escapePdf(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+const UK_DEVICE_TYPE_LABELS: Record<string, string> = {
+  socket: 'Розетка',
+  switch: 'Вимикач',
+  light: 'Світло',
+  panel: 'Розподільний щит',
+  junction: 'З’єднувальна коробка',
+  custom: 'Точка',
+};
+
+const UK_DEVICE_SUBTYPE_LABELS: Record<string, string> = {
+  'main-board': 'Головний щит',
+  'sub-board': 'Поверховий щит',
+  'circuit-origin': 'Точка кола',
+  'junction-box': 'З’єднувальна коробка',
+  'ceiling-junction-box': 'Стельова з’єднувальна коробка',
+  'floor-box': 'Підлогова коробка',
+  'socket-single': 'Розетка одинарна',
+  'socket-double': 'Розетка подвійна',
+  'socket-triple': 'Розетка потрійна',
+  'socket-kitchen': 'Розетка кухонна',
+  'socket-dedicated': 'Розетка виділена',
+  'socket-three-phase': 'Розетка трифазна',
+  'socket-floor': 'Розетка підлогова',
+  'socket-outdoor': 'Розетка зовнішня',
+  'switch-single': 'Вимикач одинарний',
+  'switch-double': 'Вимикач подвійний',
+  'switch-two-way': 'Вимикач прохідний',
+  'switch-intermediate': 'Вимикач проміжний',
+  dimmer: 'Диммер',
+  'motion-sensor': 'Датчик руху',
+  'blind-controller': 'Контролер жалюзі',
+  thermostat: 'Термостат',
+  'smart-switch': 'Розумний вимикач',
+  'light-ceiling': 'Стельове світло',
+  'light-wall': 'Настінне світло',
+  'light-pendant': 'Підвісне світло',
+  'light-led-strip': 'LED-стрічка',
+  'light-emergency': 'Аварійне світло',
+  'light-outdoor': 'Зовнішнє світло',
+  'data-lan': 'LAN-точка',
+  'data-tv': 'TV-точка',
+  'data-satellite': 'Супутникова точка',
+  'data-intercom': 'Домофон',
+  'data-alarm': 'Тривожна кнопка',
+  'data-camera': 'Відеоточка',
+  'data-speaker': 'Аудіоточка',
+  'data-smart-home': 'Розумний дім',
+  'smoke-detector': 'Димовий датчик',
+  'heat-detector': 'Тепловий датчик',
+  'smoke-heat-detector': 'Комбінований датчик',
+  'manual-call-point': 'Ручна точка виклику',
+  'door-contact': 'Контакт дверей',
+  'glass-break': 'Датчик розбиття скла',
+  'water-leak': 'Датчик протікання',
+  'vibration-detector': 'Вібраційний датчик',
+  'loop-expander': 'Розширювач шлейфу',
+  'siren-internal': 'Внутрішня сирена',
+  'siren-external': 'Зовнішня сирена',
+  strobe: 'Стробоскоп',
+  'exit-sign': 'Вихідний знак',
+  'voice-alarm': 'Голосове оповіщення',
+  'fire-panel': 'Пожежний щит',
+  keypad: 'Клавіатура',
+  'card-reader': 'Зчитувач карток',
+  'relay-module': 'Релейний модуль',
+  'power-supply': 'Блок живлення',
+  battery: 'Акумулятор',
+  'gsm-communicator': 'GSM-комунікатор',
+  dialer: 'Дозвонювач',
+  'patch-panel': 'Патч-панель',
+  'network-switch': 'Мережевий комутатор',
+  'ip-camera': 'IP-камера',
+  nvr: 'Відеореєстратор',
+};
+
+const UK_LOOP_TYPE_LABELS: Record<string, string> = {
+  power: 'живлення',
+  fire: 'пожежне',
+  security: 'охоронне',
+  access: 'доступ',
+  cctv: 'відео',
+  pa: 'оповіщення',
+  data: 'дані',
+};
+
+function ukDeviceLabel(type: string, subtype: string | null): string {
+  if (subtype) {
+    return (
+      UK_DEVICE_SUBTYPE_LABELS[subtype] ??
+      `${UK_DEVICE_TYPE_LABELS[type] ?? 'Пристрій'} (${subtype.replace(/-/g, ' ')})`
+    );
+  }
+  return UK_DEVICE_TYPE_LABELS[type] ?? 'Пристрій';
 }
+
+interface PriceMaterial {
+  id: string;
+  code: string;
+  unit: string;
+  unitPrice: number | null;
+}
+
+interface DeviceEstimateItem {
+  materialId: string | null;
+  description: string;
+  unit: string;
+  quantity: number;
+  purchaseQuantity: number | null;
+  unitPrice: number | null;
+  subtotal: number | null;
+  note: string | null;
+}
+
+/**
+ * Groups placed devices into estimate lines. Every socket, switch, board,
+ * junction box or detector becomes a countable line with its article price.
+ */
+function buildPowerDeviceItems(
+  points: readonly PublicPoint[],
+  materialByCode: ReadonlyMap<string, PriceMaterial>,
+): DeviceEstimateItem[] {
+  const groups = new Map<
+    string,
+    {
+      productId: string | null;
+      type: string;
+      subtype: string | null;
+      count: number;
+      circuits: Set<string>;
+    }
+  >();
+
+  for (const point of points) {
+    const productId = point.properties.productId ?? null;
+    const subtype = point.properties.subtype ?? null;
+    const key =
+      productId ?? (subtype ? `subtype:${subtype}` : `type:${point.type}`);
+    const group = groups.get(key);
+
+    if (group) {
+      group.count += 1;
+    } else {
+      groups.set(key, {
+        productId,
+        type: point.type,
+        subtype,
+        count: 1,
+        circuits: new Set(),
+      });
+    }
+    const circuitId = point.properties.circuitId;
+    if (circuitId) groups.get(key)?.circuits.add(circuitId);
+  }
+
+  return [...groups.values()]
+    .map((group) => {
+      const product = deviceProduct(group.productId);
+      const material = product?.catalogCode
+        ? materialByCode.get(product.catalogCode)
+        : undefined;
+      const unitPrice = product?.unitPrice ?? material?.unitPrice ?? null;
+      const label = ukDeviceLabel(group.type, group.subtype);
+      const description = product
+        ? `${label} — ${product.manufacturer} ${product.article} · ${product.name}`
+        : label;
+      const circuits = [...group.circuits].sort();
+
+      return {
+        materialId: material?.id ?? null,
+        description,
+        unit: product?.unit ?? 'pcs',
+        quantity: group.count,
+        purchaseQuantity: group.count,
+        unitPrice,
+        subtotal: unitPrice === null ? null : group.count * unitPrice,
+        note: circuits.length > 0 ? `Коло: ${circuits.join(', ')}` : null,
+        label,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, 'uk'))
+    .map(({ label: _label, ...item }) => item);
+}
+
 import { deviceProduct } from '@drawmyplace/contracts';
 import type {
   ElectricalSettings,
   EstimateType,
   PlanCalculation,
   PublicEstimate,
+  PublicPoint,
   SignalingLoop,
 } from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
@@ -62,6 +245,7 @@ export class EstimatesService {
     const defaultCable =
       catalog.find((item) => item.category === 'cable') ?? catalog[0] ?? null;
     const materialById = new Map(catalog.map((item) => [item.id, item]));
+    const materialByCode = new Map(catalog.map((item) => [item.code, item]));
 
     // Re-read the plan's routes to pick up the assigned cable type (materialId).
     const drawing = await this.drawing.getDrawing(ownerId, planId);
@@ -159,13 +343,11 @@ export class EstimatesService {
         });
       }
 
-      const materialByCode = new Map(
-        catalog.map((material) => [material.code, material]),
-      );
       const grouped = new Map<
         string,
         {
           productId: string | null;
+          type: string;
           subtype: string | null;
           count: number;
           loopCodes: Set<string>;
@@ -187,6 +369,7 @@ export class EstimatesService {
         } else {
           grouped.set(key, {
             productId,
+            type: point.type,
             subtype,
             count: 1,
             loopCodes: new Set([loop.code]),
@@ -216,14 +399,14 @@ export class EstimatesService {
         items.push({
           materialId: material?.id ?? null,
           description: product
-            ? `${product.manufacturer} ${product.article} — ${product.name}`
-            : `Signaling device — ${group.subtype ?? 'unknown'}`,
+            ? `${ukDeviceLabel(group.type, group.subtype)} — ${product.manufacturer} ${product.article} · ${product.name}`
+            : ukDeviceLabel(group.type, group.subtype),
           unit: product?.unit ?? 'pcs',
           quantity,
           purchaseQuantity: quantity,
           unitPrice,
           subtotal: unitPrice === null ? null : quantity * unitPrice,
-          note: `Loop ${[...group.loopCodes].join(', ')}`,
+          note: `Коло ${[...group.loopCodes].join(', ')}`,
         });
       }
 
@@ -238,13 +421,13 @@ export class EstimatesService {
 
         items.push({
           materialId: material?.id ?? null,
-          description: `Signaling cable ${result.code} (${loop?.type ?? 'signaling'})`,
+          description: `Сигналізаційний кабель ${result.code} (${UK_LOOP_TYPE_LABELS[loop?.type ?? ''] ?? loop?.type ?? 'сигналізація'})`,
           unit: material?.unit ?? 'm',
           quantity: result.cableMeters,
           purchaseQuantity,
           unitPrice,
           subtotal: unitPrice === null ? null : purchaseQuantity * unitPrice,
-          note: `${result.deviceCount} devices · ${result.addresses.length} addresses`,
+          note: `${result.deviceCount} пристроїв · ${result.addresses.length} адрес`,
         });
       }
 
@@ -255,14 +438,13 @@ export class EstimatesService {
 
         items.push({
           materialId: null,
-          description:
-            battery?.name ?? 'Sealed lead-acid battery, 12 V 7 Ah',
+          description: 'Акумулятор 12 В 7 А·год',
           unit: battery?.unit ?? 'pcs',
           quantity,
           purchaseQuantity: quantity,
           unitPrice,
           subtotal: unitPrice === null ? null : quantity * unitPrice,
-          note: `Battery calculation: ${takeoff.battery.requiredAh} Ah required, ${takeoff.battery.recommendedAh} Ah recommended`,
+          note: `Розрахунок АКБ: потрібно ${takeoff.battery.requiredAh} А·год, рекомендовано ${takeoff.battery.recommendedAh} А·год`,
         });
       }
 
@@ -272,7 +454,7 @@ export class EstimatesService {
         items,
         [
           ...calculation.warnings,
-          `Signaling: ${takeoff.loops.length} loops, ${takeoff.totalDevices} devices, ${takeoff.totalCableMeters} m cable, ${takeoff.battery.recommendedAh} Ah battery.`,
+          `Сигналізація: ${takeoff.loops.length} шлейфів, ${takeoff.totalDevices} пристроїв, ${takeoff.totalCableMeters} м кабелю, ${takeoff.battery.recommendedAh} А·год акумулятор.`,
           ...takeoff.issues.slice(0, 20).map((issue) => {
             const params = issue.params
               ? Object.entries(issue.params)
@@ -341,7 +523,7 @@ export class EstimatesService {
       });
     }
 
-    const items = calculation.routes.map((route) => {
+    const cableItems = calculation.routes.map((route) => {
       const quantity = route.requiredLength ?? 0;
       const assignedId = routeMaterialById.get(route.routeId) ?? null;
       const material =
@@ -354,8 +536,8 @@ export class EstimatesService {
       return {
         materialId: material?.id ?? null,
         description: route.circuitId
-          ? `Cable route ${route.circuitId}`
-          : 'Cable route',
+          ? `Кабельна траса ${route.circuitId}`
+          : 'Кабельна траса',
         unit: material?.unit ?? 'm',
         quantity,
         purchaseQuantity: quantity > 0 ? purchaseQuantity : 0,
@@ -365,12 +547,18 @@ export class EstimatesService {
       };
     });
 
+    const deviceItems = buildPowerDeviceItems(
+      drawing?.points ?? [],
+      materialByCode,
+    );
+    const items = [...deviceItems, ...cableItems];
+
     const electricalWarnings =
       electrical.circuits.length > 0
         ? [
-            `Electrical load: ${(electrical.totalConnectedPowerW / 1_000).toFixed(2)} kW installed, ` +
-              `${(electrical.totalDemandPowerW / 1_000).toFixed(2)} kW demand, ` +
-              `${electrical.maxPhaseCurrentA.toFixed(1)} A design current.`,
+            `Електричне навантаження: ${(electrical.totalConnectedPowerW / 1_000).toFixed(2)} кВт встановленої, ` +
+              `${(electrical.totalDemandPowerW / 1_000).toFixed(2)} кВт розрахункової потужності, ` +
+              `${electrical.maxPhaseCurrentA.toFixed(1)} А розрахунковий струм.`,
           ]
         : [];
 
@@ -539,52 +727,196 @@ export class EstimatesService {
     if (!estimate) {
       throw new Error('Estimate not found');
     }
+    const project = await this.projects.findAccessibleById(
+      estimate.projectId,
+      ownerId,
+    );
 
-    const lines = [
-      'Estimate',
-      `ID: ${estimate.id}`,
-      `Project: ${estimate.projectId}`,
-      `Version: ${estimate.version}`,
-      `Status: ${estimate.status}`,
-      '',
-      'description,unit,quantity,purchase,price,subtotal',
-      ...estimate.items.map(
-        (item) =>
-          `${item.description} | ${item.unit} | ${item.quantity} | ${
-            item.purchaseQuantity ?? ''
-          } | ${item.unitPrice ?? ''} | ${item.subtotal ?? ''}`,
-      ),
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 40,
+      bufferPages: true,
+      info: {
+        Title: `Кошторис · версія ${estimate.version}`,
+        Author: 'DrawMyPlace',
+      },
+    });
+    const chunks: Buffer[] = [];
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+    const finished = new Promise<Buffer>((resolve) => {
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+
+    const assets = path.join(__dirname, '..', '..', '..', 'assets');
+    doc.registerFont(
+      'Regular',
+      path.join(assets, 'LiberationSans-Regular.ttf'),
+    );
+    doc.registerFont('Bold', path.join(assets, 'LiberationSans-Bold.ttf'));
+
+    const margin = 40;
+    const pageWidth = 595.28;
+    const contentWidth = pageWidth - margin * 2;
+    const columns = [
+      { label: '№', width: 24, align: 'left' as const },
+      { label: 'Найменування', width: 250, align: 'left' as const },
+      { label: 'Од.', width: 36, align: 'center' as const },
+      { label: 'К-сть', width: 52, align: 'right' as const },
+      { label: 'Ціна', width: 72, align: 'right' as const },
+      { label: 'Сума', width: 81, align: 'right' as const },
     ];
 
-    const content = lines
-      .map((line, index) => `BT /F1 10 Tf 50 ${780 - index * 14} Td (${escapePdf(line)}) Tj ET`)
-      .join('\n');
+    const unitLabel = (unit: string) =>
+      ({ m: 'м', pcs: 'шт', kg: 'кг', l: 'л' })[unit] ?? unit;
+    const number = (value: number) =>
+      new Intl.NumberFormat('uk-UA', {
+        maximumFractionDigits: 2,
+      }).format(value);
+    const money = (value: number | null) =>
+      value === null
+        ? '—'
+        : new Intl.NumberFormat('uk-UA', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(value);
 
-    const objects = [
-      '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
-      '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
-      '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj',
-      '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
-      `5 0 obj << /Length ${content.length} >> stream\n${content}\nendstream endobj`,
-    ];
+    let y = margin;
+    doc
+      .font('Bold')
+      .fontSize(18)
+      .fillColor('#0f172a')
+      .text('Кошторис', margin, y);
+    y += 26;
+    doc
+      .font('Regular')
+      .fontSize(9)
+      .fillColor('#475569')
+      .text(`Проєкт: ${project?.name ?? estimate.projectId}`, margin, y);
+    doc.text(
+      `Версія: ${estimate.version} · ${
+        estimate.status === 'final' ? 'затверджено' : 'чернетка'
+      } · ${
+        estimate.type === 'signaling' ? 'сигналізація' : 'силове'
+      }`,
+      margin + 260,
+      y,
+      { width: contentWidth - 260, align: 'right' },
+    );
+    y += 14;
+    doc.text(
+      `Дата: ${new Date(estimate.createdAt).toLocaleDateString('uk-UA')}`,
+      margin,
+      y,
+    );
+    y += 22;
 
-    let pdf = '%PDF-1.4\n';
-    const offsets: number[] = [];
+    const drawHeader = () => {
+      doc.rect(margin, y, contentWidth, 22).fill('#eef2f6');
+      doc.fillColor('#0f172a').font('Bold').fontSize(9);
+      let x = margin;
+      for (const column of columns) {
+        doc.text(column.label, x + 4, y + 7, {
+          width: column.width - 8,
+          align: column.align,
+        });
+        x += column.width;
+      }
+      doc
+        .strokeColor('#cbd5e1')
+        .lineWidth(0.6)
+        .rect(margin, y, contentWidth, 22)
+        .stroke();
+      y += 22;
+    };
 
-    for (const object of objects) {
-      offsets.push(pdf.length);
-      pdf += `${object}\n`;
+    drawHeader();
+
+    estimate.items.forEach((item, index) => {
+      doc.font('Regular').fontSize(8.5);
+      const descriptionHeight = doc.heightOfString(item.description, {
+        width: columns[1]!.width - 8,
+      });
+      const rowHeight = Math.max(19, descriptionHeight + 8);
+
+      if (y + rowHeight > 790) {
+        doc.addPage();
+        y = margin;
+        drawHeader();
+      }
+
+      if (index % 2 === 1) {
+        doc.rect(margin, y, contentWidth, rowHeight).fill('#f8fafc');
+      }
+
+      const values = [
+        String(index + 1),
+        item.description,
+        unitLabel(item.unit),
+        number(item.quantity),
+        money(item.unitPrice),
+        money(item.subtotal),
+      ];
+      doc.fillColor('#0f172a').font('Regular').fontSize(8.5);
+      let x = margin;
+      columns.forEach((column, columnIndex) => {
+        doc.text(values[columnIndex] ?? '', x + 4, y + 5, {
+          width: column.width - 8,
+          align: column.align,
+          lineBreak: columnIndex === 1,
+          ellipsis: columnIndex !== 1,
+        });
+        x += column.width;
+      });
+
+      doc
+        .strokeColor('#e2e8f0')
+        .lineWidth(0.5)
+        .moveTo(margin, y + rowHeight)
+        .lineTo(margin + contentWidth, y + rowHeight)
+        .stroke();
+      y += rowHeight;
+    });
+
+    const total = estimate.items.reduce(
+      (sum, item) => sum + (item.subtotal ?? 0),
+      0,
+    );
+    doc.rect(margin, y, contentWidth, 22).fill('#eef2f6');
+    doc.fillColor('#0f172a').font('Bold').fontSize(9);
+    doc.text('Разом', margin + 4, y + 7, {
+      width:
+        columns.slice(0, 5).reduce((sum, column) => sum + column.width, 0) - 8,
+      align: 'right',
+    });
+    doc.text(
+      money(total),
+      margin + contentWidth - columns[5]!.width + 4,
+      y + 7,
+      { width: columns[5]!.width - 8, align: 'right' },
+    );
+    doc
+      .strokeColor('#cbd5e1')
+      .lineWidth(0.6)
+      .rect(margin, y, contentWidth, 22)
+      .stroke();
+
+    const range = doc.bufferedPageRange();
+    for (let index = 0; index < range.count; index += 1) {
+      doc.switchToPage(range.start + index);
+      doc
+        .font('Regular')
+        .fontSize(8)
+        .fillColor('#64748b')
+        .text(
+          `Сторінка ${index + 1} з ${range.count} · DrawMyPlace`,
+          margin,
+          815,
+          { width: contentWidth, align: 'center', lineBreak: false },
+        );
     }
 
-    const xrefOffset = pdf.length;
-    pdf += `xref\n0 ${objects.length + 1}\n`;
-    pdf += '0000000000 65535 f \n';
-    for (const offset of offsets) {
-      pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
-    }
-    pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-
-    return Buffer.from(pdf, 'latin1');
+    doc.end();
+    return finished;
   }
 
   async toCsv(ownerId: string, estimateId: string): Promise<string> {

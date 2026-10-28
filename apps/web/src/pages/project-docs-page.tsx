@@ -505,22 +505,40 @@ export function ProjectDocsPage() {
                         </Button>
                       </div>
                     </div>
-                    <ul className="mt-3 space-y-1 border-t border-white/5 pt-2 text-xs">
-                      {estimate.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 text-slate-400"
-                        >
-                          <span className="truncate">{item.description}</span>
-                          <span className="shrink-0 tabular-nums">
-                            {formatNumber(item.quantity, {
-                              maximumFractionDigits: 2,
-                            })}{' '}
-                            {t(`units.${item.unit}`)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mt-3 overflow-x-auto border-t border-border pt-2">
+                      <table className="w-full border-collapse text-xs text-muted-foreground">
+                        <thead>
+                          <tr className="text-left text-[10px] uppercase tracking-wide">
+                            <th className="pb-1 pr-2 font-medium">
+                              {t('estimates.description')}
+                            </th>
+                            <th className="pb-1 pr-2 text-right font-medium">
+                              {t('estimates.qty')}
+                            </th>
+                            <th className="pb-1 text-right font-medium">
+                              {t('estimates.unit')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {estimate.items.map((item) => (
+                            <tr key={item.id} className="border-b border-border/50">
+                              <td className="py-1 pr-2 text-foreground">
+                                {item.description}
+                              </td>
+                              <td className="py-1 pr-2 text-right tabular-nums text-foreground">
+                                {formatNumber(item.quantity, {
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td className="py-1 text-right">
+                                {t(`units.${item.unit}`)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </article>
                 ))
               )}

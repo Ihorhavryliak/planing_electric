@@ -1482,7 +1482,7 @@ export function ThreeView({
     const scene = sceneRef.current;
     if (!scene) return;
     scene.background = new THREE.Color(
-      daylight || lightScene ? 0xf1f5f9 : 0x020617,
+      daylight || lightScene ? 0xf1f5f9 : 0x08090b,
     );
     if (ambientRef.current) ambientRef.current.intensity = daylight ? 2.2 : 1.4;
     if (sunRef.current) sunRef.current.intensity = daylight ? 3.2 : 2;
@@ -2619,7 +2619,7 @@ export function ThreeView({
               onClick={() => setMountMode(mode)}
               className={`rounded-md px-1 py-1 text-[10px] transition ${
                 mountMode === mode
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'bg-white/5 text-slate-400 hover:text-white'
               }`}
             >
@@ -2648,7 +2648,7 @@ export function ThreeView({
               }
               className={`flex min-w-0 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[9px] leading-tight transition ${
                 placementType === type
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'hover:bg-white/10 hover:text-white'
               }`}
             >
@@ -2678,7 +2678,7 @@ export function ThreeView({
               }}
               className={`flex items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] transition ${
                 placementOpening === type
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'hover:bg-white/10 hover:text-white'
               }`}
             >
@@ -2717,7 +2717,7 @@ export function ThreeView({
               }}
               className={`flex min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] transition ${
                 draftMode === mode
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'hover:bg-white/10 hover:text-white'
               }`}
             >
@@ -2740,7 +2740,7 @@ export function ThreeView({
                   onClick={() => onRouteMountingChange?.(mounting)}
                   className={`flex-1 rounded px-1 py-1 text-[10px] transition ${
                     routeMounting === mounting
-                      ? 'bg-[var(--dmp-color-brand)] text-white'
+                      ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                       : 'text-slate-400 hover:bg-white/10 hover:text-white'
                   }`}
                 >
@@ -2835,7 +2835,7 @@ export function ThreeView({
             onClick={() => setMode(value)}
             className={`pointer-events-auto rounded-lg px-2 py-1 transition ${
               mode === value
-                ? 'bg-[var(--dmp-color-brand)] text-white'
+                ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                 : 'hover:bg-white/10 hover:text-white'
             }`}
           >

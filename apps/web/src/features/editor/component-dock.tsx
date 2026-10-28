@@ -135,7 +135,7 @@ export function ComponentDock({
               }}
               className={`flex h-9 items-center gap-1 rounded-md px-2 text-xs transition ${
                 openType === type
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
@@ -183,7 +183,7 @@ export function ComponentDock({
               onClick={() => setOpeningTab(type)}
               className={`flex h-7 items-center gap-1 rounded px-2 text-xs transition ${
                 openingTab === type
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -291,7 +291,7 @@ export function ComponentDock({
               onClick={() => onRouteMountingChange(mounting)}
               className={`h-7 whitespace-nowrap rounded px-1.5 text-xs transition sm:px-2 ${
                 routeMounting === mounting
-                  ? 'bg-[var(--dmp-color-brand)] text-white'
+                  ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                   : 'text-slate-400 hover:text-white'
               }`}
             >

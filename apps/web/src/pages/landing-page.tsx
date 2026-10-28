@@ -40,7 +40,7 @@ export function LandingPage() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-12">
         <header className="flex flex-wrap items-center justify-between gap-4 py-6">
           <Link to="/" className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-blue-500/20">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)] shadow-lg shadow-blue-500/20">
               <Zap className="h-5 w-5" fill="currentColor" />
             </span>
             <div>

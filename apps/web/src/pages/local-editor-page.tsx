@@ -1492,7 +1492,7 @@ export function LocalEditorPage() {
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               fullscreen.isFullscreen
-                ? 'bg-[var(--dmp-color-brand)] text-white'
+                ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >
@@ -1512,7 +1512,7 @@ export function LocalEditorPage() {
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
               previewMode
-                ? 'bg-[var(--dmp-color-brand)] text-white'
+                ? 'bg-[var(--dmp-color-brand)] text-[var(--dmp-color-on-brand)]'
                 : 'text-slate-300 hover:bg-white/10 hover:text-white',
             )}
           >

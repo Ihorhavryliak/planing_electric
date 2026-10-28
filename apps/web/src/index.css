@@ -108,7 +108,7 @@ body {
 
 ::selection {
   background-color: var(--dmp-color-brand);
-  color: #ffffff;
+  color: var(--dmp-color-on-brand);
 }
 
 :focus-visible {
@@ -138,21 +138,21 @@ body {
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --color-slate-950: #0d141c;
-  --color-slate-900: #131c26;
-  --color-slate-800: #1a2531;
-  --color-slate-700: #243242;
-  --color-slate-600: #33465a;
-  --color-slate-500: #647a8f;
-  --color-slate-400: #93a4b5;
-  --color-slate-300: #c3d0dc;
-  --color-slate-200: #dde6ee;
-  --color-slate-100: #eef4fa;
-  --color-white: #f7fafc;
+  --color-slate-950: #08090b;
+  --color-slate-900: #111316;
+  --color-slate-800: #171a1e;
+  --color-slate-700: #22262b;
+  --color-slate-600: #343b42;
+  --color-slate-500: #6b7682;
+  --color-slate-400: #9aa6b2;
+  --color-slate-300: #c7d0d9;
+  --color-slate-200: #e1e7ec;
+  --color-slate-100: #f2f5f7;
+  --color-white: #f7f9fa;
 
-  --panel-bg-top: rgb(19 28 38 / 0.96);
-  --panel-bg-bottom: rgb(13 20 28 / 0.98);
-  --panel-border: rgb(148 163 184 / 0.14);
+  --panel-bg-top: rgb(17 19 22 / 0.96);
+  --panel-bg-bottom: rgb(8 9 11 / 0.98);
+  --panel-border: rgb(255 255 255 / 0.09);
 }
 
 /*
@@ -211,13 +211,13 @@ body {
 
 /* ---------------------------------------------------------------- design system */
 :root {
-  --panel-border: rgb(148 163 184 / 0.14);
-  --panel-bg-top: rgb(19 28 38 / 0.96);
-  --panel-bg-bottom: rgb(13 20 28 / 0.98);
+  --panel-border: rgb(255 255 255 / 0.09);
+  --panel-bg-top: rgb(17 19 22 / 0.96);
+  --panel-bg-bottom: rgb(8 9 11 / 0.98);
   --panel-highlight: rgb(255 255 255 / 0.04);
-  --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.24);
+  --panel-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
   --subpanel-bg: rgb(255 255 255 / 0.03);
-  --subpanel-border: rgb(148 163 184 / 0.1);
+  --subpanel-border: rgb(255 255 255 / 0.07);
 }
 
 [data-theme='light'] {
@@ -232,8 +232,8 @@ body {
 
 body {
   background-image:
-    radial-gradient(52rem 34rem at 50% -18%, rgb(51 122 183 / 0.12), transparent 70%),
-    radial-gradient(36rem 28rem at 100% 100%, rgb(103 173 234 / 0.06), transparent 70%);
+    radial-gradient(52rem 34rem at 50% -18%, rgb(45 212 191 / 0.1), transparent 70%),
+    radial-gradient(36rem 28rem at 100% 100%, rgb(34 211 238 / 0.045), transparent 70%);
   background-attachment: fixed;
 }
 

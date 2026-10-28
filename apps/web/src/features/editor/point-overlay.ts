@@ -24,7 +24,7 @@ export interface PointGhost {
 
 /** Symbols are schematic: a constant size in screen pixels, not to scale. */
 const RADIUS = 9;
-const BACKGROUND = '#020617';
+const BACKGROUND = '#08090b';
 
 let pointLight = false;
 
@@ -317,7 +317,7 @@ function drawPointLabel(
   roundedRectPath(context, at.x - width / 2, top, width, height, 8);
   context.fillStyle = pointLight
     ? 'rgba(255, 255, 255, 0.96)'
-    : 'rgba(15, 23, 42, 0.92)';
+    : 'rgba(8, 9, 11, 0.92)';
   context.fill();
   context.lineWidth = 1;
   context.strokeStyle = pointLight
@@ -361,10 +361,10 @@ export function drawPointsOverlay(
       context.beginPath();
       context.arc(at.x, at.y, RADIUS + 7, 0, Math.PI * 2);
       context.lineWidth = 2;
-      context.strokeStyle = pointLight ? '#2f6bd8' : '#5b8def';
+      context.strokeStyle = pointLight ? '#337ab7' : '#2dd4bf';
       context.shadowColor = pointLight
-        ? 'rgba(47, 107, 216, 0.45)'
-        : 'rgba(91, 141, 239, 0.55)';
+        ? 'rgba(51, 122, 183, 0.45)'
+        : 'rgba(45, 212, 191, 0.55)';
       context.shadowBlur = 12;
       context.stroke();
       context.shadowBlur = 0;

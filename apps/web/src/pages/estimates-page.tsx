@@ -216,9 +216,9 @@ export function EstimatesPage() {
                 </div>
 
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr className="text-left text-xs text-slate-500">
+                      <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
                         <th className="py-2">{t('estimates.description')}</th>
                         <th className="py-2">{t('estimates.unit')}</th>
                         <th className="py-2">{t('estimates.qty')}</th>
@@ -232,7 +232,7 @@ export function EstimatesPage() {
                       {estimate.items.map((item) => (
                         <tr
                           key={item.id}
-                          className="border-t border-white/5"
+                          className="border-b border-border/60 transition-colors hover:bg-accent/40"
                         >
                           <td className="py-2 pr-3 text-slate-200">
                             {item.description}
@@ -300,6 +300,22 @@ export function EstimatesPage() {
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot>
+                      <tr className="border-t border-border text-sm font-semibold">
+                        <td colSpan={5} className="py-3 pr-3 text-right">
+                          {t('estimates.total')}
+                        </td>
+                        <td className="py-3 pr-3 tabular-nums">
+                          {formatCurrency(
+                            estimate.items.reduce(
+                              (sum, item) => sum + (item.subtotal ?? 0),
+                              0,
+                            ),
+                          )}
+                        </td>
+                        <td />
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
                 {estimate.items.some((i) => i.isOverridden) ? (

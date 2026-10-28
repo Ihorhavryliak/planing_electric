@@ -8,24 +8,24 @@
  */
 :root {
   /* brand: shadcn-style indigo with a blue cast */
-  --dmp-color-brand: #4a9de0;
-  --dmp-color-brand-strong: #337ab7;
-  --dmp-color-brand-soft: rgb(74 157 224 / 0.16);
-  --dmp-color-on-brand: #ffffff;
+  --dmp-color-brand: #2dd4bf;
+  --dmp-color-brand-strong: #14b8a6;
+  --dmp-color-brand-soft: rgb(45 212 191 / 0.14);
+  --dmp-color-on-brand: #042f2e;
 
-  /* surfaces and borders */
-  --dmp-color-surface: #0d141c;
-  --dmp-color-surface-raised: #131c26;
-  --dmp-color-surface-overlay: rgb(13 20 28 / 0.95);
+  /* surfaces and borders: obsidian graphite */
+  --dmp-color-surface: #08090b;
+  --dmp-color-surface-raised: #111316;
+  --dmp-color-surface-overlay: rgb(8 9 11 / 0.96);
   --dmp-color-surface-inset: rgb(255 255 255 / 0.04);
-  --dmp-color-border: rgb(148 163 184 / 0.14);
-  --dmp-color-border-strong: rgb(148 163 184 / 0.24);
-  --dmp-color-border-brand: rgb(74 157 224 / 0.45);
+  --dmp-color-border: rgb(255 255 255 / 0.09);
+  --dmp-color-border-strong: rgb(255 255 255 / 0.16);
+  --dmp-color-border-brand: rgb(45 212 191 / 0.45);
 
   /* text */
-  --dmp-color-text: #eef4fa;
-  --dmp-color-text-muted: #93a4b5;
-  --dmp-color-text-subtle: #7d8ea0;
+  --dmp-color-text: #f4f7f8;
+  --dmp-color-text-muted: #9aa6b2;
+  --dmp-color-text-subtle: #7f8b98;
 
   /* status */
   --dmp-color-success: #34d399;
@@ -34,8 +34,8 @@
   --dmp-color-warning-soft: rgb(251 191 36 / 0.12);
   --dmp-color-danger: #fb7185;
   --dmp-color-danger-soft: rgb(251 113 133 / 0.12);
-  --dmp-color-info: #67adea;
-  --dmp-color-info-soft: rgb(103 173 234 / 0.14);
+  --dmp-color-info: #22d3ee;
+  --dmp-color-info-soft: rgb(34 211 238 / 0.14);
 
   /* typography */
   --dmp-font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
