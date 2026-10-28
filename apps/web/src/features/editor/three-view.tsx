@@ -1,4 +1,5 @@
 import type {
+  Circuit,
   ElectricalPointType,
   PublicOpening,
   PublicPoint,
@@ -36,8 +37,11 @@ import { useI18n } from '@/features/i18n/i18n-context';
 import { useTheme } from '@/features/theme/theme-context';
 import { computeWallBoxes, pointAlongWall } from './three-geometry';
 import { polygonArea } from './structure-geometry';
+import { computeRouteBundles, offsetPolyline } from './route-bundles';
+import { colorToHex, effectiveCircuitColors } from './route-colors';
 
 interface ThreeViewProps {
+  circuits?: readonly Circuit[];
   walls: readonly PublicWall[];
   openings: readonly PublicOpening[];
   rooms: readonly PublicRoom[];
@@ -454,9 +458,12 @@ function routeCable(
   selected: boolean,
   points: readonly PublicPoint[],
   metersPerUnit: number | null,
+  colorHex: number,
+  bundleIndex: number,
+  bundleSize: number,
 ): THREE.Group {
   const group = new THREE.Group();
-  const color = selected ? 0xf472b6 : ROUTE_COLOR;
+  const color = selected ? 0xf472b6 : colorHex;
   const radius = selected ? ROUTE_RADIUS * 1.3 : ROUTE_RADIUS;
   const material = new THREE.MeshStandardMaterial({
     color,
@@ -471,7 +478,14 @@ function routeCable(
     opacity: selected ? 0.22 : 0.1,
     depthWrite: false,
   });
-  const nodes = route.geometry.map(
+  const geometry =
+    bundleSize > 1
+      ? offsetPolyline(
+          route.geometry,
+          (bundleIndex - (bundleSize - 1) / 2) * ROUTE_RADIUS * 3.2,
+        )
+      : route.geometry;
+  const nodes = geometry.map(
     (point) => new THREE.Vector3(point.x, elevation, point.y),
   );
   const add = (mesh: THREE.Mesh) => {
@@ -554,6 +568,7 @@ function routeCable(
 }
 
 export function ThreeView({
+  circuits = [],
   walls,
   openings,
   rooms,
@@ -1832,8 +1847,22 @@ export function ThreeView({
     }
 
     if (showRoutes) {
+      const routeBundles = computeRouteBundles(
+        visibleRoutes.map((route) => ({
+          id: route.id,
+          geometry: route.geometry,
+          mounting: route.settings.mounting ?? null,
+          elevationMm: route.settings.elevationMm ?? null,
+        })),
+      );
+      const circuitColors = effectiveCircuitColors(circuits);
+
       for (const route of visibleRoutes) {
         const elevation = routeElevation(route, wallHeight, metersPerUnit);
+        const bundle = routeBundles.get(route.id);
+        const circuitColor = route.circuitId
+          ? circuitColors.get(route.circuitId)
+          : undefined;
         group.add(
           routeCable(
             route,
@@ -1841,6 +1870,9 @@ export function ThreeView({
             route.id === selectedRouteId,
             points,
             metersPerUnit,
+            colorToHex(circuitColor) ?? ROUTE_COLOR,
+            bundle?.index ?? 0,
+            bundle?.size ?? 1,
           ),
         );
 
@@ -1938,6 +1970,7 @@ export function ThreeView({
       }
     }
   }, [
+    circuits,
     walls,
     openings,
     rooms,

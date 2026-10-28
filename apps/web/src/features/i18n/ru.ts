@@ -478,6 +478,33 @@ export const ru: Dictionary = {
   'app.optional': '(необязательно)',
   'app.creating': 'Создание…',
   'app.create': 'Создать проект',
+  'templates.title': 'Начать с шаблона',
+  'templates.subtitle':
+    'Выберите готовый план с комнатами, устройствами и цепями. Откройте его в редакторе и измените под себя.',
+  'templates.use': 'Использовать шаблон',
+  'templates.using': 'Создание…',
+  'templates.blank': 'Или начать с пустого проекта',
+  'templates.blankHint':
+    'Не нашли подходящий? Начните с чистого холста и нарисуйте своё.',
+  'templates.loading': 'Загрузка шаблонов…',
+  'templates.unavailable':
+    'Шаблоны сейчас недоступны. Можно начать с пустого проекта.',
+  'templates.rooms': 'комн.',
+  'templates.devices': 'устройств',
+  'templates.circuits': 'цепей',
+  'templates.apartment_1br.name': '1-комнатная квартира · 35 м²',
+  'templates.apartment_1br.description':
+    'Готовая студия 8 × 4,5 м: гостиная, розетки, свет, щит и трассы.',
+  'templates.apartment_2br.name': '2-комнатная квартира · 55 м²',
+  'templates.apartment_2br.description':
+    'Гостиная, спальня и кухня с тремя цепями и готовыми трассами.',
+  'templates.house_2fl.name': 'Двухэтажный дом · 120 м²',
+  'templates.house_2fl.description':
+    'Первый этаж 12 × 10 м: гостиная, кухня, спальня и санузел, 5 цепей.',
+  'templates.office_open.name': 'Открытый офис · 80 м²',
+  'templates.office_open.description':
+    'Open space и переговорная 10 × 8 м: 12 устройств, 4 цепи, 9 трасс.',
+
   'app.statusAria': 'Статус проекта',
   'app.tabActive': 'Активные',
   'app.tabArchived': 'Архивные',
@@ -1407,6 +1434,9 @@ export const ru: Dictionary = {
   'circuits.codePlaceholder': 'напр. L1',
   'circuits.namePlaceholder': 'напр. Освещение',
   'circuits.counts': '{points} устройств · {routes} трасс',
+  'circuits.routeColor': 'Цвет кабеля на плане',
+  'circuits.routeLegend':
+    'Цвет трассы = цвет цепи. Кабели, идущие рядом, раздвигаются, а у общей подписи видно ×N.',
   'circuits.delete': 'Удалить цепь',
   'circuits.deleteBlocked':
     'Переназначьте устройства и трассы перед удалением.',

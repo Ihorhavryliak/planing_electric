@@ -13,6 +13,7 @@ export * from './opening';
 export * from './signaling';
 export * from './organization';
 export * from './project';
+export * from './project-templates';
 export * from './structure';
 export * from './variant';
 

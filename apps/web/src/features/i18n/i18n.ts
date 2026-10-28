@@ -502,6 +502,33 @@ const en: Dictionary = {
   'app.optional': '(optional)',
   'app.creating': 'Creating…',
   'app.create': 'Create project',
+  'templates.title': 'Start from a template',
+  'templates.subtitle':
+    'Pick a ready plan with rooms, devices and circuits. Open it in the editor and adjust everything.',
+  'templates.use': 'Use template',
+  'templates.using': 'Creating…',
+  'templates.blank': 'Or start with a blank project',
+  'templates.blankHint':
+    'No template fits? Start from an empty canvas and draw your own.',
+  'templates.loading': 'Loading templates…',
+  'templates.unavailable':
+    'Templates are unavailable right now. Start with a blank project.',
+  'templates.rooms': 'rooms',
+  'templates.devices': 'devices',
+  'templates.circuits': 'circuits',
+  'templates.apartment_1br.name': '1-bedroom apartment · 35 m²',
+  'templates.apartment_1br.description':
+    'Ready 8 × 4.5 m studio: living room, sockets, lighting, board and routes.',
+  'templates.apartment_2br.name': '2-bedroom apartment · 55 m²',
+  'templates.apartment_2br.description':
+    'Living room, bedroom and kitchen with three circuits and ready routes.',
+  'templates.house_2fl.name': 'Two-storey house · 120 m²',
+  'templates.house_2fl.description':
+    'Ground floor 12 × 10 m: living room, kitchen, bedroom and bathroom, 5 circuits.',
+  'templates.office_open.name': 'Open office · 80 m²',
+  'templates.office_open.description':
+    'Open space and meeting room 10 × 8 m: 12 devices, 4 circuits, 9 routes.',
+
   'app.statusAria': 'Project status',
   'app.tabActive': 'Active',
   'app.tabArchived': 'Archived',
@@ -1430,6 +1457,9 @@ const en: Dictionary = {
   'circuits.codePlaceholder': 'e.g. L1',
   'circuits.namePlaceholder': 'e.g. Lighting',
   'circuits.counts': '{points} devices · {routes} routes',
+  'circuits.routeColor': 'Cable colour on the plan',
+  'circuits.routeLegend':
+    'The cable line uses the circuit colour. Cables that run together are spread apart, and the shared chip shows ×N.',
   'circuits.delete': 'Delete circuit',
   'circuits.deleteBlocked': 'Reassign devices and routes before deleting.',
   'circuits.duplicateCode': 'Circuit code already exists.',
@@ -2098,6 +2128,33 @@ const ua: Dictionary = {
   'app.optional': '(необов’язково)',
   'app.creating': 'Створення…',
   'app.create': 'Створити проєкт',
+  'templates.title': 'Почніть із шаблону',
+  'templates.subtitle':
+    'Виберіть готовий план із кімнатами, пристроями та колами. Відкрийте його в редакторі й змініть під себе.',
+  'templates.use': 'Використати шаблон',
+  'templates.using': 'Створення…',
+  'templates.blank': 'Або почати з порожнього проєкту',
+  'templates.blankHint':
+    'Не знайшли потрібного? Почніть із чистого полотна й намалюйте своє.',
+  'templates.loading': 'Завантаження шаблонів…',
+  'templates.unavailable':
+    'Шаблони зараз недоступні. Можна почати з порожнього проєкту.',
+  'templates.rooms': 'кімн.',
+  'templates.devices': 'пристроїв',
+  'templates.circuits': 'кіл',
+  'templates.apartment_1br.name': '1-кімнатна квартира · 35 м²',
+  'templates.apartment_1br.description':
+    'Готова студія 8 × 4,5 м: вітальня, розетки, світло, щит і траси.',
+  'templates.apartment_2br.name': '2-кімнатна квартира · 55 м²',
+  'templates.apartment_2br.description':
+    'Вітальня, спальня й кухня з трьома колами та готовими трасами.',
+  'templates.house_2fl.name': 'Двоповерховий будинок · 120 м²',
+  'templates.house_2fl.description':
+    'Перший поверх 12 × 10 м: вітальня, кухня, спальня і санвузол, 5 кіл.',
+  'templates.office_open.name': 'Відкритий офіс · 80 м²',
+  'templates.office_open.description':
+    'Open space і переговорна 10 × 8 м: 12 пристроїв, 4 кола, 9 трас.',
+
   'app.statusAria': 'Статус проєкту',
   'app.tabActive': 'Активні',
   'app.tabArchived': 'Архівовані',
@@ -3029,6 +3086,9 @@ const ua: Dictionary = {
   'circuits.codePlaceholder': 'напр. L1',
   'circuits.namePlaceholder': 'напр. Освітлення',
   'circuits.counts': '{points} пристроїв · {routes} трас',
+  'circuits.routeColor': 'Колір кабелю на плані',
+  'circuits.routeLegend':
+    'Колір траси = колір кола. Кабелі, що йдуть поруч, розсуваються, а біля спільного підпису видно ×N.',
   'circuits.delete': 'Видалити коло',
   'circuits.deleteBlocked':
     'Перепризначте пристрої та траси перед видаленням.',

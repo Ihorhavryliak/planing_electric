@@ -1,9 +1,14 @@
-import type { PublicProjectSummary } from '@drawmyplace/contracts';
+import type {
+  PublicProject,
+  PublicProjectSummary,
+  PublicProjectTemplate,
+} from '@drawmyplace/contracts';
 import {
   ArrowUpRight,
   FolderKanban,
   FolderOpen,
   FolderPlus,
+  LayoutTemplate,
   Lightbulb,
   LoaderCircle,
   Package,
@@ -13,12 +18,18 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CardSkeleton } from '@/components/ui/skeleton';
 import { ProjectCard } from '@/features/projects/project-card';
+import { TemplatePicker } from '@/features/projects/template-picker';
+import { templateText } from '@/features/projects/template-text';
+import {
+  createProjectFromTemplate,
+  listProjectTemplates,
+} from '@/features/projects/project-templates-api';
 import {
   archiveProject,
   createProject,
@@ -38,7 +49,8 @@ const projectTabs: Array<{ value: ProjectTab; labelKey: string }> = [
 ];
 
 export function AppPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<PublicProjectSummary[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -52,6 +64,17 @@ export function AppPage() {
 
   const [busyProjectId, setBusyProjectId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  const [templates, setTemplates] = useState<PublicProjectTemplate[] | null>(
+    null,
+  );
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
+  const [templateBusy, setTemplateBusy] = useState<string | null>(null);
+  const [templateCreateError, setTemplateCreateError] = useState<string | null>(
+    null,
+  );
+  const [showTemplates, setShowTemplates] = useState(false);
+  const pickerTouchedRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -74,6 +97,33 @@ export function AppPage() {
 
     return () => controller.abort();
   }, [reloadToken]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void listProjectTemplates(controller.signal)
+      .then((loaded) => {
+        if (!controller.signal.aborted) {
+          setTemplates(loaded);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setTemplatesError(getErrorMessage(error));
+          setTemplates([]);
+        }
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!projects || pickerTouchedRef.current) return;
+
+    if (!projects.some((project) => project.status === 'active')) {
+      setShowTemplates(true);
+    }
+  }, [projects]);
 
   const activeProjects = projects?.filter((project) => project.status === 'active') ?? [];
   const archivedProjects =
@@ -105,10 +155,40 @@ export function AppPage() {
       setName('');
       setDescription('');
       setTab('active');
+      setShowTemplates(false);
     } catch (error) {
       setCreateError(getErrorMessage(error));
     } finally {
       setCreating(false);
+    }
+  }
+
+  function openTemplatePicker() {
+    pickerTouchedRef.current = true;
+    setShowTemplates(true);
+  }
+
+  function startBlankProject() {
+    pickerTouchedRef.current = true;
+    setShowTemplates(false);
+    nameInputRef.current?.focus();
+  }
+
+  async function handleUseTemplate(template: PublicProjectTemplate) {
+    setTemplateBusy(template.code);
+    setTemplateCreateError(null);
+
+    try {
+      const created: PublicProject = await createProjectFromTemplate({
+        templateCode: template.code,
+        name: templateText(template, 'name', t, locale),
+        description: templateText(template, 'description', t, locale),
+      });
+
+      navigate(`/app/projects/${created.id}/editor`);
+    } catch (error) {
+      setTemplateCreateError(getErrorMessage(error));
+      setTemplateBusy(null);
     }
   }
 
@@ -158,20 +238,37 @@ export function AppPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-              <FolderKanban className="h-4 w-4 text-[var(--dmp-color-brand)]" />
-              <span>
-                <strong className="font-semibold text-white">
-                  {activeProjects.length}
-                </strong>{' '}
-                {t('app.activeWord')}
-              </span>
-              <span className="text-slate-600">·</span>
-              <span>
-                {t('app.archivedCount', { count: archivedProjects.length })}
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button onClick={openTemplatePicker}>
+                <LayoutTemplate className="h-4 w-4" />
+                {t('app.newProject')}
+              </Button>
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                <FolderKanban className="h-4 w-4 text-[var(--dmp-color-brand)]" />
+                <span>
+                  <strong className="font-semibold text-white">
+                    {activeProjects.length}
+                  </strong>{' '}
+                  {t('app.activeWord')}
+                </span>
+                <span className="text-slate-600">·</span>
+                <span>
+                  {t('app.archivedCount', { count: archivedProjects.length })}
+                </span>
+              </div>
             </div>
           </div>
+
+          {showTemplates ? (
+            <TemplatePicker
+              templates={templates}
+              error={templatesError}
+              actionError={templateCreateError}
+              busyCode={templateBusy}
+              onUse={(template) => void handleUseTemplate(template)}
+              onBlank={startBlankProject}
+            />
+          ) : null}
 
           <section className="mt-8 app-panel p-5 sm:p-6">
             <div className="flex items-center gap-2">

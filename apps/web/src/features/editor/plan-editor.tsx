@@ -3723,6 +3723,7 @@ export function PlanEditor({
       }
     >
       <ThreeView
+        circuits={circuits}
         walls={walls}
         openings={openings}
         rooms={rooms}

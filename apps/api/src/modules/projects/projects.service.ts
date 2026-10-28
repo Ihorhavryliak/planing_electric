@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -7,7 +8,7 @@ import {
 } from '@nestjs/common';
 import type {
   AddProjectMemberInput,
-  CreateProjectInput,
+  CreateProjectBodyInput,
   ProjectListQuery,
   PublicProject,
   PublicProjectMember,
@@ -16,6 +17,7 @@ import type {
 } from '@drawmyplace/contracts';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { NotificationsRepository } from '../notifications/notifications.repository';
+import { ProjectTemplatesService } from '../project-templates/project-templates.service';
 import {
   toPublicProject,
   toPublicProjectSummary,
@@ -31,6 +33,8 @@ export class ProjectsService {
     private readonly activity: ActivityLogService,
     @Inject(NotificationsRepository)
     private readonly notifications: NotificationsRepository,
+    @Inject(ProjectTemplatesService)
+    private readonly templates: ProjectTemplatesService,
   ) {}
 
   async list(
@@ -53,9 +57,53 @@ export class ProjectsService {
 
   async create(
     ownerId: string,
-    input: CreateProjectInput,
+    input: CreateProjectBodyInput,
   ): Promise<PublicProject> {
-    const project = await this.repository.create(ownerId, input);
+    if (input.templateCode) {
+      const template = await this.templates.findForCreation(input.templateCode);
+
+      if (!template) {
+        throw new BadRequestException({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: ['Unknown project template'],
+        });
+      }
+
+      const name =
+        input.name ??
+        template.name.en ??
+        template.name.ua ??
+        template.name.ru ??
+        'Project';
+      const project = await this.repository.createFromTemplate(ownerId, {
+        name,
+        description: input.description ?? null,
+        organizationId: input.organizationId ?? null,
+        payload: template.payload,
+      });
+
+      await this.activity.record({
+        projectId: project.id,
+        actorId: ownerId,
+        action: 'project.created',
+        resourceType: 'project',
+        resourceId: project.id,
+        metadata: { templateCode: input.templateCode },
+      });
+
+      return toPublicProject(project);
+    }
+
+    if (!input.name) {
+      throw new BadRequestException('Project name is required');
+    }
+
+    const project = await this.repository.create(ownerId, {
+      name: input.name,
+      description: input.description,
+      organizationId: input.organizationId,
+    });
 
     await this.activity.record({
       projectId: project.id,

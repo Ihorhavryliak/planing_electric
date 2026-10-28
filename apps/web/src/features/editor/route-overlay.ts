@@ -6,6 +6,7 @@ import {
   type Vec2,
 } from './editor-geometry';
 import { MIN_SEGMENT_HANDLE_PX } from './route-geometry';
+import { offsetPolyline } from './route-bundles';
 
 export interface RouteRenderItem {
   id: string;
@@ -18,6 +19,10 @@ export interface RouteRenderItem {
   label?: string | null;
   startPinned?: boolean;
   endPinned?: boolean;
+  /** Position inside a bundle of cables running along the same line. */
+  bundleIndex?: number;
+  /** Number of cables sharing that line (1 means no bundle). */
+  bundleSize?: number;
 }
 
 export interface RouteCircuitBadge {
@@ -172,8 +177,22 @@ export function drawRoutesOverlay(
   context.lineJoin = 'round';
   context.lineCap = 'round';
 
-  for (const route of routes) {
-    const path = route.geometry.map((v) => worldToScreen(v, viewport, size));
+  // Draw the selected route last so its offset line stays on top of the bundle.
+  const ordered = [...routes].sort(
+    (left, right) =>
+      Number(left.id === selectedId) - Number(right.id === selectedId),
+  );
+
+  for (const route of ordered) {
+    const rawPath = route.geometry.map((v) =>
+      worldToScreen(v, viewport, size),
+    );
+    const bundleSize = route.bundleSize ?? 1;
+    const lateral =
+      bundleSize > 1
+        ? ((route.bundleIndex ?? 0) - (bundleSize - 1) / 2) * 3.2
+        : 0;
+    const path = lateral === 0 ? rawPath : offsetPolyline(rawPath, lateral);
     const selected = route.id === selectedId;
 
     const routeColor = route.color ?? ROUTE_COLOR;
@@ -206,14 +225,18 @@ export function drawRoutesOverlay(
     }
 
     const label = route.label ?? route.circuitId;
-    if (options.showLabels !== false && label) {
+    const bundleCount =
+      bundleSize > 1 && (route.bundleIndex ?? 0) === 0 ? ` ×${bundleSize}` : '';
+    const chipLabel = `${label ?? ''}${bundleCount}`;
+
+    if (options.showLabels !== false && chipLabel.length > 0) {
       const midpoint = pathMidpoint(path);
 
       if (midpoint) {
         drawCircuitChip(
           context,
           midpoint,
-          label,
+          chipLabel,
           route.color ??
             (route.circuitId
               ? (circuitColors.get(route.circuitId) ?? ROUTE_COLOR)

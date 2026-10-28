@@ -239,6 +239,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@drawmyplace/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@opentelemetry/api':
         specifier: 1.10.0
         version: 1.10.0

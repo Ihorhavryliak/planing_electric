@@ -19,6 +19,7 @@ import { InvitationsModule } from './modules/invitations/invitations.module';
 import { MaterialsModule } from './modules/materials/materials.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { ProjectTemplatesModule } from './modules/project-templates/project-templates.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { UsersModule } from './modules/users/users.module';
 import { VariantsModule } from './modules/variants/variants.module';
@@ -47,6 +48,7 @@ import { VariantsModule } from './modules/variants/variants.module';
     MaterialsModule,
     NotificationsModule,
     OrganizationsModule,
+    ProjectTemplatesModule,
     ProjectsModule,
     UsersModule,
     VariantsModule,

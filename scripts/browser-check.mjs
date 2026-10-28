@@ -112,6 +112,55 @@ async function main() {
   await page.getByLabel('Мова').selectOption('en');
   await page.getByRole('button', { name: 'Sign out' }).waitFor();
 
+  // A new account has no projects, so the picker offers the four templates.
+  const templatePicker = page.getByTestId('template-picker');
+  await templatePicker.waitFor({ timeout: 20000 });
+  const templateCards = templatePicker.getByRole('button', {
+    name: /Use template/,
+  });
+  if ((await templateCards.count()) !== 4) {
+    throw new Error(
+      `Expected 4 template cards, got ${await templateCards.count()}`,
+    );
+  }
+  await page
+    .getByRole('button', { name: /2-bedroom apartment/ })
+    .click();
+  await page.waitForURL(/\/app\/projects\/[^/]+\/editor/, {
+    timeout: 25000,
+  });
+  await page.locator('[data-plan-id]').waitFor({ timeout: 25000 });
+  const templatePlanId = await page
+    .locator('[data-plan-id]')
+    .getAttribute('data-plan-id');
+  const templateProjectId = page
+    .url()
+    .match(/\/projects\/([^/]+)\/editor/)?.[1];
+  if (!templatePlanId || !templateProjectId) {
+    throw new Error('Template project did not open in the editor.');
+  }
+  const templateDrawing = await page.request.get(
+    `${WEB}/api/v1/plans/${templatePlanId}/drawing`,
+  );
+  if (!templateDrawing.ok()) {
+    throw new Error('Template drawing could not be loaded.');
+  }
+  const templateDrawingBody = await templateDrawing.json();
+  if (!Array.isArray(templateDrawingBody.walls) || templateDrawingBody.walls.length === 0) {
+    throw new Error('Template project has no walls.');
+  }
+  for (const code of ['L1', 'L2', 'S1']) {
+    await page.getByText(code, { exact: true }).first().waitFor({
+      timeout: 10000,
+    });
+  }
+  // Keep the list clean for the existing blank-project flow.
+  await page.request.post(
+    `${WEB}/api/v1/projects/${templateProjectId}/archive`,
+  );
+  await page.goto(`${WEB}/app`);
+  await page.getByPlaceholder('Test apartment').waitFor({ timeout: 20000 });
+
   await page.getByPlaceholder('Test apartment').fill('Browser Check Project');
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('link', { name: /open project/i }).first().click();

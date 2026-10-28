@@ -8,6 +8,10 @@ import { useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useI18n } from '@/features/i18n/i18n-context';
+import {
+  effectiveCircuitColors,
+  nextCircuitColor,
+} from './route-colors';
 
 interface CircuitsPanelProps {
   circuits: readonly Circuit[];
@@ -25,12 +29,14 @@ function CircuitRow({
   circuit,
   pointCount,
   routeCount,
+  routeColor,
   onUpdate,
   onDelete,
 }: {
   circuit: Circuit;
   pointCount: number;
   routeCount: number;
+  routeColor: string;
   onUpdate: (id: string, patch: Partial<Pick<Circuit, 'name' | 'color'>>) => void;
   onDelete: (id: string) => void;
 }) {
@@ -43,8 +49,9 @@ function CircuitRow({
       <div className="flex items-center gap-2">
         <span
           aria-hidden="true"
+          title={t('circuits.routeColor')}
           className="h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{ backgroundColor: circuit.color }}
+          style={{ backgroundColor: routeColor }}
         />
         <span className="font-mono text-xs font-semibold text-amber-200">
           {circuit.id}
@@ -102,7 +109,7 @@ export function CircuitsPanel({
   const { t } = useI18n();
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#f59e0b');
+  const [color, setColor] = useState(() => nextCircuitColor(circuits.length));
   const [error, setError] = useState<string | null>(null);
 
   function handleAdd(event: FormEvent<HTMLFormElement>) {
@@ -124,6 +131,7 @@ export function CircuitsPanel({
     onAdd({ id, name: label, color });
     setCode('');
     setName('');
+    setColor(nextCircuitColor(circuits.length + 1));
   }
 
   return (
@@ -148,6 +156,10 @@ export function CircuitsPanel({
             <CircuitRow
               key={circuit.id}
               circuit={circuit}
+              routeColor={
+                effectiveCircuitColors(circuits).get(circuit.id) ??
+                circuit.color
+              }
               pointCount={
                 points.filter(
                   (point) => point.properties.circuitId === circuit.id,
@@ -162,6 +174,10 @@ export function CircuitsPanel({
           ))}
         </ul>
       )}
+
+      <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+        {t('circuits.routeLegend')}
+      </p>
 
       <form className="mt-3 space-y-2" onSubmit={handleAdd}>
         <div className="grid grid-cols-[5.5rem_minmax(0,1fr)_2.25rem] gap-2">

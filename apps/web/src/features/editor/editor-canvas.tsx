@@ -78,6 +78,8 @@ import {
 } from './opening-overlay';
 import { drawPointsOverlay, type PointRenderItem } from './point-overlay';
 import { drawRoutesOverlay, type RouteRenderItem } from './route-overlay';
+import { computeRouteBundles } from './route-bundles';
+import { effectiveCircuitColors } from './route-colors';
 import {
   drawSignalingCoverage,
   type SignalingCoverageItem,
@@ -972,6 +974,23 @@ export function EditorCanvas({
     }
     return null;
   };
+  const circuitRouteColors = useMemo(
+    () => effectiveCircuitColors(circuits),
+    [circuits],
+  );
+  const routeBundles = useMemo(
+    () =>
+      computeRouteBundles(
+        routes.map((route) => ({
+          id: route.id,
+          geometry: route.geometry,
+          mounting: route.settings.mounting ?? null,
+          elevationMm: route.settings.elevationMm ?? null,
+        })),
+      ),
+    [routes],
+  );
+
   const renderRoutes = useMemo<RouteRenderItem[]>(() => {
     const draggedPoint = pointDrag
       ? points.find((point) => point.id === pointDrag.id)
@@ -1000,13 +1019,23 @@ export function EditorCanvas({
             ? null
             : (signalingLoops.find((item) => item.type === system) ?? null);
 
+        const bundle = routeBundles.get(route.id);
+        const circuitColor = route.circuitId
+          ? (circuitRouteColors.get(route.circuitId) ?? null)
+          : null;
+
         return {
           id: route.id,
           circuitId: route.circuitId,
           mounting: route.settings.mounting ?? null,
+          bundleIndex: bundle?.index ?? 0,
+          bundleSize: bundle?.size ?? 1,
           startPinned: Boolean(route.startPointId),
           endPinned: Boolean(route.endPointId),
-          color: system === 'power' ? null : (loop?.color ?? null),
+          color:
+            system === 'power'
+              ? circuitColor
+              : (loop?.color ?? circuitColor ?? null),
           label:
             system === 'power'
               ? null
@@ -1028,6 +1057,8 @@ export function EditorCanvas({
     worldBounds,
     loopById,
     signalingLoops,
+    circuitRouteColors,
+    routeBundles,
   ]);
 
   const routeAttachHint = useMemo(() => {

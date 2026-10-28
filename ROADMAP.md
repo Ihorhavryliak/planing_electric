@@ -28,7 +28,7 @@
 - [x] Запущено базове встановлення, збірку, перевірку типів, лінтінг та тести; результати записані в журнал сесій.
 - [x] Повна локальна перевірка 2026-10-25: `pnpm typecheck`, `pnpm lint`, `pnpm build` та `pnpm test` — усі проходять.
 
-**Поточний етап проєкту:** усі фази 0–14 реалізовано й перевірено. Виконано локалізацію ua/en (російський каталог підготовлено, але тимчасово приховано), тему, 3D, варіанти, налаштовувану валідацію, кошторисні попередження, local-first із лімітами/конфліктами, Sentry та розширений браузерний прогін.
+**Поточний етап проєкту:** фази 0–22 реалізовано й перевірено. Останнє: серверні шаблони проєктів (Фаза 22) — публічний каталог, seed 4 готових планів і створення проєкту з геометрією в одній транзакції; веб-пікер шаблонів на `/app`. Також виконано локалізацію ua/en (ru підготовлено), тему, 3D, варіанти, валідацію, кошторисні попередження, local-first із лімітами/конфліктами, Sentry та браузерний прогін.
 
 **Відомі блокери:** немає. Нові завдання для відповідності нижче не розпочаті, якщо не позначено інше.
 
@@ -840,6 +840,32 @@ takeoff, layers, validation, …) зараз розгорнуті вертика
 АКБ, побачити нормативні попередження, експортувати специфікацію та
 структурну схему; дані проходять через серверний, локальний режими та IFC.
 
+### Фаза 22 — Серверні шаблони проєктів
+
+Мета: новий користувач створює готовий проєкт (кімнати, пристрої, кола,
+калібрування) одним кліком, без ручного креслення.
+
+- [x] 22.1 Додати таблицю `project_templates` (code unique, локалізовані
+      name/description, preview_svg, plan_payload, is_public, sort_order)
+      та міграцію `0015_project_templates` з індексами code/is_public.
+- [x] 22.2 Додати контракти `publicProjectTemplateSchema` (без plan_payload,
+      з кількостями), `createProjectFromTemplateSchema`,
+      `createProjectBodySchema` і payload-схему з `calculationSettings`.
+- [x] 22.3 Seed-каталог із 4 шаблонів (`apartment_1br`, `apartment_2br`,
+      `house_2fl`, `office_open`), калібрування 1 unit = 1 см, SVG-прев’ю;
+      ідемпотентний `pnpm db:seed:templates`.
+- [x] 22.4 Публічні `GET /api/v1/project-templates` та `/:code` без
+      plan_payload, з кількостями кімнат/пристроїв/кіл.
+- [x] 22.5 `POST /api/v1/projects` приймає `templateCode` і створює
+      проєкт + поверх + план + геометрію + калібрування в одній транзакції;
+      невідомий код → 400.
+- [x] 22.6 Веб: пікер 4 шаблонів на `/app` (нуль активних проєктів або
+      кнопка «Новий проєкт»), картки з прев’ю/кількостями, «почати з
+      порожнього», редірект у редактор; локалізація ua/en/ru.
+- [x] 22.7 Тести: seed-валідація, API e2e (список/деталь/створення/
+      невалідний код/порожній проєкт/401), browser-check (4 картки,
+      редактор з 3 колами та стінами), `pnpm typecheck/lint/test/build`.
+
 ## 4. Наскрізний сценарій приймання MVP
 
 Використовуйте цей сценарій як основне визначення працюючого MVP:
@@ -1296,3 +1322,13 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm test` (web 153), `pnpm --filter @drawmyplace/api test` (69), `node scripts/browser-check.mjs` (ok), manual Playwright: single-element Ctrl+C→Ctrl+V twice placed copies at (40,40)/(80,80), palette search found “Димовий датчик”, analysis created 3 rooms / 6 walls / 1 door opening and undo cleared them, 2D/3D screenshots reviewed.
 - Issues/blockers: analysis still creates entities with sequential requests (batch endpoint pending); the “analysis offered” marker is per-browser; batch analysis and the server flag need schema work. Diagonal walls and window arcs are not recognised yet.
 - Next action: one transactional `POST /plans/:id/structure` for analysis results, then room-type templates and automatic device layouts.
+
+### 2026-10-28 — session 55: server-side project templates (Phase 22)
+- Completed: `project_templates` table + `0015_project_templates` (the old `0014` slot is occupied by opening holes); snapshots were repaired so future `db:generate` diffs from the full schema.
+- Completed: four seeded templates — 1-bedroom (4 walls/1 room/5 devices/2 circuits/4 routes), 2-bedroom (8/3/10/3/8), two-storey house floor 1 (12/4/15/5), open office (6/2/12/4/9) — all calibrated at 1 unit = 1 cm and validated against the template payload schema; `pnpm db:seed:templates` is idempotent.
+- Completed: public catalog `GET /api/v1/project-templates` and `/:code` (no payload, counts only); `POST /projects` accepts `templateCode` and creates project/floor/plan/walls/rooms/openings/points/routes/dimensions/calibration in one transaction; unknown code → 400; blank creation unchanged.
+- Completed: `/app` template picker with four preview cards, localized names/descriptions, counts, loading/error states, a “New project” trigger and “start blank” action; clicking a card redirects to the editor.
+- Completed: seed test, API e2e (6 tests), browser-check template step (cards, 3 circuits, walls via API), localization in `i18n.ts` and `ru.ts`.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm test` (contracts 52, calculations 70, database 6, web 161, API 75; 364 total), `pnpm build`, `pnpm db:migrate`, `pnpm db:seed:templates`, `node scripts/browser-check.mjs` (ok).
+- Issues/blockers: the floor created from a template is always named “Floor 1” (no locale in the create request); room names inside payloads are English; template SVG previews use a dark palette only; no admin UI for editing templates yet.
+- Next action: localize floor/room names at creation (or store name maps), add drag-and-drop/blank-card polish, then the deferred transactional analysis endpoint.

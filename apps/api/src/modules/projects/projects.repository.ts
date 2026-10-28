@@ -1,15 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import type {
   CreateProjectInput,
   ProjectListQuery,
   ProjectStatus,
+  TemplatePlanPayload,
   UpdateProjectInput,
 } from '@drawmyplace/contracts';
 import { and, count, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
 import {
   cableRoutes,
+  calibrations,
+  dimensions,
   electricalPoints,
   floors,
+  openings,
   plans,
   projectMembers,
   projects,
@@ -316,6 +321,189 @@ export class ProjectsRepository {
     }
 
     return project;
+  }
+
+  /**
+   * Creates a project, its first floor/plan and the complete drawing from a
+   * template in one transaction. IDs are regenerated so the same template can
+   * be used any number of times.
+   */
+  async createFromTemplate(
+    ownerId: string,
+    input: {
+      name: string;
+      description: string | null;
+      organizationId: string | null;
+      payload: TemplatePlanPayload;
+    },
+  ): Promise<ProjectRow> {
+    return this.db.transaction(async (tx) => {
+      const [project] = await tx
+        .insert(projects)
+        .values({
+          createdBy: ownerId,
+          name: input.name,
+          description: input.description,
+          organizationId: input.organizationId,
+        })
+        .returning();
+
+      if (!project) {
+        throw new Error('Failed to create project');
+      }
+
+      const [floor] = await tx
+        .insert(floors)
+        .values({
+          projectId: project.id,
+          name: 'Floor 1',
+          sortOrder: 0,
+        })
+        .returning();
+
+      if (!floor) {
+        throw new Error('Failed to create floor');
+      }
+
+      const [plan] = await tx
+        .insert(plans)
+        .values({
+          floorId: floor.id,
+          sourceType: 'blank',
+          underlay: {},
+          viewport: { x: 0, y: 0, zoom: 1 },
+          calculationSettings: input.payload.calculationSettings ?? {},
+        })
+        .returning();
+
+      if (!plan) {
+        throw new Error('Failed to create plan');
+      }
+
+      const wallIds = new Map<string, string>();
+      const wallRows = input.payload.walls.map((wall) => {
+        const id = randomUUID();
+        wallIds.set(wall.id, id);
+
+        return {
+          id,
+          floorId: floor.id,
+          geometry: wall.geometry,
+          thickness: wall.thickness,
+          label: wall.label,
+        };
+      });
+
+      if (wallRows.length > 0) {
+        await tx.insert(walls).values(wallRows);
+      }
+
+      const openingRows = input.payload.openings.flatMap((opening) => {
+        const wallId = wallIds.get(opening.wallId);
+
+        if (!wallId) return [];
+
+        return [
+          {
+            id: randomUUID(),
+            floorId: floor.id,
+            wallId,
+            type: opening.type,
+            offset: opening.offset,
+            width: opening.width,
+            height: opening.height,
+            diameter: opening.diameter,
+            sillHeight: opening.sillHeight,
+            flipped: opening.flipped,
+            label: opening.label,
+          },
+        ];
+      });
+
+      if (openingRows.length > 0) {
+        await tx.insert(openings).values(openingRows);
+      }
+
+      const pointIds = new Map<string, string>();
+      const pointRows = input.payload.points.map((point) => {
+        const id = randomUUID();
+        pointIds.set(point.id, id);
+
+        return {
+          id,
+          floorId: floor.id,
+          type: point.type,
+          x: point.x,
+          y: point.y,
+          rotation: point.rotation,
+          label: point.label,
+          mountingHeight: point.mountingHeight,
+          properties: point.properties,
+        };
+      });
+
+      if (pointRows.length > 0) {
+        await tx.insert(electricalPoints).values(pointRows);
+      }
+
+      const routeRows = input.payload.routes.map((route) => ({
+        id: randomUUID(),
+        floorId: floor.id,
+        materialId: null,
+        circuitId: route.circuitId,
+        startPointId: route.startPointId
+          ? (pointIds.get(route.startPointId) ?? null)
+          : null,
+        endPointId: route.endPointId
+          ? (pointIds.get(route.endPointId) ?? null)
+          : null,
+        geometry: route.geometry,
+        settings: route.settings,
+      }));
+
+      if (routeRows.length > 0) {
+        await tx.insert(cableRoutes).values(routeRows);
+      }
+
+      const roomRows = input.payload.rooms.map((room) => ({
+        id: randomUUID(),
+        floorId: floor.id,
+        name: room.name,
+        boundary: room.boundary,
+      }));
+
+      if (roomRows.length > 0) {
+        await tx.insert(rooms).values(roomRows);
+      }
+
+      const dimensionRows = input.payload.dimensions.map((dimension) => ({
+        id: randomUUID(),
+        floorId: floor.id,
+        pointA: dimension.pointA,
+        pointB: dimension.pointB,
+        offset: dimension.offset,
+        label: dimension.label,
+      }));
+
+      if (dimensionRows.length > 0) {
+        await tx.insert(dimensions).values(dimensionRows);
+      }
+
+      const calibration = input.payload.calibration;
+
+      if (calibration) {
+        await tx.insert(calibrations).values({
+          planId: plan.id,
+          pointA: calibration.pointA,
+          pointB: calibration.pointB,
+          knownDistance: calibration.realDistance,
+          unit: calibration.unit,
+          metersPerPixel: calibration.metersPerUnit,
+        });
+      }
+
+      return project;
+    });
   }
 
   async updateOwned(

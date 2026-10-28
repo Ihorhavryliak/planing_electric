@@ -15,11 +15,11 @@ import {
 } from '@nestjs/common';
 import {
   addProjectMemberSchema,
-  createProjectSchema,
+  createProjectBodySchema,
   projectListQuerySchema,
   updateProjectSchema,
   type AddProjectMemberInput,
-  type CreateProjectInput,
+  type CreateProjectBodyInput,
   type ProjectListQuery,
   type PublicProject,
   type PublicProjectMember,
@@ -60,7 +60,8 @@ export class ProjectsController {
   @Post()
   create(
     @CurrentUser() user: PublicUser,
-    @Body(new ZodValidationPipe(createProjectSchema)) input: CreateProjectInput,
+    @Body(new ZodValidationPipe(createProjectBodySchema))
+    input: CreateProjectBodyInput,
   ): Promise<PublicProject> {
     return this.projects.create(user.id, input);
   }

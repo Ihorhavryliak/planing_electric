@@ -8,21 +8,22 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "browser:check": "node scripts/browser-check.mjs",
     "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "eslint .",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
     "db:generate": "pnpm --filter @drawmyplace/database db:generate",
     "db:migrate": "pnpm --filter @drawmyplace/database db:migrate",
+    "db:seed:templates": "pnpm --filter @drawmyplace/contracts build && pnpm --filter @drawmyplace/database seed:templates",
     "db:up": "docker compose -f infra/docker-compose.yml up -d",
-    "db:down": "docker compose -f infra/docker-compose.yml down",
-    "browser:check": "node scripts/browser-check.mjs",
-    "docker:prod:up": "docker compose -f infra/docker-compose.prod.yml up -d --build",
+    "dev": "turbo run dev",
     "docker:prod:down": "docker compose -f infra/docker-compose.prod.yml down",
-    "signaling:check": "node scripts/signaling-check.mjs",
+    "docker:prod:up": "docker compose -f infra/docker-compose.prod.yml up -d --build",
+    "lint": "eslint .",
+    "responsive:check": "node scripts/responsive-check.mjs",
     "screenshots": "node scripts/screenshots.mjs",
-    "responsive:check": "node scripts/responsive-check.mjs"
+    "signaling:check": "node scripts/signaling-check.mjs",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
