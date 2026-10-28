@@ -590,6 +590,13 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       сторінці редактора прокручуватися, щоб нижній док не обрізався.
 - [x] 21.16.6 Дочекатися збереження розетки з дока перед побудовою
       траси в browser-check, щоб авто-прив’язка старту не флапала.
+- [x] 21.17.1 Збільшити магнітний радіус прив’язки кінців трас у 2D
+      до 18 px і показувати зелене магнітне кільце на пристрої під
+      курсором.
+- [x] 21.17.2 Прив’язувати кінці трас у 3D до розеток, щитів і ламп
+      (екранна відстань), брати висоту старту з першого пристрою.
+- [x] 21.17.3 Малювати в 3D вертикальні спуски/підйоми від траси до
+      висоти приєднаного пристрою, як у розрахунку довжин.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -865,6 +872,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-28 — session 30: magnetic cable snapping
+- Completed: 2D route ends snap to devices within an 18 px magnet radius and show a green magnetic ring while the cursor is near a socket, lamp or board; dragging an existing route end uses the same radius. In 3D, route ends snap to device glyphs, the first device sets the run height (so a board at 1.5 m starts the cable at 1.5 m), and the renderer draws vertical risers/drops from the route elevation to every attached device height. This makes board → socket and wall → lamp runs visible in 3D and matches the vertical-drop lengths already used by the calculation.
+- Tests run: `pnpm --filter @drawmyplace/web typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149).
+- Issues/blockers: the 3D snap targets are visually dense at the default dollhouse zoom; verify with real projects and consider a larger snap radius.
+- Next action: full design refresh on shadcn/ui primitives and a 2D plan realism pass.
 
 ### 2026-10-28 — session 29: responsive editor and stable 3D framing
 - Completed: the editor now opens with the sidebars hidden on narrow screens when no preference is stored, so the plan and bottom dock are immediately visible instead of being pushed below Circuits/History. The 3D camera frames the whole plan (walls, rooms, devices, routes) with a deterministic binary-search fit that respects the canvas aspect ratio, so the view no longer jumps or crops points when a wall exists; the first 2D viewport sync no longer fights that fit. The “Add in 3D” panel is collapsible, keeps GLB export in its header, defaults collapsed on phones, and is tall enough to show every tool. Cable-level labels no longer break onto two lines in the mobile dock.

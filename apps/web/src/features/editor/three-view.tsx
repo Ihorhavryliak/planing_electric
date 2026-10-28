@@ -107,6 +107,16 @@ function defaultMountingHeight(point: PublicPoint): number {
   return 100;
 }
 
+/** Device height in plan units, matching the rendered glyph position. */
+function pointHeightPlanUnits(
+  point: PublicPoint,
+  metersPerUnit: number | null,
+): number {
+  return typeof point.mountingHeight === 'number' && metersPerUnit
+    ? point.mountingHeight / metersPerUnit
+    : defaultMountingHeight(point);
+}
+
 function planUnitsPerMeter(metersPerUnit: number | null): number {
   return metersPerUnit ? 1 / metersPerUnit : 100;
 }
@@ -274,11 +284,11 @@ function pointGlyph(
     add(new THREE.ConeGeometry(8, 15, 8), plate, 7.5);
   }
 
-  const height =
-    typeof point.mountingHeight === 'number' && metersPerUnit
-      ? point.mountingHeight / metersPerUnit
-      : defaultMountingHeight(point);
-  group.position.set(point.x, height, point.y);
+  group.position.set(
+    point.x,
+    pointHeightPlanUnits(point, metersPerUnit),
+    point.y,
+  );
   return group;
 }
 
@@ -425,6 +435,8 @@ function routeCable(
   route: PublicRoute,
   elevation: number,
   selected: boolean,
+  points: readonly PublicPoint[],
+  metersPerUnit: number | null,
 ): THREE.Group {
   const group = new THREE.Group();
   const color = selected ? 0xf472b6 : ROUTE_COLOR;
@@ -481,6 +493,43 @@ function routeCable(
       material,
     );
     joint.position.copy(node);
+    add(joint);
+  }
+
+  // Vertical drops/risers to attached devices (socket, board, lamp). The
+  // calculation already adds these lengths; this makes them visible in 3D.
+  const ends = [
+    { at: route.geometry[0], id: route.startPointId },
+    { at: route.geometry[route.geometry.length - 1], id: route.endPointId },
+  ] as const;
+
+  for (const end of ends) {
+    if (!end.at) continue;
+    const point =
+      points.find((item) => item.id === end.id) ??
+      points.find(
+        (item) =>
+          Math.abs(item.x - end.at!.x) < 1e-6 &&
+          Math.abs(item.y - end.at!.y) < 1e-6,
+      );
+    if (!point) continue;
+
+    const height = pointHeightPlanUnits(point, metersPerUnit);
+    const delta = height - elevation;
+    if (Math.abs(delta) < 1) continue;
+
+    const riser = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, Math.abs(delta), 12),
+      material,
+    );
+    riser.position.set(end.at.x, elevation + delta / 2, end.at.y);
+    add(riser);
+
+    const joint = new THREE.Mesh(
+      new THREE.SphereGeometry(radius * 1.15, 12, 10),
+      material,
+    );
+    joint.position.set(end.at.x, height, end.at.y);
     add(joint);
   }
 
@@ -636,6 +685,8 @@ export function ThreeView({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const wallsRef = useRef(walls);
   wallsRef.current = walls;
+  const pointsRef = useRef(points);
+  pointsRef.current = points;
   const routeMountingRef = useRef(routeMounting);
   routeMountingRef.current = routeMounting;
   const openingDragRef = useRef<{
@@ -744,7 +795,38 @@ export function ThreeView({
      * the wall polyline, so the cable never dives to the floor or flies through
      * the room when the cursor leaves the wall silhouette.
      */
+    /** Nearest device glyph under the pointer, in screen space. */
+    const deviceAt = (event: PointerEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const meters = metersPerUnitRef.current;
+      let best: { point: PublicPoint; distance: number } | null = null;
+
+      for (const point of pointsRef.current) {
+        const projected = new THREE.Vector3(
+          point.x,
+          pointHeightPlanUnits(point, meters),
+          point.y,
+        ).project(camera);
+        if (projected.z < -1 || projected.z > 1) continue;
+
+        const sx = rect.left + (projected.x * 0.5 + 0.5) * rect.width;
+        const sy = rect.top + (-projected.y * 0.5 + 0.5) * rect.height;
+        const distance = Math.hypot(sx - event.clientX, sy - event.clientY);
+
+        if (distance <= 18 && (!best || distance < best.distance)) {
+          best = { point, distance };
+        }
+      }
+
+      return best?.point ?? null;
+    };
+
     const routePointAt = (event: PointerEvent) => {
+      // Route ends snap to devices so the server attaches the cable and adds
+      // the vertical drop to the socket, board or lamp.
+      const device = deviceAt(event);
+      if (device) return { x: device.x, y: device.y };
+
       const mounting = routeMountingRef.current;
       if (mounting !== 'wall' && mounting !== 'chase') return groundAt(event);
 
@@ -792,10 +874,15 @@ export function ThreeView({
         metersPerUnitRef.current,
       );
 
+      const device = deviceAt(event);
+      const deviceHeight = device
+        ? pointHeightPlanUnits(device, metersPerUnitRef.current)
+        : null;
+
       if (mounting !== 'wall' && mounting !== 'chase') {
         draftWallRef.current = null;
-        draftElevationRef.current = fallback;
-        setDraftElevation(fallback);
+        draftElevationRef.current = deviceHeight ?? fallback;
+        setDraftElevation(deviceHeight ?? fallback);
         return;
       }
 
@@ -809,7 +896,10 @@ export function ThreeView({
 
       if (wallHit && normal && wall) {
         const maxHeight = wallHeightPlanUnits(metersPerUnitRef.current);
-        const height = Math.min(maxHeight, Math.max(0, wallHit.point.y));
+        const height = Math.min(
+          maxHeight,
+          Math.max(0, deviceHeight ?? wallHit.point.y),
+        );
         draftWallRef.current = {
           id: wall.id,
           normal,
@@ -1517,7 +1607,13 @@ export function ThreeView({
       for (const route of visibleRoutes) {
         const elevation = routeElevation(route, wallHeight, metersPerUnit);
         group.add(
-          routeCable(route, elevation, route.id === selectedRouteId),
+          routeCable(
+            route,
+            elevation,
+            route.id === selectedRouteId,
+            points,
+            metersPerUnit,
+          ),
         );
 
         for (const [end, pinned] of [
@@ -1774,6 +1870,19 @@ export function ThreeView({
       );
     }
 
+    const snapped =
+      draftMode === 'route' && draftCursor
+        ? points.find(
+            (point) =>
+              Math.abs(point.x - draftCursor.x) < 1e-6 &&
+              Math.abs(point.y - draftCursor.y) < 1e-6,
+          )
+        : undefined;
+    const snappedHeight =
+      snapped !== undefined
+        ? pointHeightPlanUnits(snapped, metersPerUnit)
+        : null;
+
     const rubberStart =
       draftStart ?? draftPoints[draftPoints.length - 1] ?? null;
     if (rubberStart && draftCursor) {
@@ -1816,6 +1925,46 @@ export function ThreeView({
       );
       rubber.computeLineDistances();
       group.add(rubber);
+
+      if (
+        snappedHeight !== null &&
+        Math.abs(snappedHeight - draftHeight) > 1
+      ) {
+        const riser = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(
+              draftCursor.x,
+              draftHeight,
+              draftCursor.y,
+            ),
+            new THREE.Vector3(
+              draftCursor.x,
+              snappedHeight,
+              draftCursor.y,
+            ),
+          ]),
+          new THREE.LineDashedMaterial({
+            color: 0x34d399,
+            dashSize: 7,
+            gapSize: 5,
+            transparent: true,
+            opacity: 0.9,
+          }),
+        );
+        riser.computeLineDistances();
+        group.add(riser);
+
+        const target = new THREE.Mesh(
+          new THREE.SphereGeometry(4, 10, 8),
+          new THREE.MeshStandardMaterial({
+            color: 0x34d399,
+            emissive: 0x34d399,
+            emissiveIntensity: 0.6,
+          }),
+        );
+        target.position.set(draftCursor.x, snappedHeight, draftCursor.y);
+        group.add(target);
+      }
     }
 
     const dotMaterial = new THREE.MeshStandardMaterial({ color: 0x2f6bd8 });
@@ -1849,6 +1998,7 @@ export function ThreeView({
     draftCursor,
     draftStart,
     draftElevation,
+    points,
   ]);
 
   useEffect(() => {

@@ -295,20 +295,37 @@ export function drawRoutesOverlay(
 
   if (options.attachHint) {
     const at = worldToScreen(options.attachHint, viewport, size);
+    const magnet = routeLight ? '#059669' : '#34d399';
+
+    // Magnetic target: a soft halo plus a solid ring makes it obvious that the
+    // cable end will snap to this device.
+    context.save();
+    context.beginPath();
+    context.arc(at.x, at.y, 15, 0, Math.PI * 2);
+    context.setLineDash([3, 3]);
+    context.lineWidth = 1.5;
+    context.strokeStyle = magnet;
+    context.globalAlpha = 0.7;
+    context.stroke();
+    context.setLineDash([]);
+    context.globalAlpha = 1;
 
     context.beginPath();
-    context.arc(at.x, at.y, 9, 0, Math.PI * 2);
+    context.arc(at.x, at.y, 9.5, 0, Math.PI * 2);
     context.lineWidth = 2;
-    context.strokeStyle = routeLight
-      ? 'rgba(47, 107, 216, 0.9)'
-      : 'rgba(251, 191, 36, 0.9)';
+    context.strokeStyle = magnet;
+    context.shadowColor = routeLight
+      ? 'rgba(5, 150, 105, 0.35)'
+      : 'rgba(52, 211, 153, 0.45)';
+    context.shadowBlur = 8;
     context.stroke();
+    context.shadowBlur = 0;
+
     context.beginPath();
-    context.arc(at.x, at.y, 4, 0, Math.PI * 2);
-    context.fillStyle = routeLight
-      ? 'rgba(47, 107, 216, 0.2)'
-      : 'rgba(251, 191, 36, 0.25)';
+    context.arc(at.x, at.y, 3.5, 0, Math.PI * 2);
+    context.fillStyle = magnet;
     context.fill();
+    context.restore();
   }
 
   for (const penetration of options.penetrations ?? []) {

@@ -939,6 +939,17 @@ export function EditorCanvas({
     return point ? { x: point.x, y: point.y } : null;
   }, [vertexDrag, routes, points]);
 
+  const draftSnapHint = useMemo(() => {
+    if (tool !== 'route' || !hoverWorld) return null;
+    const point = points.find(
+      (item) =>
+        Math.abs(item.x - hoverWorld.x) <= 1e-6 &&
+        Math.abs(item.y - hoverWorld.y) <= 1e-6,
+    );
+
+    return point ? { x: point.x, y: point.y } : null;
+  }, [tool, hoverWorld, points]);
+
   const penetrationMarkers = useMemo(
     () =>
       findPenetrations(
@@ -1318,7 +1329,7 @@ export function EditorCanvas({
           layers?.routes === false || layers?.penetrations === false
             ? []
             : penetrationMarkers,
-        attachHint: routeAttachHint,
+        attachHint: routeAttachHint ?? draftSnapHint,
         light: canvasLight,
       },
     );
@@ -1354,6 +1365,7 @@ export function EditorCanvas({
     layers,
     penetrationMarkers,
     routeAttachHint,
+    draftSnapHint,
     readOnly,
     selectedOpeningId,
     selectedPointId,
@@ -1600,11 +1612,14 @@ export function EditorCanvas({
 
   /** Route bends snap to an electrical point first, then to the grid. */
   function routeSnap(screen: Vec2): Vec2 {
+    // A generous magnet radius makes it easy to land a cable end on a socket,
+    // lamp or board without pixel-perfect aiming.
     const point = snapToPoint(
       pointsRef.current,
       screen,
       viewportRef.current,
       sizeRef.current,
+      18,
     );
 
     if (point) return point;
@@ -1641,6 +1656,7 @@ export function EditorCanvas({
         screen,
         viewportRef.current,
         sizeRef.current,
+        18,
       ) ?? raw
     );
   }
