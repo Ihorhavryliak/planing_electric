@@ -586,6 +586,10 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       збільшити висоту, щоб усі інструменти були видимі.
 - [x] 21.16.4 Не переносити підписи рівнів кабелю в доку на два
       рядки на мобільних; дозволити рядку переноситися цілком.
+- [x] 21.16.5 На коротких екранах (max-height 720px) дозволити
+      сторінці редактора прокручуватися, щоб нижній док не обрізався.
+- [x] 21.16.6 Дочекатися збереження розетки з дока перед побудовою
+      траси в browser-check, щоб авто-прив’язка старту не флапала.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -865,8 +869,9 @@ MVP готовий до початкового тестування корист
 ### 2026-10-28 — session 29: responsive editor and stable 3D framing
 - Completed: the editor now opens with the sidebars hidden on narrow screens when no preference is stored, so the plan and bottom dock are immediately visible instead of being pushed below Circuits/History. The 3D camera frames the whole plan (walls, rooms, devices, routes) with a deterministic binary-search fit that respects the canvas aspect ratio, so the view no longer jumps or crops points when a wall exists; the first 2D viewport sync no longer fights that fit. The “Add in 3D” panel is collapsible, keeps GLB export in its header, defaults collapsed on phones, and is tall enough to show every tool. Cable-level labels no longer break onto two lines in the mobile dock.
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm --filter @drawmyplace/web test` (149), `node scripts/browser-check.mjs` (dev and Docker), `responsive-check` (360/768/1024/1440) and `signaling-check` on <http://localhost:8090>, Playwright screenshots at 1440×900 and 390×844 for 2D/3D, collapsed 3D tools, and mobile editor layout.
-- Issues/blockers: one browser-check run on Docker failed the route auto-pin assertion, then passed on an immediate rerun; the assertion needs a stability review if it repeats.
-- Next action: review the 3D tools panel and layer checkbox card on short landscape screens, and harden the browser-check route auto-pin wait if the flake returns.
+- Completed: short landscape screens (under 720 px tall) let the editor page scroll instead of clipping the bottom component dock, and browser-check now waits for the dock socket to finish saving before it draws the route, removing the auto-pin flake.
+- Issues/blockers: none.
+- Next action: review the 3D layer checkbox card on very small screens.
 
 ### 2026-10-28 — session 28: reliable 3D wall cable routing
 - Completed: wall-mounted routes now lock to the wall that was first hit. Every later pointer position is projected onto that wall plane and clamped to the wall polyline, so the cable no longer drops to the floor or cuts across the room when the cursor leaves the wall silhouette. The first click sets the cable height (`elevationMm`), which matches the live preview and the Properties field. Pointer capture keeps the drag alive when the mouse is released outside the canvas. Route rendering switched from 1 px lines (WebGL ignores `lineWidth`) to solid tubes with joint spheres, a soft halo and a translucent tube in the live preview. Draft state for the wall/height is cleared on finish, Escape and `pointercancel`.

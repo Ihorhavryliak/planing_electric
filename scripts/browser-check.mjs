@@ -342,7 +342,19 @@ async function main() {
     .getByRole('button', { name: 'Socket', exact: true })
     .click();
   await page.getByRole('button', { name: 'Double socket' }).click();
+  const socketSaved = page
+    .waitForResponse(
+      (response) =>
+        response.url().includes('/points') &&
+        response.request().method() === 'POST',
+      { timeout: 10000 },
+    )
+    .catch(() => null);
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  if (!(await socketSaved)) {
+    await page.screenshot({ path: path.join(dir, 'socket-save-failure.png') });
+    throw new Error('The dock socket was not saved before routing.');
+  }
   await page.getByRole('button', { name: 'Draw cable route tool' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
   await page.mouse.click(at(0.5, 0.57).x, at(0.5, 0.57).y);

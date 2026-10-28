@@ -57,6 +57,21 @@
   }
 }
 
+/* Short landscape screens cannot fit the header, canvas and dock at once.
+   Let the editor page scroll instead of clipping the dock. */
+@media (max-height: 720px) {
+  [data-full-editor] {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  [data-full-editor] .editor-shell {
+    height: auto;
+    min-height: 0;
+  }
+}
+
 html,
 body,
 #root {
