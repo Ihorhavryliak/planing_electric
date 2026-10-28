@@ -48,7 +48,20 @@ export function loadEditorPreferences(): EditorPreferences {
   if (typeof window === 'undefined') return DEFAULT_EDITOR_PREFERENCES;
 
   try {
-    return parseEditorPreferences(window.localStorage.getItem(STORAGE_KEY));
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+
+    if (raw) return parseEditorPreferences(raw);
+
+    // On a phone the stacked sidebars push the plan off-screen; start with the
+    // canvas visible. An explicit stored preference always wins.
+    let narrow = false;
+    try {
+      narrow = window.matchMedia?.('(max-width: 1023px)').matches ?? false;
+    } catch {
+      narrow = false;
+    }
+
+    return { ...DEFAULT_EDITOR_PREFERENCES, sidebarCollapsed: narrow };
   } catch {
     return DEFAULT_EDITOR_PREFERENCES;
   }

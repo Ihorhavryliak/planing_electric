@@ -246,7 +246,7 @@ export function ComponentDock({
 
       <div className="h-6 w-px shrink-0 bg-white/10" aria-hidden />
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           <Cable className="h-3.5 w-3.5" />
           {t('editor.dock.routeLevel')}
@@ -258,7 +258,7 @@ export function ComponentDock({
               type="button"
               aria-pressed={routeMounting === mounting}
               onClick={() => onRouteMountingChange(mounting)}
-              className={`h-7 rounded px-2 text-xs transition ${
+              className={`h-7 whitespace-nowrap rounded px-1.5 text-xs transition sm:px-2 ${
                 routeMounting === mounting
                   ? 'bg-[var(--dmp-color-brand)] text-white'
                   : 'text-slate-400 hover:text-white'
@@ -268,7 +268,7 @@ export function ComponentDock({
             </button>
           ))}
         </div>
-        <span className="text-[10px] text-slate-500">
+        <span className="whitespace-nowrap text-[10px] text-slate-500">
           {t('editor.dock.routeHeight', { value: routeHeightLabel })}
         </span>
       </div>

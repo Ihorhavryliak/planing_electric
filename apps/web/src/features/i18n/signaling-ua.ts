@@ -121,6 +121,8 @@ export const signalingUa: Record<string, string> = {
   'editor.context.dimension': 'Розмір',
   'editor.lengthUnit': 'Одиниці виміру',
   'editor.threeAdd': 'Додати в 3D',
+  'editor.threeCollapse': 'Згорнути інструменти 3D',
+  'editor.threeExpand': 'Розгорнути інструменти 3D',
   'editor.threeClickFloor': 'Виберіть пристрій і клацніть підлогу',
   'editor.threeDistance': 'Відстань до щита',
   'editor.threeCoordinates': 'Координати',

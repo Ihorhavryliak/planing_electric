@@ -121,6 +121,8 @@ export const signalingEn: Record<string, string> = {
   'editor.context.dimension': 'Dimension',
   'editor.lengthUnit': 'Measurement units',
   'editor.threeAdd': 'Add in 3D',
+  'editor.threeCollapse': 'Collapse 3D tools',
+  'editor.threeExpand': 'Expand 3D tools',
   'editor.threeClickFloor': 'Choose a device, then click the floor',
   'editor.threeDistance': 'Distance to board',
   'editor.threeCoordinates': 'Coordinates',

@@ -11,6 +11,8 @@ import {
   Box,
   BrickWall,
   Cable,
+  ChevronDown,
+  ChevronUp,
   CircleDot,
   Download,
   Lightbulb,
@@ -351,6 +353,70 @@ function disposeGroup(group: THREE.Group): void {
 }
 
 /**
+ * Frames the whole plan in the 3D camera. A binary search finds the closest
+ * distance at which every corner of the bounds stays inside a safe margin, so
+ * the result is deterministic and independent of aspect ratio or plan size.
+ */
+function frameCameraToBounds(
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls,
+  bounds: THREE.Box3,
+): void {
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  const corners: THREE.Vector3[] = [];
+
+  for (const x of [bounds.min.x, bounds.max.x]) {
+    for (const y of [bounds.min.y, bounds.max.y]) {
+      for (const z of [bounds.min.z, bounds.max.z]) {
+        corners.push(new THREE.Vector3(x, y, z));
+      }
+    }
+  }
+
+  // Higher than a typical orbit angle so tall walls do not hide the floor and
+  // the plan reads like a dollhouse view.
+  const direction = new THREE.Vector3(0.5, 1.15, 0.85).normalize();
+  const probe = camera.clone() as THREE.PerspectiveCamera;
+  probe.aspect = camera.aspect;
+  probe.updateProjectionMatrix();
+
+  const fits = (distance: number) => {
+    probe.position.copy(center).addScaledVector(direction, distance);
+    probe.lookAt(center);
+    probe.updateMatrixWorld(true);
+    probe.matrixWorldInverse.copy(probe.matrixWorld).invert();
+
+    return corners.every((corner) => {
+      const projected = corner.clone().project(probe);
+      return (
+        Math.abs(projected.x) <= 0.9 &&
+        Math.abs(projected.y) <= 0.86 &&
+        projected.z > -1 &&
+        projected.z < 1
+      );
+    });
+  };
+
+  let low = 10;
+  let high = Math.max(size.length() * 12, 1000);
+
+  while (!fits(high) && high < 1_000_000) high *= 4;
+
+  for (let step = 0; step < 24; step += 1) {
+    const mid = (low + high) / 2;
+    if (fits(mid)) high = mid;
+    else low = mid;
+  }
+
+  const distance = high * 1.03;
+  camera.position.copy(center).addScaledVector(direction, distance);
+  camera.lookAt(center);
+  controls.target.copy(center);
+  controls.update();
+}
+
+/**
  * Builds a solid cable run instead of a one-pixel line. WebGL ignores
  * `lineWidth`, so thin lines disappear against walls; tubes stay readable from
  * every angle and read as physical cables in 3D.
@@ -498,6 +564,10 @@ export function ThreeView({
   const [xray, setXray] = useState(false);
   const [daylight, setDaylight] = useState(false);
   const [sectionEnabled, setSectionEnabled] = useState(false);
+  // Keep the drawing tools out of the way on phones; desktop opens them.
+  const [toolsOpen, setToolsOpen] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 1024,
+  );
   const [sectionHeight, setSectionHeight] = useState(1.6);
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef(new THREE.Group());
@@ -1495,35 +1565,51 @@ export function ThreeView({
       }
     }
 
+    // Frame walls, rooms, devices and routes together. Using only walls made
+    // the view jump and crop points whenever a wall existed.
     const bounds = new THREE.Box3();
+    const includePlanPoint = (x: number, z: number, y = 0) =>
+      bounds.expandByPoint(new THREE.Vector3(x, y, z));
+
     for (const wall of walls) {
       for (const point of wall.geometry) {
-        bounds.expandByPoint(new THREE.Vector3(point.x, 0, point.y));
+        includePlanPoint(point.x, point.y);
+        includePlanPoint(point.x, point.y, wallHeight);
       }
     }
+    for (const room of rooms) {
+      for (const point of room.boundary) {
+        includePlanPoint(point.x, point.y);
+        includePlanPoint(point.x, point.y, wallHeight);
+      }
+    }
+    for (const point of points) includePlanPoint(point.x, point.y);
+    for (const route of routes) {
+      for (const point of route.geometry) includePlanPoint(point.x, point.y);
+    }
+
     if (!bounds.isEmpty()) {
-      const signature = `${bounds.min.x.toFixed(2)}:${bounds.min.z.toFixed(2)}:${bounds.max.x.toFixed(2)}:${bounds.max.z.toFixed(2)}`;
+      const signature = [
+        bounds.min.x,
+        bounds.min.y,
+        bounds.min.z,
+        bounds.max.x,
+        bounds.max.y,
+        bounds.max.z,
+      ]
+        .map((value) => value.toFixed(2))
+        .join(':');
 
       // Refit only when the plan geometry changes, not when selection changes,
       // so clicking in the split view does not move the camera.
       if (fitSignatureRef.current !== signature) {
         fitSignatureRef.current = signature;
-        const center = new THREE.Vector3();
-        const size = new THREE.Vector3();
-        bounds.getCenter(center);
-        bounds.getSize(size);
-        const distance = Math.max(size.x, size.z, 100) * 1.4;
-        if (cameraRef.current) {
-          cameraRef.current.position.set(
-            center.x + distance * 0.8,
-            distance * 0.9,
-            center.z + distance * 0.8,
+        if (cameraRef.current && controlsRef.current) {
+          frameCameraToBounds(
+            cameraRef.current,
+            controlsRef.current,
+            bounds,
           );
-          cameraRef.current.lookAt(center);
-        }
-        if (controlsRef.current) {
-          controlsRef.current.target.copy(center);
-          controlsRef.current.update();
         }
       }
     }
@@ -1550,9 +1636,16 @@ export function ThreeView({
     selectedRouteId,
   ]);
 
+  const viewportSyncedRef = useRef(false);
   useEffect(() => {
     const controls = controlsRef.current;
     if (!controls) return;
+    // The first frame is owned by the geometry fit below. Only later 2D pans
+    // move the 3D target; otherwise the two effects fight on mount.
+    if (!viewportSyncedRef.current) {
+      viewportSyncedRef.current = true;
+      return;
+    }
     controls.target.set(viewport.x, 0, viewport.y);
     controls.update();
   }, [viewport.x, viewport.y]);
@@ -2092,10 +2185,49 @@ export function ThreeView({
           </label>
         ) : null}
       </div>
-      <div className="absolute top-16 right-3 flex max-h-[calc(100%-14rem)] w-52 flex-col gap-1 overflow-y-auto rounded-xl border border-white/10 bg-slate-950/90 p-2 text-[11px] text-slate-300 backdrop-blur">
-        <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-          {t('editor.threeAdd')}
-        </p>
+      <div className="absolute top-16 right-3 flex max-h-[calc(100%-10rem)] w-52 flex-col rounded-xl border border-white/10 bg-slate-950/90 text-[11px] text-slate-300 backdrop-blur">
+        <div className="flex items-center justify-between gap-1 px-2 pt-2 pb-1">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
+            {t('editor.threeAdd')}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => void exportGlb()}
+              disabled={exporting}
+              title="Export GLB"
+              aria-label="Export GLB"
+              className="inline-flex h-6 items-center gap-1 rounded-md border border-white/10 px-1.5 text-[10px] text-slate-300 transition hover:bg-white/10 disabled:opacity-50"
+            >
+              {exporting ? (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              ) : (
+                <Download className="h-3 w-3" />
+              )}
+              GLB
+            </button>
+            <button
+              type="button"
+              onClick={() => setToolsOpen((open) => !open)}
+              aria-expanded={toolsOpen}
+              aria-label={
+                toolsOpen ? t('editor.threeCollapse') : t('editor.threeExpand')
+              }
+              title={
+                toolsOpen ? t('editor.threeCollapse') : t('editor.threeExpand')
+              }
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 text-slate-300 transition hover:bg-white/10"
+            >
+              {toolsOpen ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        </div>
+        {toolsOpen ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 pt-0">
         <div className="grid grid-cols-3 gap-1 px-1 pb-1">
           {(['floor', 'wall', 'ceiling'] as const).map((mode) => (
             <button
@@ -2240,6 +2372,8 @@ export function ThreeView({
                 : t('editor.threeClickFloor')}
           </p>
         ) : null}
+        </div>
+        ) : null}
       </div>
 
       {selectedPoint ? (
@@ -2299,19 +2433,6 @@ export function ThreeView({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => void exportGlb()}
-        disabled={exporting}
-        className="absolute top-16 right-3 inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-slate-950/90 px-3 text-xs text-slate-200 backdrop-blur hover:bg-white/10"
-      >
-        {exporting ? (
-          <LoaderCircle className="h-4 w-4 animate-spin" />
-        ) : (
-          <Download className="h-4 w-4" />
-        )}
-        GLB
-      </button>
       <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1.5 text-[11px] text-slate-300 backdrop-blur">
         {(
           [
