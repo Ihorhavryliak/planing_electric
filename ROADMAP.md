@@ -1267,3 +1267,12 @@ MVP готовий до початкового тестування корист
 - Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm test` (API 66, web 144, contracts 47, calculations 64, database 2; 323 tests), `node scripts/browser-check.mjs`, screenshots regenerated.
 - Issues/blockers: the reference three-column shell (rooms left / canvas / properties right) is approximated by the existing canvas + tabbed sidebar; a dedicated left rooms rail and the remaining 19.4 property-panel polish are still open. 19.4.5 hover/selection animation polish remains.
 - Next action: left rooms rail + property-panel accordion (19.4.4/19.4.5), then Phase 19.2/19.3 polish.
+
+### 2026-10-28 — session 52: automatic plan analysis (rooms and walls from the underlay)
+- Completed: new client-side analyser (`plan-analysis.ts`) rasterizes the uploaded underlay, builds a wall mask from long dark runs (Otsu threshold, inverted-blueprint support), extracts horizontal/vertical wall bands, merges double-line walls, snaps shared coordinates and derives wall thickness from the drawing.
+- Completed: free space is flood-filled with doorway gaps sealed (metric when calibrated, 8% of the sheet otherwise), rooms are traced as simplified polygons, and the shared vertex graph produces one wall per unique edge. Sealed door spans are subtracted again, so doorways stay open; collinear overlapping room edges are merged.
+- Completed: `PlanAnalysisDialog` previews the detection over the underlay with room/wall/area statistics and an optional replace-existing switch; confirmed results are created through the regular drawing API and land in history as one undoable step.
+- Completed: analysis starts automatically after a file is replaced in the editor and on the first open of an uploaded, still-empty plan (once per plan/browser); it can be re-run from the Layers panel or the command palette.
+- Tests run: `pnpm typecheck`, `pnpm lint`, `pnpm test` (web 152 including the new synthetic four-room mask test), manual Playwright run with a generated plan (3 rooms / 8 walls, doorways kept open, undo clears everything) and 3D verification.
+- Issues/blockers: the detector is heuristic — diagonal walls, dense furniture and low-contrast scans may need manual cleanup; room names are numbered rather than classified.
+- Next action: capture the analysis flow in `scripts/browser-check.mjs`, then calibrate-on-upload prompts and opening detection (doors/windows) from the same mask.

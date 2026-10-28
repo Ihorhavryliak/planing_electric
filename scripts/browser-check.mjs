@@ -188,6 +188,13 @@ async function main() {
   await tour.getByRole('button', { name: 'Finish tour', exact: true }).click();
   await onboardingSaved;
   await tour.waitFor({ state: 'detached', timeout: 10000 });
+
+  // A freshly uploaded plan is analysed automatically; the dialog opened
+  // under the tour, so review it once the tour is finished.
+  const analysisDialog = page.getByRole('dialog', { name: 'Plan analysis' });
+  await analysisDialog.waitFor({ timeout: 25000 });
+  await analysisDialog.getByRole('button', { name: 'Cancel' }).click();
+  await analysisDialog.waitFor({ state: 'hidden', timeout: 10000 });
   const onboardingResponse = await page.request.get(
     `${WEB}/api/v1/users/me/onboarding`,
   );

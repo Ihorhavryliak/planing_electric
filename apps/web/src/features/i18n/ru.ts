@@ -559,6 +559,27 @@ export const ru: Dictionary = {
   'editor.dimensions': 'Размеры',
   'editor.openings': 'Проёмы',
   'editor.underlay': 'Подложка',
+  'editor.analysis.run': 'Анализировать план',
+  'editor.analysis.title': 'Анализ плана',
+  'editor.analysis.hint':
+    'Мы нашли комнаты и стены на подложке. Проверьте результат и добавьте его в проект.',
+  'editor.analysis.running': 'Анализируем план…',
+  'editor.analysis.noImage': 'Сначала загрузите план помещения.',
+  'editor.analysis.previewAlt': 'Распознанные комнаты и стены',
+  'editor.analysis.rooms': 'Комнаты',
+  'editor.analysis.walls': 'Стены',
+  'editor.analysis.area': 'Площадь',
+  'editor.analysis.wallLengthUnits': 'Длина стен, усл. ед.',
+  'editor.analysis.uncalibrated':
+    'План не откалиброван, поэтому размеры показаны в условных единицах. Задайте масштаб, чтобы получить квадратные метры.',
+  'editor.analysis.replace': 'Заменить существующие стены и комнаты',
+  'editor.analysis.replaceHint':
+    'Сейчас в плане: стен — {walls}, комнат — {rooms}. Отмена их вернёт.',
+  'editor.analysis.confirm': 'Добавить в проект',
+  'editor.analysis.noRooms':
+    'Замкнутых комнат не найдено, поэтому будут добавлены только линии стен. Попробуйте более чёткий скан или нарисуйте комнаты вручную.',
+  'editor.analysis.roomName': 'Комната {index}',
+  'editor.history.analyzePlan': 'Автоматический анализ плана',
   'editor.estimate': 'Смета',
   'editor.saveState': 'Состояние сохранения',
   'editor.allSaved': 'Все изменения сохранены',

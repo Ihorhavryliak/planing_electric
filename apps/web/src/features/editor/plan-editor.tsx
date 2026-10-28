@@ -36,6 +36,11 @@ import type {
 import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
 import { AddElementDialog, type AddElementResult } from './add-element-dialog';
 import { PointDetailsDialog } from './point-details-dialog';
+import { PlanAnalysisDialog } from './plan-analysis-dialog';
+import {
+  analyzePlanImage,
+  type PlanAnalysis,
+} from './plan-analysis';
 import { useEditorLocks } from './editor-locks';
 import {
   Box,
@@ -59,6 +64,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Moon,
+  ScanLine,
   Sun,
   Monitor,
   RadioTower,
@@ -507,6 +513,7 @@ export function PlanEditor({
     null,
   );
   const [drawingError, setDrawingError] = useState<string | null>(null);
+  const [drawingReady, setDrawingReady] = useState(false);
 
   const [points, setPoints] = useState<PublicPoint[]>([]);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
@@ -548,6 +555,16 @@ export function PlanEditor({
   }>({ type: 'socket', subtype: null });
   const pendingPointCircuitRef = useRef<string | null>(null);
   const [postAddPointId, setPostAddPointId] = useState<string | null>(null);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<PlanAnalysis | null>(
+    null,
+  );
+  const autoAnalysisRef = useRef(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const underlayRef = useRef(underlay);
+  const runAnalysisRef = useRef<() => void>(() => {});
   const [allSelected, setAllSelected] = useState(false);
   const allSelectedRef = useRef(false);
   const copyAllRef = useRef<() => void>(() => {});
@@ -757,6 +774,7 @@ export function PlanEditor({
     const controller = new AbortController();
 
     setDrawingError(null);
+    setDrawingReady(false);
     setPoints([]);
     setSelectedPointId(null);
     setPointsError(null);
@@ -790,11 +808,13 @@ export function PlanEditor({
           setOpenings(drawing.openings);
           setRooms(drawing.rooms);
           setDimensions(drawing.dimensions);
+          setDrawingReady(true);
         }
       })
       .catch((loadError: unknown) => {
         if (!controller.signal.aborted) {
           setDrawingError(getErrorMessage(loadError));
+          setDrawingReady(true);
         }
       });
 
@@ -2186,6 +2206,161 @@ export function PlanEditor({
     }
   }
 
+  function openPlanAnalysis() {
+    try {
+      window.localStorage.setItem(`dmp:analysis:auto:${plan.id}`, '1');
+    } catch {
+      // A blocked storage call should not stop the manual analysis.
+    }
+
+    setAnalysisOpen(true);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+
+    const currentImage = imageRef.current;
+
+    if (!currentImage) {
+      setAnalysisError(t('editor.analysis.noImage'));
+      return;
+    }
+
+    setAnalysisBusy(true);
+
+    // Let the dialog paint its spinner before the (synchronous) analysis.
+    window.setTimeout(() => {
+      try {
+        const result = analyzePlanImage(currentImage, underlayRef.current, {
+          metersPerUnit,
+        });
+        setAnalysisResult(result);
+      } catch (error) {
+        setAnalysisError(describeError(error));
+      } finally {
+        setAnalysisBusy(false);
+      }
+    }, 60);
+  }
+
+  async function applyPlanAnalysis(replaceExisting: boolean) {
+    const result = analysisResult;
+
+    if (!result || analysisBusy) return;
+
+    const baseWalls: PublicWall[] = replaceExisting ? [] : [...wallsRef.current];
+    const baseRooms: PublicRoom[] = replaceExisting ? [] : [...roomsRef.current];
+    const originalWalls: PublicWall[] = replaceExisting
+      ? [...wallsRef.current]
+      : [];
+    const originalRooms: PublicRoom[] = replaceExisting
+      ? [...roomsRef.current]
+      : [];
+    let existingWalls: PublicWall[] = [...originalWalls];
+    let existingRooms: PublicRoom[] = [...originalRooms];
+    let addedWalls: PublicWall[] = [];
+    let addedRooms: PublicRoom[] = [];
+
+    const sync = () => {
+      setWalls([...baseWalls, ...existingWalls, ...addedWalls]);
+      setRooms([...baseRooms, ...existingRooms, ...addedRooms]);
+      bumpCalculation();
+    };
+
+    const createAnalysis = async () => {
+      for (const wall of existingWalls) {
+        await deleteWall(wall.id);
+      }
+
+      for (const room of existingRooms) {
+        await deleteRoom(room.id);
+      }
+
+      existingWalls = [];
+      existingRooms = [];
+      addedWalls = [];
+      addedRooms = [];
+
+      for (let index = 0; index < result.rooms.length; index += 1) {
+        const room = result.rooms[index];
+
+        if (!room) continue;
+
+        addedRooms.push(
+          await createRoom(plan.id, {
+            name: t('editor.analysis.roomName', { index: index + 1 }),
+            boundary: room.boundary,
+          }),
+        );
+      }
+
+      for (const wall of result.walls) {
+        addedWalls.push(
+          await createWall(plan.id, {
+            geometry: wall.geometry,
+            thickness: wall.thickness,
+          }),
+        );
+      }
+
+      sync();
+    };
+
+    const removeAnalysis = async () => {
+      for (const wall of addedWalls) {
+        await deleteWall(wall.id);
+      }
+
+      for (const room of addedRooms) {
+        await deleteRoom(room.id);
+      }
+
+      addedWalls = [];
+      addedRooms = [];
+      existingRooms = [];
+
+      for (const room of originalRooms) {
+        existingRooms.push(
+          await createRoom(plan.id, {
+            name: room.name,
+            boundary: room.boundary,
+          }),
+        );
+      }
+
+      existingWalls = [];
+
+      for (const wall of originalWalls) {
+        existingWalls.push(
+          await createWall(plan.id, {
+            geometry: wall.geometry,
+            thickness: wall.thickness,
+            label: wall.label,
+          }),
+        );
+      }
+
+      sync();
+    };
+
+    setAnalysisBusy(true);
+    setAnalysisError(null);
+
+    try {
+      await createAnalysis();
+      pushHistory({
+        label: t('editor.history.analyzePlan'),
+        undo: removeAnalysis,
+        redo: createAnalysis,
+      });
+      setAnalysisOpen(false);
+      setAnalysisResult(null);
+    } catch (error) {
+      setAnalysisError(describeError(error));
+      await reloadDrawing().catch(() => undefined);
+    } finally {
+      setAnalysisBusy(false);
+    }
+  }
+
   /**
    * Applies a point change at once and saves it. Route ends sitting on the
    * point move with it, both in the UI and on the server (one transaction).
@@ -2457,6 +2632,46 @@ export function PlanEditor({
     };
   }, [imageUrl]);
 
+  imageRef.current = image;
+  underlayRef.current = underlay;
+  runAnalysisRef.current = openPlanAnalysis;
+
+  useEffect(() => {
+    if (autoAnalysisRef.current) {
+      if (!image) return;
+
+      autoAnalysisRef.current = false;
+      runAnalysisRef.current();
+      return;
+    }
+
+    if (!drawingReady || !image || plan.sourceType !== 'upload') return;
+    if (walls.length + rooms.length + points.length + routes.length > 0) return;
+
+    // Only offer the automatic analysis once per plan; the user can always
+    // start it again from the Layers panel or the command palette.
+    try {
+      const key = `dmp:analysis:auto:${plan.id}`;
+
+      if (window.localStorage.getItem(key)) return;
+
+      window.localStorage.setItem(key, '1');
+    } catch {
+      return;
+    }
+
+    runAnalysisRef.current();
+  }, [
+    drawingReady,
+    image,
+    plan.id,
+    plan.sourceType,
+    points.length,
+    rooms.length,
+    routes.length,
+    walls.length,
+  ]);
+
   function updateUnderlay(patch: Partial<UnderlaySettings>) {
     setUnderlay((current) => ({ ...current, ...patch }));
   }
@@ -2538,6 +2753,8 @@ export function PlanEditor({
         offsetX: 0,
         offsetY: 0,
       }));
+      autoAnalysisRef.current =
+        walls.length + rooms.length + points.length + routes.length === 0;
       onPlanChange(updated);
       setAssetNonce((value) => value + 1);
 
@@ -3082,6 +3299,11 @@ export function PlanEditor({
       label: t('editor.fit'),
       shortcut: '0',
       run: () => setFitRequest(Date.now()),
+    },
+    {
+      id: 'analyze-plan',
+      label: t('editor.analysis.run'),
+      run: () => openPlanAnalysis(),
     },
     {
       id: 'undo',
@@ -4858,6 +5080,21 @@ export function PlanEditor({
                   </Button>
                 </div>
 
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={openPlanAnalysis}
+                  disabled={!hasUploadedFile || analysisBusy}
+                >
+                  {analysisBusy ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ScanLine className="h-4 w-4" />
+                  )}
+                  {t('editor.analysis.run')}
+                </Button>
+
                 <div className="mt-4 space-y-4">
                   <RangeControl
                     label={t('editor.opacity')}
@@ -5191,6 +5428,22 @@ export function PlanEditor({
         onSave={(id, patch) => {
           void handlePatchPoint(id, patch);
         }}
+      />
+      <PlanAnalysisDialog
+        open={analysisOpen}
+        busy={analysisBusy}
+        error={analysisError}
+        result={analysisResult}
+        existingWalls={walls.length}
+        existingRooms={rooms.length}
+        metersPerUnit={metersPerUnit}
+        onCancel={() => {
+          if (analysisBusy) return;
+          setAnalysisOpen(false);
+          setAnalysisResult(null);
+          setAnalysisError(null);
+        }}
+        onConfirm={(replaceExisting) => void applyPlanAnalysis(replaceExisting)}
       />
       <AddElementDialog
         open={addElementOpen}
