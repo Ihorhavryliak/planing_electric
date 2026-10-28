@@ -28,9 +28,21 @@ export interface AnalysisRoom {
   area: number;
 }
 
+export interface AnalysisOpening {
+  /** Index of the generated wall this opening belongs to. */
+  wallIndex: number;
+  type: 'door' | 'window';
+  /** Distance from the wall start to the opening start, plan units. */
+  offset: number;
+  width: number;
+  height: number;
+  sillHeight: number;
+}
+
 export interface PlanAnalysis {
   rooms: AnalysisRoom[];
   walls: AnalysisWall[];
+  openings: AnalysisOpening[];
   /** Detected wall thickness in plan units. */
   wallThickness: number;
   imageWidth: number;
@@ -43,7 +55,7 @@ export interface PlanAnalysis {
 
 type SegmentAxis = 'h' | 'v';
 
-interface Segment {
+export interface Segment {
   axis: SegmentAxis;
   /** Perpendicular coordinate (row for horizontal, column for vertical). */
   pos: number;
@@ -68,7 +80,7 @@ interface Box {
   y2: number;
 }
 
-interface WorkRaster {
+export interface WorkRaster {
   width: number;
   height: number;
   canvas: HTMLCanvasElement;
@@ -76,7 +88,7 @@ interface WorkRaster {
   pixels: Uint8ClampedArray;
 }
 
-function rasterize(image: HTMLImageElement): WorkRaster {
+export function rasterizePlanImage(image: HTMLImageElement): WorkRaster {
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
   const ratio = Math.min(
@@ -158,8 +170,11 @@ function otsuThreshold(gray: Uint8Array): number {
   return best;
 }
 
-function buildWallMask(raster: WorkRaster): Uint8Array {
-  const { width, height, pixels } = raster;
+export function buildWallMask(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+): Uint8Array {
   const gray = new Uint8Array(width * height);
 
   for (let index = 0; index < gray.length; index += 1) {
@@ -990,11 +1005,10 @@ function toPlanPoint(
 }
 
 function renderPreview(
-  raster: WorkRaster,
+  context: CanvasRenderingContext2D,
   rooms: Vec2[][],
   segments: Segment[],
-): string {
-  const { context } = raster;
+): void {
   context.save();
   context.lineJoin = 'round';
   context.lineCap = 'round';
@@ -1035,8 +1049,21 @@ function renderPreview(
 
   context.restore();
   context.globalAlpha = 1;
+}
 
-  return raster.canvas.toDataURL('image/png');
+/** Paints the detection over the underlay and returns a PNG data URL. */
+export function drawAnalysisPreview(
+  canvas: HTMLCanvasElement,
+  rooms: Vec2[][],
+  segments: Segment[],
+): string {
+  const context = canvas.getContext('2d');
+
+  if (context) {
+    renderPreview(context, rooms, segments);
+  }
+
+  return canvas.toDataURL('image/png');
 }
 
 interface LineWall {
@@ -1198,9 +1225,186 @@ function subtractDoorways(
   return result;
 }
 
+/**
+ * Walls are modelled as continuous surfaces with openings cut into them (that
+ * is how the editor renders a door in 3D). Room contours, however, stop at a
+ * doorway, so pieces on both sides of a detected gap are joined again here.
+ */
+function mergeWallsAcrossSeals(
+  walls: AnalysisWall[],
+  seals: AnalysisWall[],
+  tolerance: number,
+): AnalysisWall[] {
+  let list = walls.map((wall) => ({
+    thickness: wall.thickness,
+    geometry: wall.geometry.map((point) => ({ ...point })),
+  }));
+
+  for (const seal of seals) {
+    const [start, end] = seal.geometry;
+
+    if (!start || !end) continue;
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const sealLength = Math.hypot(dx, dy);
+
+    if (sealLength < 0.01) continue;
+
+    const ux = dx / sealLength;
+    const uy = dy / sealLength;
+    const project = (point: Vec2) =>
+      (point.x - start.x) * ux + (point.y - start.y) * uy;
+    const perpendicular = (point: Vec2) =>
+      Math.abs((point.x - start.x) * -uy + (point.y - start.y) * ux);
+    const indices: number[] = [];
+
+    for (let index = 0; index < list.length; index += 1) {
+      const wall = list[index];
+      const [from, to] = wall?.geometry ?? [];
+
+      if (!from || !to) continue;
+      if (perpendicular(from) > tolerance || perpendicular(to) > tolerance) {
+        continue;
+      }
+
+      const first = project(from);
+      const second = project(to);
+      const min = Math.min(first, second);
+      const max = Math.max(first, second);
+
+      if (max < -tolerance || min > sealLength + tolerance) continue;
+
+      indices.push(index);
+    }
+
+    if (indices.length < 2) continue;
+
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+    let thickness = 0;
+
+    for (const index of indices) {
+      const wall = list[index];
+      const [from, to] = wall?.geometry ?? [];
+
+      if (!from || !to) continue;
+
+      const first = project(from);
+      const second = project(to);
+
+      min = Math.min(min, first, second);
+      max = Math.max(max, first, second);
+      thickness = Math.max(thickness, wall?.thickness ?? 0);
+    }
+
+    if (!Number.isFinite(min) || !Number.isFinite(max)) continue;
+
+    const merged: AnalysisWall = {
+      thickness,
+      geometry: [
+        { x: round(start.x + ux * min), y: round(start.y + uy * min) },
+        { x: round(start.x + ux * max), y: round(start.y + uy * max) },
+      ],
+    };
+
+    list = list.filter((_, index) => !indices.includes(index));
+    list.push(merged);
+  }
+
+  return list;
+}
+
+function buildOpenings(
+  walls: AnalysisWall[],
+  seals: AnalysisWall[],
+  types: Array<'door' | 'window'>,
+  tolerance: number,
+  metersPerUnit: number | null,
+): AnalysisOpening[] {
+  const unit = metersPerUnit && metersPerUnit > 0 ? metersPerUnit : 0.01;
+  const result: AnalysisOpening[] = [];
+
+  seals.forEach((seal, sealIndex) => {
+    const [start, end] = seal.geometry;
+
+    if (!start || !end) return;
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const sealLength = Math.hypot(dx, dy);
+
+    if (sealLength < 0.5) return;
+
+    let best:
+      | {
+          wallIndex: number;
+          offset: number;
+          wallLength: number;
+        }
+      | undefined;
+
+    walls.forEach((wall, wallIndex) => {
+      const [from, to] = wall.geometry;
+
+      if (!from || !to) return;
+
+      const wallDx = to.x - from.x;
+      const wallDy = to.y - from.y;
+      const wallLength = Math.hypot(wallDx, wallDy);
+
+      if (wallLength < 0.5) return;
+
+      const ux = wallDx / wallLength;
+      const uy = wallDy / wallLength;
+
+      if (perpendicularDistance(start, from, to) > tolerance) return;
+      if (perpendicularDistance(end, from, to) > tolerance) return;
+
+      const startProjection =
+        (start.x - from.x) * ux + (start.y - from.y) * uy;
+      const endProjection = (end.x - from.x) * ux + (end.y - from.y) * uy;
+      const offset = Math.max(0, Math.min(startProjection, endProjection));
+
+      if (offset > wallLength + tolerance) return;
+      if (offset + sealLength > wallLength + tolerance * 2) return;
+
+      if (
+        best === undefined ||
+        Math.abs(wallLength - sealLength) <
+          Math.abs(best.wallLength - sealLength)
+      ) {
+        best = { wallIndex, offset, wallLength };
+      }
+    });
+
+    if (!best) return;
+
+    const type = types[sealIndex] ?? 'door';
+    const width = Math.min(sealLength, best.wallLength);
+    const height =
+      type === 'window' ? Math.round((1.4 / unit) * 100) / 100 : Math.round((2.1 / unit) * 100) / 100;
+    const sillHeight =
+      type === 'window' ? Math.round((0.9 / unit) * 100) / 100 : 0;
+
+    result.push({
+      wallIndex: best.wallIndex,
+      type,
+      offset: Math.round(best.offset * 100) / 100,
+      width: Math.round(width * 100) / 100,
+      height,
+      sillHeight,
+    });
+  });
+
+  return result;
+}
+
 interface AnalysisOptions {
   /** Meters per plan unit, when the plan is calibrated. */
   metersPerUnit?: number | null;
+  /** Cut detected doorway/window gaps into openings instead of wall gaps. */
+  detectOpenings?: boolean;
 }
 
 /**
@@ -1216,6 +1420,7 @@ export function analyzeWallMask(
 ): {
   rooms: AnalysisRoom[];
   walls: AnalysisWall[];
+  openings: AnalysisOpening[];
   wallThickness: number;
   wallCoverage: number;
   imageRooms: Vec2[][];
@@ -1420,11 +1625,71 @@ export function analyzeWallMask(
       ),
     ],
   }));
-  const mergedWalls = subtractDoorways(
-    mergeCollinearWalls(walls, vertexTolerance),
-    doorwaySeals,
-    vertexTolerance * 1.5,
+  const detectOpenings = options.detectOpenings !== false;
+  const exteriorLabels = new Set(
+    regions
+      .filter((region) => {
+        const borders = [
+          region.touches.top,
+          region.touches.bottom,
+          region.touches.left,
+          region.touches.right,
+        ];
+
+        return borders.filter(Boolean).length >= 2;
+      })
+      .map((region) => region.label),
   );
+  const sealTypes: Array<'door' | 'window'> = seals.map((seal) => {
+    const inset = Math.max(4, Math.round(seal.thickness / 2) + 3);
+    const mid = (seal.a + seal.b) / 2;
+    const samples =
+      seal.axis === 'h'
+        ? [
+            { x: mid, y: seal.pos - inset },
+            { x: mid, y: seal.pos + inset },
+          ]
+        : [
+            { x: seal.pos - inset, y: mid },
+            { x: seal.pos + inset, y: mid },
+          ];
+    const touchesExterior = samples.some((sample) => {
+      const x = Math.round(sample.x);
+      const y = Math.round(sample.y);
+
+      if (x < 0 || y < 0 || x >= width || y >= height) return true;
+
+      const label = labels[y * width + x];
+
+      return label !== undefined && exteriorLabels.has(label);
+    });
+
+    return touchesExterior ? 'window' : 'door';
+  });
+  let mergedWalls = mergeCollinearWalls(walls, vertexTolerance);
+  let openings: AnalysisOpening[] = [];
+
+  if (detectOpenings) {
+    mergedWalls = mergeWallsAcrossSeals(
+      mergedWalls,
+      doorwaySeals,
+      vertexTolerance * 1.5,
+    );
+    openings = buildOpenings(
+      mergedWalls,
+      doorwaySeals,
+      sealTypes,
+      vertexTolerance * 1.5,
+      options.metersPerUnit ?? null,
+    );
+  } else {
+    mergedWalls = subtractDoorways(
+      mergedWalls,
+      doorwaySeals,
+      vertexTolerance * 1.5,
+    );
+  }
+
   walls.length = 0;
   walls.push(...mergedWalls);
 
@@ -1464,6 +1729,7 @@ export function analyzeWallMask(
   return {
     rooms,
     walls,
+    openings,
     wallThickness: defaultThickness,
     wallCoverage,
     imageRooms,
@@ -1471,25 +1737,55 @@ export function analyzeWallMask(
   };
 }
 
+export interface WallMaskAnalysis {
+  rooms: AnalysisRoom[];
+  walls: AnalysisWall[];
+  openings: AnalysisOpening[];
+  wallThickness: number;
+  wallCoverage: number;
+  imageRooms: Vec2[][];
+  segments: Segment[];
+}
+
+/**
+ * Pure part of the analysis (no canvas), so it can run inside a Web Worker:
+ * builds the wall mask from raw RGBA pixels and extracts rooms and walls.
+ */
+export function analyzePixels(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+  underlay: UnderlaySettings,
+  options: AnalysisOptions = {},
+): WallMaskAnalysis {
+  const mask = buildWallMask(pixels, width, height);
+
+  return analyzeWallMask(mask, width, height, underlay, options);
+}
+
 export function analyzePlanImage(
   image: HTMLImageElement,
   underlay: UnderlaySettings,
   options: AnalysisOptions = {},
 ): PlanAnalysis {
-  const raster = rasterize(image);
-  const mask = buildWallMask(raster);
-  const analysis = analyzeWallMask(
-    mask,
+  const raster = rasterizePlanImage(image);
+  const analysis = analyzePixels(
+    raster.pixels,
     raster.width,
     raster.height,
     underlay,
     options,
   );
-  const preview = renderPreview(raster, analysis.imageRooms, analysis.segments);
+  const preview = drawAnalysisPreview(
+    raster.canvas,
+    analysis.imageRooms,
+    analysis.segments,
+  );
 
   return {
     rooms: analysis.rooms,
     walls: analysis.walls,
+    openings: analysis.openings,
     wallThickness: analysis.wallThickness,
     imageWidth: raster.width,
     imageHeight: raster.height,

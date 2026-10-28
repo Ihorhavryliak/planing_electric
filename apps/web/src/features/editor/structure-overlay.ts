@@ -110,9 +110,9 @@ function lengthLabel(length: number, metersPerUnit: number | null): string {
     : formatMeters(length * metersPerUnit);
 }
 
-function areaLabel(area: number, metersPerUnit: number | null): string {
+function areaLabel(area: number, metersPerUnit: number | null): string | null {
   if (metersPerUnit === null) {
-    return `${area.toFixed(0)} units²`;
+    return null;
   }
 
   const squareMeters = area * metersPerUnit * metersPerUnit;
@@ -176,13 +176,25 @@ export function drawStructureOverlay(
         : ROOM_STROKE;
     context.stroke();
 
-    drawText(context, room.name, { x: center.x, y: center.y - 7 }, light ? '#1c2229' : '#ccfbf1', '600');
+    const roomArea = areaLabel(
+      polygonArea(room.boundary),
+      metersPerUnit,
+    );
     drawText(
       context,
-      areaLabel(polygonArea(room.boundary), metersPerUnit),
-      { x: center.x, y: center.y + 10 },
-      light ? '#2f6bd8' : '#5eead4',
+      room.name,
+      { x: center.x, y: center.y - (roomArea ? 7 : 0) },
+      light ? '#1c2229' : '#ccfbf1',
+      '600',
     );
+    if (roomArea) {
+      drawText(
+        context,
+        roomArea,
+        { x: center.x, y: center.y + 10 },
+        light ? '#2f6bd8' : '#5eead4',
+      );
+    }
 
     if (selected) {
       drawHandles(context, path);

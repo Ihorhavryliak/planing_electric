@@ -15,7 +15,7 @@ import type {
   UnderlaySettings,
   UpdatePointInput,
 } from '@drawmyplace/contracts';
-import { DEVICE_SUBTYPES, deviceProduct } from '@drawmyplace/contracts';
+import { DEVICE_CATEGORY_ORDER, DEVICE_SUBTYPES, deviceProduct } from '@drawmyplace/contracts';
 import { SelectionQuickCard } from './selection-quick-card';
 import {
   Box,
@@ -587,6 +587,7 @@ export function EditorCanvas({
   const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
   const [placeProductId, setPlaceProductId] = useState<string | null>(null);
   const [devicePaletteOpen, setDevicePaletteOpen] = useState(false);
+  const [deviceQuery, setDeviceQuery] = useState('');
   const [snapEnabled, setSnapEnabled] = useState(() => {
     try {
       const stored = window.localStorage.getItem('dmp:editor:gridSnap');
@@ -3380,7 +3381,10 @@ export function EditorCanvas({
           title={t('editor.allDevices')}
           aria-label={t('editor.allDevices')}
           aria-expanded={devicePaletteOpen}
-          onClick={() => setDevicePaletteOpen((open) => !open)}
+          onClick={() => {
+            setDeviceQuery('');
+            setDevicePaletteOpen((open) => !open);
+          }}
           className={cn(
             'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
             devicePaletteOpen
@@ -3510,7 +3514,10 @@ export function EditorCanvas({
         <>
           <div
             className="absolute inset-0 z-20"
-            onClick={() => setDevicePaletteOpen(false)}
+            onClick={() => {
+              setDeviceQuery('');
+              setDevicePaletteOpen(false);
+            }}
           />
           <div className="absolute top-16 left-3 z-30 max-h-[calc(100%-6rem)] w-[min(26rem,calc(100%-1.5rem))] overflow-y-auto rounded-xl border border-border bg-card p-3 text-card-foreground shadow-xl">
             <div className="flex items-center justify-between pb-2">
@@ -3518,50 +3525,81 @@ export function EditorCanvas({
               <button
                 type="button"
                 aria-label={t('editor.close')}
-                onClick={() => setDevicePaletteOpen(false)}
+                onClick={() => {
+                  setDeviceQuery('');
+                  setDevicePaletteOpen(false);
+                }}
                 className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
-            {(['socket', 'switch', 'light', 'panel', 'junction', 'custom'] as const).map(
-              (type) => {
-                const items = DEVICE_SUBTYPES.filter(
-                  (item) => item.type === type,
-                );
-                if (items.length === 0) return null;
+            <input
+              value={deviceQuery}
+              onChange={(event) => setDeviceQuery(event.target.value)}
+              placeholder={t('editor.searchDevices')}
+              aria-label={t('editor.searchDevices')}
+              className="mb-2 h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+            />
+            {(() => {
+              const query = deviceQuery.trim().toLowerCase();
+              const groups = DEVICE_CATEGORY_ORDER.map((category) => ({
+                category,
+                items: DEVICE_SUBTYPES.filter(
+                  (item) =>
+                    item.category === category &&
+                    (query.length === 0 ||
+                      t(`devices.subtype.${item.id}`)
+                        .toLowerCase()
+                        .includes(query) ||
+                      item.id.includes(query)),
+                ).sort((left, right) =>
+                  t(`devices.subtype.${left.id}`).localeCompare(
+                    t(`devices.subtype.${right.id}`),
+                  ),
+                ),
+              })).filter((group) => group.items.length > 0);
 
+              if (groups.length === 0) {
                 return (
-                  <div key={type} className="mb-2">
-                    <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {t(`editor.point.${type}`)}
-                    </p>
-                    <div className="grid grid-cols-2 gap-1">
-                      {items.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            if (onRequestAddPoint) {
-                              onRequestAddPoint(type, item.id);
-                            } else {
-                              setPlaceType(type);
-                              setPlaceSubtype(item.id);
-                              setPlaceProductId(null);
-                              setTool('place');
-                            }
-                            setDevicePaletteOpen(false);
-                          }}
-                          className="truncate rounded-md border border-border px-2 py-1 text-left text-[11px] text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                        >
-                          {t(`devices.subtype.${item.id}`)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <p className="rounded-md border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+                    {t('editor.noDevicesFound')}
+                  </p>
                 );
-              },
-            )}
+              }
+
+              return groups.map(({ category, items }) => (
+                <div key={category} className="mb-2">
+                  <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t(`devices.category.${category}`)}
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          if (onRequestAddPoint) {
+                            onRequestAddPoint(item.type, item.id);
+                          } else {
+                            setPlaceType(item.type);
+                            setPlaceSubtype(item.id);
+                            setPlaceProductId(null);
+                            setTool('place');
+                          }
+                          setDevicePaletteOpen(false);
+                          setDeviceQuery('');
+                        }}
+                        className="truncate rounded-md border border-border px-2 py-1 text-left text-[11px] text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        title={t(`devices.subtype.${item.id}`)}
+                      >
+                        {t(`devices.subtype.${item.id}`)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         </>
       ) : null}

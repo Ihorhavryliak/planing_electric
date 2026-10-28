@@ -39,8 +39,10 @@ import { PointDetailsDialog } from './point-details-dialog';
 import { PlanAnalysisDialog } from './plan-analysis-dialog';
 import {
   analyzePlanImage,
+  rasterizePlanImage,
   type PlanAnalysis,
 } from './plan-analysis';
+import { runPlanAnalysis, type AnalysisRun } from './plan-analysis-runner';
 import { useEditorLocks } from './editor-locks';
 import {
   Box,
@@ -570,10 +572,13 @@ export function PlanEditor({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const underlayRef = useRef(underlay);
   const runAnalysisRef = useRef<() => void>(() => {});
+  const analysisWorkerRef = useRef<AnalysisRun | null>(null);
   const [allSelected, setAllSelected] = useState(false);
   const allSelectedRef = useRef(false);
   const copyAllRef = useRef<() => void>(() => {});
+  const copySelectionRef = useRef<() => boolean>(() => false);
   const pasteAllRef = useRef<() => Promise<void>>(async () => {});
+  const pasteCountRef = useRef(0);
   const clipboardRef = useRef<{
     points: PublicPoint[];
     walls: PublicWall[];
@@ -1089,6 +1094,7 @@ export function PlanEditor({
     setSelectedPointId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedRouteId(null);
       setSelectedWallId(null);
       setSelectedOpeningId(null);
@@ -1101,6 +1107,7 @@ export function PlanEditor({
     setSelectedRouteId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedPointId(null);
       setSelectedWallId(null);
       setSelectedOpeningId(null);
@@ -1113,6 +1120,7 @@ export function PlanEditor({
     setSelectedWallId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedOpeningId(null);
@@ -1125,6 +1133,7 @@ export function PlanEditor({
     setSelectedOpeningId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedWallId(null);
@@ -1137,6 +1146,7 @@ export function PlanEditor({
     setSelectedRoomId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedWallId(null);
@@ -1149,6 +1159,7 @@ export function PlanEditor({
     setSelectedDimensionId(id);
 
     if (id) {
+      setAllSelected(false);
       setSelectedPointId(null);
       setSelectedRouteId(null);
       setSelectedWallId(null);
@@ -2004,20 +2015,106 @@ export function PlanEditor({
     setAddElementOpen(false);
   }
 
+  type ClipboardSnapshot = NonNullable<typeof clipboardRef.current>;
+
+  function emptySnapshot(): ClipboardSnapshot {
+    return {
+      points: [],
+      walls: [],
+      rooms: [],
+      openings: [],
+      dimensions: [],
+      routes: [],
+    };
+  }
+
+  function writeClipboard(snapshot: ClipboardSnapshot) {
+    clipboardRef.current = snapshot;
+    pasteCountRef.current = 0;
+    void navigator.clipboard
+      ?.writeText(JSON.stringify({ app: 'drawmyplace', ...snapshot }))
+      .catch(() => undefined);
+  }
+
   function copyAllElements() {
-    const snapshot = {
+    writeClipboard({
       points: pointsRef.current.map((item) => ({ ...item })),
       walls: wallsRef.current.map((item) => ({ ...item })),
       rooms: roomsRef.current.map((item) => ({ ...item })),
       openings: openingsRef.current.map((item) => ({ ...item })),
       dimensions: dimensionsRef.current.map((item) => ({ ...item })),
       routes: routesRef.current.map((item) => ({ ...item })),
-    };
-    clipboardRef.current = snapshot;
+    });
     setAllSelected(true);
-    void navigator.clipboard
-      ?.writeText(JSON.stringify({ app: 'drawmyplace', ...snapshot }))
-      .catch(() => undefined);
+  }
+
+  /**
+   * Figma-style copy: the current selection when there is one, the whole plan
+   * otherwise. A selected wall brings its openings; a selected opening brings
+   * the wall it is cut into.
+   */
+  function copySelection(): boolean {
+    const snapshot = emptySnapshot();
+    const point = selectedPointId
+      ? pointsRef.current.find((item) => item.id === selectedPointId)
+      : null;
+    const route = selectedRouteId
+      ? routesRef.current.find((item) => item.id === selectedRouteId)
+      : null;
+    const room = selectedRoomId
+      ? roomsRef.current.find((item) => item.id === selectedRoomId)
+      : null;
+    const dimension = selectedDimensionId
+      ? dimensionsRef.current.find((item) => item.id === selectedDimensionId)
+      : null;
+    const wall = selectedWallId
+      ? wallsRef.current.find((item) => item.id === selectedWallId)
+      : null;
+    const opening = selectedOpeningId
+      ? openingsRef.current.find((item) => item.id === selectedOpeningId)
+      : null;
+
+    if (point) {
+      snapshot.points.push({ ...point });
+    } else if (route) {
+      snapshot.routes.push({ ...route });
+    } else if (room) {
+      snapshot.rooms.push({ ...room });
+    } else if (dimension) {
+      snapshot.dimensions.push({ ...dimension });
+    } else if (wall) {
+      snapshot.walls.push({ ...wall });
+      snapshot.openings = openingsRef.current
+        .filter((item) => item.wallId === wall.id)
+        .map((item) => ({ ...item }));
+    } else if (opening) {
+      const hostWall = wallsRef.current.find(
+        (item) => item.id === opening.wallId,
+      );
+
+      if (hostWall) {
+        snapshot.walls.push({ ...hostWall });
+        snapshot.openings = openingsRef.current
+          .filter((item) => item.wallId === hostWall.id)
+          .map((item) => ({ ...item }));
+      }
+    }
+
+    if (
+      snapshot.points.length +
+        snapshot.walls.length +
+        snapshot.rooms.length +
+        snapshot.openings.length +
+        snapshot.dimensions.length +
+        snapshot.routes.length ===
+      0
+    ) {
+      return false;
+    }
+
+    writeClipboard(snapshot);
+    setAllSelected(false);
+    return true;
   }
 
   type CreatedElement = {
@@ -2069,8 +2166,7 @@ export function PlanEditor({
     setRoutes((current) => current.filter((item) => !removed.routes.has(item.id)));
   }
 
-  async function pasteSnapshot(snapshot: NonNullable<typeof clipboardRef.current>) {
-    const offset = 40;
+  async function pasteSnapshot(snapshot: ClipboardSnapshot, offset: number) {
     const created: CreatedElement[] = [];
     const pointMap = new Map<string, string>();
     const wallMap = new Map<string, string>();
@@ -2115,7 +2211,7 @@ export function PlanEditor({
       const newRooms: PublicRoom[] = [];
       for (const room of snapshot.rooms) {
         const copy = await createRoom(plan.id, {
-          name: `${room.name} (копія)`,
+          name: `${room.name} ${t('editor.copySuffix')}`,
           boundary: room.boundary.map((vertex) => ({
             x: vertex.x + offset,
             y: vertex.y + offset,
@@ -2188,22 +2284,46 @@ export function PlanEditor({
     }
   }
 
-  async function pasteAllElements() {
+  async function pasteClipboard() {
     const snapshot = clipboardRef.current;
     if (!snapshot) return;
+    const step = pasteCountRef.current;
+    const offset = 40 * (step + 1);
+    pasteCountRef.current = step + 1;
+    const createdTotal =
+      snapshot.points.length +
+      snapshot.walls.length +
+      snapshot.rooms.length +
+      snapshot.openings.length +
+      snapshot.dimensions.length +
+      snapshot.routes.length;
     setPointsError(null);
     let active: CreatedElement[] = [];
 
     try {
-      active = await pasteSnapshot(snapshot);
+      active = await pasteSnapshot(snapshot, offset);
       setAllSelected(false);
+
+      if (createdTotal === 1 && active.length === 1) {
+        const [only] = active;
+
+        if (only?.kind === 'point') selectPoint(only.id);
+        else if (only?.kind === 'wall') selectWall(only.id);
+        else if (only?.kind === 'room') selectRoom(only.id);
+        else if (only?.kind === 'route') selectRoute(only.id);
+        else if (only?.kind === 'dimension') selectDimension(only.id);
+        else if (only?.kind === 'opening') selectOpening(only.id);
+      }
+
       pushHistory({
-        label: t('editor.history.pasteAll'),
+        label: t(
+          createdTotal > 1 ? 'editor.history.paste' : 'editor.history.pasteOne',
+        ),
         undo: async () => {
           await deleteCreatedElements(active);
         },
         redo: async () => {
-          active = await pasteSnapshot(snapshot);
+          active = await pasteSnapshot(snapshot, offset);
         },
       });
     } catch (error) {
@@ -2231,20 +2351,90 @@ export function PlanEditor({
 
     setAnalysisBusy(true);
 
-    // Let the dialog paint its spinner before the (synchronous) analysis.
+    // Rasterize on the main thread, then run the pixel analysis in a worker so
+    // the editor stays responsive and the dialog can cancel it.
     window.setTimeout(() => {
+      const latestImage = imageRef.current;
+
+      if (!latestImage) {
+        setAnalysisBusy(false);
+        setAnalysisError(t('editor.analysis.noImage'));
+        return;
+      }
+
       try {
-        const result = analyzePlanImage(currentImage, underlayRef.current, {
+        const raster = rasterizePlanImage(latestImage);
+        const run = runPlanAnalysis(raster, underlayRef.current, {
           metersPerUnit,
         });
-        setAnalysisResult(result);
-      } catch (error) {
-        setAnalysisError(describeError(error));
-      } finally {
-        setAnalysisBusy(false);
+        analysisWorkerRef.current = run;
+        run.promise
+          .then((result) => {
+            if (analysisWorkerRef.current !== run) return;
+
+            setAnalysisResult(result);
+          })
+          .catch((error: unknown) => {
+            if (analysisWorkerRef.current !== run) return;
+
+            if (
+              error instanceof Error &&
+              error.message.toLowerCase().includes('cancel')
+            ) {
+              return;
+            }
+
+            // Older browsers without module workers still get a result.
+            try {
+              setAnalysisResult(
+                analyzePlanImage(latestImage, underlayRef.current, {
+                  metersPerUnit,
+                }),
+              );
+            } catch (fallbackError) {
+              setAnalysisError(describeError(fallbackError));
+            }
+          })
+          .finally(() => {
+            if (analysisWorkerRef.current !== run) return;
+
+            analysisWorkerRef.current = null;
+            setAnalysisBusy(false);
+          });
+      } catch {
+        try {
+          setAnalysisResult(
+            analyzePlanImage(latestImage, underlayRef.current, {
+              metersPerUnit,
+            }),
+          );
+        } catch (fallbackError) {
+          setAnalysisError(describeError(fallbackError));
+        } finally {
+          setAnalysisBusy(false);
+        }
       }
     }, 60);
   }
+
+  function cancelPlanAnalysis() {
+    const run = analysisWorkerRef.current;
+
+    analysisWorkerRef.current = null;
+    run?.cancel();
+    setAnalysisBusy(false);
+    setAnalysisOpen(false);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+  }
+
+  useEffect(
+    () => () => {
+      analysisWorkerRef.current?.cancel();
+      analysisWorkerRef.current = null;
+    },
+    [],
+  );
 
   async function applyPlanAnalysis(replaceExisting: boolean) {
     const result = analysisResult;
@@ -2253,6 +2443,9 @@ export function PlanEditor({
 
     const baseWalls: PublicWall[] = replaceExisting ? [] : [...wallsRef.current];
     const baseRooms: PublicRoom[] = replaceExisting ? [] : [...roomsRef.current];
+    const baseOpenings: PublicOpening[] = replaceExisting
+      ? []
+      : [...openingsRef.current];
     const originalWalls: PublicWall[] = replaceExisting
       ? [...wallsRef.current]
       : [];
@@ -2265,12 +2458,15 @@ export function PlanEditor({
       : [];
     let existingWalls: PublicWall[] = [...originalWalls];
     let existingRooms: PublicRoom[] = [...originalRooms];
+    let existingOpenings: PublicOpening[] = [...originalOpenings];
     let addedWalls: PublicWall[] = [];
     let addedRooms: PublicRoom[] = [];
+    let addedOpenings: PublicOpening[] = [];
 
     const sync = () => {
       setWalls([...baseWalls, ...existingWalls, ...addedWalls]);
       setRooms([...baseRooms, ...existingRooms, ...addedRooms]);
+      setOpenings([...baseOpenings, ...existingOpenings, ...addedOpenings]);
       bumpCalculation();
     };
 
@@ -2285,12 +2481,11 @@ export function PlanEditor({
 
       existingWalls = [];
       existingRooms = [];
+      // The wall cascade already removed the old openings on the server.
+      existingOpenings = [];
       addedWalls = [];
       addedRooms = [];
-
-      if (replaceExisting) {
-        setOpenings([]);
-      }
+      addedOpenings = [];
 
       for (let index = 0; index < result.rooms.length; index += 1) {
         const room = result.rooms[index];
@@ -2314,6 +2509,23 @@ export function PlanEditor({
         );
       }
 
+      for (const opening of result.openings) {
+        const wall = addedWalls[opening.wallIndex];
+
+        if (!wall) continue;
+
+        addedOpenings.push(
+          await createOpening(plan.id, {
+            wallId: wall.id,
+            type: opening.type,
+            offset: opening.offset,
+            width: opening.width,
+            height: opening.height,
+            sillHeight: opening.sillHeight,
+          }),
+        );
+      }
+
       sync();
     };
 
@@ -2328,7 +2540,10 @@ export function PlanEditor({
 
       addedWalls = [];
       addedRooms = [];
+      addedOpenings = [];
       existingRooms = [];
+      existingWalls = [];
+      existingOpenings = [];
 
       for (const room of originalRooms) {
         existingRooms.push(
@@ -2339,7 +2554,6 @@ export function PlanEditor({
         );
       }
 
-      existingWalls = [];
       const wallIds = new Map<string, string>();
 
       for (const wall of originalWalls) {
@@ -2352,30 +2566,24 @@ export function PlanEditor({
         wallIds.set(wall.id, restored.id);
       }
 
-      if (replaceExisting) {
-        const restoredOpenings: PublicOpening[] = [];
+      for (const opening of originalOpenings) {
+        const wallId = wallIds.get(opening.wallId);
 
-        for (const opening of originalOpenings) {
-          const wallId = wallIds.get(opening.wallId);
+        if (!wallId) continue;
 
-          if (!wallId) continue;
-
-          restoredOpenings.push(
-            await createOpening(plan.id, {
-              wallId,
-              type: opening.type,
-              offset: opening.offset,
-              width: opening.width,
-              height: opening.height,
-              diameter: opening.diameter ?? undefined,
-              sillHeight: opening.sillHeight,
-              flipped: opening.flipped,
-              label: opening.label,
-            }),
-          );
-        }
-
-        setOpenings(restoredOpenings);
+        existingOpenings.push(
+          await createOpening(plan.id, {
+            wallId,
+            type: opening.type,
+            offset: opening.offset,
+            width: opening.width,
+            height: opening.height,
+            diameter: opening.diameter ?? undefined,
+            sillHeight: opening.sillHeight,
+            flipped: opening.flipped,
+            label: opening.label,
+          }),
+        );
       }
 
       sync();
@@ -3165,7 +3373,8 @@ export function PlanEditor({
 
   allSelectedRef.current = allSelected;
   copyAllRef.current = copyAllElements;
-  pasteAllRef.current = pasteAllElements;
+  copySelectionRef.current = copySelection;
+  pasteAllRef.current = pasteClipboard;
   const historyShortcutRef = useRef<(direction: 'undo' | 'redo') => void>(
     () => {},
   );
@@ -3195,9 +3404,12 @@ export function PlanEditor({
         }
 
         if (key === 'c') {
+          event.preventDefault();
+
           if (allSelectedRef.current) {
-            event.preventDefault();
             copyAllRef.current();
+          } else {
+            copySelectionRef.current();
           }
           return;
         }
@@ -5481,14 +5693,28 @@ export function PlanEditor({
         result={analysisResult}
         existingWalls={walls.length}
         existingRooms={rooms.length}
+        existingOpenings={openings.length}
         metersPerUnit={metersPerUnit}
+        canAbort={analysisBusy && analysisResult === null}
         onCancel={() => {
+          if (analysisBusy && analysisResult === null) {
+            cancelPlanAnalysis();
+            return;
+          }
+
           if (analysisBusy) return;
+
           setAnalysisOpen(false);
           setAnalysisResult(null);
           setAnalysisError(null);
         }}
         onConfirm={(replaceExisting) => void applyPlanAnalysis(replaceExisting)}
+        onCalibrate={() => {
+          setAnalysisOpen(false);
+          setAnalysisResult(null);
+          setAnalysisError(null);
+          requestTool('calibrate');
+        }}
       />
       <AddElementDialog
         open={addElementOpen}

@@ -591,6 +591,9 @@ const en: Dictionary = {
   'editor.analysis.noImage': 'Upload a floor plan first.',
   'editor.analysis.previewAlt': 'Detected rooms and walls',
   'editor.analysis.rooms': 'Rooms',
+  'editor.analysis.openings': 'Openings',
+  'editor.analysis.replaceOpenings':
+    'The {count} openings will be restored by undo.',
   'editor.analysis.walls': 'Walls',
   'editor.analysis.area': 'Area',
   'editor.analysis.wallLengthUnits': 'Wall length, units',
@@ -600,6 +603,7 @@ const en: Dictionary = {
   'editor.analysis.replaceHint':
     'Currently in the plan: {walls} walls, {rooms} rooms. Undo brings them back.',
   'editor.analysis.confirm': 'Add to project',
+  'editor.analysis.calibrate': 'Set the scale',
   'editor.analysis.noRooms':
     'No enclosed rooms were found, so only wall lines will be added. Try a sharper scan or draw the rooms manually.',
   'editor.analysis.roomName': 'Room {index}',
@@ -622,6 +626,8 @@ const en: Dictionary = {
   'editor.pointDetails.save': 'Save',
   'editor.pointDetails.skip': 'Skip',
   'editor.allDevices': 'All devices',
+  'editor.searchDevices': 'Search devices…',
+  'editor.noDevicesFound': 'No devices match the search.',
   'editor.addElement.title': 'Add element',
   'editor.addElement.description':
     'Choose the type, subtype, article and circuit before placing the element on the plan.',
@@ -798,6 +804,9 @@ const en: Dictionary = {
   'editor.centerHeight': 'Center height',
   'editor.history.addHole': 'Add wall hole',
   'editor.history.pasteAll': 'Paste all elements',
+  'editor.history.paste': 'Paste elements',
+  'editor.history.pasteOne': 'Paste element',
+  'editor.copySuffix': '(copy)',
   'editor.allSelected':
     'All elements selected · Ctrl+C to copy · Ctrl+V to paste',
 
@@ -1078,6 +1087,7 @@ const en: Dictionary = {
 
   'rooms.navigate': 'Room navigation',
   'rooms.navigateEmpty': 'No rooms on this floor yet.',
+  'rooms.noScale': 'Set the scale to see m²',
   'rooms.devicesShort': 'dev',
   'palette.title': 'Command palette',
   'palette.placeholder': 'Search tools and commands…',
@@ -2178,6 +2188,9 @@ const ua: Dictionary = {
   'editor.analysis.noImage': 'Спочатку завантажте план приміщення.',
   'editor.analysis.previewAlt': 'Розпізнані кімнати та стіни',
   'editor.analysis.rooms': 'Кімнати',
+  'editor.analysis.openings': 'Отвори',
+  'editor.analysis.replaceOpenings':
+    'Отворів — {count}; скасування їх поверне.',
   'editor.analysis.walls': 'Стіни',
   'editor.analysis.area': 'Площа',
   'editor.analysis.wallLengthUnits': 'Довжина стін, ум. од.',
@@ -2187,6 +2200,7 @@ const ua: Dictionary = {
   'editor.analysis.replaceHint':
     'Зараз у плані: стін — {walls}, кімнат — {rooms}. Скасування їх поверне.',
   'editor.analysis.confirm': 'Додати в проєкт',
+  'editor.analysis.calibrate': 'Задати масштаб',
   'editor.analysis.noRooms':
     'Замкнених кімнат не знайдено, тому буде додано лише лінії стін. Спробуйте чіткіший скан або намалюйте кімнати вручну.',
   'editor.analysis.roomName': 'Кімната {index}',
@@ -2209,6 +2223,8 @@ const ua: Dictionary = {
   'editor.pointDetails.save': 'Зберегти',
   'editor.pointDetails.skip': 'Пропустити',
   'editor.allDevices': 'Усі пристрої',
+  'editor.searchDevices': 'Пошук пристроїв…',
+  'editor.noDevicesFound': 'Нічого не знайдено.',
   'editor.addElement.title': 'Додати елемент',
   'editor.addElement.description':
     'Виберіть тип, підтип, артикул і коло перед розміщенням елемента на плані.',
@@ -2388,6 +2404,9 @@ const ua: Dictionary = {
   'editor.centerHeight': 'Висота центру',
   'editor.history.addHole': 'Додавання отвору',
   'editor.history.pasteAll': 'Вставлення всіх елементів',
+  'editor.history.paste': 'Вставлення елементів',
+  'editor.history.pasteOne': 'Вставлення елемента',
+  'editor.copySuffix': '(копія)',
   'editor.allSelected':
     'Обрано всі елементи · Ctrl+C — копіювати · Ctrl+V — вставити',
 
@@ -2668,6 +2687,7 @@ const ua: Dictionary = {
 
   'rooms.navigate': 'Навігація кімнатами',
   'rooms.navigateEmpty': 'На цьому поверсі ще немає кімнат.',
+  'rooms.noScale': 'Задайте масштаб, щоб бачити м²',
   'rooms.devicesShort': 'пристр.',
   'palette.title': 'Палітра команд',
   'palette.placeholder': 'Пошук інструментів і команд…',

@@ -1,4 +1,4 @@
-import { LoaderCircle, ScanLine, TriangleAlert } from 'lucide-react';
+import { LoaderCircle, Ruler, ScanLine, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -15,8 +15,11 @@ interface PlanAnalysisDialogProps {
   result: PlanAnalysis | null;
   existingWalls: number;
   existingRooms: number;
+  existingOpenings: number;
   metersPerUnit: number | null;
+  canAbort?: boolean;
   onCancel: () => void;
+  onCalibrate?: () => void;
   onConfirm: (replaceExisting: boolean) => void;
 }
 
@@ -27,8 +30,11 @@ export function PlanAnalysisDialog({
   result,
   existingWalls,
   existingRooms,
+  existingOpenings,
   metersPerUnit,
+  canAbort = false,
   onCancel,
+  onCalibrate,
   onConfirm,
 }: PlanAnalysisDialogProps) {
   const { t } = useI18n();
@@ -61,9 +67,14 @@ export function PlanAnalysisDialog({
       title={t('editor.analysis.title')}
       description={t('editor.analysis.hint')}
       className="max-w-2xl"
+      closeLabel={t('editor.close')}
       footer={
         <>
-          <Button variant="outline" onClick={onCancel} disabled={busy}>
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={busy && !canAbort}
+          >
             {t('editor.cancel')}
           </Button>
           <Button
@@ -111,7 +122,7 @@ export function PlanAnalysisDialog({
             </div>
           ) : null}
 
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
             <div className="rounded-lg border border-border bg-muted/30 px-2 py-2.5">
               <p className="text-lg font-semibold text-foreground">
                 {result.rooms.length}
@@ -130,6 +141,14 @@ export function PlanAnalysisDialog({
             </div>
             <div className="rounded-lg border border-border bg-muted/30 px-2 py-2.5">
               <p className="text-lg font-semibold text-foreground">
+                {result.openings.length}
+              </p>
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {t('editor.analysis.openings')}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted/30 px-2 py-2.5">
+              <p className="text-lg font-semibold text-foreground">
                 {area === null
                   ? wallLength.toFixed(0)
                   : `${area.toFixed(1)} m²`}
@@ -143,9 +162,22 @@ export function PlanAnalysisDialog({
           </div>
 
           {metersPerUnit === null ? (
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              {t('editor.analysis.uncalibrated')}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2">
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                {t('editor.analysis.uncalibrated')}
+              </p>
+              {onCalibrate ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCalibrate}
+                  disabled={busy}
+                >
+                  <Ruler className="h-3.5 w-3.5" />
+                  {t('editor.analysis.calibrate')}
+                </Button>
+              ) : null}
+            </div>
           ) : null}
 
           {hasExisting ? (
@@ -164,6 +196,11 @@ export function PlanAnalysisDialog({
                       walls: existingWalls,
                       rooms: existingRooms,
                     })}
+                    {existingOpenings > 0
+                      ? ` ${t('editor.analysis.replaceOpenings', {
+                          count: existingOpenings,
+                        })}`
+                      : ''}
                   </span>
                 </span>
               </label>

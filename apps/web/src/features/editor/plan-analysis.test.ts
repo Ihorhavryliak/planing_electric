@@ -61,7 +61,7 @@ function bounds(points: Array<{ x: number; y: number }>) {
 }
 
 describe('plan analysis', () => {
-  it('detects four rooms and their walls', () => {
+  it('detects four rooms and continuous walls with openings', () => {
     const result = analyzeWallMask(
       makeMask(1000, 750),
       1000,
@@ -70,9 +70,52 @@ describe('plan analysis', () => {
     );
 
     expect(result.rooms).toHaveLength(4);
-    expect(result.walls.length).toBe(8);
+    // Four perimeter walls plus two continuous partitions.
+    expect(result.walls).toHaveLength(6);
+    expect(result.openings).toHaveLength(2);
+    expect(result.openings.map((opening) => opening.type)).toEqual([
+      'door',
+      'door',
+    ]);
 
-    // Doorways must stay open: no interior wall crosses the door spans.
+    result.openings.forEach((opening) => {
+      expect(opening.wallIndex).toBeGreaterThanOrEqual(0);
+      expect(opening.wallIndex).toBeLessThan(result.walls.length);
+      expect(opening.width).toBeGreaterThan(40);
+      expect(opening.offset).toBeGreaterThanOrEqual(0);
+      expect(opening.height).toBeGreaterThan(0);
+    });
+
+    const doorWidths = result.openings
+      .map((opening) => opening.width)
+      .sort((left, right) => left - right);
+    expect(doorWidths[0]).toBeGreaterThan(45);
+    expect(doorWidths[1]).toBeLessThan(75);
+
+    const boxes = result.rooms.map((room) => bounds(room.boundary));
+    // Rooms must not cover each other; each quadrant is roughly 430×300.
+    boxes.forEach((box) => {
+      expect(box.x2 - box.x1).toBeGreaterThan(380);
+      expect(box.y2 - box.y1).toBeGreaterThan(260);
+    });
+
+    const quadrants = boxes.map((box) => {
+      const left = (box.x1 + box.x2) / 2 < 0;
+      const top = (box.y1 + box.y2) / 2 < 0;
+
+      return `${left ? 'l' : 'r'}${top ? 't' : 'b'}`;
+    });
+    expect(new Set(quadrants).size).toBe(4);
+  });
+
+  it('can leave doorway gaps instead of openings', () => {
+    const result = analyzeWallMask(makeMask(1000, 750), 1000, 750, UNDERLAY, {
+      detectOpenings: false,
+    });
+
+    expect(result.openings).toHaveLength(0);
+    expect(result.walls).toHaveLength(8);
+
     const crossesVerticalDoor = result.walls.some((wall) => {
       const [from, to] = wall.geometry;
 
@@ -94,21 +137,6 @@ describe('plan analysis', () => {
       return Math.min(from.x, to.x) < -310 && Math.max(from.x, to.x) > -230;
     });
     expect(crossesHorizontalDoor).toBe(false);
-
-    const boxes = result.rooms.map((room) => bounds(room.boundary));
-    // Rooms must not cover each other; each quadrant is roughly 430×300.
-    boxes.forEach((box) => {
-      expect(box.x2 - box.x1).toBeGreaterThan(380);
-      expect(box.y2 - box.y1).toBeGreaterThan(260);
-    });
-
-    const quadrants = boxes.map((box) => {
-      const left = (box.x1 + box.x2) / 2 < 0;
-      const top = (box.y1 + box.y2) / 2 < 0;
-
-      return `${left ? 'l' : 'r'}${top ? 't' : 'b'}`;
-    });
-    expect(new Set(quadrants).size).toBe(4);
   });
 
   it('keeps the underlay transform in the generated plan', () => {

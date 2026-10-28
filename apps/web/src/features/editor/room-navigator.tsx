@@ -67,7 +67,7 @@ export function RoomNavigator({
             const areaLabel =
               metersPerUnit !== null
                 ? `${(area * metersPerUnit * metersPerUnit).toFixed(1)} m²`
-                : `${Math.round(area)} u²`;
+                : t('rooms.noScale');
 
             return (
               <li key={room.id}>

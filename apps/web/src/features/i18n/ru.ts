@@ -567,6 +567,9 @@ export const ru: Dictionary = {
   'editor.analysis.noImage': 'Сначала загрузите план помещения.',
   'editor.analysis.previewAlt': 'Распознанные комнаты и стены',
   'editor.analysis.rooms': 'Комнаты',
+  'editor.analysis.openings': 'Проёмы',
+  'editor.analysis.replaceOpenings':
+    'Проёмов — {count}; отмена их вернёт.',
   'editor.analysis.walls': 'Стены',
   'editor.analysis.area': 'Площадь',
   'editor.analysis.wallLengthUnits': 'Длина стен, усл. ед.',
@@ -576,6 +579,7 @@ export const ru: Dictionary = {
   'editor.analysis.replaceHint':
     'Сейчас в плане: стен — {walls}, комнат — {rooms}. Отмена их вернёт.',
   'editor.analysis.confirm': 'Добавить в проект',
+  'editor.analysis.calibrate': 'Задать масштаб',
   'editor.analysis.noRooms':
     'Замкнутых комнат не найдено, поэтому будут добавлены только линии стен. Попробуйте более чёткий скан или нарисуйте комнаты вручную.',
   'editor.analysis.roomName': 'Комната {index}',
@@ -598,6 +602,8 @@ export const ru: Dictionary = {
   'editor.pointDetails.save': 'Сохранить',
   'editor.pointDetails.skip': 'Пропустить',
   'editor.allDevices': 'Все устройства',
+  'editor.searchDevices': 'Поиск устройств…',
+  'editor.noDevicesFound': 'Ничего не найдено.',
   'editor.addElement.title': 'Добавить элемент',
   'editor.addElement.description':
     'Выберите тип, подтип, артикул и цепь перед размещением элемента на плане.',
@@ -777,6 +783,9 @@ export const ru: Dictionary = {
   'editor.centerHeight': 'Высота центра',
   'editor.history.addHole': 'Добавление отверстия',
   'editor.history.pasteAll': 'Вставка всех элементов',
+  'editor.history.paste': 'Вставка элементов',
+  'editor.history.pasteOne': 'Вставка элемента',
+  'editor.copySuffix': '(копия)',
   'editor.allSelected':
     'Выбраны все элементы · Ctrl+C — копировать · Ctrl+V — вставить',
 
@@ -1055,6 +1064,7 @@ export const ru: Dictionary = {
 
   'rooms.navigate': 'Навигация по комнатам',
   'rooms.navigateEmpty': 'На этом этаже пока нет комнат.',
+  'rooms.noScale': 'Задайте масштаб, чтобы видеть м²',
   'rooms.devicesShort': 'устр.',
   'palette.title': 'Палитра команд',
   'palette.placeholder': 'Поиск инструментов и команд…',
