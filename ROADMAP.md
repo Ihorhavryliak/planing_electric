@@ -624,6 +624,13 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
 - [x] 21.18.10 Додати локальне закріплення стін, кімнат, трас,
       отворів і розмірів із контекстним меню, кнопкою в статусі та
       забороною перетягування/видалення.
+- [x] 21.18.11 Провести візуальний аудит тем: вирівняти rail/хедер із
+      контентом, перенести логотип у rail, вирівняти Settings/
+      Notifications/Invite по лівому краю та прибрати legacy amber
+      посилання.
+- [x] 21.18.12 Оновити browser-check під діалоги створення, окремі
+      кнопки панелей, увімкнений Ortho та пошук пристрою за
+      координатами; перевірити Docker web + API.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -899,6 +906,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-28 — session 32: cross-theme UX audit
+- Completed: audited dark and light themes across landing, login, dashboard, Settings, the 2D/3D editor and the new creation dialogs. Aligned the workspace header with the page shell, moved the brand into the full-height rail, left-aligned narrow settings/notification/invite columns, removed remaining amber auth/tip accents, and verified the editor header’s per-panel toggles and theme switch. Updated `browser-check` for the add-element and position dialogs, the split panel toggles, the default-on Ortho toggle and viewport-robust hover checks. Docker API and web were rebuilt; browser-check, responsive-check and signaling-check pass on <http://localhost:8090>.
+- Tests run: `pnpm typecheck`, `pnpm lint`, web tests (150), database tests (2), API tests (69), `browser-check` (dev + Docker), `responsive-check` (360/768/1024/1440), `signaling-check` (Docker), Playwright dark/light screenshots of landing, login, dashboard, settings, editor 2D/3D, add/post-add dialogs and quick-edit popup.
+- Issues/blockers: the 3D placement ghost still needs a close-up visual pass; the rounded hole cutout is visual-only (the wall is not CSG-cut).
+- Next action: verify the 3D ghost in a real wall close-up and decide whether to add a true CSG cutout for holes.
 
 ### 2026-10-28 — session 31: shadcn refresh, wall holes and guided creation
 - Completed: rebuilt the primitive layer on semantic shadcn tokens and a refined blue palette (light and dark), added a split auth layout, unified page width via `.page-shell`, aligned the workspace header with the content and moved the brand into the left rail, and left-aligned Settings/Notifications/Invite columns. Round wall holes are now a real opening type with a diameter column/migration, dock controls, 2D circle rendering and a 3D sleeve marker. The 2D dark canvas is black with a neutral grid and blue axes. The editor header has separate left/right panel toggles and a theme switch; Snap/Ortho are on by default and persisted with a grid snap guide. Adding a device opens a type/subtype/article/circuit dialog from the dock or toolbar, then a Position & Mounting dialog; the selection popup exposes m/cm/mm, X/Y and floor/wall/ceiling presets. Walls, rooms, routes, openings and dimensions can be pinned locally from the context menu or status bar.

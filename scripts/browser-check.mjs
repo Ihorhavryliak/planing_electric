@@ -359,6 +359,7 @@ async function main() {
     .getByRole('button', { name: 'Place on plan', exact: true })
     .click();
   await addDialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+  await syncCanvas();
   const socketSaved = page
     .waitForResponse(
       (response) =>
