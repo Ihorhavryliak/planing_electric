@@ -755,6 +755,9 @@ export const ru: Dictionary = {
   'editor.diameter': 'Диаметр',
   'editor.centerHeight': 'Высота центра',
   'editor.history.addHole': 'Добавление отверстия',
+  'editor.history.pasteAll': 'Вставка всех элементов',
+  'editor.allSelected':
+    'Выбраны все элементы · Ctrl+C — копировать · Ctrl+V — вставить',
 
   'editor.cableRoutes': 'Кабельные трассы',
   'editor.routesEmpty':

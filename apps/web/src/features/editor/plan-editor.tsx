@@ -548,6 +548,18 @@ export function PlanEditor({
   }>({ type: 'socket', subtype: null });
   const pendingPointCircuitRef = useRef<string | null>(null);
   const [postAddPointId, setPostAddPointId] = useState<string | null>(null);
+  const [allSelected, setAllSelected] = useState(false);
+  const allSelectedRef = useRef(false);
+  const copyAllRef = useRef<() => void>(() => {});
+  const pasteAllRef = useRef<() => Promise<void>>(async () => {});
+  const clipboardRef = useRef<{
+    points: PublicPoint[];
+    walls: PublicWall[];
+    rooms: PublicRoom[];
+    openings: PublicOpening[];
+    dimensions: PublicDimension[];
+    routes: PublicRoute[];
+  } | null>(null);
   const [openingSizes, setOpeningSizes] = useState<
     Record<OpeningType, OpeningSizeMeters>
   >({
@@ -1967,6 +1979,213 @@ export function PlanEditor({
     setAddElementOpen(false);
   }
 
+  function copyAllElements() {
+    const snapshot = {
+      points: pointsRef.current.map((item) => ({ ...item })),
+      walls: wallsRef.current.map((item) => ({ ...item })),
+      rooms: roomsRef.current.map((item) => ({ ...item })),
+      openings: openingsRef.current.map((item) => ({ ...item })),
+      dimensions: dimensionsRef.current.map((item) => ({ ...item })),
+      routes: routesRef.current.map((item) => ({ ...item })),
+    };
+    clipboardRef.current = snapshot;
+    setAllSelected(true);
+    void navigator.clipboard
+      ?.writeText(JSON.stringify({ app: 'drawmyplace', ...snapshot }))
+      .catch(() => undefined);
+  }
+
+  type CreatedElement = {
+    kind: 'point' | 'wall' | 'room' | 'opening' | 'dimension' | 'route';
+    id: string;
+  };
+
+  async function deleteCreatedElements(created: CreatedElement[]) {
+    const removed = {
+      points: new Set<string>(),
+      walls: new Set<string>(),
+      rooms: new Set<string>(),
+      openings: new Set<string>(),
+      dimensions: new Set<string>(),
+      routes: new Set<string>(),
+    };
+
+    for (const item of [...created].reverse()) {
+      if (item.kind === 'point') {
+        removed.points.add(item.id);
+        await deletePoint(item.id);
+      } else if (item.kind === 'wall') {
+        removed.walls.add(item.id);
+        await deleteWall(item.id);
+      } else if (item.kind === 'room') {
+        removed.rooms.add(item.id);
+        await deleteRoom(item.id);
+      } else if (item.kind === 'opening') {
+        removed.openings.add(item.id);
+        await deleteOpening(item.id);
+      } else if (item.kind === 'dimension') {
+        removed.dimensions.add(item.id);
+        await deleteDimension(item.id);
+      } else {
+        removed.routes.add(item.id);
+        await deleteRoute(item.id);
+      }
+    }
+
+    setPoints((current) => current.filter((item) => !removed.points.has(item.id)));
+    setWalls((current) => current.filter((item) => !removed.walls.has(item.id)));
+    setRooms((current) => current.filter((item) => !removed.rooms.has(item.id)));
+    setOpenings((current) =>
+      current.filter((item) => !removed.openings.has(item.id)),
+    );
+    setDimensions((current) =>
+      current.filter((item) => !removed.dimensions.has(item.id)),
+    );
+    setRoutes((current) => current.filter((item) => !removed.routes.has(item.id)));
+  }
+
+  async function pasteSnapshot(snapshot: NonNullable<typeof clipboardRef.current>) {
+    const offset = 40;
+    const created: CreatedElement[] = [];
+    const pointMap = new Map<string, string>();
+    const wallMap = new Map<string, string>();
+
+    try {
+      const newPoints: PublicPoint[] = [];
+      for (const point of snapshot.points) {
+        const { locked: _locked, ...properties } = point.properties as {
+          locked?: boolean;
+        } & Record<string, unknown>;
+        const copy = await createPoint(plan.id, {
+          type: point.type,
+          x: point.x + offset,
+          y: point.y + offset,
+          rotation: point.rotation,
+          label: point.label,
+          mountingHeight: point.mountingHeight,
+          properties,
+        });
+        pointMap.set(point.id, copy.id);
+        newPoints.push(copy);
+        created.push({ kind: 'point', id: copy.id });
+      }
+      setPoints((current) => [...current, ...newPoints]);
+
+      const newWalls: PublicWall[] = [];
+      for (const wall of snapshot.walls) {
+        const copy = await createWall(plan.id, {
+          geometry: wall.geometry.map((vertex) => ({
+            x: vertex.x + offset,
+            y: vertex.y + offset,
+          })),
+          thickness: wall.thickness ?? undefined,
+          label: wall.label,
+        });
+        wallMap.set(wall.id, copy.id);
+        newWalls.push(copy);
+        created.push({ kind: 'wall', id: copy.id });
+      }
+      setWalls((current) => [...current, ...newWalls]);
+
+      const newRooms: PublicRoom[] = [];
+      for (const room of snapshot.rooms) {
+        const copy = await createRoom(plan.id, {
+          name: `${room.name} (копія)`,
+          boundary: room.boundary.map((vertex) => ({
+            x: vertex.x + offset,
+            y: vertex.y + offset,
+          })),
+        });
+        newRooms.push(copy);
+        created.push({ kind: 'room', id: copy.id });
+      }
+      setRooms((current) => [...current, ...newRooms]);
+
+      const newOpenings: PublicOpening[] = [];
+      for (const opening of snapshot.openings) {
+        const wallId = wallMap.get(opening.wallId);
+        if (!wallId) continue;
+        const copy = await createOpening(plan.id, {
+          wallId,
+          type: opening.type,
+          offset: opening.offset,
+          width: opening.width,
+          height: opening.height,
+          diameter: opening.diameter ?? undefined,
+          sillHeight: opening.sillHeight,
+          flipped: opening.flipped,
+          label: opening.label,
+        });
+        newOpenings.push(copy);
+        created.push({ kind: 'opening', id: copy.id });
+      }
+      setOpenings((current) => [...current, ...newOpenings]);
+
+      const newDimensions: PublicDimension[] = [];
+      for (const dimension of snapshot.dimensions) {
+        const copy = await createDimension(plan.id, {
+          pointA: { x: dimension.pointA.x + offset, y: dimension.pointA.y + offset },
+          pointB: { x: dimension.pointB.x + offset, y: dimension.pointB.y + offset },
+          offset: dimension.offset,
+          label: dimension.label,
+        });
+        newDimensions.push(copy);
+        created.push({ kind: 'dimension', id: copy.id });
+      }
+      setDimensions((current) => [...current, ...newDimensions]);
+
+      const newRoutes: PublicRoute[] = [];
+      for (const route of snapshot.routes) {
+        const copy = await createRoute(plan.id, {
+          geometry: route.geometry.map((vertex) => ({
+            x: vertex.x + offset,
+            y: vertex.y + offset,
+          })),
+          circuitId: route.circuitId,
+          materialId: route.materialId,
+          startPointId: route.startPointId
+            ? (pointMap.get(route.startPointId) ?? null)
+            : null,
+          endPointId: route.endPointId
+            ? (pointMap.get(route.endPointId) ?? null)
+            : null,
+          settings: { ...route.settings },
+        });
+        newRoutes.push(copy);
+        created.push({ kind: 'route', id: copy.id });
+      }
+      setRoutes((current) => [...current, ...newRoutes]);
+      bumpCalculation();
+      return created;
+    } catch (error) {
+      await deleteCreatedElements(created).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async function pasteAllElements() {
+    const snapshot = clipboardRef.current;
+    if (!snapshot) return;
+    setPointsError(null);
+    let active: CreatedElement[] = [];
+
+    try {
+      active = await pasteSnapshot(snapshot);
+      setAllSelected(false);
+      pushHistory({
+        label: t('editor.history.pasteAll'),
+        undo: async () => {
+          await deleteCreatedElements(active);
+        },
+        redo: async () => {
+          active = await pasteSnapshot(snapshot);
+        },
+      });
+    } catch (error) {
+      setPointsError(getErrorMessage(error));
+    }
+  }
+
   /**
    * Applies a point change at once and saves it. Route ends sitting on the
    * point move with it, both in the UI and on the server (one transaction).
@@ -2683,6 +2902,9 @@ export function PlanEditor({
     })();
   }
 
+  allSelectedRef.current = allSelected;
+  copyAllRef.current = copyAllElements;
+  pasteAllRef.current = pasteAllElements;
   const historyShortcutRef = useRef<(direction: 'undo' | 'redo') => void>(
     () => {},
   );
@@ -2705,6 +2927,28 @@ export function PlanEditor({
       if ((event.ctrlKey || event.metaKey) && !event.altKey) {
         const key = event.key.toLowerCase();
 
+        if (key === 'a') {
+          event.preventDefault();
+          setAllSelected(true);
+          return;
+        }
+
+        if (key === 'c') {
+          if (allSelectedRef.current) {
+            event.preventDefault();
+            copyAllRef.current();
+          }
+          return;
+        }
+
+        if (key === 'v') {
+          if (clipboardRef.current) {
+            event.preventDefault();
+            void pasteAllRef.current();
+          }
+          return;
+        }
+
         if (key === 'z') {
           event.preventDefault();
           historyShortcutRef.current(event.shiftKey ? 'redo' : 'undo');
@@ -2716,6 +2960,10 @@ export function PlanEditor({
           historyShortcutRef.current('redo');
           return;
         }
+      }
+
+      if (event.key === 'Escape') {
+        setAllSelected(false);
       }
 
       if (
@@ -3346,6 +3594,12 @@ export function PlanEditor({
         }
       >
         {viewModeBar}
+
+        {allSelected ? (
+          <div className="pointer-events-none absolute bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full border border-primary/25 bg-card/95 px-3 py-1.5 text-[11px] text-primary shadow-lg backdrop-blur">
+            {t('editor.allSelected')}
+          </div>
+        ) : null}
 
         {previewMode || preferences.leftSidebarCollapsed ? null : (
           <aside className="editor-sidebar order-1 flex flex-col gap-3 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">

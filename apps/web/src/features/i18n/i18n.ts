@@ -776,6 +776,9 @@ const en: Dictionary = {
   'editor.diameter': 'Diameter',
   'editor.centerHeight': 'Center height',
   'editor.history.addHole': 'Add wall hole',
+  'editor.history.pasteAll': 'Paste all elements',
+  'editor.allSelected':
+    'All elements selected · Ctrl+C to copy · Ctrl+V to paste',
 
   'editor.cableRoutes': 'Cable routes',
   'editor.routesEmpty':
@@ -2342,6 +2345,9 @@ const ua: Dictionary = {
   'editor.diameter': 'Діаметр',
   'editor.centerHeight': 'Висота центру',
   'editor.history.addHole': 'Додавання отвору',
+  'editor.history.pasteAll': 'Вставлення всіх елементів',
+  'editor.allSelected':
+    'Обрано всі елементи · Ctrl+C — копіювати · Ctrl+V — вставити',
 
   'editor.cableRoutes': 'Кабельні траси',
   'editor.routesEmpty':
