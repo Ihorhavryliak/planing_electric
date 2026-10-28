@@ -251,6 +251,7 @@ export function createDemoLocalProject(
     offset,
     width,
     height,
+    diameter: null,
     sillHeight,
     flipped: false,
     label: null,

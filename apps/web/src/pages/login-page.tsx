@@ -52,7 +52,7 @@ export function LoginPage() {
           {t('auth.newHere')}{' '}
           <Link
             to="/register"
-            className="font-medium text-amber-300 hover:text-amber-200"
+            className="font-medium text-primary hover:text-primary/80"
           >
             {t('auth.createAccount')}
           </Link>

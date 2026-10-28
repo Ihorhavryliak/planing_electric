@@ -173,7 +173,7 @@ export function EditorPage() {
     return (
       <div className="relative min-h-screen">
         <WorkspaceHeader badge={t('editorPage.badge')} />
-        <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
+        <main id="main-content" className="page-shell">
           <div
             role="alert"
             className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100"
@@ -204,7 +204,7 @@ export function EditorPage() {
         <WorkspaceHeader badge={t('editorPage.badge')} />
         <div
           role="status"
-          className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-16 text-sm text-slate-400"
+          className="page-shell flex items-center gap-3 text-sm text-slate-400"
         >
           <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
           {t('editorPage.loading')}

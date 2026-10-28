@@ -6,10 +6,12 @@ import type {
   CreateRoomInput,
   CreateRouteInput,
   CreateWallInput,
+  DeviceSubtype,
   EditorViewport,
   ElectricalPointType,
   ElectricalSettings,
   LengthUnitInput,
+  OpeningType,
   PublicCalibration,
   PublicDimension,
   PublicOpening,
@@ -32,6 +34,9 @@ import type {
   UpdateWallInput,
 } from '@drawmyplace/contracts';
 import { DEVICE_LIBRARY } from '@drawmyplace/contracts';
+import { AddElementDialog, type AddElementResult } from './add-element-dialog';
+import { PointDetailsDialog } from './point-details-dialog';
+import { useEditorLocks } from './editor-locks';
 import {
   Box,
   Calculator,
@@ -49,8 +54,13 @@ import {
   Lock,
   Maximize2,
   Minimize2,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Moon,
+  Sun,
+  Monitor,
   RadioTower,
   RotateCcw,
   Ruler,
@@ -207,6 +217,7 @@ import {
 } from './use-plan-autosave';
 import { getErrorMessage } from '@/lib/api';
 import { useI18n } from '@/features/i18n/i18n-context';
+import { useTheme } from '@/features/theme/theme-context';
 import { cn } from '@/lib/utils';
 
 interface PlanEditorProps {
@@ -276,6 +287,7 @@ function createOpeningInput(opening: PublicOpening): CreateOpeningInput {
     offset: opening.offset,
     width: opening.width,
     height: opening.height,
+    diameter: opening.diameter ?? undefined,
     sillHeight: opening.sillHeight,
     flipped: opening.flipped,
     label: opening.label,
@@ -529,11 +541,19 @@ export function PlanEditor({
     }
   }, [lengthUnit]);
   const [routeMounting, setRouteMounting] = useState<RouteMounting>('wall');
+  const [addElementOpen, setAddElementOpen] = useState(false);
+  const [addElementDraft, setAddElementDraft] = useState<{
+    type: ElectricalPointType;
+    subtype: DeviceSubtype | null;
+  }>({ type: 'socket', subtype: null });
+  const pendingPointCircuitRef = useRef<string | null>(null);
+  const [postAddPointId, setPostAddPointId] = useState<string | null>(null);
   const [openingSizes, setOpeningSizes] = useState<
-    Record<'door' | 'window', OpeningSizeMeters>
+    Record<OpeningType, OpeningSizeMeters>
   >({
     door: { width: 0.9, height: 2.1, sill: 0 },
     window: { width: 1.3, height: 1.3, sill: 0.9 },
+    hole: { width: 0.1, height: 0.1, sill: 0.95 },
   });
   const [placementRequest, setPlacementRequest] =
     useState<PlacementRequest | null>(null);
@@ -567,7 +587,14 @@ export function PlanEditor({
     preferences,
     setUiScale,
     toggleSidebar,
+    toggleLeftSidebar,
+    toggleRightSidebar,
   } = useEditorPreferences();
+  const { preference: themePreference, resolved: resolvedTheme, toggle: toggleTheme } =
+    useTheme();
+  const { isLocked, toggleLock } = useEditorLocks();
+  const bothSidebarsCollapsed =
+    preferences.leftSidebarCollapsed && preferences.rightSidebarCollapsed;
   const {
     settings: takeoffSettings,
     setWallHeight,
@@ -1430,7 +1457,7 @@ export function PlanEditor({
 
   async function handleAddOpening(
     wall: PublicWall,
-    type: 'door' | 'window',
+    type: OpeningType,
     offsetOverride?: number,
     sizeOverride?: { widthM?: number; heightM?: number; sillM?: number },
   ) {
@@ -1439,16 +1466,26 @@ export function PlanEditor({
     const planUnitsPerMeter = metersPerUnit ?? 100;
     const defaults = openingSizes[type];
     const widthMeters = sizeOverride?.widthM ?? defaults.width;
-    const heightMeters = sizeOverride?.heightM ?? defaults.height;
+    const heightMeters =
+      type === 'hole'
+        ? widthMeters
+        : (sizeOverride?.heightM ?? defaults.height);
     const sillMeters =
-      type === 'window' ? (sizeOverride?.sillM ?? defaults.sill) : 0;
+      type === 'window' || type === 'hole'
+        ? (sizeOverride?.sillM ?? defaults.sill)
+        : 0;
     const width = Math.max(
       1,
       Math.min(length > 1 ? length - 1 : length, widthMeters * planUnitsPerMeter),
     );
-    const height = Math.max(1, heightMeters * planUnitsPerMeter);
+    const height =
+      type === 'hole'
+        ? width
+        : Math.max(1, heightMeters * planUnitsPerMeter);
     const sillHeight =
-      type === 'window' ? Math.max(0, sillMeters * planUnitsPerMeter) : 0;
+      type === 'window' || type === 'hole'
+        ? Math.max(0, sillMeters * planUnitsPerMeter)
+        : 0;
     const offset = Math.max(
       0,
       Math.min(length - width, offsetOverride ?? (length - width) / 2),
@@ -1461,6 +1498,7 @@ export function PlanEditor({
         offset,
         width,
         height,
+        diameter: type === 'hole' ? width : undefined,
         sillHeight,
       });
       setOpenings((current) => [...current, created]);
@@ -1472,7 +1510,9 @@ export function PlanEditor({
         label:
           type === 'door'
             ? t('editor.history.addDoor')
-            : t('editor.history.addWindow'),
+            : type === 'window'
+              ? t('editor.history.addWindow')
+              : t('editor.history.addHole'),
         undo: async () => {
           await deleteOpening(activeId);
         },
@@ -1874,6 +1914,12 @@ export function PlanEditor({
     extra: Partial<Pick<PublicPoint, 'rotation' | 'label' | 'mountingHeight' | 'properties'>> = {},
   ) {
     setPointsError(null);
+    const pendingCircuit = pendingPointCircuitRef.current;
+    pendingPointCircuitRef.current = null;
+    const properties = {
+      ...(extra.properties ?? {}),
+      ...(pendingCircuit ? { circuitId: pendingCircuit } : {}),
+    };
 
     try {
       const created = await createPoint(plan.id, {
@@ -1883,11 +1929,12 @@ export function PlanEditor({
         rotation: extra.rotation ?? 0,
         label: extra.label ?? null,
         mountingHeight: extra.mountingHeight ?? null,
-        properties: extra.properties ?? {},
+        properties,
       });
 
       setPoints((current) => [...current, created]);
       selectPoint(created.id);
+      setPostAddPointId(created.id);
       bumpCalculation();
 
       const input = createPointInput(created);
@@ -1906,6 +1953,17 @@ export function PlanEditor({
     } catch (createError) {
       setPointsError(getErrorMessage(createError));
     }
+  }
+
+  function handleAddElementConfirm(result: AddElementResult) {
+    pendingPointCircuitRef.current = result.circuitId;
+    setPlacementRequest({
+      type: result.type,
+      subtype: result.subtype,
+      productId: result.productId,
+      nonce: Date.now(),
+    });
+    setAddElementOpen(false);
   }
 
   /**
@@ -2853,7 +2911,7 @@ export function PlanEditor({
     },
     {
       id: 'panels',
-      label: preferences.sidebarCollapsed
+      label: bothSidebarsCollapsed
         ? t('editor.showPanels')
         : t('editor.hidePanels'),
       run: toggleSidebar,
@@ -2979,12 +3037,17 @@ export function PlanEditor({
         onRouteMountingChange={setRouteMounting}
         onCreateOpening={(
           wallId: string,
-          type: 'door' | 'window',
+          type: OpeningType,
           offset: number,
           size?: { widthM?: number; heightM?: number; sillM?: number },
         ) => {
           const wall = walls.find((item) => item.id === wallId);
           if (wall) void handleAddOpening(wall, type, offset, size);
+        }}
+        holeSize={{
+          diameter: openingSizes.hole.width,
+          centerHeight:
+            openingSizes.hole.sill + openingSizes.hole.width / 2,
         }}
         onCreateWall={(geometry: { x: number; y: number }[]) =>
           void handleCreateWall(geometry)
@@ -3137,30 +3200,78 @@ export function PlanEditor({
             )}
           </button>
           {previewMode ? null : (
-            <button
-              type="button"
-              title={
-                preferences.sidebarCollapsed
-                  ? t('editor.showPanels')
-                  : t('editor.hidePanels')
-              }
-              aria-label={
-                preferences.sidebarCollapsed
-                  ? t('editor.showPanels')
-                  : t('editor.hidePanels')
-              }
-              aria-pressed={preferences.sidebarCollapsed}
-              data-tooltip-hint={t('tooltip.panels')}
-              onClick={toggleSidebar}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              {preferences.sidebarCollapsed ? (
-                <PanelRightOpen className="h-4 w-4" />
-              ) : (
-                <PanelRightClose className="h-4 w-4" />
-              )}
-            </button>
+            <>
+              <button
+                type="button"
+                title={
+                  preferences.leftSidebarCollapsed
+                    ? t('editor.showLeftPanel')
+                    : t('editor.hideLeftPanel')
+                }
+                aria-label={
+                  preferences.leftSidebarCollapsed
+                    ? t('editor.showLeftPanel')
+                    : t('editor.hideLeftPanel')
+                }
+                aria-pressed={!preferences.leftSidebarCollapsed}
+                onClick={toggleLeftSidebar}
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+                  preferences.leftSidebarCollapsed
+                    ? 'text-slate-500 hover:bg-white/10 hover:text-white'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                )}
+              >
+                {preferences.leftSidebarCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </button>
+              <button
+                type="button"
+                title={
+                  preferences.rightSidebarCollapsed
+                    ? t('editor.showRightPanel')
+                    : t('editor.hideRightPanel')
+                }
+                aria-label={
+                  preferences.rightSidebarCollapsed
+                    ? t('editor.showRightPanel')
+                    : t('editor.hideRightPanel')
+                }
+                aria-pressed={!preferences.rightSidebarCollapsed}
+                onClick={toggleRightSidebar}
+                className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg transition-colors',
+                  preferences.rightSidebarCollapsed
+                    ? 'text-slate-500 hover:bg-white/10 hover:text-white'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                )}
+              >
+                {preferences.rightSidebarCollapsed ? (
+                  <PanelRightOpen className="h-4 w-4" />
+                ) : (
+                  <PanelRightClose className="h-4 w-4" />
+                )}
+              </button>
+            </>
           )}
+          <button
+            type="button"
+            title={t('editor.themeToggle')}
+            aria-label={t('editor.themeToggle')}
+            onClick={toggleTheme}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {themePreference === 'system' ? (
+              <Monitor className="h-4 w-4" />
+            ) : resolvedTheme === 'dark' ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </button>
           <button
             type="button"
             title={t('guide.title')}
@@ -3214,9 +3325,13 @@ export function PlanEditor({
         data-plan-id={plan.id}
         data-viewport={JSON.stringify(viewport)}
         className={`editor-shell ${fullscreen.isFullscreen ? 'bg-slate-950' : ''} ${
-          previewMode || preferences.sidebarCollapsed
+          previewMode || bothSidebarsCollapsed
             ? 'relative'
-            : 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_20rem] xl:grid-cols-[17rem_minmax(0,1fr)_22rem]'
+            : preferences.leftSidebarCollapsed
+              ? 'grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]'
+              : preferences.rightSidebarCollapsed
+                ? 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]'
+                : 'grid grid-cols-1 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_20rem] xl:grid-cols-[17rem_minmax(0,1fr)_22rem]'
         }`}
         style={
           {
@@ -3226,7 +3341,7 @@ export function PlanEditor({
       >
         {viewModeBar}
 
-        {previewMode || preferences.sidebarCollapsed ? null : (
+        {previewMode || preferences.leftSidebarCollapsed ? null : (
           <aside className="editor-sidebar order-1 flex flex-col gap-3 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
             <RoomNavigator
               rooms={rooms}
@@ -3270,7 +3385,7 @@ export function PlanEditor({
               ? 'h-[calc(100vh-1rem)]'
               : previewMode
                 ? 'h-[calc(100vh-6rem)]'
-                : preferences.sidebarCollapsed
+                : bothSidebarsCollapsed
                   ? 'h-[calc(62vh+3.5rem)] lg:h-[calc(100vh-12rem)]'
                   : 'h-[calc(62vh+3.5rem)] lg:h-auto lg:min-h-[calc(100vh-22rem)]'
           }`}
@@ -3313,6 +3428,9 @@ export function PlanEditor({
             circuits={circuits}
             signalingLoops={signaling.loops}
             lengthUnit={lengthUnit}
+            onLengthUnitChange={setLengthUnit}
+            isLocked={isLocked}
+            onToggleLock={toggleLock}
             layers={layers}
             walls={walls}
             selectedWallId={selectedWallId}
@@ -3353,6 +3471,10 @@ export function PlanEditor({
             onDeleteRoute={(id) => void handleDeleteRoute(id)}
             onAttachRouteEnd={handleAttachRouteEnd}
             onDetachRouteEnd={handleDetachRouteEnd}
+            onRequestAddPoint={(type) => {
+              setAddElementDraft({ type, subtype: null });
+              setAddElementOpen(true);
+            }}
             onCreatePoint={(type, at, subtype, productId) =>
               void handleCreatePoint(type, at, {
                 properties: {
@@ -3474,18 +3596,39 @@ export function PlanEditor({
               openingSizes={openingSizes}
               canAddOpening={activeOpeningWall !== null}
               routeMounting={routeMounting}
-              onSelectDevice={(type, subtype) =>
-                setPlacementRequest({
-                  type,
-                  subtype,
-                  nonce: Date.now(),
-                })
-              }
+              onSelectDevice={(type, subtype) => {
+                setAddElementDraft({ type, subtype });
+                setAddElementOpen(true);
+              }}
               onOpeningSizeChange={(type, field, meters) =>
-                setOpeningSizes((current) => ({
-                  ...current,
-                  [type]: { ...current[type], [field]: meters },
-                }))
+                setOpeningSizes((current) => {
+                  if (type !== 'hole') {
+                    return {
+                      ...current,
+                      [type]: { ...current[type], [field]: meters },
+                    };
+                  }
+                  if (field === 'width') {
+                    return {
+                      ...current,
+                      hole: {
+                        ...current.hole,
+                        width: meters,
+                        height: meters,
+                      },
+                    };
+                  }
+                  if (field === 'sill') {
+                    return {
+                      ...current,
+                      hole: {
+                        ...current.hole,
+                        sill: Math.max(0, meters - current.hole.width / 2),
+                      },
+                    };
+                  }
+                  return current;
+                })
               }
               onAddOpening={(type) => {
                 if (activeOpeningWall) {
@@ -3497,7 +3640,7 @@ export function PlanEditor({
           )}
         </div>
 
-        {previewMode || preferences.sidebarCollapsed ? null : (
+        {previewMode || preferences.rightSidebarCollapsed ? null : (
         <aside data-active-tab={sidebarTab} className="editor-sidebar relative order-3 flex w-full flex-col gap-2 lg:order-none lg:max-h-[calc(100vh-14rem)] lg:overflow-y-auto lg:pr-1">
           <div data-sidebar-tab-header className="sticky top-0 z-20 -mx-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur-xl">
             <div
@@ -4076,6 +4219,15 @@ export function PlanEditor({
                 >
                   {t('editor.addWindow')}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void handleAddOpening(activeOpeningWall, 'hole')
+                  }
+                >
+                  {t('editor.addHole')}
+                </Button>
               </div>
             ) : null}
 
@@ -4096,7 +4248,7 @@ export function PlanEditor({
                         {t(`editor.opening.${opening.type}`)}
                       </span>
                       <span className="text-slate-500">
-                        {opening.width.toFixed(0)}
+                        {(opening.diameter ?? opening.width).toFixed(0)}
                       </span>
                     </button>
                   </li>
@@ -4123,66 +4275,116 @@ export function PlanEditor({
                     />
                   </label>
                   <label className="text-xs text-slate-400">
-                    {t('editor.width')}
+                    {selectedOpening.type === 'hole'
+                      ? t('editor.diameter')
+                      : t('editor.width')}
                     <Input
                       type="number"
                       min="1"
                       step="1"
-                      defaultValue={selectedOpening.width}
-                      className="mt-1 h-8"
-                      onBlur={(event) =>
-                        void handlePatchOpening(selectedOpening.id, {
-                          width: Math.max(1, Number(event.target.value) || 1),
-                        })
+                      defaultValue={
+                        selectedOpening.diameter ?? selectedOpening.width
                       }
+                      className="mt-1 h-8"
+                      onBlur={(event) => {
+                        const value = Math.max(
+                          1,
+                          Number(event.target.value) || 1,
+                        );
+                        void handlePatchOpening(selectedOpening.id, {
+                          width: value,
+                          ...(selectedOpening.type === 'hole'
+                            ? { diameter: value, height: value }
+                            : {}),
+                        });
+                      }}
                     />
                   </label>
-                  <label className="text-xs text-slate-400">
-                    {t('editor.height')}
-                    <Input
-                      type="number"
-                      min="1"
-                      step="1"
-                      defaultValue={selectedOpening.height}
-                      className="mt-1 h-8"
-                      onBlur={(event) =>
-                        void handlePatchOpening(selectedOpening.id, {
-                          height: Math.max(1, Number(event.target.value) || 1),
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="text-xs text-slate-400">
-                    {t('editor.sill')}
-                    <Input
-                      type="number"
-                      min="0"
-                      step="1"
-                      defaultValue={selectedOpening.sillHeight}
-                      className="mt-1 h-8"
-                      onBlur={(event) =>
-                        void handlePatchOpening(selectedOpening.id, {
-                          sillHeight: Math.max(
+                  {selectedOpening.type !== 'hole' ? (
+                    <>
+                      <label className="text-xs text-slate-400">
+                        {t('editor.height')}
+                        <Input
+                          type="number"
+                          min="1"
+                          step="1"
+                          defaultValue={selectedOpening.height}
+                          className="mt-1 h-8"
+                          onBlur={(event) =>
+                            void handlePatchOpening(selectedOpening.id, {
+                              height: Math.max(
+                                1,
+                                Number(event.target.value) || 1,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="text-xs text-slate-400">
+                        {t('editor.sill')}
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          defaultValue={selectedOpening.sillHeight}
+                          className="mt-1 h-8"
+                          onBlur={(event) =>
+                            void handlePatchOpening(selectedOpening.id, {
+                              sillHeight: Math.max(
+                                0,
+                                Number(event.target.value) || 0,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <label className="text-xs text-slate-400">
+                      {t('editor.centerHeight')}
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        defaultValue={
+                          selectedOpening.sillHeight +
+                          (selectedOpening.diameter ?? selectedOpening.height) /
+                            2
+                        }
+                        className="mt-1 h-8"
+                        onBlur={(event) => {
+                          const center = Math.max(
                             0,
                             Number(event.target.value) || 0,
-                          ),
+                          );
+                          void handlePatchOpening(selectedOpening.id, {
+                            sillHeight: Math.max(
+                              0,
+                              center -
+                                (selectedOpening.diameter ??
+                                  selectedOpening.height) /
+                                  2,
+                            ),
+                          });
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+                {selectedOpening.type !== 'hole' ? (
+                  <label className="flex items-center gap-2 text-xs text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={selectedOpening.flipped}
+                      onChange={(event) =>
+                        void handlePatchOpening(selectedOpening.id, {
+                          flipped: event.target.checked,
                         })
                       }
                     />
+                    {t('editor.flipDoor')}
                   </label>
-                </div>
-                <label className="flex items-center gap-2 text-xs text-slate-400">
-                  <input
-                    type="checkbox"
-                    checked={selectedOpening.flipped}
-                    onChange={(event) =>
-                      void handlePatchOpening(selectedOpening.id, {
-                        flipped: event.target.checked,
-                      })
-                    }
-                  />
-                  {t('editor.flipDoor')}
-                </label>
+                ) : null}
                 <Button
                   variant="outline"
                   size="sm"
@@ -4695,6 +4897,23 @@ export function PlanEditor({
         />
       ) : null}
 
+      <PointDetailsDialog
+        open={Boolean(postAddPointId)}
+        point={points.find((item) => item.id === postAddPointId) ?? null}
+        lengthUnit={lengthUnit}
+        onClose={() => setPostAddPointId(null)}
+        onSave={(id, patch) => {
+          void handlePatchPoint(id, patch);
+        }}
+      />
+      <AddElementDialog
+        open={addElementOpen}
+        initialType={addElementDraft.type}
+        initialSubtype={addElementDraft.subtype}
+        circuits={circuits}
+        onClose={() => setAddElementOpen(false)}
+        onConfirm={handleAddElementConfirm}
+      />
       <CommandPalette
         open={paletteOpen}
         commands={paletteCommands}

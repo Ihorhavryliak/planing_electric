@@ -11,12 +11,31 @@ describe('editor preferences', () => {
     expect(parseEditorPreferences('{')).toEqual(DEFAULT_EDITOR_PREFERENCES);
   });
 
-  it('restores supported zoom levels and sidebar state', () => {
+  it('restores supported zoom levels and migrates the old sidebar flag', () => {
     expect(
       parseEditorPreferences(
         JSON.stringify({ uiScale: 1.1, sidebarCollapsed: true }),
       ),
-    ).toEqual({ uiScale: 1.1, sidebarCollapsed: true });
+    ).toEqual({
+      uiScale: 1.1,
+      sidebarCollapsed: true,
+      leftSidebarCollapsed: true,
+      rightSidebarCollapsed: true,
+    });
+  });
+
+  it('restores independent left and right panel state', () => {
+    expect(
+      normalizeEditorPreferences({
+        leftSidebarCollapsed: true,
+        rightSidebarCollapsed: false,
+      }),
+    ).toEqual({
+      uiScale: 1,
+      sidebarCollapsed: false,
+      leftSidebarCollapsed: true,
+      rightSidebarCollapsed: false,
+    });
   });
 
   it('rejects unsupported zoom levels', () => {

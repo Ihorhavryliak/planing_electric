@@ -28,7 +28,7 @@ export function Tabs<T extends string = string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1',
+        'inline-flex items-center gap-1 rounded-lg bg-secondary p-1 text-muted-foreground',
         className,
       )}
     >
@@ -43,16 +43,16 @@ export function Tabs<T extends string = string>({
             aria-selected={active}
             onClick={() => onChange(item.id)}
             className={cn(
-              'inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors',
+              'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-[color,background-color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30',
               active
-                ? 'bg-[var(--dmp-color-brand)] text-white shadow-sm'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white',
+                ? 'bg-background text-foreground shadow-sm'
+                : 'hover:text-foreground',
             )}
           >
             {item.icon}
             <span className="truncate">{item.label}</span>
             {item.badge ? (
-              <span className="rounded-full bg-black/10 px-1.5 text-[10px] tabular-nums">
+              <span className="rounded bg-primary/10 px-1.5 text-[10px] text-primary tabular-nums">
                 {item.badge}
               </span>
             ) : null}

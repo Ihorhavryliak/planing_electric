@@ -298,7 +298,7 @@ export function LocalProjectsPage() {
   return (
     <div className="relative min-h-screen">
       <WorkspaceHeader badge={t('local.badge')} />
-      <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+      <main id="main-content" className="page-shell">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">

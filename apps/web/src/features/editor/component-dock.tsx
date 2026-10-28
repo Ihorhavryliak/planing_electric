@@ -3,11 +3,13 @@ import {
   DEVICE_SUBTYPES,
   type DeviceSubtype,
   type ElectricalPointType,
+  type OpeningType,
   type RouteMounting,
 } from '@drawmyplace/contracts';
 import {
   Box,
   Cable,
+  Circle,
   CircleDot,
   DoorOpen,
   Lightbulb,
@@ -28,16 +30,16 @@ export interface OpeningSizeMeters {
 
 interface ComponentDockProps {
   lengthUnit: 'm' | 'cm' | 'mm';
-  openingSizes: Record<'door' | 'window', OpeningSizeMeters>;
+  openingSizes: Record<OpeningType, OpeningSizeMeters>;
   canAddOpening: boolean;
   routeMounting: RouteMounting;
   onSelectDevice: (type: ElectricalPointType, subtype: DeviceSubtype) => void;
   onOpeningSizeChange: (
-    type: 'door' | 'window',
+    type: OpeningType,
     field: keyof OpeningSizeMeters,
     meters: number,
   ) => void;
-  onAddOpening: (type: 'door' | 'window') => void;
+  onAddOpening: (type: OpeningType) => void;
   onRouteMountingChange: (mounting: RouteMounting) => void;
 }
 
@@ -69,7 +71,7 @@ export function ComponentDock({
 }: ComponentDockProps) {
   const { t } = useI18n();
   const [openType, setOpenType] = useState<ElectricalPointType | null>(null);
-  const [openingTab, setOpeningTab] = useState<'door' | 'window'>('door');
+  const [openingTab, setOpeningTab] = useState<OpeningType>('door');
 
   const factor = lengthUnit === 'm' ? 1 : lengthUnit === 'cm' ? 100 : 1000;
   const step = lengthUnit === 'm' ? 0.01 : lengthUnit === 'cm' ? 1 : 10;
@@ -173,7 +175,7 @@ export function ComponentDock({
           {t('editor.dock.openings')}
         </span>
         <div className="flex items-center rounded-md border border-white/10 bg-slate-950/40 p-0.5">
-          {(['door', 'window'] as const).map((type) => (
+          {(['door', 'window', 'hole'] as const).map((type) => (
             <button
               key={type}
               type="button"
@@ -187,6 +189,8 @@ export function ComponentDock({
             >
               {type === 'door' ? (
                 <DoorOpen className="h-3 w-3" />
+              ) : type === 'hole' ? (
+                <Circle className="h-3 w-3" />
               ) : (
                 <Square className="h-3 w-3" />
               )}
@@ -194,38 +198,65 @@ export function ComponentDock({
             </button>
           ))}
         </div>
-        <DockNumber
-          key={`${openingTab}-width-${lengthUnit}`}
-          label={t('editor.width')}
-          unit={lengthUnit}
-          value={round(size.width * factor)}
-          step={step}
-          onCommit={(value) =>
-            onOpeningSizeChange(openingTab, 'width', value / factor)
-          }
-        />
-        <DockNumber
-          key={`${openingTab}-height-${lengthUnit}`}
-          label={t('editor.height')}
-          unit={lengthUnit}
-          value={round(size.height * factor)}
-          step={step}
-          onCommit={(value) =>
-            onOpeningSizeChange(openingTab, 'height', value / factor)
-          }
-        />
-        {openingTab === 'window' ? (
-          <DockNumber
-            key={`${openingTab}-sill-${lengthUnit}`}
-            label={t('editor.sill')}
-            unit={lengthUnit}
-            value={round(size.sill * factor)}
-            step={step}
-            onCommit={(value) =>
-              onOpeningSizeChange(openingTab, 'sill', value / factor)
-            }
-          />
-        ) : null}
+        {openingTab === 'hole' ? (
+          <>
+            <DockNumber
+              key={`hole-diameter-${lengthUnit}`}
+              label={t('editor.diameter')}
+              unit={lengthUnit}
+              value={round(size.width * factor)}
+              step={step}
+              onCommit={(value) =>
+                onOpeningSizeChange('hole', 'width', value / factor)
+              }
+            />
+            <DockNumber
+              key={`hole-center-${lengthUnit}`}
+              label={t('editor.centerHeight')}
+              unit={lengthUnit}
+              value={round((size.sill + size.width / 2) * factor)}
+              step={step}
+              onCommit={(value) =>
+                onOpeningSizeChange('hole', 'sill', value / factor)
+              }
+            />
+          </>
+        ) : (
+          <>
+            <DockNumber
+              key={`${openingTab}-width-${lengthUnit}`}
+              label={t('editor.width')}
+              unit={lengthUnit}
+              value={round(size.width * factor)}
+              step={step}
+              onCommit={(value) =>
+                onOpeningSizeChange(openingTab, 'width', value / factor)
+              }
+            />
+            <DockNumber
+              key={`${openingTab}-height-${lengthUnit}`}
+              label={t('editor.height')}
+              unit={lengthUnit}
+              value={round(size.height * factor)}
+              step={step}
+              onCommit={(value) =>
+                onOpeningSizeChange(openingTab, 'height', value / factor)
+              }
+            />
+            {openingTab === 'window' ? (
+              <DockNumber
+                key={`${openingTab}-sill-${lengthUnit}`}
+                label={t('editor.sill')}
+                unit={lengthUnit}
+                value={round(size.sill * factor)}
+                step={step}
+                onCommit={(value) =>
+                  onOpeningSizeChange(openingTab, 'sill', value / factor)
+                }
+              />
+            ) : null}
+          </>
+        )}
         <Button
           type="button"
           size="sm"

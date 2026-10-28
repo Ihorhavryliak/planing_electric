@@ -65,6 +65,7 @@ import {
   pointInBounds,
   screenToWorld,
   snapToStep,
+  worldToScreen,
   visibleWorldBounds,
   type Vec2,
 } from './editor-geometry';
@@ -80,6 +81,7 @@ import {
   type SignalingCoverageItem,
 } from './signaling-overlay';
 import type { EditorLayers } from './editor-layers';
+import type { LockableKind } from './editor-locks';
 import {
   drawStructureOverlay,
   type DimensionRenderItem,
@@ -208,7 +210,7 @@ interface DragState {
 
 export interface PlacementRequest {
   type: ElectricalPointType;
-  subtype: DeviceSubtype;
+  subtype: DeviceSubtype | null;
   /** Optional standard-library article to store on the new point. */
   productId?: string | null;
   /** Changes on every palette click so repeated selections retrigger placement. */
@@ -248,6 +250,7 @@ interface EditorCanvasProps {
   circuits?: readonly Circuit[];
   signalingLoops?: readonly SignalingLoop[];
   lengthUnit?: 'm' | 'cm' | 'mm';
+  onLengthUnitChange?: (unit: 'm' | 'cm' | 'mm') => void;
   layers?: EditorLayers;
   onCalibrationPoints: (pointA: Vec2, pointB: Vec2) => void;
   onSelectPoint: (id: string | null) => void;
@@ -257,6 +260,11 @@ interface EditorCanvasProps {
     subtype: DeviceSubtype | null,
     productId?: string | null,
   ) => void;
+  /** Opens the add-element dialog from the top toolbar. */
+  onRequestAddPoint?: (type: ElectricalPointType) => void;
+  /** Local pin state for walls, rooms, routes, openings and dimensions. */
+  isLocked?: (kind: LockableKind, id: string | null | undefined) => boolean;
+  onToggleLock?: (kind: LockableKind, id: string) => void;
   onMovePoint: (id: string, at: Vec2) => void;
   onDeletePoint: (id: string) => void;
   onDuplicatePoint?: (id: string) => void;
@@ -300,6 +308,23 @@ interface EditorCanvasProps {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+/** Painterly dark drawing surface: a soft blue-navy gradient with depth. */
+function paintCanvasBackground(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  light: boolean,
+): void {
+  if (light) {
+    context.fillStyle = '#f5f7fa';
+    context.fillRect(0, 0, width, height);
+    return;
+  }
+
+  context.fillStyle = '#000000';
+  context.fillRect(0, 0, width, height);
 }
 
 function drawGrid(
@@ -347,16 +372,16 @@ function drawGrid(
 
   drawLines(
     minorStep,
-    light ? 'rgba(90, 99, 108, 0.035)' : 'rgba(148, 163, 184, 0.055)',
+    light ? 'rgba(90, 99, 108, 0.035)' : 'rgba(255, 255, 255, 0.045)',
   );
   drawLines(
     majorStep,
-    light ? 'rgba(90, 99, 108, 0.08)' : 'rgba(148, 163, 184, 0.12)',
+    light ? 'rgba(90, 99, 108, 0.08)' : 'rgba(255, 255, 255, 0.1)',
   );
 
   context.strokeStyle = light
-    ? 'rgba(47, 107, 216, 0.2)'
-    : 'rgba(251, 191, 36, 0.22)';
+    ? 'rgba(51, 122, 183, 0.2)'
+    : 'rgba(74, 157, 224, 0.3)';
   context.beginPath();
 
   const originX = (0 - viewport.x) * viewport.zoom + width / 2;
@@ -373,6 +398,46 @@ function drawGrid(
   }
 
   context.stroke();
+}
+
+/** Shows the grid lines and crosshair the cursor is snapped to. */
+function drawSnapGuide(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  at: Vec2,
+  light: boolean,
+): void {
+  const color = light ? '#337ab7' : '#67adea';
+  context.save();
+
+  context.setLineDash([4, 5]);
+  context.lineWidth = 1;
+  context.strokeStyle = light
+    ? 'rgba(51, 122, 183, 0.18)'
+    : 'rgba(74, 157, 224, 0.2)';
+  context.beginPath();
+  context.moveTo(Math.round(at.x) + 0.5, 0);
+  context.lineTo(Math.round(at.x) + 0.5, height);
+  context.moveTo(0, Math.round(at.y) + 0.5);
+  context.lineTo(width, Math.round(at.y) + 0.5);
+  context.stroke();
+  context.setLineDash([]);
+
+  context.strokeStyle = color;
+  context.lineWidth = 1.25;
+  context.beginPath();
+  context.moveTo(at.x - 5, at.y);
+  context.lineTo(at.x + 5, at.y);
+  context.moveTo(at.x, at.y - 5);
+  context.lineTo(at.x, at.y + 5);
+  context.stroke();
+
+  context.beginPath();
+  context.arc(at.x, at.y, 1.8, 0, Math.PI * 2);
+  context.fillStyle = color;
+  context.fill();
+  context.restore();
 }
 
 function drawUnderlay(
@@ -451,10 +516,14 @@ export function EditorCanvas({
   circuits = [],
   signalingLoops = [],
   lengthUnit = 'm',
+  onLengthUnitChange,
   layers,
   onCalibrationPoints,
   onSelectPoint,
   onCreatePoint,
+  onRequestAddPoint,
+  isLocked,
+  onToggleLock,
   onMovePoint,
   onDeletePoint,
   onDuplicatePoint,
@@ -512,9 +581,23 @@ export function EditorCanvas({
   const [placeType, setPlaceType] = useState<ElectricalPointType>('socket');
   const [placeSubtype, setPlaceSubtype] = useState<DeviceSubtype | null>(null);
   const [placeProductId, setPlaceProductId] = useState<string | null>(null);
-  const [snapEnabled, setSnapEnabled] = useState(false);
+  const [snapEnabled, setSnapEnabled] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem('dmp:editor:gridSnap');
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [gridEnabled, setGridEnabled] = useState(true);
-  const [orthoEnabled, setOrthoEnabled] = useState(false);
+  const [orthoEnabled, setOrthoEnabled] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem('dmp:editor:ortho');
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
   const [hoverWorld, setHoverWorld] = useState<Vec2 | null>(null);
   const coordinateRef = useRef<HTMLSpanElement>(null);
   const [hoveringPoint, setHoveringPoint] = useState(false);
@@ -814,6 +897,22 @@ export function EditorCanvas({
   placeProductIdRef.current = placeProductId;
   snapRef.current = snapEnabled;
   orthoRef.current = orthoEnabled;
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dmp:editor:gridSnap', String(snapEnabled));
+    } catch {
+      // Preference is cosmetic.
+    }
+  }, [snapEnabled]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('dmp:editor:ortho', String(orthoEnabled));
+    } catch {
+      // Preference is cosmetic.
+    }
+  }, [orthoEnabled]);
   readOnlyRef.current = readOnly;
   onSelectPointRef.current = onSelectPoint;
   onCreatePointRef.current = onCreatePoint;
@@ -1254,8 +1353,7 @@ export function EditorCanvas({
     }
 
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    context.fillStyle = canvasLight ? '#f5f7fa' : '#020617';
-    context.fillRect(0, 0, size.width, size.height);
+    paintCanvasBackground(context, size.width, size.height, canvasLight);
 
     if (gridEnabled) {
       drawGrid(context, size.width, size.height, viewport, canvasLight);
@@ -1345,6 +1443,25 @@ export function EditorCanvas({
       layers?.labels !== false,
       canvasLight,
     );
+
+    if (
+      !readOnly &&
+      snapEnabled &&
+      hoverWorld &&
+      (tool === 'route' ||
+        tool === 'wall' ||
+        tool === 'room' ||
+        tool === 'dimension' ||
+        tool === 'place')
+    ) {
+      drawSnapGuide(
+        context,
+        size.width,
+        size.height,
+        worldToScreen(hoverWorld, viewport, size),
+        canvasLight,
+      );
+    }
   }, [
     size,
     viewport,
@@ -1381,6 +1498,7 @@ export function EditorCanvas({
     hoverWorld,
     metersPerUnit,
     gridEnabled,
+    snapEnabled,
   ]);
 
   useEffect(() => {
@@ -2074,6 +2192,23 @@ export function EditorCanvas({
         }
       }
     }
+
+    const lockedSelection = Boolean(
+      ((mode === 'wall-vertex' || mode === 'wall-body') &&
+        wallId &&
+        isLocked?.('wall', wallId)) ||
+        ((mode === 'room-vertex' || mode === 'room-body') &&
+          roomId &&
+          isLocked?.('room', roomId)) ||
+        ((mode === 'vertex' || mode === 'insert') &&
+          routeId &&
+          isLocked?.('route', routeId)) ||
+        (mode === 'dimension' &&
+          dimensionId &&
+          isLocked?.('dimension', dimensionId)),
+    );
+    // Keep the selection, but do not start dragging a pinned element.
+    if (lockedSelection) return;
 
     dragRef.current = {
       mode,
@@ -2938,6 +3073,7 @@ export function EditorCanvas({
                 key={quickPoint.id}
                 point={quickPoint}
                 lengthUnit={lengthUnit}
+                onLengthUnitChange={onLengthUnitChange}
                 anchor={{
                   x:
                     (quickPoint.x - viewport.x) * viewport.zoom +
@@ -3090,12 +3226,51 @@ export function EditorCanvas({
                 </button>
               );
             })() : null}
+            {contextMenu.target.kind !== 'point' && onToggleLock
+              ? (() => {
+                  const target = contextMenu.target;
+                  const kind = target.kind as LockableKind;
+                  const locked = Boolean(isLocked?.(kind, target.id));
+
+                  return (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onClick={() => {
+                        onToggleLock(kind, target.id);
+                        setContextMenu(null);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+                    >
+                      {locked ? (
+                        <Unlock className="h-3.5 w-3.5" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5" />
+                      )}
+                      {locked ? t('editor.unlockPoint') : t('editor.lockPoint')}
+                    </button>
+                  );
+                })()
+              : null}
             <button
               type="button"
               role="menuitem"
+              disabled={Boolean(
+                contextMenu.target.kind === 'point'
+                  ? (
+                      points.find(
+                        (item) => item.id === contextMenu.target.id,
+                      )?.properties as { locked?: boolean } | undefined
+                    )?.locked
+                  : isLocked?.(
+                      contextMenu.target.kind as LockableKind,
+                      contextMenu.target.id,
+                    ),
+              )}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={deleteContextTarget}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-200 hover:bg-rose-400/10"
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-rose-200 hover:bg-rose-400/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Trash2 className="h-3.5 w-3.5" />
               {t('editor.delete')}
@@ -3173,6 +3348,10 @@ export function EditorCanvas({
               data-tooltip-hint={t('tooltip.place')}
               aria-pressed={active}
               onClick={() => {
+                if (onRequestAddPoint) {
+                  onRequestAddPoint(symbol.type);
+                  return;
+                }
                 setPlaceType(symbol.type);
                 setPlaceSubtype(null);
                 setPlaceProductId(null);
@@ -3351,6 +3530,64 @@ export function EditorCanvas({
           >
             {t('editor.statusOrtho')}
           </button>
+          {(() => {
+            const target = selectedPointId
+              ? ({ kind: 'point', id: selectedPointId } as const)
+              : selectedWallId
+                ? ({ kind: 'wall', id: selectedWallId } as const)
+                : selectedRoomId
+                  ? ({ kind: 'room', id: selectedRoomId } as const)
+                  : selectedRouteId
+                    ? ({ kind: 'route', id: selectedRouteId } as const)
+                    : selectedOpeningId
+                      ? ({ kind: 'opening', id: selectedOpeningId } as const)
+                      : selectedDimensionId
+                        ? ({
+                            kind: 'dimension',
+                            id: selectedDimensionId,
+                          } as const)
+                        : null;
+            if (!target) return null;
+            const locked =
+              target.kind === 'point'
+                ? Boolean(
+                    (
+                      points.find((item) => item.id === target.id)
+                        ?.properties as { locked?: boolean } | undefined
+                    )?.locked,
+                  )
+                : Boolean(isLocked?.(target.kind, target.id));
+            const toggle = () => {
+              if (target.kind === 'point') {
+                onTogglePointLock?.(target.id, !locked);
+              } else {
+                onToggleLock?.(target.kind, target.id);
+              }
+            };
+
+            return (
+              <>
+                <span className="text-slate-700">|</span>
+                <button
+                  type="button"
+                  onClick={toggle}
+                  title={
+                    locked ? t('editor.unlockPoint') : t('editor.lockPoint')
+                  }
+                  className={`inline-flex items-center gap-1 rounded px-1 py-0.5 transition hover:bg-white/10 ${
+                    locked ? 'text-amber-300' : 'text-slate-500'
+                  }`}
+                >
+                  {locked ? (
+                    <Lock className="h-3 w-3" />
+                  ) : (
+                    <Unlock className="h-3 w-3" />
+                  )}
+                  {locked ? t('editor.unlockPoint') : t('editor.lockPoint')}
+                </button>
+              </>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500 backdrop-blur">
           {saveStatus ? (

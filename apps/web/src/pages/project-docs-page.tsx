@@ -278,7 +278,7 @@ export function ProjectDocsPage() {
         <WorkspaceHeader />
       </div>
 
-      <main className="mx-auto max-w-6xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
+      <main className="page-shell print:max-w-none print:px-0 print:py-0">
         <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
           <div>
             <Link

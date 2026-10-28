@@ -88,6 +88,8 @@ export const openings = pgTable(
     offset: doublePrecision('offset').notNull(),
     width: doublePrecision('width').notNull(),
     height: doublePrecision('height').notNull().default(210),
+    /** Round hole diameter; null for doors and windows. */
+    diameter: doublePrecision('diameter'),
     sillHeight: doublePrecision('sill_height').notNull().default(0),
     flipped: boolean('flipped').notNull().default(false),
     label: text('label'),

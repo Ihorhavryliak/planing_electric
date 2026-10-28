@@ -42,7 +42,7 @@ export function AdminPage() {
   return (
     <div className="relative min-h-screen">
       <WorkspaceHeader badge={t('admin.badge')} />
-      <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+      <main id="main-content" className="page-shell">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"

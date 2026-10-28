@@ -1,6 +1,7 @@
-import { Zap } from 'lucide-react';
+import { Check, Sparkles, Zap } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '@/features/i18n/i18n-context';
 
 interface AuthShellProps {
   title: string;
@@ -10,41 +11,94 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
-  return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-12">
-      <div className="app-grid pointer-events-none absolute inset-0 opacity-60" />
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[28rem] w-[44rem] -translate-x-1/2 rounded-full bg-[var(--dmp-color-brand)]/10 blur-3xl" />
+  const { t } = useI18n();
+  const points = [
+    t('auth.aside.point1'),
+    t('auth.aside.point2'),
+    t('auth.aside.point3'),
+  ];
 
-      <div className="relative w-full max-w-md">
+  return (
+    <div className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_1fr]">
+      <aside className="relative hidden overflow-hidden border-r border-border bg-card p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
+        <div className="pointer-events-none absolute -top-32 -left-24 size-[28rem] rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] [background-size:56px_56px] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_72%)]" />
+
         <Link
           to="/"
-          className="inline-flex items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--dmp-color-brand)]/60 focus-visible:outline-none"
+          className="relative inline-flex w-fit items-center gap-3 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-blue-500/20">
-            <Zap className="h-5 w-5" fill="currentColor" />
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Zap className="size-5" fill="currentColor" />
           </span>
           <span>
-            <span className="block text-sm font-semibold tracking-wide text-white">
+            <span className="block text-sm font-semibold tracking-tight">
               DrawMyPlace
             </span>
-            <span className="block text-xs text-slate-400">
-              Electrical installation planning
+            <span className="block text-xs text-muted-foreground">
+              {t('landing.tagline')}
             </span>
           </span>
         </Link>
 
-        <div className="mt-8 app-panel p-7 shadow-2xl shadow-black/40 backdrop-blur">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            {title}
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-400">
-            {subtitle}
+        <div className="relative max-w-xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-[11px] font-medium text-muted-foreground">
+            <Sparkles className="size-3.5 text-primary" />
+            {t('auth.aside.eyebrow')}
+          </span>
+          <h2 className="mt-6 text-4xl leading-[1.08] font-semibold tracking-tight text-balance xl:text-5xl">
+            {t('auth.aside.title')}
+          </h2>
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
+            {t('auth.aside.subtitle')}
           </p>
-          <div className="mt-6">{children}</div>
+          <ul className="mt-8 space-y-3">
+            {points.map((point) => (
+              <li
+                key={point}
+                className="flex items-center gap-3 text-sm text-foreground"
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Check className="size-3" />
+                </span>
+                {point}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="mt-5 text-center text-sm text-slate-400">{footer}</div>
-      </div>
+        <p className="relative text-xs text-muted-foreground">
+          {t('auth.aside.footnote')}
+        </p>
+      </aside>
+
+      <main className="relative flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <Link
+            to="/"
+            className="mb-8 inline-flex items-center gap-3 rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30 lg:hidden"
+          >
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Zap className="size-5" fill="currentColor" />
+            </span>
+            <span className="text-sm font-semibold tracking-tight">
+              DrawMyPlace
+            </span>
+          </Link>
+
+          <div className="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm sm:p-7">
+            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {subtitle}
+            </p>
+            <div className="mt-6">{children}</div>
+          </div>
+
+          <div className="mt-5 text-center text-sm text-muted-foreground">
+            {footer}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

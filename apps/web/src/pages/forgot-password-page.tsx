@@ -38,7 +38,7 @@ export function ForgotPasswordPage() {
           {t('auth.remembered')}{' '}
           <Link
             to="/login"
-            className="font-medium text-amber-300 hover:text-amber-200"
+            className="font-medium text-primary hover:text-primary/80"
           >
             {t('auth.forgot.back')}
           </Link>

@@ -1,11 +1,11 @@
-import type { EditorViewport } from '@drawmyplace/contracts';
+import type { EditorViewport, OpeningType } from '@drawmyplace/contracts';
 import { worldToScreen, type CanvasSize, type Vec2 } from './editor-geometry';
 import { distanceToSegment } from './route-geometry';
 
 export interface OpeningRenderItem {
   id: string;
   wallId: string;
-  type: 'door' | 'window';
+  type: OpeningType;
   offset: number;
   width: number;
   flipped: boolean;
@@ -20,7 +20,7 @@ export interface WallLike {
 const DOOR_COLOR = '#fbbf24';
 const WINDOW_COLOR = '#38bdf8';
 const SELECTED_COLOR = '#f472b6';
-const CUT_COLOR = '#020617';
+const CUT_COLOR = '#000000';
 
 interface PointOnWall {
   point: Vec2;
@@ -119,16 +119,7 @@ export function drawOpeningsOverlay(
         ? DOOR_COLOR
         : WINDOW_COLOR;
 
-    // Erase the wall segment so the opening reads as a gap.
     context.save();
-    context.strokeStyle = light ? '#f5f7fa' : CUT_COLOR;
-    context.lineWidth = Math.max(8, 10 * viewport.zoom);
-    context.lineCap = 'butt';
-    context.beginPath();
-    context.moveTo(screenStart.x, screenStart.y);
-    context.lineTo(screenEnd.x, screenEnd.y);
-    context.stroke();
-
     context.strokeStyle = color;
     context.lineWidth = selected ? 3 : 2;
     context.lineCap = 'round';
@@ -143,6 +134,56 @@ export function drawOpeningsOverlay(
     const ux = dx / pixelWidth;
     const uy = dy / pixelWidth;
     const direction = opening.flipped ? -1 : 1;
+
+    if (opening.type === 'hole') {
+      // A round wall penetration: clear a disc out of the wall band, then
+      // draw the rim and a small centre mark.
+      const centerX = (screenStart.x + screenEnd.x) / 2;
+      const centerY = (screenStart.y + screenEnd.y) / 2;
+      const radius = pixelWidth / 2;
+
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      context.fillStyle = light ? '#f5f7fa' : CUT_COLOR;
+      context.fill();
+
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      context.strokeStyle = color;
+      context.lineWidth = selected ? 3 : 2;
+      context.stroke();
+
+      context.beginPath();
+      context.moveTo(centerX - radius * 0.45, centerY);
+      context.lineTo(centerX + radius * 0.45, centerY);
+      context.moveTo(centerX, centerY - radius * 0.45);
+      context.lineTo(centerX, centerY + radius * 0.45);
+      context.lineWidth = 1;
+      context.stroke();
+
+      if (opening.label) {
+        context.fillStyle = color;
+        context.font = '11px Inter, sans-serif';
+        context.textAlign = 'center';
+        context.fillText(opening.label, centerX, centerY - radius - 6);
+      }
+
+      context.restore();
+      continue;
+    }
+
+    // Erase the wall segment so a door or window reads as a gap.
+    context.strokeStyle = light ? '#f5f7fa' : CUT_COLOR;
+    context.lineWidth = Math.max(8, 10 * viewport.zoom);
+    context.lineCap = 'butt';
+    context.beginPath();
+    context.moveTo(screenStart.x, screenStart.y);
+    context.lineTo(screenEnd.x, screenEnd.y);
+    context.stroke();
+
+    context.strokeStyle = color;
+    context.lineWidth = selected ? 3 : 2;
+    context.lineCap = 'round';
 
     if (opening.type === 'window') {
       const nx = -uy * 4;

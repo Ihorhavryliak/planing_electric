@@ -241,30 +241,37 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-900/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <Link to="/app" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--dmp-color-brand)] text-white shadow-lg shadow-black/10">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
+      <div
+        className={`mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-6 py-2.5 ${
+          showRail ? 'lg:pl-[11.5rem]' : ''
+        }`}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            to="/app"
+            className={`items-center gap-3 ${showRail ? 'flex lg:hidden' : 'flex'}`}
+          >
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
               <Zap className="h-3.5 w-3.5" fill="currentColor" />
             </span>
-            <span className="text-sm font-semibold tracking-wide text-white">
+            <span className="text-sm font-semibold tracking-tight text-foreground">
               DrawMyPlace
             </span>
           </Link>
           <nav
             aria-label={t('breadcrumb.label')}
-            className="hidden min-w-0 items-center gap-1.5 text-[11px] text-slate-500 md:flex"
+            className="hidden min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground md:flex"
           >
             {breadcrumbs.map((item, index) => (
               <span key={item.to} className="flex items-center gap-1.5">
-                {index > 0 ? <span className="text-slate-700">/</span> : null}
+                {index > 0 ? <span className="text-border">/</span> : null}
                 <Link
                   to={item.to}
                   className={
                     index === breadcrumbs.length - 1
-                      ? 'truncate text-slate-300'
-                      : 'truncate hover:text-white'
+                      ? 'truncate text-foreground'
+                      : 'truncate hover:text-foreground'
                   }
                 >
                   {item.label}
@@ -282,7 +289,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
             aria-expanded={menuOpen}
             aria-controls="workspace-mobile-menu"
             onClick={() => setMenuOpen((value) => !value)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2 text-xs text-slate-300 transition-colors hover:border-white/20 hover:text-white lg:hidden"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-secondary px-2 text-xs text-secondary-foreground transition-colors hover:bg-accent lg:hidden"
           >
             {menuOpen ? (
               <X className="h-4 w-4" />
@@ -294,16 +301,16 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-xs text-slate-400 transition-colors hover:border-white/20 hover:text-white"
+            className="inline-flex h-8 items-center gap-2 rounded-lg border border-border bg-secondary px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Search className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{t('palette.searchPlaceholder')}</span>
-            <span className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px]">
+            <span className="rounded border border-border bg-background px-1.5 py-0.5 text-[10px]">
               ⌘K
             </span>
           </button>
           <label
-            className="inline-flex items-center gap-1 text-slate-300"
+            className="inline-flex items-center gap-1 text-muted-foreground"
             title={t('nav.language')}
           >
             <Globe2 className="h-4 w-4" />
@@ -311,7 +318,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
               aria-label={t('nav.language')}
               value={locale}
               onChange={(event) => setLocale(event.target.value as Locale)}
-              className="h-8 rounded-lg border border-white/10 bg-slate-900 px-2 text-xs text-slate-200"
+              className="h-8 rounded-lg border border-border bg-background px-2 text-xs text-foreground"
             >
               {LOCALES.map((item) => (
                 <option key={item.value} value={item.value}>
@@ -325,7 +332,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
             onClick={toggle}
             title={themeLabel}
             aria-label={themeLabel}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             {preference === 'system' ? (
               <Monitor className="h-4 w-4" />
@@ -339,7 +346,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
           {user ? (
             <Link
               to="/app/settings"
-              className="hidden max-w-48 truncate text-sm text-slate-300 hover:text-white sm:block"
+              className="hidden max-w-48 truncate text-sm text-muted-foreground hover:text-foreground sm:block"
             >
               {user.name}
             </Link>
@@ -368,7 +375,7 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
       {menuOpen ? (
         <div
           id="workspace-mobile-menu"
-          className="border-t border-white/10 bg-slate-900/95 backdrop-blur-xl lg:hidden"
+          className="border-t border-border bg-background/95 backdrop-blur-xl lg:hidden"
         >
           <nav
             aria-label={t('nav.workspace')}
@@ -388,8 +395,8 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
                   className={cn(
                     'flex h-10 items-center gap-2 rounded-lg px-3 text-sm transition-colors',
                     active
-                      ? 'bg-[var(--dmp-color-brand)]/12 text-[var(--dmp-color-brand)]'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -438,9 +445,20 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
       {showRail ? (
         <nav
           aria-label={t('nav.workspace')}
-          className="workspace-rail fixed top-[6.75rem] bottom-0 left-0 z-30 hidden w-52 flex-col gap-1 border-r border-white/10 bg-slate-900/80 px-2 py-4 backdrop-blur-xl lg:flex"
+          className="workspace-rail fixed inset-y-0 left-0 z-40 hidden w-52 flex-col border-r border-border bg-background px-2 pb-4 lg:flex"
         >
-          <p className="px-3 pb-2 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+          <Link
+            to="/app"
+            className="mb-4 flex h-[4.5rem] shrink-0 items-center gap-2.5 border-b border-border px-2"
+          >
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <Zap className="h-3.5 w-3.5" fill="currentColor" />
+            </span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">
+              DrawMyPlace
+            </span>
+          </Link>
+          <p className="px-3 pb-2 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
             {t('nav.workspace')}
           </p>
           {[
@@ -472,8 +490,8 @@ export function WorkspaceHeader({ badge, children }: WorkspaceHeaderProps) {
                 className={cn(
                   'flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm transition-colors',
                   active
-                    ? 'bg-[var(--dmp-color-brand)]/12 text-[var(--dmp-color-brand)]'
-                    : 'text-slate-400 hover:bg-white/10 hover:text-white',
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />

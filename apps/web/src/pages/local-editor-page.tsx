@@ -542,7 +542,7 @@ export function LocalEditorPage() {
 
   if (error && !drawing) {
     return (
-      <div className="mx-auto max-w-xl px-6 py-16">
+      <div className="page-shell">
         <p className="text-sm text-rose-300">{error}</p>
         <Link to="/local" className="mt-4 inline-flex text-amber-300">
           Back to local projects
@@ -2236,6 +2236,7 @@ export function LocalEditorPage() {
                             wallLength(activeOpeningWall.geometry) * 0.2,
                           ),
                           height: 210,
+                          diameter: null,
                           sillHeight: 0,
                           flipped: false,
                           label: null,
@@ -2269,6 +2270,7 @@ export function LocalEditorPage() {
                             wallLength(activeOpeningWall.geometry) * 0.2,
                           ),
                           height: 130,
+                          diameter: null,
                           sillHeight: 90,
                           flipped: false,
                           label: null,

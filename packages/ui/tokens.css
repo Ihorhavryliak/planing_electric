@@ -7,25 +7,25 @@
  * stable names for new components and the /design catalogue.
  */
 :root {
-  /* brand */
-  --dmp-color-brand: #5b8def;
-  --dmp-color-brand-strong: #3f74d6;
-  --dmp-color-brand-soft: rgb(91 141 239 / 0.16);
+  /* brand: shadcn-style indigo with a blue cast */
+  --dmp-color-brand: #4a9de0;
+  --dmp-color-brand-strong: #337ab7;
+  --dmp-color-brand-soft: rgb(74 157 224 / 0.16);
   --dmp-color-on-brand: #ffffff;
 
   /* surfaces and borders */
-  --dmp-color-surface: #020617;
-  --dmp-color-surface-raised: #0f172a;
-  --dmp-color-surface-overlay: rgb(2 6 23 / 0.92);
-  --dmp-color-surface-inset: rgb(255 255 255 / 0.03);
-  --dmp-color-border: rgb(255 255 255 / 0.09);
-  --dmp-color-border-strong: rgb(255 255 255 / 0.16);
-  --dmp-color-border-brand: rgb(251 191 36 / 0.4);
+  --dmp-color-surface: #0d141c;
+  --dmp-color-surface-raised: #131c26;
+  --dmp-color-surface-overlay: rgb(13 20 28 / 0.95);
+  --dmp-color-surface-inset: rgb(255 255 255 / 0.04);
+  --dmp-color-border: rgb(148 163 184 / 0.14);
+  --dmp-color-border-strong: rgb(148 163 184 / 0.24);
+  --dmp-color-border-brand: rgb(74 157 224 / 0.45);
 
   /* text */
-  --dmp-color-text: #f1f5f9;
-  --dmp-color-text-muted: #94a3b8;
-  --dmp-color-text-subtle: #7f8ea3;
+  --dmp-color-text: #eef4fa;
+  --dmp-color-text-muted: #93a4b5;
+  --dmp-color-text-subtle: #7d8ea0;
 
   /* status */
   --dmp-color-success: #34d399;
@@ -34,8 +34,8 @@
   --dmp-color-warning-soft: rgb(251 191 36 / 0.12);
   --dmp-color-danger: #fb7185;
   --dmp-color-danger-soft: rgb(251 113 133 / 0.12);
-  --dmp-color-info: #38bdf8;
-  --dmp-color-info-soft: rgb(56 189 248 / 0.12);
+  --dmp-color-info: #67adea;
+  --dmp-color-info-soft: rgb(103 173 234 / 0.14);
 
   /* typography */
   --dmp-font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -65,16 +65,16 @@
   /* radii */
   --dmp-radius-sm: 0.375rem;
   --dmp-radius-md: 0.5rem;
-  --dmp-radius-lg: 0.75rem;
-  --dmp-radius-xl: 1rem;
-  --dmp-radius-2xl: 1.25rem;
+  --dmp-radius-lg: 0.625rem;
+  --dmp-radius-xl: 0.875rem;
+  --dmp-radius-2xl: 1.125rem;
 
   /* elevation */
   --dmp-shadow-0: none;
-  --dmp-shadow-1: 0 1px 2px rgb(0 0 0 / 0.25);
-  --dmp-shadow-2: 0 4px 12px -4px rgb(0 0 0 / 0.35);
-  --dmp-shadow-3: 0 12px 28px -16px rgb(0 0 0 / 0.55);
-  --dmp-shadow-4: 0 24px 60px -28px rgb(0 0 0 / 0.8);
+  --dmp-shadow-1: 0 1px 2px rgb(0 0 0 / 0.2);
+  --dmp-shadow-2: 0 4px 14px -6px rgb(0 0 0 / 0.35);
+  --dmp-shadow-3: 0 16px 36px -20px rgb(0 0 0 / 0.6);
+  --dmp-shadow-4: 0 32px 72px -32px rgb(0 0 0 / 0.85);
 
   /* motion */
   --dmp-duration-fast: 120ms;
@@ -85,22 +85,22 @@
 }
 
 [data-theme='light'] {
-  --dmp-color-brand: #2f6bd8;
-  --dmp-color-brand-strong: #2559b8;
-  --dmp-color-brand-soft: rgb(47 107 216 / 0.1);
+  --dmp-color-brand: #337ab7;
+  --dmp-color-brand-strong: #286191;
+  --dmp-color-brand-soft: rgb(51 122 183 / 0.1);
   --dmp-color-on-brand: #ffffff;
 
-  --dmp-color-surface: #eef1f4;
+  --dmp-color-surface: #f4f7fa;
   --dmp-color-surface-raised: #ffffff;
-  --dmp-color-surface-overlay: rgb(255 255 255 / 0.97);
-  --dmp-color-surface-inset: rgb(28 34 41 / 0.035);
-  --dmp-color-border: #e3e7ec;
-  --dmp-color-border-strong: #cfd6de;
-  --dmp-color-border-brand: rgb(47 107 216 / 0.35);
+  --dmp-color-surface-overlay: rgb(255 255 255 / 0.98);
+  --dmp-color-surface-inset: rgb(31 45 61 / 0.035);
+  --dmp-color-border: #dde5ee;
+  --dmp-color-border-strong: #c9d5e2;
+  --dmp-color-border-brand: rgb(51 122 183 / 0.35);
 
-  --dmp-color-text: #1c2229;
-  --dmp-color-text-muted: #5a636c;
-  --dmp-color-text-subtle: #5f6a75;
+  --dmp-color-text: #1f2d3d;
+  --dmp-color-text-muted: #5f6b7a;
+  --dmp-color-text-subtle: #636f7e;
 
   --dmp-color-success: #1a7f5a;
   --dmp-color-success-soft: rgb(26 127 90 / 0.1);
@@ -108,13 +108,13 @@
   --dmp-color-warning-soft: rgb(180 83 9 / 0.1);
   --dmp-color-danger: #d1344f;
   --dmp-color-danger-soft: rgb(209 52 79 / 0.1);
-  --dmp-color-info: #2f6bd8;
-  --dmp-color-info-soft: rgb(47 107 216 / 0.1);
+  --dmp-color-info: #337ab7;
+  --dmp-color-info-soft: rgb(51 122 183 / 0.1);
 
-  --dmp-shadow-1: 0 1px 2px rgb(28 34 41 / 0.05);
-  --dmp-shadow-2: 0 4px 12px -4px rgb(28 34 41 / 0.12);
-  --dmp-shadow-3: 0 12px 28px -16px rgb(28 34 41 / 0.22);
-  --dmp-shadow-4: 0 24px 60px -28px rgb(28 34 41 / 0.3);
+  --dmp-shadow-1: 0 1px 2px rgb(24 24 27 / 0.04);
+  --dmp-shadow-2: 0 4px 14px -6px rgb(24 24 27 / 0.1);
+  --dmp-shadow-3: 0 16px 36px -20px rgb(24 24 27 / 0.18);
+  --dmp-shadow-4: 0 32px 72px -32px rgb(24 24 27 / 0.24);
 }
 
 @media (prefers-reduced-motion: reduce) {

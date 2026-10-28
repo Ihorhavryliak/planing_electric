@@ -597,6 +597,33 @@ P0 = необхідно для першого робочого MVP. P1 = важ�
       (екранна відстань), брати висоту старту з першого пристрою.
 - [x] 21.17.3 Малювати в 3D вертикальні спуски/підйоми від траси до
       висоти приєднаного пристрою, як у розрахунку довжин.
+- [x] 21.18.1 Перевести базові UI-примітиви (Button, Card, Input,
+      Select, Textarea, Badge, Tabs, Dialog, Popover, Tooltip) на
+      семантичні shadcn-токени та синю палітру; оновити auth-shell
+      до двоколонкового макета.
+- [x] 21.18.2 Уніфікувати ширину сторінок через `.page-shell`
+      (max-w-6xl), вирівняти хедер із контентом, додати логотип у
+      лівий rail і вирівняти Settings/Notifications/Invite по лівому
+      краю.
+- [x] 21.18.3 Додати круглі отвори в стінах із діаметром: enum
+      `opening_type = hole`, колонка `diameter`, UI у доку, 2D-коло
+      та 3D-маркер із гільзою.
+- [x] 21.18.4 Зробити фон 2D-полотна чорним у темній темі з
+      нейтральною сіткою та синіми осями.
+- [x] 21.18.5 Додати окремі кнопки приховування лівої/правої панелі
+      та перемикач теми у хедері редактора.
+- [x] 21.18.6 Увімкнути Snap/Ortho за замовчуванням, зберігати їх у
+      localStorage і показувати лінії сітки та хрестик у точці
+      прив’язки.
+- [x] 21.18.7 Додати діалог створення елемента (тип, підтип, артикул,
+      коло) з дока та верхньої панелі інструментів.
+- [x] 21.18.8 Після розміщення пристрою показувати діалог «Позиція та
+      монтаж» із X/Y, підлогою/стіною/стелею та висотою.
+- [x] 21.18.9 Додати у quick-edit popup вибір одиниць m/cm/mm,
+      координати X/Y та пресети монтажу.
+- [x] 21.18.10 Додати локальне закріплення стін, кімнат, трас,
+      отворів і розмірів із контекстним меню, кнопкою в статусі та
+      забороною перетягування/видалення.
 - [x] 21.8.1 Додати вибір одиниць виміру `m` / `cm` / `mm` у верхній
       панелі редактора та показувати їх у статусі й 3D-координатах.
 - [x] 21.8.2 Зробити `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` глобальними
@@ -872,6 +899,12 @@ MVP готовий до початкового тестування корист
 
 
 
+
+### 2026-10-28 — session 31: shadcn refresh, wall holes and guided creation
+- Completed: rebuilt the primitive layer on semantic shadcn tokens and a refined blue palette (light and dark), added a split auth layout, unified page width via `.page-shell`, aligned the workspace header with the content and moved the brand into the left rail, and left-aligned Settings/Notifications/Invite columns. Round wall holes are now a real opening type with a diameter column/migration, dock controls, 2D circle rendering and a 3D sleeve marker. The 2D dark canvas is black with a neutral grid and blue axes. The editor header has separate left/right panel toggles and a theme switch; Snap/Ortho are on by default and persisted with a grid snap guide. Adding a device opens a type/subtype/article/circuit dialog from the dock or toolbar, then a Position & Mounting dialog; the selection popup exposes m/cm/mm, X/Y and floor/wall/ceiling presets. Walls, rooms, routes, openings and dimensions can be pinned locally from the context menu or status bar.
+- Tests run: `pnpm typecheck`, `pnpm lint`, web tests (150), database tests (2), API tests (69), Playwright visual checks of dark/light landing, login, app, settings, editor 2D/3D, add-element dialog, post-add dialog and quick-edit popup.
+- Issues/blockers: the 3D “device on the wall” placement ghost is implemented but still needs a reliable visual pass; the Docker images need a rebuild for this batch (API schema changed).
+- Next action: rebuild Docker web + API, run browser/responsive/signaling checks on :8090, then verify the 3D placement ghost and the rounded-hole cutout with a real wall close-up.
 
 ### 2026-10-28 — session 30: magnetic cable snapping
 - Completed: 2D route ends snap to devices within an 18 px magnet radius and show a green magnetic ring while the cursor is near a socket, lamp or board; dragging an existing route end uses the same radius. In 3D, route ends snap to device glyphs, the first device sets the run height (so a board at 1.5 m starts the cable at 1.5 m), and the renderer draws vertical risers/drops from the route elevation to every attached device height. This makes board → socket and wall → lamp runs visible in 3D and matches the vertical-drop lengths already used by the calculation.

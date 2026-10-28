@@ -130,7 +130,8 @@ export function SettingsPage() {
   return (
     <div className="relative min-h-screen">
       <WorkspaceHeader badge="Settings" />
-      <main id="main-content" className="mx-auto max-w-2xl px-6 py-10">
+      <main id="main-content" className="page-shell">
+        <div className="max-w-3xl">
         <Link
           to="/app"
           className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
@@ -338,6 +339,7 @@ export function SettingsPage() {
             </p>
           ) : null}
         </section>
+        </div>
       </main>
     </div>
   );

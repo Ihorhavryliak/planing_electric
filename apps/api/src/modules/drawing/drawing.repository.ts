@@ -239,7 +239,12 @@ export class DrawingRepository {
         type: input.type,
         offset: input.offset,
         width: input.width,
-        height: input.height ?? 210,
+        height:
+          input.type === 'hole'
+            ? (input.diameter ?? input.width)
+            : (input.height ?? 210),
+        diameter:
+          input.type === 'hole' ? (input.diameter ?? input.width) : null,
         sillHeight: input.sillHeight ?? 0,
         flipped: input.flipped ?? false,
         label: input.label ?? null,
@@ -264,6 +269,9 @@ export class DrawingRepository {
         ...(input.offset !== undefined ? { offset: input.offset } : {}),
         ...(input.width !== undefined ? { width: input.width } : {}),
         ...(input.height !== undefined ? { height: input.height } : {}),
+        ...(input.diameter !== undefined
+          ? { diameter: input.diameter }
+          : {}),
         ...(input.sillHeight !== undefined
           ? { sillHeight: input.sillHeight }
           : {}),

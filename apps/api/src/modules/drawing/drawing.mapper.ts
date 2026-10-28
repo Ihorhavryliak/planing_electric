@@ -56,6 +56,7 @@ export function toPublicOpening(row: OpeningRow): PublicOpening {
     offset: row.offset,
     width: row.width,
     height: row.height,
+    diameter: row.diameter ?? null,
     sillHeight: row.sillHeight,
     flipped: row.flipped,
     label: row.label,

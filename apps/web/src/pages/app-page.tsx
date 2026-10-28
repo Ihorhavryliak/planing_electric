@@ -144,7 +144,7 @@ export function AppPage() {
       <div className="relative">
         <WorkspaceHeader />
 
-        <main id="main-content" className="mx-auto max-w-6xl px-6 py-10">
+        <main id="main-content" className="page-shell">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-medium tracking-widest text-[var(--dmp-color-brand)] uppercase">
@@ -461,7 +461,7 @@ export function AppPage() {
 
               <section className="app-panel p-5">
                 <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-amber-400" />
+                  <Lightbulb className="h-4 w-4 text-primary" />
                   <h2 className="text-sm font-semibold text-white">
                     {t('app.tip')}
                   </h2>

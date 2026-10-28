@@ -1,9 +1,10 @@
+import type { OpeningType } from '@drawmyplace/contracts';
 import type { Vec2 } from './editor-geometry';
 
 export interface OpeningSpan {
   offset: number;
   width: number;
-  type: 'door' | 'window';
+  type: OpeningType;
   sillHeight: number;
   height: number;
 }
@@ -75,13 +76,15 @@ export function computeWallBoxes(
 ): WallBox[] {
   const list = segments(geometry);
   const boxes: WallBox[] = [];
+  // Round holes are rendered as penetration sleeves, not rectangular cutouts.
+  const cutouts = openings.filter((opening) => opening.type !== 'hole');
 
   for (const segment of list) {
     if (segment.length <= 0) continue;
     const segmentStart = segment.startDistance;
     const segmentEnd = segmentStart + segment.length;
 
-    const overlaps = openings
+    const overlaps = cutouts
       .map((opening) => ({
         opening,
         start: Math.max(opening.offset, segmentStart),

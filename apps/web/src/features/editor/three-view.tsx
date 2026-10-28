@@ -13,6 +13,7 @@ import {
   Cable,
   ChevronDown,
   ChevronUp,
+  Circle,
   CircleDot,
   Download,
   Lightbulb,
@@ -73,10 +74,12 @@ interface ThreeViewProps {
   onRouteMountingChange?: (mounting: RouteMounting) => void;
   onCreateOpening?: (
     wallId: string,
-    type: 'door' | 'window',
+    type: 'door' | 'window' | 'hole',
     offset: number,
     size?: { widthM?: number; heightM?: number; sillM?: number },
   ) => void;
+  /** Diameter and centre height used when clicking a wall to add a hole. */
+  holeSize?: { diameter: number; centerHeight: number };
   onCreateWall?: (geometry: { x: number; y: number }[]) => void;
   onCreateRoom?: (boundary: { x: number; y: number }[]) => void;
   onCreateRoute?: (
@@ -98,7 +101,7 @@ const POINT_COLORS: Record<ElectricalPointType, number> = {
   custom: 0x64748b,
 };
 
-function defaultMountingHeight(point: PublicPoint): number {
+function defaultMountingHeight(point: { type: ElectricalPointType }): number {
   if (point.type === 'socket') return 30;
   if (point.type === 'switch') return 110;
   if (point.type === 'light') return 240;
@@ -109,12 +112,14 @@ function defaultMountingHeight(point: PublicPoint): number {
 
 /** Device height in plan units, matching the rendered glyph position. */
 function pointHeightPlanUnits(
-  point: PublicPoint,
+  point: { type: ElectricalPointType; mountingHeight?: number | null },
   metersPerUnit: number | null,
 ): number {
-  return typeof point.mountingHeight === 'number' && metersPerUnit
-    ? point.mountingHeight / metersPerUnit
-    : defaultMountingHeight(point);
+  if (typeof point.mountingHeight === 'number') {
+    // Uncalibrated plans use the default 100 plan units per metre.
+    return point.mountingHeight / (metersPerUnit ?? 0.01);
+  }
+  return defaultMountingHeight(point);
 }
 
 function planUnitsPerMeter(metersPerUnit: number | null): number {
@@ -226,8 +231,16 @@ function routeElevation(
   return mountingElevation(route.settings.mounting, wallHeight, metersPerUnit);
 }
 
+interface PointGlyphInput {
+  id?: string;
+  type: ElectricalPointType;
+  x: number;
+  y: number;
+  mountingHeight?: number | null;
+}
+
 function pointGlyph(
-  point: PublicPoint,
+  point: PointGlyphInput,
   selected: boolean,
   metersPerUnit: number | null,
 ): THREE.Group {
@@ -346,6 +359,10 @@ const ROUTE_COLOR = 0xfb923c;
 function disposeGroup(group: THREE.Group): void {
   for (const child of [...group.children]) {
     group.remove(child);
+    if (child instanceof THREE.Group) {
+      disposeGroup(child);
+      continue;
+    }
     if (
       child instanceof THREE.Mesh ||
       child instanceof THREE.Line ||
@@ -557,6 +574,7 @@ export function ThreeView({
   routeMounting = 'wall',
   onRouteMountingChange,
   onCreateOpening,
+  holeSize = { diameter: 0.1, centerHeight: 1 },
   onCreateWall,
   onCreateRoom,
   onCreateRoute,
@@ -565,7 +583,7 @@ export function ThreeView({
   const [placementType, setPlacementType] =
     useState<ElectricalPointType | null>(null);
   const [placementOpening, setPlacementOpening] = useState<
-    'door' | 'window' | null
+    'door' | 'window' | 'hole' | null
   >(null);
   const [mountMode, setMountMode] = useState<'floor' | 'wall' | 'ceiling'>(
     'wall',
@@ -647,7 +665,7 @@ export function ThreeView({
   onCreatePointRef.current = onCreatePoint;
   const placementRef = useRef<ElectricalPointType | null>(placementType);
   placementRef.current = placementType;
-  const placementOpeningRef = useRef<'door' | 'window' | null>(
+  const placementOpeningRef = useRef<'door' | 'window' | 'hole' | null>(
     placementOpening,
   );
   placementOpeningRef.current = placementOpening;
@@ -680,6 +698,7 @@ export function ThreeView({
     point: THREE.Vector3;
   } | null>(null);
   const draftGroupRef = useRef(new THREE.Group());
+  const ghostGroupRef = useRef(new THREE.Group());
   const finishDraftRef = useRef<() => void>(() => {});
   const fitSignatureRef = useRef<string | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -723,6 +742,8 @@ export function ThreeView({
     controls.dampingFactor = 0.08;
     controls.target.set(400, 0, 300);
     controlsRef.current = controls;
+
+    scene.add(ghostGroupRef.current);
 
     const ambient = new THREE.AmbientLight(0xffffff, 1.4);
     ambientRef.current = ambient;
@@ -1003,6 +1024,104 @@ export function ThreeView({
       setDraftCursor(point);
     };
 
+    const clearPlacementGhost = () => {
+      disposeGroup(ghostGroupRef.current);
+    };
+
+    /** Shows a live 3D sample of the device on the wall before placing it. */
+    const handlePlacementPreview = (event: PointerEvent) => {
+      const placement = placementRef.current;
+      if (!placement || draftModeRef.current || openingDragRef.current) {
+        clearPlacementGhost();
+        return;
+      }
+
+      const group = ghostGroupRef.current;
+      clearPlacementGhost();
+
+      const mode = mountModeRef.current;
+      let at: { x: number; y: number };
+      let heightPlan: number;
+      let heightMeters: number | undefined;
+
+      if (mode === 'wall') {
+        const wallHit = wallAt(event);
+        if (!wallHit) return;
+        const normal = wallFaceNormal(wallHit);
+        // Keep the preview just proud of the wall so it never z-fights.
+        at = {
+          x: wallHit.point.x + (normal?.x ?? 0) * 2.5,
+          y: wallHit.point.z + (normal?.z ?? 0) * 2.5,
+        };
+        heightPlan = wallHit.point.y;
+        heightMeters = heightPlan * (metersPerUnitRef.current ?? 0.01);
+      } else {
+        const ground = groundAt(event);
+        if (!ground) return;
+        at = ground;
+        const scale = planUnitsPerMeter(metersPerUnitRef.current);
+        heightPlan =
+          mode === 'ceiling'
+            ? 2.4 * scale
+            : defaultMountingHeight({ type: placement });
+        heightMeters = heightPlan * (metersPerUnitRef.current ?? 0.01);
+      }
+
+      const ghost = pointGlyph(
+        {
+          type: placement,
+          x: at.x,
+          y: at.y,
+          mountingHeight: heightMeters,
+        },
+        false,
+        metersPerUnitRef.current,
+      );
+      ghost.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const materials = Array.isArray(child.material)
+          ? child.material
+          : [child.material];
+        for (const material of materials) {
+          material.transparent = true;
+          material.opacity = 0.58;
+          material.depthWrite = false;
+        }
+      });
+      group.add(ghost);
+
+      if (mode === 'wall') {
+        const guide = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(at.x, 0, at.y),
+            new THREE.Vector3(at.x, heightPlan, at.y),
+          ]),
+          new THREE.LineDashedMaterial({
+            color: 0x67adea,
+            dashSize: 6,
+            gapSize: 5,
+            transparent: true,
+            opacity: 0.55,
+          }),
+        );
+        guide.computeLineDistances();
+        group.add(guide);
+
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(3.5, 5, 24),
+          new THREE.MeshBasicMaterial({
+            color: 0x67adea,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide,
+          }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(at.x, 0.4, at.y);
+        group.add(ring);
+      }
+    };
+
     const handlePointerUp = (event: PointerEvent) => {
       const start = pointerStartRef.current;
       pointerStartRef.current = null;
@@ -1021,6 +1140,41 @@ export function ThreeView({
         openingDragRef.current = null;
         controls.enabled = true;
         setOpeningDraft(null);
+
+        const placementType = placementOpeningRef.current;
+        if (placementType === 'hole') {
+          const wall = wallsRef.current.find(
+            (item) => item.id === openingDrag.wallId,
+          );
+          if (wall) {
+            const scale = planUnitsPerMeter(metersPerUnitRef.current);
+            const diameterUnits = Math.max(1, holeSize.diameter * scale);
+            const wallLength = wall.geometry.reduce((sum, vertex, index) => {
+              const previous = wall.geometry[index - 1];
+              return previous
+                ? sum +
+                    Math.hypot(vertex.x - previous.x, vertex.y - previous.y)
+                : sum;
+            }, 0);
+            const offset = Math.max(
+              0,
+              Math.min(
+                Math.max(0, wallLength - diameterUnits),
+                openingDrag.startOffset - diameterUnits / 2,
+              ),
+            );
+
+            onCreateOpeningRef.current?.(wall.id, 'hole', offset, {
+              widthM: holeSize.diameter,
+              heightM: holeSize.diameter,
+              sillM: Math.max(
+                0,
+                holeSize.centerHeight - holeSize.diameter / 2,
+              ),
+            });
+          }
+          return;
+        }
 
         if (distance >= 5) {
           const type = placementOpeningRef.current;
@@ -1239,6 +1393,7 @@ export function ThreeView({
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointermove', handleDragMove);
     renderer.domElement.addEventListener('pointermove', handleDraftMove);
+    renderer.domElement.addEventListener('pointermove', handlePlacementPreview);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
 
@@ -1298,6 +1453,10 @@ export function ThreeView({
       renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
       renderer.domElement.removeEventListener('pointermove', handleDragMove);
       renderer.domElement.removeEventListener('pointermove', handleDraftMove);
+      renderer.domElement.removeEventListener(
+        'pointermove',
+        handlePlacementPreview,
+      );
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener(
         'pointercancel',
@@ -1305,6 +1464,8 @@ export function ThreeView({
       );
       controls.dispose();
       disposeGroup(contentRef.current);
+      scene.remove(ghostGroupRef.current);
+      disposeGroup(ghostGroupRef.current);
       renderer.dispose();
       renderer.domElement.remove();
       rendererRef.current = null;
@@ -1592,6 +1753,73 @@ export function ThreeView({
         );
         mesh.rotation.y = -Math.atan2(box.b.y - box.a.y, box.b.x - box.a.x);
         group.add(mesh);
+      }
+    }
+
+    if (showWalls) {
+      for (const opening of openings) {
+        if (opening.type !== 'hole') continue;
+        const wall = visibleWalls.find((item) => item.id === opening.wallId);
+        if (!wall) continue;
+
+        const diameter = opening.diameter ?? opening.width;
+        const radius = Math.max(0.5, diameter / 2);
+        const centerDistance = opening.offset + opening.width / 2;
+        const center = pointAlongWall(wall.geometry, centerDistance);
+        const before = pointAlongWall(wall.geometry, centerDistance - 0.5);
+        const after = pointAlongWall(wall.geometry, centerDistance + 0.5);
+        if (!center || !before || !after) continue;
+
+        const angle = Math.atan2(after.y - before.y, after.x - before.x);
+        const normal = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+        const wallThickness = wall.thickness ?? thickness;
+        const faceOffset = wallThickness / 2 + 0.35;
+        const height =
+          opening.sillHeight + (opening.diameter ?? opening.height) / 2;
+        const hole = new THREE.Group();
+        hole.position.set(center.x, height, center.y);
+        hole.rotation.y = -angle;
+
+        const dark = new THREE.MeshBasicMaterial({
+          color: lightScene ? 0x64748b : 0x020617,
+          side: THREE.DoubleSide,
+        });
+        const rim = new THREE.MeshStandardMaterial({
+          color: 0x94a3b8,
+          roughness: 0.5,
+          metalness: 0.3,
+        });
+
+        for (const side of [-1, 1]) {
+          const disc = new THREE.Mesh(
+            new THREE.CircleGeometry(radius, 24),
+            dark,
+          );
+          disc.position.z = faceOffset * side;
+          hole.add(disc);
+
+          const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, 0.45, 8, 28),
+            rim,
+          );
+          ring.position.z = faceOffset * side;
+          hole.add(ring);
+        }
+
+        const sleeve = new THREE.Mesh(
+          new THREE.CylinderGeometry(radius, radius, wallThickness, 24, 1, true),
+          new THREE.MeshBasicMaterial({
+            color: 0x020617,
+            side: THREE.DoubleSide,
+          }),
+        );
+        sleeve.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          normal,
+        );
+        hole.add(sleeve);
+
+        group.add(hole);
       }
     }
 
@@ -2068,6 +2296,10 @@ export function ThreeView({
   }, [draftMode]);
 
   useEffect(() => {
+    disposeGroup(ghostGroupRef.current);
+  }, [placementType, mountMode]);
+
+  useEffect(() => {
     if (draftMode) return;
     draftStartRef.current = null;
     setDraftStart(null);
@@ -2431,6 +2663,7 @@ export function ThreeView({
             [
               ['door', t('editor.addDoor')],
               ['window', t('editor.addWindow')],
+              ['hole', t('editor.addHole')],
             ] as const
           ).map(([type, label]) => (
             <button
@@ -2449,7 +2682,11 @@ export function ThreeView({
                   : 'hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Square className="h-3.5 w-3.5" />
+              {type === 'hole' ? (
+                <Circle className="h-3.5 w-3.5" />
+              ) : (
+                <Square className="h-3.5 w-3.5" />
+              )}
               <span className="truncate">{label}</span>
             </button>
           ))}

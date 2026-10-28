@@ -212,12 +212,22 @@ export class DrawingService {
     if (!wall || wall.floorId !== plan.floorId) {
       throw new BadRequestException('Opening must reference a wall on this plan');
     }
-    this.validateOpeningAgainstWall(wall, input.offset, input.width);
+
+    const normalized =
+      input.type === 'hole'
+        ? {
+            ...input,
+            diameter: input.diameter ?? input.width,
+            width: input.diameter ?? input.width,
+            height: input.diameter ?? input.width,
+          }
+        : input;
+    this.validateOpeningAgainstWall(wall, normalized.offset, normalized.width);
 
     const created = await this.drawing.createOpening(
       plan.floorId,
       wall.id,
-      input,
+      normalized,
     );
     await this.emitFloor(plan.floorId, 'opening.created');
     return toPublicOpening(created);
@@ -236,13 +246,32 @@ export class DrawingService {
       throw new BadRequestException('Opening must reference a wall on this plan');
     }
 
+    const nextType = input.type ?? opening.type;
+    const nextDiameter =
+      nextType === 'hole'
+        ? (input.diameter ??
+          input.width ??
+          opening.diameter ??
+          opening.width)
+        : null;
+    const normalized =
+      nextType === 'hole'
+        ? {
+            ...input,
+            type: 'hole' as const,
+            diameter: nextDiameter ?? undefined,
+            width: nextDiameter ?? input.width ?? opening.width,
+            height: nextDiameter ?? input.height ?? opening.height,
+          }
+        : input;
+
     this.validateOpeningAgainstWall(
       wall,
-      input.offset ?? opening.offset,
-      input.width ?? opening.width,
+      normalized.offset ?? opening.offset,
+      normalized.width ?? opening.width,
     );
 
-    const updated = await this.drawing.updateOpening(opening.id, input);
+    const updated = await this.drawing.updateOpening(opening.id, normalized);
     await this.emitFloor(opening.floorId, 'opening.updated');
     return toPublicOpening(updated);
   }

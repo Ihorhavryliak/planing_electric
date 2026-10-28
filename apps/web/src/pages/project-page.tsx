@@ -193,7 +193,7 @@ export function ProjectPage() {
     return (
       <div className="relative min-h-screen">
         <WorkspaceHeader badge={t('project.badge')} />
-        <main id="main-content" className="mx-auto max-w-3xl px-6 py-16">
+        <main id="main-content" className="page-shell">
           <div
             role="alert"
             className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-6 text-rose-100"
@@ -232,7 +232,7 @@ export function ProjectPage() {
         <WorkspaceHeader badge={t('project.badge')} />
         <div
           role="status"
-          className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-16 text-sm text-slate-400"
+          className="page-shell flex items-center gap-3 text-sm text-slate-400"
         >
           <LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />
           {t('project.loading')}
@@ -251,7 +251,7 @@ export function ProjectPage() {
       <div className="relative">
         <WorkspaceHeader badge={t('project.badge')} />
 
-        <main className="mx-auto max-w-6xl px-6 py-10">
+        <main className="page-shell">
           <Link
             to="/app"
             className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"

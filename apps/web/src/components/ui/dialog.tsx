@@ -42,21 +42,21 @@ export function Dialog({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm motion-safe:animate-[dmp-fade-in_180ms_ease-out]" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm motion-safe:animate-[dmp-fade-in_180ms_ease-out]" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-5 text-slate-100 shadow-2xl shadow-black/40 motion-safe:animate-[dmp-scale-in_180ms_ease-out]',
+          'relative w-full max-w-lg rounded-xl border border-border bg-card p-5 text-card-foreground shadow-2xl motion-safe:animate-[dmp-scale-in_180ms_ease-out]',
           className,
         )}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold">{title}</h2>
+            <h2 className="text-base font-semibold tracking-tight">{title}</h2>
             {description ? (
-              <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 {description}
               </p>
             ) : null}
@@ -65,7 +65,7 @@ export function Dialog({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <X className="h-4 w-4" />
           </button>

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const openingTypeSchema = z.enum(['door', 'window']);
+export const openingTypeSchema = z.enum(['door', 'window', 'hole']);
 
 const openingLabelSchema = z.string().trim().max(80);
 
@@ -12,6 +12,8 @@ export const createOpeningSchema = z.object({
   width: z.number().positive().max(10_000_000),
   /** Opening height in the same drawing units (defaults to 2.1 m in mm-derived units). */
   height: z.number().positive().max(10_000_000).optional(),
+  /** Round wall hole diameter; width/height mirror it for compatibility. */
+  diameter: z.number().positive().max(10_000_000).optional(),
   sillHeight: z.number().min(0).max(10_000_000).optional(),
   flipped: z.boolean().optional(),
   label: openingLabelSchema.nullable().optional(),
@@ -24,6 +26,7 @@ export const updateOpeningSchema = z
     offset: z.number().min(0).max(10_000_000).optional(),
     width: z.number().positive().max(10_000_000).optional(),
     height: z.number().positive().max(10_000_000).optional(),
+    diameter: z.number().positive().max(10_000_000).optional(),
     sillHeight: z.number().min(0).max(10_000_000).optional(),
     flipped: z.boolean().optional(),
     label: openingLabelSchema.nullable().optional(),
@@ -40,6 +43,7 @@ export const publicOpeningSchema = z.object({
   offset: z.number(),
   width: z.number(),
   height: z.number(),
+  diameter: z.number().nullable(),
   sillHeight: z.number(),
   flipped: z.boolean(),
   label: z.string().nullable(),
