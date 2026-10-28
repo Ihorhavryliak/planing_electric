@@ -1912,6 +1912,7 @@ export function PlanEditor({
     type: ElectricalPointType,
     at: Vec2,
     extra: Partial<Pick<PublicPoint, 'rotation' | 'label' | 'mountingHeight' | 'properties'>> = {},
+    options: { openDetails?: boolean } = {},
   ) {
     setPointsError(null);
     const pendingCircuit = pendingPointCircuitRef.current;
@@ -1934,7 +1935,7 @@ export function PlanEditor({
 
       setPoints((current) => [...current, created]);
       selectPoint(created.id);
-      setPostAddPointId(created.id);
+      if (options.openDetails) setPostAddPointId(created.id);
       bumpCalculation();
 
       const input = createPointInput(created);
@@ -3011,9 +3012,14 @@ export function PlanEditor({
         clashes={clashes}
         onSelect={handleThreeSelect}
         onCreatePoint={(type: ElectricalPointType, at: { x: number; y: number }, options?: { mountingHeight?: number | null }) =>
-          void handleCreatePoint(type, at, {
-            mountingHeight: options?.mountingHeight ?? null,
-          })
+          void handleCreatePoint(
+            type,
+            at,
+            {
+              mountingHeight: options?.mountingHeight ?? null,
+            },
+            { openDetails: true },
+          )
         }
         onUpdatePoint={(
           id: string,
@@ -3476,12 +3482,17 @@ export function PlanEditor({
               setAddElementOpen(true);
             }}
             onCreatePoint={(type, at, subtype, productId) =>
-              void handleCreatePoint(type, at, {
-                properties: {
-                  ...(subtype ? { subtype } : {}),
-                  ...(productId ? { productId } : {}),
+              void handleCreatePoint(
+                type,
+                at,
+                {
+                  properties: {
+                    ...(subtype ? { subtype } : {}),
+                    ...(productId ? { productId } : {}),
+                  },
                 },
-              })
+                { openDetails: true },
+              )
             }
             onMovePoint={(id, at) =>
               void handlePatchPoint(id, { x: at.x, y: at.y })

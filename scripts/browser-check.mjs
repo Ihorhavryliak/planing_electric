@@ -327,6 +327,17 @@ async function main() {
     if (box) canvasBox = box;
   };
 
+  const screenAtWorld = async (world) => {
+    const viewportData = JSON.parse(
+      await page.locator('[data-viewport]').first().getAttribute('data-viewport'),
+    );
+    const box = (await planCanvas.boundingBox()) ?? canvasBox;
+    return {
+      x: box.x + (world.x - viewportData.x) * viewportData.zoom + box.width / 2,
+      y: box.y + (world.y - viewportData.y) * viewportData.zoom + box.height / 2,
+    };
+  };
+
   // Calibrate so the calculation panel can show real lengths.
   await page.getByRole('button', { name: 'Calibrate scale tool' }).click();
   await syncCanvas();
@@ -342,6 +353,12 @@ async function main() {
     .getByRole('button', { name: 'Socket', exact: true })
     .click();
   await page.getByRole('button', { name: 'Double socket' }).click();
+  const addDialog = page.getByRole('dialog');
+  await addDialog.waitFor({ timeout: 5000 });
+  await addDialog
+    .getByRole('button', { name: 'Place on plan', exact: true })
+    .click();
+  await addDialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
   const socketSaved = page
     .waitForResponse(
       (response) =>
@@ -354,6 +371,15 @@ async function main() {
   if (!(await socketSaved)) {
     await page.screenshot({ path: path.join(dir, 'socket-save-failure.png') });
     throw new Error('The dock socket was not saved before routing.');
+  }
+  const detailsDialog = page.getByRole('dialog');
+  try {
+    await detailsDialog.waitFor({ timeout: 3000 });
+    await detailsDialog
+      .getByRole('button', { name: 'Skip', exact: true })
+      .click();
+  } catch {
+    // The position dialog is optional; continue if it did not open.
   }
   await page.getByRole('button', { name: 'Draw cable route tool' }).click();
   await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
@@ -421,13 +447,42 @@ async function main() {
       .getByRole('button', { name: 'Close' })
       .click();
   }
-  await page.mouse.move(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.getByRole('button', { name: 'Fit plan to view' }).first().click();
+  await page.waitForTimeout(400);
+  const planIdForHover = await page
+    .locator('[data-plan-id]')
+    .getAttribute('data-plan-id');
+  const drawingForHover = await page.evaluate(
+    async (id) => (await fetch(`/api/v1/plans/${id}/drawing`)).json(),
+    planIdForHover,
+  );
+  const socketForHover = drawingForHover.points.find(
+    (point) => point.type === 'socket',
+  );
+  if (!socketForHover) {
+    throw new Error('The placed socket is missing from the drawing.');
+  }
+  const socketScreen = await screenAtWorld(socketForHover);
+  await page.mouse.move(socketScreen.x, socketScreen.y);
   const hoverTooltip = page.getByTestId('canvas-hover-tooltip');
   await hoverTooltip.waitFor({ timeout: 3000 });
-  if (!(await hoverTooltip.innerText()).includes('Circuit')) {
+  const hoverText = await hoverTooltip.innerText();
+  if (!hoverText.includes('Circuit')) {
+    console.error('HOVER TEXT', JSON.stringify(hoverText));
+    await page.screenshot({ path: path.join(dir, 'hover-failure.png') });
     throw new Error('Point hover tooltip did not show its circuit.');
   }
-  await page.mouse.move(at(0.5, 0.57).x, at(0.5, 0.57).y);
+  const hoverRoute = drawingForHover.routes[0];
+  if (!hoverRoute) {
+    throw new Error('The drawn route is missing from the drawing.');
+  }
+  const routeA = hoverRoute.geometry[0];
+  const routeB = hoverRoute.geometry[1] ?? routeA;
+  const routeScreen = await screenAtWorld({
+    x: (routeA.x + routeB.x) / 2,
+    y: (routeA.y + routeB.y) / 2,
+  });
+  await page.mouse.move(routeScreen.x, routeScreen.y);
   await page.waitForFunction(
     () =>
       document
@@ -443,8 +498,8 @@ async function main() {
     pointerId: 51,
     isPrimary: true,
     button: 0,
-    clientX: at(0.35, 0.6).x,
-    clientY: at(0.35, 0.6).y,
+    clientX: socketScreen.x,
+    clientY: socketScreen.y,
   });
   await page.waitForTimeout(650);
   if (!(await hoverTooltip.isVisible().catch(() => false))) {
@@ -455,14 +510,14 @@ async function main() {
     pointerId: 51,
     isPrimary: true,
     button: 0,
-    clientX: at(0.35, 0.6).x,
-    clientY: at(0.35, 0.6).y,
+    clientX: socketScreen.x,
+    clientY: socketScreen.y,
   });
 
   // Select the socket, rotate it, and duplicate it.
   await page.getByRole('button', { name: 'Select tool' }).click();
   await syncCanvas();
-  await page.mouse.click(at(0.35, 0.6).x, at(0.35, 0.6).y);
+  await page.mouse.click(socketScreen.x, socketScreen.y);
   await page.getByRole('button', { name: 'Duplicate' }).waitFor();
   await page.getByRole('textbox', { name: /Rotation/ }).fill('90');
   await page.getByRole('textbox', { name: /Rotation/ }).blur();
@@ -635,7 +690,22 @@ async function main() {
     { timeout: 10000 },
   );
 
-  // Switch the route to a wall chase and change its width.
+  // Switch the route to a wall chase and change its width. Re-select the route
+  // explicitly: earlier hover/selection checks may have changed the selection.
+  await page.getByTestId('sidebar-tab-calculation').click();
+  const chaseRouteButton = routeSection
+    .getByRole('button', { name: /L1|Route/ })
+    .first();
+  try {
+    await chaseRouteButton.waitFor({ timeout: 5000 });
+  } catch {
+    console.error(
+      'ROUTES PANEL',
+      JSON.stringify(await routeSection.innerText().catch(() => 'missing')),
+    );
+    throw new Error('No route available to switch to a chase.');
+  }
+  await chaseRouteButton.click();
   await page.getByTestId('sidebar-tab-properties').click();
   await page
     .getByRole('heading', { name: 'Cable route', exact: true })
@@ -789,8 +859,10 @@ async function main() {
   await hotkeys.waitFor();
   await hotkeys.getByRole('button', { name: 'Close shortcuts' }).click();
 
-  await page.getByRole('button', { name: 'Hide panels' }).click();
-  await page.getByRole('button', { name: 'Show panels' }).click();
+  await page.getByRole('button', { name: 'Hide left panel' }).click();
+  await page.getByRole('button', { name: 'Hide right panel' }).click();
+  await page.getByRole('button', { name: 'Show left panel' }).click();
+  await page.getByRole('button', { name: 'Show right panel' }).click();
   await circuitsSection.getByText('L1', { exact: true }).waitFor();
 
   await page.getByTestId('sidebar-tab-layers').click();
@@ -815,7 +887,9 @@ async function main() {
   const orthoToggle = page.getByRole('button', {
     name: 'Orthogonal routing',
   });
-  await orthoToggle.click();
+  if ((await orthoToggle.getAttribute('aria-pressed')) !== 'true') {
+    await orthoToggle.click();
+  }
   if ((await orthoToggle.getAttribute('aria-pressed')) !== 'true') {
     throw new Error('Orthogonal routing toggle did not activate.');
   }
